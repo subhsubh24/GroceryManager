@@ -60,3 +60,23 @@ describe("rankRecipes", () => {
     expect(lowE).toBeGreaterThan(normal); // effortScore 0.2 → strong effortFit boost
   });
 });
+
+describe("rankRecipes with personalization", () => {
+  const recipes = (
+    [
+      { id: "thai", title: "Thai curry", ingredients: [{ name: "eggs" }, { name: "spinach" }], cuisine: "Thai" },
+      { id: "italian", title: "Frittata", ingredients: [{ name: "eggs" }, { name: "spinach" }], cuisine: "Italian" },
+      { id: "peanutty", title: "Peanut stew", ingredients: [{ name: "eggs" }, { name: "peanuts" }] },
+    ] as RawRecipe[]
+  ).map((r) => annotateRecipe(r, pantry));
+
+  it("hard-excludes recipes containing an allergen", () => {
+    const ranked = rankRecipes(recipes, { prefs: { allergens: ["peanut"] } });
+    expect(ranked.some((r) => r.id === "peanutty")).toBe(false);
+  });
+
+  it("boosts a loved cuisine to the top", () => {
+    const ranked = rankRecipes(recipes, { prefs: { cuisineAffinity: { thai: 0.9 } } });
+    expect(ranked[0]!.id).toBe("thai");
+  });
+});

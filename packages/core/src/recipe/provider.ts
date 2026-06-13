@@ -9,6 +9,7 @@ export interface ProviderRecipe {
   imageUrl?: string;
   sourceUrl?: string;
   instructions?: string;
+  cuisine?: string;
   ingredients: { name: string }[];
 }
 
@@ -33,6 +34,7 @@ export function mapMealDbMeal(meal: Record<string, unknown>): ProviderRecipe {
     imageUrl: typeof meal.strMealThumb === "string" ? meal.strMealThumb : undefined,
     sourceUrl: typeof meal.strSource === "string" ? meal.strSource : undefined,
     instructions: typeof meal.strInstructions === "string" ? meal.strInstructions : undefined,
+    cuisine: typeof meal.strArea === "string" ? meal.strArea : undefined,
     ingredients,
   };
 }

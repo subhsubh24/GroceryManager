@@ -1,4 +1,4 @@
-import { getDb, getLatestUserId, getPantryView } from "@gm/db";
+import { getDb, getLatestUserId, getPantryView, loadPreferenceSignals } from "@gm/db";
 import {
   annotateRecipe,
   buildPantryIndex,
@@ -6,6 +6,7 @@ import {
   rankRecipes,
   TheMealDBProvider,
 } from "@gm/core/recipe";
+import { projectUserModel } from "@gm/core/personalization";
 
 export const dynamic = "force-dynamic";
 
@@ -37,14 +38,27 @@ async function loadRecipes(lowEnergy: boolean) {
     );
 
     const images = new Map(full.map((r) => [r.id, r.imageUrl ?? ""]));
+    const model = projectUserModel(await loadPreferenceSignals(db, userId));
     const annotated = full.map((r) => {
       const { effortScore } = estimateEffort({
         ingredientCount: r.ingredients.length,
         instructions: r.instructions,
       });
-      return annotateRecipe({ id: r.id, title: r.title, ingredients: r.ingredients, effortScore }, idx);
+      return annotateRecipe(
+        { id: r.id, title: r.title, ingredients: r.ingredients, effortScore, cuisine: r.cuisine },
+        idx,
+      );
     });
-    const ranked = rankRecipes(annotated, { limit: 8, lowEnergy });
+    const ranked = rankRecipes(annotated, {
+      limit: 8,
+      lowEnergy,
+      prefs: {
+        allergens: model.allergens,
+        dislikes: model.dislikes,
+        loves: model.loves,
+        cuisineAffinity: model.cuisineAffinity,
+      },
+    });
     return { ranked, images, error: null as string | null };
   } catch (e) {
     return { ranked: [], images: new Map<string, string>(), error: e instanceof Error ? e.message : String(e) };

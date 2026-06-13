@@ -81,6 +81,7 @@ export interface RawRecipe {
   ingredients: { name: string; isOptional?: boolean }[];
   readyMinutes?: number | null;
   effortScore?: number | null; // 0..1, lower = easier
+  cuisine?: string;
 }
 
 export interface MatchRecipe extends RawRecipe {
@@ -114,19 +115,50 @@ interface Weights {
   missing: number;
   expiring: number;
   effort: number;
+  love: number;
+  dislike: number;
+  cuisine: number;
 }
-const DEFAULT_WEIGHTS: Weights = { coverage: 1, missing: 0.15, expiring: 0.3, effort: 0.4 };
+const DEFAULT_WEIGHTS: Weights = {
+  coverage: 1,
+  missing: 0.15,
+  expiring: 0.3,
+  effort: 0.4,
+  love: 0.25,
+  dislike: 0.5,
+  cuisine: 0.3,
+};
+
+/** Personalization inputs from the projected UserModel (§8.7). */
+export interface RankPrefs {
+  allergens?: string[]; // hard-exclude recipes that contain any of these
+  dislikes?: string[]; // ingredient names / "cuisine:x" keys to penalize
+  loves?: string[]; // ingredient names / "cuisine:x" keys to boost
+  cuisineAffinity?: Record<string, number>; // cuisine (lowercase) -> -1..1
+}
 
 export interface RankOpts {
   /** Busy/low-energy: up-weight low-effort recipes (§7.4). */
   lowEnergy?: boolean;
   weights?: Partial<Weights>;
   limit?: number;
+  prefs?: RankPrefs;
 }
+
+const stripCuisineKeys = (keys: string[] | undefined) =>
+  (keys ?? []).filter((k) => !k.startsWith("cuisine:"));
 
 export function rankRecipes(recipes: MatchRecipe[], opts: RankOpts = {}): RankedRecipe[] {
   const w: Weights = { ...DEFAULT_WEIGHTS, ...opts.weights };
+  const p = opts.prefs;
+  const allergenIdx = p?.allergens?.length ? buildPantryIndex(p.allergens.map((a) => ({ name: a }))) : null;
+  const loveNames = stripCuisineKeys(p?.loves);
+  const dislikeNames = stripCuisineKeys(p?.dislikes);
+  const loveIdx = loveNames.length ? buildPantryIndex(loveNames.map((n) => ({ name: n }))) : null;
+  const dislikeIdx = dislikeNames.length ? buildPantryIndex(dislikeNames.map((n) => ({ name: n }))) : null;
+
   const ranked = recipes
+    .filter((r) => !(allergenIdx && r.ingredients.some((i) => allergenIdx.has(i.name))))
     .map((r) => {
       const core = r.ingredients.filter((i) => !i.isOptional);
       const have = core.filter((i) => i.inPantry);
@@ -134,9 +166,21 @@ export function rankRecipes(recipes: MatchRecipe[], opts: RankOpts = {}): Ranked
       const missing = core.filter((i) => !i.inPantry).map((i) => i.name);
       const usesExpiring = r.ingredients.filter((i) => i.inPantry && i.expiringSoon).length;
       const effortFit = r.effortScore != null ? 1 - r.effortScore : 0.5;
+
+      const loveMatches = loveIdx ? r.ingredients.filter((i) => loveIdx.has(i.name)).length : 0;
+      const dislikeMatches = dislikeIdx ? r.ingredients.filter((i) => dislikeIdx.has(i.name)).length : 0;
+      const cuisineAffinity =
+        p?.cuisineAffinity && r.cuisine ? (p.cuisineAffinity[r.cuisine.toLowerCase()] ?? 0) : 0;
+
       let score =
-        w.coverage * coverage + w.expiring * Math.min(1, usesExpiring * 0.5) - w.missing * missing.length;
+        w.coverage * coverage +
+        w.expiring * Math.min(1, usesExpiring * 0.5) -
+        w.missing * missing.length +
+        w.love * Math.min(1, loveMatches * 0.5) -
+        w.dislike * dislikeMatches +
+        w.cuisine * cuisineAffinity;
       if (opts.lowEnergy) score += w.effort * effortFit;
+
       return {
         id: r.id,
         title: r.title,
