@@ -45,6 +45,12 @@ export default function HomePage() {
         <h1 className="mt-1 text-3xl font-bold tracking-tight text-ink">
           Never stress about groceries or cooking.
         </h1>
+        <a
+          href="/api/auth/signin"
+          className="mt-3 inline-block rounded-xl border border-brand-200 bg-white px-3 py-1.5 text-sm font-medium text-brand-700"
+        >
+          Connect Gmail
+        </a>
       </header>
 
       {/* Weekly autopilot hero */}

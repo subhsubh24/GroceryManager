@@ -6,12 +6,99 @@ import { and, desc, eq } from "drizzle-orm";
 import type { DB } from "./client.js";
 import {
   canonicalItems,
+  oauthCredentials,
   pantryStock,
   purchaseLineItems,
   purchases,
   reorderPolicies,
   users,
 } from "./schema.js";
+
+export interface GoogleAuthUpsert {
+  email: string;
+  name: string | null;
+  image: string | null;
+  accessTokenEnc: string | null;
+  refreshTokenEnc: string | null;
+  scopes: string[];
+  expiresAt: Date | null;
+}
+
+/** Upsert the user (by email) + their encrypted Google OAuth credential. Returns userId. */
+export async function upsertGoogleAuth(db: DB, a: GoogleAuthUpsert): Promise<string> {
+  const u = await db
+    .insert(users)
+    .values({ email: a.email, name: a.name, image: a.image })
+    .onConflictDoUpdate({ target: users.email, set: { name: a.name, image: a.image, updatedAt: new Date() } })
+    .returning({ id: users.id });
+  const userId = u[0]!.id;
+
+  await db
+    .insert(oauthCredentials)
+    .values({
+      userId,
+      provider: "google",
+      scopes: a.scopes,
+      accessTokenEnc: a.accessTokenEnc,
+      refreshTokenEnc: a.refreshTokenEnc,
+      expiresAt: a.expiresAt,
+    })
+    .onConflictDoUpdate({
+      target: [oauthCredentials.userId, oauthCredentials.provider],
+      // Google only returns a refresh_token on first consent — don't clobber it with null.
+      set: {
+        scopes: a.scopes,
+        accessTokenEnc: a.accessTokenEnc,
+        expiresAt: a.expiresAt,
+        updatedAt: new Date(),
+        ...(a.refreshTokenEnc ? { refreshTokenEnc: a.refreshTokenEnc } : {}),
+      },
+    });
+  return userId;
+}
+
+/** A user's stored Google credential (encrypted) for the worker to use. */
+export async function getGoogleCredential(db: DB, userId: string) {
+  const rows = await db
+    .select({
+      userId: oauthCredentials.userId,
+      accessTokenEnc: oauthCredentials.accessTokenEnc,
+      refreshTokenEnc: oauthCredentials.refreshTokenEnc,
+      expiresAt: oauthCredentials.expiresAt,
+      historyId: oauthCredentials.historyId,
+    })
+    .from(oauthCredentials)
+    .where(and(eq(oauthCredentials.userId, userId), eq(oauthCredentials.provider, "google")))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/** All users who have connected Google (for the poll worker to iterate). */
+export async function listGoogleUserIds(db: DB): Promise<string[]> {
+  const rows = await db
+    .select({ userId: oauthCredentials.userId })
+    .from(oauthCredentials)
+    .where(eq(oauthCredentials.provider, "google"));
+  return rows.map((r) => r.userId);
+}
+
+export async function updateGoogleTokens(
+  db: DB,
+  userId: string,
+  a: { accessTokenEnc: string; expiresAt: Date | null },
+) {
+  await db
+    .update(oauthCredentials)
+    .set({ accessTokenEnc: a.accessTokenEnc, expiresAt: a.expiresAt, updatedAt: new Date() })
+    .where(and(eq(oauthCredentials.userId, userId), eq(oauthCredentials.provider, "google")));
+}
+
+export async function setGmailHistoryId(db: DB, userId: string, historyId: string) {
+  await db
+    .update(oauthCredentials)
+    .set({ historyId, updatedAt: new Date() })
+    .where(and(eq(oauthCredentials.userId, userId), eq(oauthCredentials.provider, "google")));
+}
 
 /** Demo helper until Auth.js is wired: the most recently created user. */
 export async function getLatestUserId(db: DB): Promise<string | null> {
