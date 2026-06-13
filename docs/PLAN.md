@@ -92,7 +92,7 @@ Plus it covers **all your recurring needs, not just food**: a second **Household
 | Language | **TypeScript** everywhere | Locked; one language across UI, core, workers. |
 | UI | **Tailwind + shadcn/ui + Radix**, custom Instacart-*inspired* theme tokens | Fast path to a clean, green, card-based aesthetic — original, not copied. |
 | Data/cache | **TanStack Query** + Server Actions | Identical patterns reusable in RN later. |
-| DB | **Postgres** (Neon/Supabase managed; Docker in dev) + `pgvector` + `pg_trgm` | Relational integrity for the units math; vector + trigram for ingredient matching. |
+| DB | **Postgres** (**Supabase** managed — chosen; Docker in dev) + `pgvector` + `pg_trgm`. App uses the Supabase **transaction pooler** (6543, prepared statements off); migrations use the **direct** connection (5432). | Relational integrity for the units math; vector + trigram for ingredient matching. |
 | ORM | **Drizzle ORM** | Typed SQL, transparent for the quantity math, great migrations. |
 | Auth | **Auth.js (NextAuth v5)** w/ Google provider | We need Google OAuth for Gmail anyway — reuse for login. |
 | Jobs/queue | **BullMQ on Redis** (Upstash in prod) | Receipt processing, Gmail polling, prediction recompute = async + retryable. The ingestion backbone. |
@@ -789,5 +789,5 @@ depletion model swap-in; **native Expo app reusing `packages/core`**. **Growth:*
 - **`gemini-2.5-flash-lite` is public preview** — keep `gemini-2.5-flash` wired as the fallback and
   watch for its GA / any preview-deprecation date.
 - Confirm Spoonacular vs. self-hosted recipe data for cost at scale (free tier is limited).
-- Decide hosting specifics (Vercel + Railway/Fly + Neon/Supabase + Upstash) and KMS provider.
+- Hosting: Vercel (app) + Railway/Fly (workers) + **Supabase** (Postgres — chosen) + Upstash (Redis); KMS provider TBD. On Supabase, enable `vector` + `pg_trgm`; app uses the pooler URL, migrations the direct URL.
 ```

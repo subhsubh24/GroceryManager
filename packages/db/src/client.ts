@@ -5,7 +5,9 @@ import * as schema from "./schema.js";
 
 /** Create a Drizzle client for a given connection string (useful for scripts/tests). */
 export function createDb(url: string, max = 10) {
-  const client = postgres(url, { max });
+  // Supabase/pgbouncer transaction pooler (port 6543) doesn't support prepared statements.
+  const pooled = /pooler\.supabase\.com|[:.]6543\b|pgbouncer=true/.test(url);
+  const client = pooled ? postgres(url, { max, prepare: false }) : postgres(url, { max });
   return { db: drizzle(client, { schema }), client };
 }
 

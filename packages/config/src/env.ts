@@ -10,7 +10,10 @@ const EnvSchema = z.object({
     .default("development"),
 
   // Core infra
+  // App connection — on Supabase use the Transaction pooler URL (port 6543).
   DATABASE_URL: z.string().url(),
+  // Direct (non-pooled) connection for migrations — Supabase port 5432.
+  DIRECT_DATABASE_URL: z.string().url().optional(),
   // Optional app-wide: only the worker service requires it (it guards at startup).
   REDIS_URL: z.string().url().optional(),
 

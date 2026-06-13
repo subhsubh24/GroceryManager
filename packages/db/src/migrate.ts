@@ -15,7 +15,8 @@ const pkgRoot = join(here, "..");
 
 async function main() {
   const env = loadEnv();
-  const sql = postgres(env.DATABASE_URL, { max: 1 });
+  // Run migrations on the DIRECT connection (the Supabase pooler can't run all DDL).
+  const sql = postgres(env.DIRECT_DATABASE_URL ?? env.DATABASE_URL, { max: 1 });
   try {
     console.log("→ creating extensions…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0000_extensions.sql"), "utf8"));
