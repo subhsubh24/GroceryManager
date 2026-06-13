@@ -8,7 +8,7 @@
  * Reliability comes from this loop + the semantic layer, not from the model — so the
  * default tier is the cheapest (gemini-2.5-flash-lite).
  */
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, type Content, type Part } from "@google/genai";
 import { loadEnv, useVertex, type Env } from "@gm/config/env";
 import type { GeminiTier } from "@gm/config/constants";
 import { z } from "zod";
@@ -72,14 +72,15 @@ export class GeminiClient {
     const model = resolveModel(tier, this.env.LLM_USE_FLASH_LITE);
     const budget = opts.thinkingBudget ?? thinkingBudgetFor(tier);
 
-    const parts: unknown[] = [{ text: prompt }];
+    const parts: Part[] = [{ text: prompt }];
     for (const img of opts.images ?? []) {
       parts.push({ inlineData: { mimeType: img.mimeType, data: img.dataBase64 } });
     }
+    const contents: Content = { role: "user", parts };
 
     const res = await this.ai.models.generateContent({
       model,
-      contents: [{ role: "user", parts }],
+      contents,
       config: {
         responseMimeType: "application/json",
         // Gemini accepts an OpenAPI-subset schema; zod-to-json-schema is close enough for
