@@ -6,12 +6,15 @@ import { and, desc, eq, gte } from "drizzle-orm";
 import type { DB } from "./client.js";
 import {
   canonicalItems,
+  mealLogs,
   oauthCredentials,
   pantryStock,
   preferenceSignals,
   purchaseLineItems,
   purchases,
+  recipes,
   reorderPolicies,
+  stockLedger,
   userModels,
   users,
 } from "./schema.js";
@@ -122,6 +125,45 @@ export async function loadLineItemsForSpend(db: DB, userId: string, sinceDays = 
     unitPriceCents: r.unitPriceCents,
     lineTotalCents: r.lineTotalCents,
   }));
+}
+
+/**
+ * Inputs for the "Grocery Wrapped" recap (PLAN §10 growth): cooked meals (+ recipe title),
+ * grocery spend, and the count of items let expire — all within the lookback window.
+ * Aggregation lives in @gm/core/spend (buildWrapped) so it stays pure + testable.
+ */
+export async function loadWrappedInputs(db: DB, userId: string, sinceDays = 30) {
+  const since = new Date(Date.now() - sinceDays * 86_400_000);
+  const [meals, purchaseRows, spoilage] = await Promise.all([
+    db
+      .select({ cookedAt: mealLogs.cookedAt, recipeTitle: recipes.title })
+      .from(mealLogs)
+      .leftJoin(recipes, eq(mealLogs.recipeId, recipes.id))
+      .where(and(eq(mealLogs.userId, userId), gte(mealLogs.cookedAt, since))),
+    db
+      .select({ totalCents: purchases.totalCents })
+      .from(purchases)
+      .where(and(eq(purchases.userId, userId), gte(purchases.purchasedAt, since))),
+    db
+      .select({ id: stockLedger.id })
+      .from(stockLedger)
+      .where(
+        and(
+          eq(stockLedger.userId, userId),
+          eq(stockLedger.eventType, "spoilage"),
+          gte(stockLedger.occurredAt, since),
+        ),
+      ),
+  ]);
+  return {
+    mealLogs: meals.map((m) => ({
+      cookedAt: m.cookedAt as Date,
+      recipeTitle: m.recipeTitle ?? null,
+    })),
+    purchases: purchaseRows.map((p) => ({ totalCents: p.totalCents })),
+    spoilageCount: spoilage.length,
+    windowDays: sinceDays,
+  };
 }
 
 export async function getUserBudgetCents(db: DB, userId: string): Promise<number | null> {

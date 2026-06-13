@@ -46,7 +46,13 @@ export default async function SpendPage() {
     <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
       <a href="/" className="text-sm text-brand-600">← Home</a>
       <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">Spending</h1>
-      <p className="mb-6 text-sm text-ink/60">From your receipts — no bank link needed.</p>
+      <p className="mb-4 text-sm text-ink/60">From your receipts — no bank link needed.</p>
+      <a
+        href="/wrapped"
+        className="mb-6 inline-block rounded-xl border border-brand-200 bg-white px-3 py-1.5 text-sm font-medium text-brand-700"
+      >
+        See your Grocery Wrapped →
+      </a>
 
       {!data.ready && (
         <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">

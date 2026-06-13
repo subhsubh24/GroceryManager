@@ -42,6 +42,13 @@ const SECTIONS: Section[] = [
     blurb: "What you spend, where it goes, and where the same item is cheaper.",
     emoji: "💸",
   },
+  {
+    key: "wrapped",
+    href: "/wrapped",
+    title: "Grocery Wrapped",
+    blurb: "Your recap: meals cooked, money saved vs takeout, top recipes — made to share.",
+    emoji: "🎉",
+  },
 ];
 
 export default function HomePage() {

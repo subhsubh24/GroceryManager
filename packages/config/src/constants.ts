@@ -44,6 +44,17 @@ export const REORDER = {
 /** Replenishment "running low" nudge fires at this fraction of the observed interval (§7.5). */
 export const REPLENISH_NUDGE_FRACTION = 0.8;
 
+/**
+ * "Grocery Wrapped" recap estimate inputs (PLAN §10 growth). Deliberately round, honest
+ * estimates — the recap is upfront that "$ saved vs takeout" is a ballpark, not precise.
+ */
+export const WRAPPED = {
+  /** Assumed cost of an equivalent takeout/delivery meal. */
+  takeoutMealCents: 1500,
+  /** Assumed marginal ingredient cost of cooking that meal at home. */
+  homeCookedMealCents: 500,
+} as const;
+
 /** Normalization cascade thresholds + fixed confidences (PLAN §5.4). */
 export const NORMALIZE = {
   trigramThreshold: 0.55, // pg_trgm similarity (0..1)
