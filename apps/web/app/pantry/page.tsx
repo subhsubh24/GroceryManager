@@ -28,7 +28,10 @@ export default async function PantryPage() {
       <a href="/" className="text-sm text-brand-600">← Home</a>
       <div className="mt-2 mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-ink">Pantry</h1>
-        <a href="/review" className="text-sm font-medium text-brand-600">Review inbox →</a>
+        <div className="flex gap-4">
+          <a href="/use-it-up" className="text-sm font-medium text-brand-600">Use it up →</a>
+          <a href="/review" className="text-sm font-medium text-brand-600">Review inbox →</a>
+        </div>
       </div>
 
       {error && (

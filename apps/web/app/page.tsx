@@ -36,6 +36,13 @@ const SECTIONS: Section[] = [
     emoji: "🧴",
   },
   {
+    key: "use-it-up",
+    href: "/use-it-up",
+    title: "Use it up",
+    blurb: "What's about to spoil, with one-tap recipes to rescue it before it's wasted.",
+    emoji: "♻️",
+  },
+  {
     key: "spend",
     href: "/spend",
     title: "Spending",
