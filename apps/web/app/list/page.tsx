@@ -24,7 +24,10 @@ export default async function ListPage() {
 
   return (
     <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
-      <a href="/" className="text-sm text-brand-600">← Home</a>
+      <div className="flex items-center justify-between">
+        <a href="/" className="text-sm text-brand-600">← Home</a>
+        <a href="/staples" className="text-sm font-medium text-brand-600">Staples autopilot →</a>
+      </div>
       <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">Reorder</h1>
       <p className="mb-6 text-sm text-ink/60">
         Drafted from what&apos;s running low — one tap to order, you confirm checkout.

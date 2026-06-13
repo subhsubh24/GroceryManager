@@ -36,6 +36,13 @@ const SECTIONS: Section[] = [
     emoji: "🧴",
   },
   {
+    key: "staples",
+    href: "/staples",
+    title: "Staples autopilot",
+    blurb: "Set and forget your always-on items — they appear on the list the moment they're due.",
+    emoji: "🔁",
+  },
+  {
     key: "use-it-up",
     href: "/use-it-up",
     title: "Use it up",

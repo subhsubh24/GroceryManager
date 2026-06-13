@@ -353,3 +353,32 @@ export async function loadReorderInputs(db: DB, userId: string) {
     asin: null as string | null,
   }));
 }
+
+/**
+ * Toggle a staple onto/off "autopilot" (PLAN §7.1). On first enable, seed par/reorder-point from
+ * the caller-computed defaults; on re-enable, preserve any tuned par and just flip the flags.
+ */
+export async function setReorderAutopilot(
+  db: DB,
+  userId: string,
+  canonicalItemId: string,
+  enabled: boolean,
+  seed?: { targetParQty: number; reorderPointQty: number; leadTimeDays: number; minIntervalDays: number },
+) {
+  await db
+    .insert(reorderPolicies)
+    .values({
+      userId,
+      canonicalItemId,
+      enabled,
+      isStaple: enabled,
+      targetParQty: seed ? String(seed.targetParQty) : null,
+      reorderPointQty: seed ? String(seed.reorderPointQty) : null,
+      leadTimeDays: seed?.leadTimeDays ?? 2,
+      minIntervalDays: seed?.minIntervalDays ?? 7,
+    })
+    .onConflictDoUpdate({
+      target: [reorderPolicies.userId, reorderPolicies.canonicalItemId],
+      set: { enabled, isStaple: enabled, updatedAt: new Date() },
+    });
+}
