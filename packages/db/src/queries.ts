@@ -8,11 +8,83 @@ import {
   canonicalItems,
   oauthCredentials,
   pantryStock,
+  preferenceSignals,
   purchaseLineItems,
   purchases,
   reorderPolicies,
+  userModels,
   users,
 } from "./schema.js";
+
+type SignalPolarity = "positive" | "negative" | "neutral";
+type SignalSource =
+  | "onboarding_q"
+  | "meal_log"
+  | "skip"
+  | "reorder"
+  | "waste"
+  | "rating"
+  | "chat"
+  | "correction";
+
+/** Append to the preference ledger (PLAN §8.7). */
+export async function appendPreferenceSignal(
+  db: DB,
+  a: { userId: string; topic: string; value?: string | null; polarity: SignalPolarity; source: SignalSource; confidence: number },
+) {
+  await db.insert(preferenceSignals).values({
+    userId: a.userId,
+    topic: a.topic,
+    value: a.value ?? null,
+    polarity: a.polarity,
+    source: a.source,
+    confidence: a.confidence,
+  });
+}
+
+/** Load a user's preference signals (shape feeds projectUserModel). */
+export async function loadPreferenceSignals(db: DB, userId: string) {
+  const rows = await db
+    .select({
+      topic: preferenceSignals.topic,
+      value: preferenceSignals.value,
+      polarity: preferenceSignals.polarity,
+      confidence: preferenceSignals.confidence,
+    })
+    .from(preferenceSignals)
+    .where(eq(preferenceSignals.userId, userId));
+  return rows.map((r) => ({
+    topic: r.topic,
+    value: r.value,
+    polarity: r.polarity as SignalPolarity,
+    confidence: r.confidence,
+  }));
+}
+
+/** Upsert the projected UserModel (cleanly-mappable fields). */
+export async function persistUserModel(
+  db: DB,
+  userId: string,
+  m: {
+    diets: string[];
+    allergens: string[];
+    cuisineAffinity: Record<string, number>;
+    qualityPrefs: Record<string, boolean>;
+    confidencePerField: Record<string, number>;
+  },
+) {
+  const values = {
+    diets: m.diets,
+    allergens: m.allergens,
+    cuisineAffinity: m.cuisineAffinity,
+    qualityPrefs: m.qualityPrefs,
+    confidencePerField: m.confidencePerField,
+  };
+  await db
+    .insert(userModels)
+    .values({ userId, ...values })
+    .onConflictDoUpdate({ target: userModels.userId, set: { ...values, updatedAt: new Date() } });
+}
 
 export interface GoogleAuthUpsert {
   email: string;
