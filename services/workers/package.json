@@ -1,0 +1,25 @@
+{
+  "name": "@gm/workers",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "lint": "echo \"(lint) @gm/workers\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gm/config": "workspace:*",
+    "@gm/core": "workspace:*",
+    "@gm/db": "workspace:*",
+    "@gm/shared": "workspace:*",
+    "bullmq": "^5.21.0",
+    "ioredis": "^5.11.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
+  }
+}
