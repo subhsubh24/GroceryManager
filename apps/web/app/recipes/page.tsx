@@ -1,4 +1,4 @@
-import { getDb, getLatestUserId, getPantryView, loadPreferenceSignals } from "@gm/db";
+import { getDb, getPantryView, loadPreferenceSignals, withTenant } from "@gm/db";
 import {
   annotateRecipe,
   buildPantryIndex,
@@ -7,16 +7,20 @@ import {
   TheMealDBProvider,
 } from "@gm/core/recipe";
 import { projectUserModel } from "@gm/core/personalization";
+import { currentUserId } from "@/app/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 async function loadRecipes(lowEnergy: boolean) {
   try {
-    const db = getDb();
-    const userId = await getLatestUserId(db);
+    const userId = await currentUserId();
     if (!userId) return { ranked: [], images: new Map<string, string>(), error: null as string | null };
 
-    const pantry = await getPantryView(db, userId);
+    // Read pantry + taste signals together in one tenant tx; the provider fetch happens after.
+    const { pantry, signals } = await withTenant(getDb(), userId, async (tx) => ({
+      pantry: await getPantryView(tx, userId),
+      signals: await loadPreferenceSignals(tx, userId),
+    }));
     const inStock = pantry.filter((p) => p.status === "in_stock" || p.status === "low");
     if (inStock.length === 0) return { ranked: [], images: new Map<string, string>(), error: null as string | null };
 
@@ -38,7 +42,7 @@ async function loadRecipes(lowEnergy: boolean) {
     );
 
     const images = new Map(full.map((r) => [r.id, r.imageUrl ?? ""]));
-    const model = projectUserModel(await loadPreferenceSignals(db, userId));
+    const model = projectUserModel(signals);
     const annotated = full.map((r) => {
       const { effortScore } = estimateEffort({
         ingredientCount: r.ingredients.length,

@@ -3,7 +3,7 @@
  * PantryStock from the full ledger for that (user, item) and upsert the projection.
  */
 import { and, eq } from "drizzle-orm";
-import type { DB } from "@gm/db";
+import type { Querier } from "@gm/db";
 import { canonicalItems, pantryStock, stockLedger } from "@gm/db";
 import type { LedgerEventType } from "@gm/shared";
 import { projectPantryStock } from "./project.js";
@@ -20,7 +20,7 @@ export interface LedgerAppend {
   ratePerDay?: number | null;
 }
 
-export async function appendLedgerAndReproject(db: DB, a: LedgerAppend) {
+export async function appendLedgerAndReproject(db: Querier, a: LedgerAppend) {
   await db.insert(stockLedger).values({
     userId: a.userId,
     canonicalItemId: a.canonicalItemId,
@@ -36,7 +36,7 @@ export async function appendLedgerAndReproject(db: DB, a: LedgerAppend) {
 
 /** Recompute PantryStock for one (user, item) from its full ledger and upsert it. */
 export async function reprojectStock(
-  db: DB,
+  db: Querier,
   userId: string,
   canonicalItemId: string,
   ratePerDay: number | null,

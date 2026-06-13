@@ -4,7 +4,7 @@
  * (`pgvector` cosine) + LLM tiebreak when an embedder/resolver is injected.
  */
 import { and, eq, sql } from "drizzle-orm";
-import type { DB } from "@gm/db";
+import type { Querier } from "@gm/db";
 import { canonicalItems, ingredientMatchOverrides, products, unitsOfMeasure } from "@gm/db";
 import type { CanonicalCandidate, NormalizationPorts } from "./normalize.js";
 
@@ -25,7 +25,7 @@ function toCandidates(res: unknown): CanonicalCandidate[] {
 }
 
 export function createDbNormalizationPorts(
-  db: DB,
+  db: Querier,
   userId: string,
   deps: DbPortsDeps = {},
 ): NormalizationPorts {

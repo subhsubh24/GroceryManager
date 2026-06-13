@@ -27,6 +27,9 @@ async function main() {
     console.log("→ creating custom indexes…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0001_indexes.sql"), "utf8"));
 
+    console.log("→ applying row-level security…");
+    await sql.unsafe(readFileSync(join(pkgRoot, "sql/0002_rls.sql"), "utf8"));
+
     console.log("✓ migrations complete");
   } finally {
     await sql.end();

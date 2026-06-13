@@ -1,5 +1,6 @@
-import { getDb, getLatestUserId, getPantryView, loadWrappedInputs } from "@gm/db";
+import { getDb, getPantryView, loadWrappedInputs, withTenant } from "@gm/db";
 import { selectExpiringSoon } from "@gm/core/pantry";
+import { currentUserId } from "@/app/lib/tenant";
 import {
   annotateRecipe,
   buildPantryIndex,
@@ -13,14 +14,12 @@ export const dynamic = "force-dynamic";
 
 async function load() {
   try {
-    const db = getDb();
-    const userId = await getLatestUserId(db);
+    const userId = await currentUserId();
     if (!userId) return { ready: false as const, error: null as string | null };
 
-    const [pantry, wrapped] = await Promise.all([
-      getPantryView(db, userId),
-      loadWrappedInputs(db, userId, 30),
-    ]);
+    const [pantry, wrapped] = await withTenant(getDb(), userId, (tx) =>
+      Promise.all([getPantryView(tx, userId), loadWrappedInputs(tx, userId, 30)]),
+    );
     const expiring = selectExpiringSoon(pantry, { domain: "grocery", withinDays: 5 });
 
     // Index every in-stock item (accurate coverage/missing), flagging the at-risk ones so the

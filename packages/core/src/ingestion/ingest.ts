@@ -7,7 +7,7 @@
  * the orchestrator testable end-to-end against a live DB with a stubbed extractor.
  */
 import { and, eq } from "drizzle-orm";
-import type { DB } from "@gm/db";
+import type { Querier } from "@gm/db";
 import { canonicalItems, purchaseLineItems, purchases, unitsOfMeasure } from "@gm/db";
 import type { PurchaseSource, ReceiptExtraction } from "@gm/shared";
 import { UnitConverter, type Dimension } from "../units/index.js";
@@ -15,7 +15,7 @@ import { appendLedgerAndReproject } from "../pantry/persist.js";
 import { normalizeLineItem, type NormalizationPorts } from "./normalize.js";
 
 export interface IngestDeps {
-  db: DB;
+  db: Querier;
   ports: NormalizationPorts;
   extract: (cleanedText: string) => Promise<ReceiptExtraction>;
 }

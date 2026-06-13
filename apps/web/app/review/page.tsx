@@ -1,13 +1,14 @@
-import { getDb, getLatestUserId, getReviewQueue } from "@gm/db";
+import { getDb, getReviewQueue, withTenant } from "@gm/db";
+import { currentUserId } from "@/app/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 async function loadReview() {
   try {
-    const db = getDb();
-    const userId = await getLatestUserId(db);
+    const userId = await currentUserId();
     if (!userId) return { rows: [], error: null as string | null };
-    return { rows: await getReviewQueue(db, userId), error: null as string | null };
+    const rows = await withTenant(getDb(), userId, (tx) => getReviewQueue(tx, userId));
+    return { rows, error: null as string | null };
   } catch (e) {
     return { rows: [], error: e instanceof Error ? e.message : String(e) };
   }

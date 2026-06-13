@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { loadEnv } from "@gm/config/env";
-import { getDb, getLatestUserId, loadReorderInputs } from "@gm/db";
+import { getDb, loadReorderInputs, withTenant } from "@gm/db";
 import { buildDraftOrders, type ReorderInputRow } from "@gm/core/reorder";
 import { instacart } from "@gm/core/integrations";
+import { currentUserId } from "@/app/lib/tenant";
 
 /**
  * Build the Instacart shopping-list page for the due items and redirect the user into Instacart
@@ -16,11 +17,12 @@ export async function POST() {
       { status: 400 },
     );
   }
-  const db = getDb();
-  const userId = await getLatestUserId(db);
+  const userId = await currentUserId();
   if (!userId) return NextResponse.json({ error: "no user" }, { status: 400 });
 
-  const rows = (await loadReorderInputs(db, userId)) as ReorderInputRow[];
+  const rows = (await withTenant(getDb(), userId, (tx) =>
+    loadReorderInputs(tx, userId),
+  )) as ReorderInputRow[];
   const draft = buildDraftOrders(rows, {});
   if (!draft.instacart.payload) {
     return NextResponse.json({ error: "nothing due for Instacart" }, { status: 400 });

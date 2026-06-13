@@ -1,6 +1,7 @@
-import { getDb, getLatestUserId, loadWrappedInputs } from "@gm/db";
+import { getDb, loadWrappedInputs, withTenant } from "@gm/db";
 import { buildWrapped, type WrappedStats } from "@gm/core/spend";
 import { ShareButton } from "./share-button.js";
+import { currentUserId } from "@/app/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -8,10 +9,9 @@ const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
 async function load() {
   try {
-    const db = getDb();
-    const userId = await getLatestUserId(db);
+    const userId = await currentUserId();
     if (!userId) return { ready: false as const, error: null as string | null };
-    const input = await loadWrappedInputs(db, userId);
+    const input = await withTenant(getDb(), userId, (tx) => loadWrappedInputs(tx, userId));
     return { ready: true as const, error: null as string | null, stats: buildWrapped(input) };
   } catch (e) {
     return { ready: false as const, error: e instanceof Error ? e.message : String(e) };

@@ -3,7 +3,7 @@
  * thin (no direct Drizzle import). Per-user; userId optional until Auth is wired.
  */
 import { and, desc, eq, gte } from "drizzle-orm";
-import type { DB } from "./client.js";
+import type { Querier } from "./client.js";
 import {
   canonicalItems,
   mealLogs,
@@ -32,7 +32,7 @@ type SignalSource =
 
 /** Append to the preference ledger (PLAN §8.7). */
 export async function appendPreferenceSignal(
-  db: DB,
+  db: Querier,
   a: { userId: string; topic: string; value?: string | null; polarity: SignalPolarity; source: SignalSource; confidence: number },
 ) {
   await db.insert(preferenceSignals).values({
@@ -46,7 +46,7 @@ export async function appendPreferenceSignal(
 }
 
 /** Load a user's preference signals (shape feeds projectUserModel). */
-export async function loadPreferenceSignals(db: DB, userId: string) {
+export async function loadPreferenceSignals(db: Querier, userId: string) {
   const rows = await db
     .select({
       topic: preferenceSignals.topic,
@@ -66,7 +66,7 @@ export async function loadPreferenceSignals(db: DB, userId: string) {
 
 /** Upsert the projected UserModel (cleanly-mappable fields). */
 export async function persistUserModel(
-  db: DB,
+  db: Querier,
   userId: string,
   m: {
     diets: string[];
@@ -91,7 +91,7 @@ export async function persistUserModel(
 
 // ---- Spend & price intelligence (PLAN §10) ----
 
-export async function loadPurchasesForSpend(db: DB, userId: string, sinceDays = 120) {
+export async function loadPurchasesForSpend(db: Querier, userId: string, sinceDays = 120) {
   const since = new Date(Date.now() - sinceDays * 86_400_000);
   const rows = await db
     .select({ purchasedAt: purchases.purchasedAt, totalCents: purchases.totalCents })
@@ -102,7 +102,7 @@ export async function loadPurchasesForSpend(db: DB, userId: string, sinceDays = 
     .map((r) => ({ purchasedAt: r.purchasedAt as Date, totalCents: r.totalCents }));
 }
 
-export async function loadLineItemsForSpend(db: DB, userId: string, sinceDays = 120) {
+export async function loadLineItemsForSpend(db: Querier, userId: string, sinceDays = 120) {
   const since = new Date(Date.now() - sinceDays * 86_400_000);
   const rows = await db
     .select({
@@ -132,7 +132,7 @@ export async function loadLineItemsForSpend(db: DB, userId: string, sinceDays = 
  * grocery spend, and the count of items let expire — all within the lookback window.
  * Aggregation lives in @gm/core/spend (buildWrapped) so it stays pure + testable.
  */
-export async function loadWrappedInputs(db: DB, userId: string, sinceDays = 30) {
+export async function loadWrappedInputs(db: Querier, userId: string, sinceDays = 30) {
   const since = new Date(Date.now() - sinceDays * 86_400_000);
   const [meals, purchaseRows, spoilage] = await Promise.all([
     db
@@ -166,7 +166,7 @@ export async function loadWrappedInputs(db: DB, userId: string, sinceDays = 30) 
   };
 }
 
-export async function getUserBudgetCents(db: DB, userId: string): Promise<number | null> {
+export async function getUserBudgetCents(db: Querier, userId: string): Promise<number | null> {
   const rows = await db
     .select({ weeklyBudgetCents: userModels.weeklyBudgetCents })
     .from(userModels)
@@ -186,7 +186,7 @@ export interface GoogleAuthUpsert {
 }
 
 /** Upsert the user (by email) + their encrypted Google OAuth credential. Returns userId. */
-export async function upsertGoogleAuth(db: DB, a: GoogleAuthUpsert): Promise<string> {
+export async function upsertGoogleAuth(db: Querier, a: GoogleAuthUpsert): Promise<string> {
   const u = await db
     .insert(users)
     .values({ email: a.email, name: a.name, image: a.image })
@@ -219,7 +219,7 @@ export async function upsertGoogleAuth(db: DB, a: GoogleAuthUpsert): Promise<str
 }
 
 /** A user's stored Google credential (encrypted) for the worker to use. */
-export async function getGoogleCredential(db: DB, userId: string) {
+export async function getGoogleCredential(db: Querier, userId: string) {
   const rows = await db
     .select({
       userId: oauthCredentials.userId,
@@ -235,7 +235,7 @@ export async function getGoogleCredential(db: DB, userId: string) {
 }
 
 /** All users who have connected Google (for the poll worker to iterate). */
-export async function listGoogleUserIds(db: DB): Promise<string[]> {
+export async function listGoogleUserIds(db: Querier): Promise<string[]> {
   const rows = await db
     .select({ userId: oauthCredentials.userId })
     .from(oauthCredentials)
@@ -244,7 +244,7 @@ export async function listGoogleUserIds(db: DB): Promise<string[]> {
 }
 
 export async function updateGoogleTokens(
-  db: DB,
+  db: Querier,
   userId: string,
   a: { accessTokenEnc: string; expiresAt: Date | null },
 ) {
@@ -254,7 +254,7 @@ export async function updateGoogleTokens(
     .where(and(eq(oauthCredentials.userId, userId), eq(oauthCredentials.provider, "google")));
 }
 
-export async function setGmailHistoryId(db: DB, userId: string, historyId: string) {
+export async function setGmailHistoryId(db: Querier, userId: string, historyId: string) {
   await db
     .update(oauthCredentials)
     .set({ historyId, updatedAt: new Date() })
@@ -262,12 +262,12 @@ export async function setGmailHistoryId(db: DB, userId: string, historyId: strin
 }
 
 /** Demo helper until Auth.js is wired: the most recently created user. */
-export async function getLatestUserId(db: DB): Promise<string | null> {
+export async function getLatestUserId(db: Querier): Promise<string | null> {
   const rows = await db.select({ id: users.id }).from(users).orderBy(desc(users.createdAt)).limit(1);
   return rows[0]?.id ?? null;
 }
 
-export async function getPantryView(db: DB, userId: string) {
+export async function getPantryView(db: Querier, userId: string) {
   return db
     .select({
       canonicalItemId: pantryStock.canonicalItemId,
@@ -285,7 +285,7 @@ export async function getPantryView(db: DB, userId: string) {
     .orderBy(desc(pantryStock.updatedAt));
 }
 
-export async function getReviewQueue(db: DB, userId: string) {
+export async function getReviewQueue(db: Querier, userId: string) {
   return db
     .select({
       id: purchaseLineItems.id,
@@ -307,7 +307,7 @@ export async function getReviewQueue(db: DB, userId: string) {
  * normalized to plain numbers so `buildDraftOrders` can consume it directly.
  * (asin/packageQty/unit are null until the products/Amazon vertical is wired.)
  */
-export async function loadReorderInputs(db: DB, userId: string) {
+export async function loadReorderInputs(db: Querier, userId: string) {
   const rows = await db
     .select({
       canonicalItemId: pantryStock.canonicalItemId,
@@ -359,7 +359,7 @@ export async function loadReorderInputs(db: DB, userId: string) {
  * the caller-computed defaults; on re-enable, preserve any tuned par and just flip the flags.
  */
 export async function setReorderAutopilot(
-  db: DB,
+  db: Querier,
   userId: string,
   canonicalItemId: string,
   enabled: boolean,

@@ -5,7 +5,7 @@
  */
 import { Worker, type Job } from "bullmq";
 import { loadEnv } from "@gm/config/env";
-import { getDb, listGoogleUserIds } from "@gm/db";
+import { getAdminDb, getDb, listGoogleUserIds, withTenant } from "@gm/db";
 import {
   QUEUES,
   connection,
@@ -29,16 +29,18 @@ const workers = [
   new Worker(
     QUEUES.gmailPoll,
     async () => {
-      const userIds = await listGoogleUserIds(db);
+      const userIds = await listGoogleUserIds(getAdminDb());
       for (const userId of userIds) {
         try {
-          const n = await pollGmailForUser(db, env, userId, async (messageId) => {
-            await receiptParseQueue.add(
-              "parse",
-              { userId, messageId },
-              { jobId: `rp-${userId}-${messageId}` },
-            );
-          });
+          const n = await withTenant(db, userId, (tx) =>
+            pollGmailForUser(tx, env, userId, async (messageId) => {
+              await receiptParseQueue.add(
+                "parse",
+                { userId, messageId },
+                { jobId: `rp-${userId}-${messageId}` },
+              );
+            }),
+          );
           console.log(`[gmail-poll] user ${userId}: enqueued ${n}`);
         } catch (e) {
           console.error(`[gmail-poll] user ${userId} failed`, e);
@@ -52,7 +54,7 @@ const workers = [
     QUEUES.receiptParse,
     async (job) => {
       const { userId, messageId } = job.data as { userId: string; messageId: string };
-      const res = await parseReceiptForUser(db, env, userId, messageId);
+      const res = await withTenant(db, userId, (tx) => parseReceiptForUser(tx, env, userId, messageId));
       console.log(`[receipt-parse] ${messageId}`, res);
     },
     { connection, concurrency: 4 },

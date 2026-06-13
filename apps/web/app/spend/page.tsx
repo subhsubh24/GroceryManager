@@ -1,11 +1,12 @@
 import {
   getDb,
-  getLatestUserId,
   getUserBudgetCents,
   loadLineItemsForSpend,
   loadPurchasesForSpend,
+  withTenant,
 } from "@gm/db";
 import { budgetVsActual, cheaperRetailer, spendByPeriod, topItemsBySpend } from "@gm/core/spend";
+import { currentUserId } from "@/app/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -14,14 +15,15 @@ const retailerLabel = (r: string) => r.replace(/_/g, " ");
 
 async function load() {
   try {
-    const db = getDb();
-    const userId = await getLatestUserId(db);
+    const userId = await currentUserId();
     if (!userId) return { ready: false as const, error: null as string | null };
-    const [purchases, lines, budgetCents] = await Promise.all([
-      loadPurchasesForSpend(db, userId),
-      loadLineItemsForSpend(db, userId),
-      getUserBudgetCents(db, userId),
-    ]);
+    const [purchases, lines, budgetCents] = await withTenant(getDb(), userId, (tx) =>
+      Promise.all([
+        loadPurchasesForSpend(tx, userId),
+        loadLineItemsForSpend(tx, userId),
+        getUserBudgetCents(tx, userId),
+      ]),
+    );
     const months = spendByPeriod(purchases, "month");
     const weeks = spendByPeriod(purchases, "week");
     return {

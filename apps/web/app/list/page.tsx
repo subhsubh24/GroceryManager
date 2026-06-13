@@ -1,15 +1,17 @@
 import { loadEnv } from "@gm/config/env";
-import { getDb, getLatestUserId, loadReorderInputs } from "@gm/db";
+import { getDb, loadReorderInputs, withTenant } from "@gm/db";
 import { buildDraftOrders, type ReorderInputRow } from "@gm/core/reorder";
+import { currentUserId } from "@/app/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 async function loadDraft() {
   try {
-    const db = getDb();
-    const userId = await getLatestUserId(db);
+    const userId = await currentUserId();
     if (!userId) return { draft: null, error: null as string | null };
-    const rows = (await loadReorderInputs(db, userId)) as ReorderInputRow[];
+    const rows = (await withTenant(getDb(), userId, (tx) =>
+      loadReorderInputs(tx, userId),
+    )) as ReorderInputRow[];
     const draft = buildDraftOrders(rows, { associateTag: loadEnv().AMAZON_ASSOCIATE_TAG });
     return { draft, error: null as string | null };
   } catch (e) {

@@ -7,7 +7,7 @@ import {
   getGoogleCredential,
   setGmailHistoryId,
   updateGoogleTokens,
-  type DB,
+  type Querier,
 } from "@gm/db";
 import { decryptSecret, encryptSecret } from "@gm/core/crypto";
 import { gmail, google } from "@gm/core/integrations";
@@ -19,7 +19,7 @@ import {
 } from "@gm/core/ingestion";
 import { getGeminiClient } from "@gm/core/llm";
 
-async function getValidAccessToken(db: DB, env: Env, userId: string): Promise<string> {
+async function getValidAccessToken(db: Querier, env: Env, userId: string): Promise<string> {
   const cred = await getGoogleCredential(db, userId);
   if (!cred) throw new Error(`no google credential for user ${userId}`);
   const key = env.TOKEN_ENC_KEY;
@@ -42,7 +42,7 @@ async function getValidAccessToken(db: DB, env: Env, userId: string): Promise<st
 
 /** Discover new receipt messages for a user and hand each off to receipt-parse. */
 export async function pollGmailForUser(
-  db: DB,
+  db: Querier,
   env: Env,
   userId: string,
   enqueue: (messageId: string) => Promise<void>,
@@ -71,7 +71,7 @@ const SOURCE_BY_RETAILER = {
 } as const;
 
 /** Fetch one message, classify, and (if a receipt) run the extract→normalize→pantry chain. */
-export async function parseReceiptForUser(db: DB, env: Env, userId: string, messageId: string) {
+export async function parseReceiptForUser(db: Querier, env: Env, userId: string, messageId: string) {
   const token = await getValidAccessToken(db, env, userId);
   const client = new gmail.GmailClient(token);
   const msg = await client.getMessage(messageId);

@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
-import { getDb, getLatestUserId, loadReorderInputs, setReorderAutopilot } from "@gm/db";
+import { getDb, loadReorderInputs, setReorderAutopilot, withTenant } from "@gm/db";
 import { defaultReorderPolicy, predictReorder } from "@gm/core/reorder";
+import { currentUserId } from "@/app/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -11,8 +12,7 @@ async function toggleAutopilot(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
   const enabled = formData.get("enabled") === "true";
-  const db = getDb();
-  const userId = await getLatestUserId(db);
+  const userId = await currentUserId();
   if (!userId) return;
 
   let seed: ReturnType<typeof defaultReorderPolicy> | undefined;
@@ -22,16 +22,15 @@ async function toggleAutopilot(formData: FormData) {
     const rate = rateRaw == null || rateRaw === "" ? null : Number(rateRaw);
     seed = defaultReorderPolicy({ baseQtyOnHand: onHand, ratePerDay: rate });
   }
-  await setReorderAutopilot(db, userId, id, enabled, seed);
+  await withTenant(getDb(), userId, (tx) => setReorderAutopilot(tx, userId, id, enabled, seed));
   revalidatePath("/staples");
 }
 
 async function load() {
   try {
-    const db = getDb();
-    const userId = await getLatestUserId(db);
+    const userId = await currentUserId();
     if (!userId) return { ready: false as const, error: null as string | null };
-    const rows = await loadReorderInputs(db, userId);
+    const rows = await withTenant(getDb(), userId, (tx) => loadReorderInputs(tx, userId));
     const now = new Date();
     const items = rows
       .filter((r) => r.ratePerDay != null || r.enabled) // consumables, or already managed

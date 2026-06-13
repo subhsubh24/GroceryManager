@@ -1,4 +1,5 @@
-import { getDb, getLatestUserId, getPantryView } from "@gm/db";
+import { getDb, getPantryView, withTenant } from "@gm/db";
+import { currentUserId } from "@/app/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -11,10 +12,10 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 
 async function loadPantry() {
   try {
-    const db = getDb();
-    const userId = await getLatestUserId(db);
+    const userId = await currentUserId();
     if (!userId) return { rows: [], error: null as string | null };
-    return { rows: await getPantryView(db, userId), error: null as string | null };
+    const rows = await withTenant(getDb(), userId, (tx) => getPantryView(tx, userId));
+    return { rows, error: null as string | null };
   } catch (e) {
     return { rows: [], error: e instanceof Error ? e.message : String(e) };
   }
