@@ -1,0 +1,153 @@
+/**
+ * "Cook what I have" matching + ranking (PLAN §7.2). Pure + testable.
+ *
+ * Split: build a pantry index → annotate a recipe's ingredients (in-pantry? expiring?) →
+ * rank by coverage, sufficiency-ish, missing count, expiring-soon boost, and (on low-energy
+ * days) effort/cleanup fit (§7.4). The provider adapter feeds raw recipes in.
+ */
+
+const STOPWORDS = new Set([
+  "fresh", "chopped", "minced", "diced", "sliced", "large", "small", "medium", "organic",
+  "ground", "grated", "to", "taste", "of", "a", "an", "the", "and", "or", "with",
+  "cup", "cups", "tbsp", "tsp", "tablespoon", "tablespoons", "teaspoon", "teaspoons",
+  "oz", "ounce", "ounces", "gram", "grams", "kg", "ml", "lb", "lbs", "pound", "pounds",
+  "clove", "can", "cans", "package", "pkg", "boneless", "skinless", "extra", "virgin",
+  "ripe", "frozen", "dried", "raw", "cooked", "optional", "pinch", "dash", "for", "into",
+]);
+
+export function normalizeIngredientName(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function singular(t: string): string {
+  return t.length > 3 && t.endsWith("s") && !t.endsWith("ss") ? t.slice(0, -1) : t;
+}
+
+function tokens(s: string): string[] {
+  return normalizeIngredientName(s)
+    .split(" ")
+    .map(singular)
+    .filter((t) => t.length > 1 && !STOPWORDS.has(t) && !/^\d+$/.test(t));
+}
+
+export interface PantryEntry {
+  name: string;
+  aliases?: string[];
+  inStock?: boolean;
+  expiringSoon?: boolean;
+}
+
+export interface PantryIndex {
+  has(ingredient: string): boolean;
+  expiring(ingredient: string): boolean;
+}
+
+/** Build a matcher from in-stock pantry items (names + aliases). */
+export function buildPantryIndex(items: PantryEntry[]): PantryIndex {
+  const entries = items
+    .filter((i) => i.inStock !== false)
+    .map((i) => ({
+      expiring: Boolean(i.expiringSoon),
+      candidateTokenSets: [i.name, ...(i.aliases ?? [])]
+        .map(tokens)
+        .filter((ts) => ts.length > 0),
+    }));
+
+  function match(ingredient: string): (typeof entries)[number] | null {
+    const it = new Set(tokens(ingredient));
+    if (it.size === 0) return null;
+    for (const e of entries) {
+      for (const cand of e.candidateTokenSets) {
+        if (cand.every((t) => it.has(t))) return e; // pantry name/alias ⊆ ingredient tokens
+      }
+    }
+    return null;
+  }
+
+  return {
+    has: (ing) => match(ing) !== null,
+    expiring: (ing) => match(ing)?.expiring ?? false,
+  };
+}
+
+export interface RawRecipe {
+  id: string;
+  title: string;
+  ingredients: { name: string; isOptional?: boolean }[];
+  readyMinutes?: number | null;
+  effortScore?: number | null; // 0..1, lower = easier
+}
+
+export interface MatchRecipe extends RawRecipe {
+  ingredients: (RawRecipe["ingredients"][number] & { inPantry: boolean; expiringSoon: boolean })[];
+}
+
+export function annotateRecipe(recipe: RawRecipe, idx: PantryIndex): MatchRecipe {
+  return {
+    ...recipe,
+    ingredients: recipe.ingredients.map((g) => ({
+      ...g,
+      inPantry: idx.has(g.name),
+      expiringSoon: idx.expiring(g.name),
+    })),
+  };
+}
+
+export interface RankedRecipe {
+  id: string;
+  title: string;
+  coverage: number;
+  haveCount: number;
+  totalCore: number;
+  missing: string[];
+  usesExpiring: number;
+  score: number;
+}
+
+interface Weights {
+  coverage: number;
+  missing: number;
+  expiring: number;
+  effort: number;
+}
+const DEFAULT_WEIGHTS: Weights = { coverage: 1, missing: 0.15, expiring: 0.3, effort: 0.4 };
+
+export interface RankOpts {
+  /** Busy/low-energy: up-weight low-effort recipes (§7.4). */
+  lowEnergy?: boolean;
+  weights?: Partial<Weights>;
+  limit?: number;
+}
+
+export function rankRecipes(recipes: MatchRecipe[], opts: RankOpts = {}): RankedRecipe[] {
+  const w: Weights = { ...DEFAULT_WEIGHTS, ...opts.weights };
+  const ranked = recipes
+    .map((r) => {
+      const core = r.ingredients.filter((i) => !i.isOptional);
+      const have = core.filter((i) => i.inPantry);
+      const coverage = core.length ? have.length / core.length : 0;
+      const missing = core.filter((i) => !i.inPantry).map((i) => i.name);
+      const usesExpiring = r.ingredients.filter((i) => i.inPantry && i.expiringSoon).length;
+      const effortFit = r.effortScore != null ? 1 - r.effortScore : 0.5;
+      let score =
+        w.coverage * coverage + w.expiring * Math.min(1, usesExpiring * 0.5) - w.missing * missing.length;
+      if (opts.lowEnergy) score += w.effort * effortFit;
+      return {
+        id: r.id,
+        title: r.title,
+        coverage,
+        haveCount: have.length,
+        totalCore: core.length,
+        missing,
+        usesExpiring,
+        score,
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+  return opts.limit ? ranked.slice(0, opts.limit) : ranked;
+}

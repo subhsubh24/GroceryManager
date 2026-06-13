@@ -1,5 +1,6 @@
 type Section = {
   key: string;
+  href: string;
   title: string;
   blurb: string;
   emoji: string;
@@ -8,24 +9,28 @@ type Section = {
 const SECTIONS: Section[] = [
   {
     key: "pantry",
+    href: "/pantry",
     title: "Pantry",
     blurb: "Fills itself from your receipts. Knows what you have and what's about to expire.",
     emoji: "🧺",
   },
   {
     key: "recipes",
+    href: "/recipes",
     title: "Cook tonight",
     blurb: "Meals you can make right now — tuned to your taste, diet, and how much energy you have.",
     emoji: "🍳",
   },
   {
     key: "list",
+    href: "/list",
     title: "Shopping list",
     blurb: "Smart reorders before you run out. One tap to checkout on Instacart.",
     emoji: "🛒",
   },
   {
     key: "household",
+    href: "/list",
     title: "Household & care",
     blurb: "Cleaning, skincare & toiletries on autopilot — reordered from Amazon when you're low.",
     emoji: "🧴",
@@ -61,7 +66,7 @@ export default function HomePage() {
         {SECTIONS.map((s) => (
           <a
             key={s.key}
-            href={`/${s.key}`}
+            href={s.href}
             className="group rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition hover:border-brand-200 hover:shadow-md"
           >
             <div className="text-2xl">{s.emoji}</div>

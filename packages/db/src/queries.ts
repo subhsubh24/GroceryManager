@@ -24,6 +24,7 @@ export async function getPantryView(db: DB, userId: string) {
     .select({
       canonicalItemId: pantryStock.canonicalItemId,
       name: canonicalItems.name,
+      aliases: canonicalItems.aliases,
       domain: canonicalItems.domain,
       status: pantryStock.status,
       baseQtyOnHand: pantryStock.baseQtyOnHand,
