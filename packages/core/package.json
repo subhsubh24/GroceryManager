@@ -19,6 +19,7 @@
     "@gm/shared": "workspace:*",
     "@google/genai": "^1.9.0",
     "cheerio": "^1.0.0",
+    "drizzle-orm": "^0.36.0",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.3"
   },
