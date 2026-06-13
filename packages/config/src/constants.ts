@@ -43,3 +43,17 @@ export const REORDER = {
 
 /** Replenishment "running low" nudge fires at this fraction of the observed interval (§7.5). */
 export const REPLENISH_NUDGE_FRACTION = 0.8;
+
+/** Normalization cascade thresholds + fixed confidences (PLAN §5.4). */
+export const NORMALIZE = {
+  trigramThreshold: 0.55, // pg_trgm similarity (0..1)
+  embeddingCosineThreshold: 0.82, // cosine similarity (0..1)
+  llmAcceptThreshold: 0.7,
+  candidateLimit: 5,
+} as const;
+
+/** Fixed match confidences for the deterministic cascade stages. */
+export const MATCH_CONFIDENCE = {
+  override: 1.0,
+  upc: 0.98,
+} as const;

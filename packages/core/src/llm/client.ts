@@ -32,10 +32,10 @@ export interface GenerateOptions {
 /** A cheap, separate verification step — "the call that wrote it doesn't grade it." */
 export type Verifier<T> = (value: T) => { ok: true } | { ok: false; reason: string };
 
-export interface VerifyOptions<T> extends GenerateOptions {
-  schema: z.ZodType<T>;
+export interface VerifyOptions<S extends z.ZodTypeAny> extends GenerateOptions {
+  schema: S;
   prompt: string;
-  verify?: Verifier<T>;
+  verify?: Verifier<z.infer<S>>;
   /** Max total attempts across escalation (the circuit breaker). */
   maxAttempts?: number;
 }
@@ -63,11 +63,11 @@ export class GeminiClient {
   }
 
   /** One schema-constrained generation at `tier`; result is parsed + validated with Zod. */
-  async generateStructured<T>(
-    schema: z.ZodType<T>,
+  async generateStructured<S extends z.ZodTypeAny>(
+    schema: S,
     prompt: string,
     opts: GenerateOptions = {},
-  ): Promise<T> {
+  ): Promise<z.infer<S>> {
     const tier = opts.tier ?? "cheap";
     const model = resolveModel(tier, this.env.LLM_USE_FLASH_LITE);
     const budget = opts.thinkingBudget ?? thinkingBudgetFor(tier);
@@ -98,7 +98,7 @@ export class GeminiClient {
     } catch {
       throw new Error(`Gemini returned non-JSON at tier=${tier}: ${text.slice(0, 200)}`);
     }
-    return schema.parse(json); // re-validate — structured output is syntactic, not semantic
+    return schema.parse(json) as z.infer<S>; // re-validate — structured output is syntactic, not semantic
   }
 
   /**
@@ -106,7 +106,9 @@ export class GeminiClient {
    * verifier, and on failure retry with more context / escalate a tier until a budget trips.
    * Tripping the budget is the circuit breaker — callers route the result to the Review inbox.
    */
-  async generateWithVerify<T>(opts: VerifyOptions<T>): Promise<VerifyResult<T>> {
+  async generateWithVerify<S extends z.ZodTypeAny>(
+    opts: VerifyOptions<S>,
+  ): Promise<VerifyResult<z.infer<S>>> {
     const maxAttempts = opts.maxAttempts ?? 3;
     let tier: GeminiTier = opts.tier ?? "cheap";
     let attempts = 0;
