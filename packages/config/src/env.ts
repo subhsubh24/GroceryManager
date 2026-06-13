@@ -11,7 +11,8 @@ const EnvSchema = z.object({
 
   // Core infra
   DATABASE_URL: z.string().url(),
-  REDIS_URL: z.string().url(),
+  // Optional app-wide: only the worker service requires it (it guards at startup).
+  REDIS_URL: z.string().url().optional(),
 
   // LLM — Gemini via @google/genai. Dev uses GEMINI_API_KEY; prod prefers Vertex AI.
   GEMINI_API_KEY: z.string().optional(),

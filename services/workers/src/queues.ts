@@ -3,7 +3,9 @@ import IORedis from "ioredis";
 import { loadEnv } from "@gm/config/env";
 
 /** Shared Redis connection for all BullMQ queues/workers (PLAN §2.1 ingestion backbone). */
-export const connection = new IORedis(loadEnv().REDIS_URL, {
+const env = loadEnv();
+if (!env.REDIS_URL) throw new Error("REDIS_URL is required to run the worker service");
+export const connection = new IORedis(env.REDIS_URL, {
   maxRetriesPerRequest: null,
 });
 
