@@ -1,0 +1,28 @@
+{
+  "name": "@gm/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./units": "./src/units/index.ts",
+    "./llm": "./src/llm/index.ts"
+  },
+  "scripts": {
+    "lint": "echo \"(lint) @gm/core\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@gm/config": "workspace:*",
+    "@gm/db": "workspace:*",
+    "@gm/shared": "workspace:*",
+    "@google/genai": "^1.9.0",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.2"
+  }
+}

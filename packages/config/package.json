@@ -1,0 +1,21 @@
+{
+  "name": "@gm/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./env": "./src/env.ts",
+    "./constants": "./src/constants.ts"
+  },
+  "scripts": {
+    "lint": "echo \"(lint) @gm/config\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2"
+  }
+}
