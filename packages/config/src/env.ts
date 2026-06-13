@@ -32,6 +32,8 @@ const EnvSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   AUTH_SECRET: z.string().optional(),
   KMS_KEY_ID: z.string().optional(),
+  // 32-byte base64 data key for encrypting OAuth tokens at rest (envelope-wrap via KMS in prod).
+  TOKEN_ENC_KEY: z.string().optional(),
 
   // Integrations
   INSTACART_API_KEY: z.string().optional(),

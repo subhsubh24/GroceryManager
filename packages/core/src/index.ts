@@ -5,3 +5,4 @@ export * as ingestion from "./ingestion/index.js";
 export * as reorder from "./reorder/index.js";
 export * as integrations from "./integrations/index.js";
 export * as recipe from "./recipe/index.js";
+export * as crypto from "./crypto/index.js";
