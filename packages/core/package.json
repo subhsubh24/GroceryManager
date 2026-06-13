@@ -13,7 +13,8 @@
     "./crypto": "./src/crypto/index.ts",
     "./ingestion": "./src/ingestion/index.ts",
     "./pantry": "./src/pantry/index.ts",
-    "./personalization": "./src/personalization/index.ts"
+    "./personalization": "./src/personalization/index.ts",
+    "./spend": "./src/spend/index.ts"
   },
   "scripts": {
     "lint": "echo \"(lint) @gm/core\"",

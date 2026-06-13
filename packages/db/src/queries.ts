@@ -2,7 +2,7 @@
  * Read-model query helpers for the UI (PLAN §5/§7). Kept in @gm/db so the web app stays
  * thin (no direct Drizzle import). Per-user; userId optional until Auth is wired.
  */
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte } from "drizzle-orm";
 import type { DB } from "./client.js";
 import {
   canonicalItems,
@@ -84,6 +84,53 @@ export async function persistUserModel(
     .insert(userModels)
     .values({ userId, ...values })
     .onConflictDoUpdate({ target: userModels.userId, set: { ...values, updatedAt: new Date() } });
+}
+
+// ---- Spend & price intelligence (PLAN §10) ----
+
+export async function loadPurchasesForSpend(db: DB, userId: string, sinceDays = 120) {
+  const since = new Date(Date.now() - sinceDays * 86_400_000);
+  const rows = await db
+    .select({ purchasedAt: purchases.purchasedAt, totalCents: purchases.totalCents })
+    .from(purchases)
+    .where(and(eq(purchases.userId, userId), gte(purchases.purchasedAt, since)));
+  return rows
+    .filter((r) => r.purchasedAt != null)
+    .map((r) => ({ purchasedAt: r.purchasedAt as Date, totalCents: r.totalCents }));
+}
+
+export async function loadLineItemsForSpend(db: DB, userId: string, sinceDays = 120) {
+  const since = new Date(Date.now() - sinceDays * 86_400_000);
+  const rows = await db
+    .select({
+      canonicalItemId: purchaseLineItems.canonicalItemId,
+      name: canonicalItems.name,
+      retailer: purchases.retailer,
+      purchasedAt: purchases.purchasedAt,
+      unitPriceCents: purchaseLineItems.unitPriceCents,
+      lineTotalCents: purchaseLineItems.lineTotalCents,
+    })
+    .from(purchaseLineItems)
+    .innerJoin(purchases, eq(purchaseLineItems.purchaseId, purchases.id))
+    .innerJoin(canonicalItems, eq(purchaseLineItems.canonicalItemId, canonicalItems.id))
+    .where(and(eq(purchases.userId, userId), gte(purchases.purchasedAt, since)));
+  return rows.map((r) => ({
+    canonicalItemId: r.canonicalItemId as string,
+    name: r.name,
+    retailer: r.retailer as string,
+    purchasedAt: r.purchasedAt as Date,
+    unitPriceCents: r.unitPriceCents,
+    lineTotalCents: r.lineTotalCents,
+  }));
+}
+
+export async function getUserBudgetCents(db: DB, userId: string): Promise<number | null> {
+  const rows = await db
+    .select({ weeklyBudgetCents: userModels.weeklyBudgetCents })
+    .from(userModels)
+    .where(eq(userModels.userId, userId))
+    .limit(1);
+  return rows[0]?.weeklyBudgetCents ?? null;
 }
 
 export interface GoogleAuthUpsert {

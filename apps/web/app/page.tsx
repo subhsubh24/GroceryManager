@@ -35,6 +35,13 @@ const SECTIONS: Section[] = [
     blurb: "Cleaning, skincare & toiletries on autopilot — reordered from Amazon when you're low.",
     emoji: "🧴",
   },
+  {
+    key: "spend",
+    href: "/spend",
+    title: "Spending",
+    blurb: "What you spend, where it goes, and where the same item is cheaper.",
+    emoji: "💸",
+  },
 ];
 
 export default function HomePage() {
