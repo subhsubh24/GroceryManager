@@ -10,7 +10,8 @@ export interface ProviderRecipe {
   sourceUrl?: string;
   instructions?: string;
   cuisine?: string;
-  ingredients: { name: string }[];
+  /** `measure` is the human amount ("200g", "1 1/2 cups") when the source provides one. */
+  ingredients: { name: string; measure?: string }[];
 }
 
 export interface RecipeProvider {
@@ -20,13 +21,16 @@ export interface RecipeProvider {
   getById(id: string): Promise<ProviderRecipe | null>;
 }
 
-/** Pure: map a TheMealDB "meal" object → our ProviderRecipe (strIngredient1..20). */
+/** Pure: map a TheMealDB "meal" object → our ProviderRecipe (strIngredient/strMeasure 1..20). */
 export function mapMealDbMeal(meal: Record<string, unknown>): ProviderRecipe {
-  const ingredients: { name: string }[] = [];
+  const ingredients: { name: string; measure?: string }[] = [];
   for (let i = 1; i <= 20; i++) {
     const raw = meal[`strIngredient${i}`];
     const name = typeof raw === "string" ? raw.trim() : "";
-    if (name) ingredients.push({ name });
+    if (!name) continue;
+    const rawMeasure = meal[`strMeasure${i}`];
+    const measure = typeof rawMeasure === "string" ? rawMeasure.trim() : "";
+    ingredients.push(measure ? { name, measure } : { name });
   }
   return {
     id: String(meal.idMeal ?? ""),

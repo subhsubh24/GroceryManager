@@ -170,6 +170,9 @@ export default async function UseItUpPage() {
                       {r.missing.length > 0 && (
                         <div className="mt-1 text-xs text-ink/40">missing: {r.missing.join(", ")}</div>
                       )}
+                      <a href={`/cook/${r.id}`} className="mt-2 inline-block text-xs font-medium text-brand-600">
+                        Cook mode →
+                      </a>
                     </div>
                   </li>
                 ))}
