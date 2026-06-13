@@ -8,6 +8,7 @@ export interface ProviderRecipe {
   title: string;
   imageUrl?: string;
   sourceUrl?: string;
+  instructions?: string;
   ingredients: { name: string }[];
 }
 
@@ -31,6 +32,7 @@ export function mapMealDbMeal(meal: Record<string, unknown>): ProviderRecipe {
     title: String(meal.strMeal ?? ""),
     imageUrl: typeof meal.strMealThumb === "string" ? meal.strMealThumb : undefined,
     sourceUrl: typeof meal.strSource === "string" ? meal.strSource : undefined,
+    instructions: typeof meal.strInstructions === "string" ? meal.strInstructions : undefined,
     ingredients,
   };
 }
