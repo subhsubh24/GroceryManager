@@ -15,6 +15,13 @@ const SECTIONS: Section[] = [
     emoji: "🧺",
   },
   {
+    key: "scan",
+    href: "/scan",
+    title: "Scan my fridge",
+    blurb: "Snap a shelf — it reconciles what's actually there against what it thinks you have.",
+    emoji: "📸",
+  },
+  {
     key: "recipes",
     href: "/recipes",
     title: "Cook tonight",
