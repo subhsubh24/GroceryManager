@@ -105,3 +105,41 @@ export function buildDraftOrders(
     amazon: { items: grouped.amazon, addToCartUrl, subscribeSave },
   };
 }
+
+const normName = (s: string) => s.toLowerCase().trim().replace(/\s+/g, " ");
+
+/**
+ * One-cart staple top-up (PLAN §10): merge due reorder items with the active shopping list
+ * (manual quick-adds + plan gaps) into a single, de-duplicated Instacart order. Due staples win on
+ * quantity; list-only items come along for the ride — so "order" means one cart, not two.
+ */
+export function mergeInstacartItems(
+  due: { name: string; recommendQty?: number | null; unit?: string | null }[],
+  listItems: { name: string }[],
+): { name: string; quantity?: number; unit?: string }[] {
+  const seen = new Set<string>();
+  const out: { name: string; quantity?: number; unit?: string }[] = [];
+  for (const d of due) {
+    const k = normName(d.name);
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    out.push({ name: d.name, quantity: d.recommendQty ?? undefined, unit: d.unit ?? undefined });
+  }
+  for (const li of listItems) {
+    const k = normName(li.name);
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    out.push({ name: li.name });
+  }
+  return out;
+}
+
+/** Build one Instacart payload from due staples + the active list; null when there's nothing. */
+export function buildCombinedInstacartPayload(
+  due: DueItem[],
+  listItems: { name: string }[],
+  title = "Your GroceryManager list",
+): ShoppingListPayload | null {
+  const merged = mergeInstacartItems(due, listItems);
+  return merged.length ? buildShoppingListPayload(title, merged) : null;
+}

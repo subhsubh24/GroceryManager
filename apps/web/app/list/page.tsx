@@ -1,5 +1,5 @@
 import { loadEnv } from "@gm/config/env";
-import { getDb, loadReorderInputs, withTenant } from "@gm/db";
+import { getActiveListView, getDb, loadReorderInputs, withTenant } from "@gm/db";
 import { buildDraftOrders, type ReorderInputRow } from "@gm/core/reorder";
 import { currentUserId } from "@/app/lib/tenant";
 
@@ -8,21 +8,26 @@ export const dynamic = "force-dynamic";
 async function loadDraft() {
   try {
     const userId = await currentUserId();
-    if (!userId) return { draft: null, error: null as string | null };
-    const rows = (await withTenant(getDb(), userId, (tx) =>
-      loadReorderInputs(tx, userId),
-    )) as ReorderInputRow[];
+    if (!userId) return { draft: null, listItems: [], error: null as string | null };
+    const { rows, list } = await withTenant(getDb(), userId, async (tx) => ({
+      rows: (await loadReorderInputs(tx, userId)) as ReorderInputRow[],
+      list: await getActiveListView(tx, userId),
+    }));
     const draft = buildDraftOrders(rows, { associateTag: loadEnv().AMAZON_ASSOCIATE_TAG });
-    return { draft, error: null as string | null };
+    const listItems = list.filter((i) => !i.checked);
+    return { draft, listItems, error: null as string | null };
   } catch (e) {
-    return { draft: null, error: e instanceof Error ? e.message : String(e) };
+    return { draft: null, listItems: [], error: e instanceof Error ? e.message : String(e) };
   }
 }
 
 export default async function ListPage() {
-  const { draft, error } = await loadDraft();
+  const { draft, listItems, error } = await loadDraft();
   const nothingDue =
-    draft && draft.instacart.items.length === 0 && draft.amazon.items.length === 0;
+    draft &&
+    draft.instacart.items.length === 0 &&
+    draft.amazon.items.length === 0 &&
+    listItems.length === 0;
 
   return (
     <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
@@ -48,18 +53,31 @@ export default async function ListPage() {
         <p className="rounded-xl bg-white p-5 text-sm text-ink/60 shadow-sm">Nothing due right now. ✅</p>
       )}
 
-      {draft && draft.instacart.items.length > 0 && (
+      {draft && (draft.instacart.items.length > 0 || listItems.length > 0) && (
         <section className="mb-6 rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
           <h2 className="font-semibold text-ink">Groceries · Instacart</h2>
-          <ul className="mt-3 space-y-1 text-sm text-ink/70">
-            {draft.instacart.items.map((i) => (
-              <li key={i.canonicalItemId}>
-                {i.name}
-                {i.recommendQty ? ` · ${Math.round(i.recommendQty)} ${i.unit ?? ""}` : ""}
-              </li>
-            ))}
-          </ul>
-          <form action="/api/instacart" method="post" className="mt-4">
+          {draft.instacart.items.length > 0 && (
+            <ul className="mt-3 space-y-1 text-sm text-ink/70">
+              {draft.instacart.items.map((i) => (
+                <li key={i.canonicalItemId}>
+                  {i.name}
+                  {i.recommendQty ? ` · ${Math.round(i.recommendQty)} ${i.unit ?? ""}` : ""}
+                </li>
+              ))}
+            </ul>
+          )}
+          {listItems.length > 0 && (
+            <div className="mt-3">
+              <div className="text-xs font-medium uppercase tracking-wide text-ink/40">From your list</div>
+              <ul className="mt-1 space-y-1 text-sm text-ink/70">
+                {listItems.map((i) => (
+                  <li key={i.id}>{i.name}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <p className="mt-3 text-xs text-ink/50">Staples due + your list — one cart.</p>
+          <form action="/api/instacart" method="post" className="mt-3">
             <button
               type="submit"
               className="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98]"
