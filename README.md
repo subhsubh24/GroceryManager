@@ -22,7 +22,7 @@
 ## Monorepo layout
 ```
 apps/web            # Next.js 15 PWA (UI + BFF)
-packages/core       # engines: ingestion · pantry · reorder · recipe · agent · units · llm · personalization
+packages/core       # engines: ingestion · pantry · reorder · recipe · agent · vision · units · llm · personalization
 packages/db         # Drizzle schema + migrations + seed
 packages/shared     # shared Zod schemas + types
 packages/config     # env + constants
@@ -40,4 +40,23 @@ pnpm dev
 ```
 
 ## Status
-Phase 0 (scaffold) in progress — see the phased roadmap in `docs/PLAN.md` §10.
+A working vertical slice runs end-to-end: pages are server-rendered against Postgres with
+**row-level-security** enforcement, and the Gemini-backed features below were verified against the
+real model. **183 core unit tests + full workspace typecheck + `next build` green.**
+
+**Built & tested**
+- **Pantry & depletion** — ledger-projected stock, confidence decay, expiring-soon.
+- **Reorder** — run-out prediction, staples autopilot, **par auto-tuning** (buy less of what you waste), draft orders.
+- **Recipes** — "cook what I have" match/rank, effort + **batch-cook** awareness, **diet/guest** filtering, Cook Mode (timers / wake-lock / scaling) + **substitutions**.
+- **Plan-my-week agent** — generator/evaluator over curated candidates (Flash → Pro), deterministic fallback floor.
+- **Vision pantry scan** — Gemini-vision detect → reconcile (presence strong, **absence ≠ depletion**).
+- **Ingestion** — receipt → extraction → normalization cascade incl. the **LLM tiebreak**; idempotent.
+- **Personalization** — onboarding interview + always-learning preference ledger → UserModel.
+- **Spend / Grocery Wrapped / Waste hub / weekly Digest** — analytics + the Sunday briefing.
+- **One-cart ordering** — due staples + your active list merged into a single Instacart push.
+
+**Wired but needs real infra/keys to exercise** — live Gmail watch/poll (OAuth + Pub/Sub),
+Instacart/Amazon ordering keys, web-push delivery, recipe import (URL/photo), and the §5.4
+embedding stage (needs a catalog-embedding backfill).
+
+See the phased roadmap in `docs/PLAN.md` §10.

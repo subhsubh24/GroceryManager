@@ -141,7 +141,7 @@ export default function HomePage() {
       </div>
 
       <p className="mt-10 text-center text-xs text-ink/40">
-        Phase 0 scaffold · see <code>docs/PLAN.md</code> for the full roadmap
+        Your grocery + cooking autopilot · see <code>docs/PLAN.md</code> for the roadmap
       </p>
     </main>
   );
