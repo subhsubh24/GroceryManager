@@ -177,6 +177,17 @@ export async function getUserBudgetCents(db: Querier, userId: string): Promise<n
   return rows[0]?.weeklyBudgetCents ?? null;
 }
 
+/** Upsert just the weekly budget on the materialized UserModel (PLAN §8.7 onboarding). */
+export async function setWeeklyBudgetCents(db: Querier, userId: string, cents: number) {
+  await db
+    .insert(userModels)
+    .values({ userId, weeklyBudgetCents: cents })
+    .onConflictDoUpdate({
+      target: userModels.userId,
+      set: { weeklyBudgetCents: cents, updatedAt: new Date() },
+    });
+}
+
 export interface GoogleAuthUpsert {
   email: string;
   name: string | null;

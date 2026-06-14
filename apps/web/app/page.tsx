@@ -43,6 +43,13 @@ const SECTIONS: Section[] = [
     emoji: "✍️",
   },
   {
+    key: "onboarding",
+    href: "/onboarding",
+    title: "Tell me your taste",
+    blurb: "Diets, loves, hates — in a minute. Every plan and recipe gets tuned to you.",
+    emoji: "👋",
+  },
+  {
     key: "household",
     href: "/list",
     title: "Household & care",
