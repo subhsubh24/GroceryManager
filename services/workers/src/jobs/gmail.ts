@@ -14,6 +14,7 @@ import { gmail, google } from "@gm/core/integrations";
 import {
   cleanReceiptText,
   createDbNormalizationPorts,
+  createLlmNormalizer,
   extractReceipt,
   ingestReceipt,
 } from "@gm/core/ingestion";
@@ -85,7 +86,9 @@ export async function parseReceiptForUser(db: Querier, env: Env, userId: string,
   if (!html) return { skipped: true as const };
 
   const geminiClient = getGeminiClient();
-  const ports = createDbNormalizationPorts(db, userId);
+  // Light up the §5.4 cascade's LLM tiebreak/create stage (was deferring everything below the
+  // trigram/embedding thresholds straight to the Review inbox).
+  const ports = createDbNormalizationPorts(db, userId, { llm: createLlmNormalizer(geminiClient) });
   const result = await ingestReceipt(
     {
       db,
