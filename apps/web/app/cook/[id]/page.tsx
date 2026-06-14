@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import { getDb, withTenant } from "@gm/db";
-import { splitSteps, TheMealDBProvider } from "@gm/core/recipe";
+import { findSubstitutions, splitSteps, TheMealDBProvider } from "@gm/core/recipe";
 import { logCook } from "@gm/core/recipe/log-cook";
+import { getSubstitutions } from "@gm/core/recipe/substitute-llm";
 import { currentUserId } from "@/app/lib/tenant";
 import { CookMode } from "./cook-mode.js";
+import { SwapFinder, type SwapState } from "./swap-finder.js";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,14 @@ async function load(id: string) {
   } catch (e) {
     return { recipe: null, error: e instanceof Error ? e.message : String(e) };
   }
+}
+
+async function askSwap(_prev: SwapState, formData: FormData): Promise<SwapState> {
+  "use server";
+  const q = String(formData.get("q") ?? "").trim();
+  if (!q) return { status: "idle" };
+  const res = await getSubstitutions(q); // static table first, LLM only for the long tail
+  return { status: "done", ingredient: q, source: res.source, subs: res.substitutions };
 }
 
 async function logThisCook(formData: FormData) {
@@ -66,7 +76,36 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
             ingredients={recipe.ingredients}
           />
 
-          <form action={logThisCook} className="mt-8 rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
+          <section className="mt-8 rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
+            <h2 className="font-semibold text-ink">Out of something?</h2>
+            <p className="mt-0.5 mb-3 text-xs text-ink/50">Common swaps for this recipe — or look one up.</p>
+            {(() => {
+              const known = recipe.ingredients
+                .map((i) => ({ name: i.name, subs: findSubstitutions(i.name) }))
+                .filter((k) => k.subs.length > 0);
+              return known.length > 0 ? (
+                <ul className="mb-4 space-y-2">
+                  {known.map((k) => (
+                    <li key={k.name}>
+                      <details>
+                        <summary className="cursor-pointer text-sm font-medium text-ink">
+                          {k.name} <span className="text-xs font-normal text-brand-600">· swap</span>
+                        </summary>
+                        <ul className="mt-1 space-y-1 pl-3 text-sm text-ink/70">
+                          {k.subs.map((s, i) => (
+                            <li key={i}>{s.text}</li>
+                          ))}
+                        </ul>
+                      </details>
+                    </li>
+                  ))}
+                </ul>
+              ) : null;
+            })()}
+            <SwapFinder action={askSwap} />
+          </section>
+
+          <form action={logThisCook} className="mt-6 rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
             <input type="hidden" name="id" value={id} />
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="min-w-0">

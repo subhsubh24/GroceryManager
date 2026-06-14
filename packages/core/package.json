@@ -11,6 +11,7 @@
     "./integrations": "./src/integrations/index.ts",
     "./recipe": "./src/recipe/index.ts",
     "./recipe/log-cook": "./src/recipe/log-cook.ts",
+    "./recipe/substitute-llm": "./src/recipe/substitute-llm.ts",
     "./crypto": "./src/crypto/index.ts",
     "./ingestion": "./src/ingestion/index.ts",
     "./pantry": "./src/pantry/index.ts",
