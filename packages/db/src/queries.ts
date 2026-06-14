@@ -14,6 +14,8 @@ import {
   purchases,
   recipes,
   reorderPolicies,
+  shoppingListItems,
+  shoppingLists,
   stockLedger,
   userModels,
   users,
@@ -259,6 +261,43 @@ export async function setGmailHistoryId(db: Querier, userId: string, historyId: 
     .update(oauthCredentials)
     .set({ historyId, updatedAt: new Date() })
     .where(and(eq(oauthCredentials.userId, userId), eq(oauthCredentials.provider, "google")));
+}
+
+/** The user's current active shopping list, creating an empty manual one if none exists (§7.1/§10). */
+export async function getOrCreateActiveList(db: Querier, userId: string): Promise<string> {
+  const existing = await db
+    .select({ id: shoppingLists.id })
+    .from(shoppingLists)
+    .where(and(eq(shoppingLists.userId, userId), eq(shoppingLists.status, "active")))
+    .orderBy(desc(shoppingLists.createdAt))
+    .limit(1);
+  if (existing[0]) return existing[0].id;
+  const created = await db
+    .insert(shoppingLists)
+    .values({ userId, name: "Shopping list", generatedBy: "manual" })
+    .returning({ id: shoppingLists.id });
+  return created[0]!.id;
+}
+
+/** Items on the active list (with canonical names) for display. */
+export async function getActiveListView(db: Querier, userId: string) {
+  const list = await db
+    .select({ id: shoppingLists.id })
+    .from(shoppingLists)
+    .where(and(eq(shoppingLists.userId, userId), eq(shoppingLists.status, "active")))
+    .orderBy(desc(shoppingLists.createdAt))
+    .limit(1);
+  if (!list[0]) return [];
+  return db
+    .select({
+      id: shoppingListItems.id,
+      name: canonicalItems.name,
+      reason: shoppingListItems.reason,
+      checked: shoppingListItems.checked,
+    })
+    .from(shoppingListItems)
+    .innerJoin(canonicalItems, eq(shoppingListItems.canonicalItemId, canonicalItems.id))
+    .where(eq(shoppingListItems.shoppingListId, list[0].id));
 }
 
 /** Demo helper until Auth.js is wired: the most recently created user. */

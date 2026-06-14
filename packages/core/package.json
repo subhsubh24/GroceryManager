@@ -14,7 +14,8 @@
     "./ingestion": "./src/ingestion/index.ts",
     "./pantry": "./src/pantry/index.ts",
     "./personalization": "./src/personalization/index.ts",
-    "./spend": "./src/spend/index.ts"
+    "./spend": "./src/spend/index.ts",
+    "./capture": "./src/capture/index.ts"
   },
   "scripts": {
     "lint": "echo \"(lint) @gm/core\"",

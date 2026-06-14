@@ -8,3 +8,4 @@ export * as recipe from "./recipe/index.js";
 export * as crypto from "./crypto/index.js";
 export * as personalization from "./personalization/index.js";
 export * as spend from "./spend/index.js";
+export * as capture from "./capture/index.js";

@@ -29,6 +29,13 @@ const SECTIONS: Section[] = [
     emoji: "🛒",
   },
   {
+    key: "capture",
+    href: "/capture",
+    title: "Quick add",
+    blurb: "Type it like you'd say it — “out of milk, need taco stuff” — and it lands on your list.",
+    emoji: "✍️",
+  },
+  {
     key: "household",
     href: "/list",
     title: "Household & care",
