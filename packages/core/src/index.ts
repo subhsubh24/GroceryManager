@@ -10,3 +10,4 @@ export * as personalization from "./personalization/index.js";
 export * as spend from "./spend/index.js";
 export * as capture from "./capture/index.js";
 export * as digest from "./digest/index.js";
+export * as agent from "./agent/index.js";

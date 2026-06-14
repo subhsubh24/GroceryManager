@@ -64,6 +64,13 @@ const SECTIONS: Section[] = [
     emoji: "💸",
   },
   {
+    key: "digest",
+    href: "/digest",
+    title: "This week",
+    blurb: "Your Sunday briefing — what's expiring, what's due to reorder, at a glance.",
+    emoji: "🗒️",
+  },
+  {
     key: "wrapped",
     href: "/wrapped",
     title: "Grocery Wrapped",
@@ -96,10 +103,10 @@ export default function HomePage() {
           across groceries and household essentials. Review, then order in a tap.
         </p>
         <a
-          href="/digest"
+          href="/plan"
           className="mt-4 inline-block rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-brand-700 shadow-sm transition active:scale-[0.98]"
         >
-          See this week
+          Plan my week
         </a>
       </section>
 

@@ -16,7 +16,8 @@
     "./personalization": "./src/personalization/index.ts",
     "./spend": "./src/spend/index.ts",
     "./capture": "./src/capture/index.ts",
-    "./digest": "./src/digest/index.ts"
+    "./digest": "./src/digest/index.ts",
+    "./agent": "./src/agent/index.ts"
   },
   "scripts": {
     "lint": "echo \"(lint) @gm/core\"",
