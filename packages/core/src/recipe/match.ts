@@ -81,6 +81,7 @@ export interface RawRecipe {
   ingredients: { name: string; isOptional?: boolean }[];
   readyMinutes?: number | null;
   effortScore?: number | null; // 0..1, lower = easier
+  batchScore?: number | null; // 0..1, higher = keeps/reheats/scales better (§10 batch-cook)
   cuisine?: string;
 }
 
@@ -107,6 +108,7 @@ export interface RankedRecipe {
   totalCore: number;
   missing: string[];
   usesExpiring: number;
+  batchFriendly: boolean;
   score: number;
 }
 
@@ -115,6 +117,7 @@ interface Weights {
   missing: number;
   expiring: number;
   effort: number;
+  batch: number;
   love: number;
   dislike: number;
   cuisine: number;
@@ -124,6 +127,7 @@ const DEFAULT_WEIGHTS: Weights = {
   missing: 0.15,
   expiring: 0.3,
   effort: 0.4,
+  batch: 0.5,
   love: 0.25,
   dislike: 0.5,
   cuisine: 0.3,
@@ -140,6 +144,8 @@ export interface RankPrefs {
 export interface RankOpts {
   /** Busy/low-energy: up-weight low-effort recipes (§7.4). */
   lowEnergy?: boolean;
+  /** Meal-prep: up-weight dishes that keep/reheat/scale well (§10 batch-cook). */
+  batchCook?: boolean;
   weights?: Partial<Weights>;
   limit?: number;
   prefs?: RankPrefs;
@@ -166,6 +172,7 @@ export function rankRecipes(recipes: MatchRecipe[], opts: RankOpts = {}): Ranked
       const missing = core.filter((i) => !i.inPantry).map((i) => i.name);
       const usesExpiring = r.ingredients.filter((i) => i.inPantry && i.expiringSoon).length;
       const effortFit = r.effortScore != null ? 1 - r.effortScore : 0.5;
+      const batchFit = r.batchScore ?? 0.5;
 
       const loveMatches = loveIdx ? r.ingredients.filter((i) => loveIdx.has(i.name)).length : 0;
       const dislikeMatches = dislikeIdx ? r.ingredients.filter((i) => dislikeIdx.has(i.name)).length : 0;
@@ -180,6 +187,7 @@ export function rankRecipes(recipes: MatchRecipe[], opts: RankOpts = {}): Ranked
         w.dislike * dislikeMatches +
         w.cuisine * cuisineAffinity;
       if (opts.lowEnergy) score += w.effort * effortFit;
+      if (opts.batchCook) score += w.batch * batchFit;
 
       return {
         id: r.id,
@@ -189,6 +197,7 @@ export function rankRecipes(recipes: MatchRecipe[], opts: RankOpts = {}): Ranked
         totalCore: core.length,
         missing,
         usesExpiring,
+        batchFriendly: batchFit >= 0.6,
         score,
       };
     })
