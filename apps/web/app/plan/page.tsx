@@ -14,7 +14,7 @@ import {
   TheMealDBProvider,
 } from "@gm/core/recipe";
 import { selectExpiringSoon } from "@gm/core/pantry";
-import { projectUserModel } from "@gm/core/personalization";
+import { dietExclusions, projectUserModel } from "@gm/core/personalization";
 import { geminiPlanGenerator, planWeek, type PlanCandidate } from "@gm/core/agent";
 import { captureToList } from "@gm/core/capture";
 import { currentUserId } from "@/app/lib/tenant";
@@ -92,7 +92,7 @@ async function load(lowEnergy: boolean) {
       limit: 8,
       lowEnergy,
       prefs: {
-        allergens: model.allergens,
+        allergens: [...model.allergens, ...dietExclusions(model.diets)],
         dislikes: model.dislikes,
         loves: model.loves,
         cuisineAffinity: model.cuisineAffinity,

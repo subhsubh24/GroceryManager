@@ -6,12 +6,15 @@ import {
   rankRecipes,
   TheMealDBProvider,
 } from "@gm/core/recipe";
-import { projectUserModel } from "@gm/core/personalization";
+import { dietExclusions, KNOWN_DIETS, projectUserModel } from "@gm/core/personalization";
 import { currentUserId } from "@/app/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
-async function loadRecipes(lowEnergy: boolean) {
+/** Guest diets offered as quick filters (subset of KNOWN_DIETS most common when hosting). */
+const GUEST_DIETS = ["vegan", "vegetarian", "gluten-free", "dairy-free", "pescatarian"];
+
+async function loadRecipes(lowEnergy: boolean, guest: string | null) {
   try {
     const userId = await currentUserId();
     if (!userId) return { ranked: [], images: new Map<string, string>(), error: null as string | null };
@@ -43,6 +46,8 @@ async function loadRecipes(lowEnergy: boolean) {
 
     const images = new Map(full.map((r) => [r.id, r.imageUrl ?? ""]));
     const model = projectUserModel(signals);
+    // Enforce the user's own diet, plus tonight's guest diet — both hard-exclude (§7.2/§10).
+    const exclusions = dietExclusions([...model.diets, ...(guest ? [guest] : [])]);
     const annotated = full.map((r) => {
       const { effortScore } = estimateEffort({
         ingredientCount: r.ingredients.length,
@@ -57,7 +62,7 @@ async function loadRecipes(lowEnergy: boolean) {
       limit: 8,
       lowEnergy,
       prefs: {
-        allergens: model.allergens,
+        allergens: [...model.allergens, ...exclusions],
         dislikes: model.dislikes,
         loves: model.loves,
         cuisineAffinity: model.cuisineAffinity,
@@ -72,15 +77,27 @@ async function loadRecipes(lowEnergy: boolean) {
 export default async function RecipesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ energy?: string }>;
+  searchParams: Promise<{ energy?: string; guest?: string }>;
 }) {
-  const lowEnergy = (await searchParams).energy === "low";
-  const { ranked, error, images } = await loadRecipes(lowEnergy);
+  const sp = await searchParams;
+  const lowEnergy = sp.energy === "low";
+  const guest = sp.guest && KNOWN_DIETS.includes(sp.guest.toLowerCase()) ? sp.guest.toLowerCase() : null;
+  const { ranked, error, images } = await loadRecipes(lowEnergy, guest);
 
-  const tab = (href: string, label: string, active: boolean) => (
+  const href = (over: { energy?: "low" | null; guest?: string | null }) => {
+    const energy = over.energy === undefined ? (lowEnergy ? "low" : null) : over.energy;
+    const g = over.guest === undefined ? guest : over.guest;
+    const p = new URLSearchParams();
+    if (energy) p.set("energy", energy);
+    if (g) p.set("guest", g);
+    const s = p.toString();
+    return s ? `/recipes?${s}` : "/recipes";
+  };
+
+  const tab = (h: string, label: string, active: boolean) => (
     <a
-      href={href}
-      className={`rounded-full px-3 py-1.5 text-sm font-medium ${
+      href={h}
+      className={`rounded-full px-3 py-1.5 text-sm font-medium capitalize ${
         active ? "bg-brand-500 text-white" : "bg-white text-ink/70 border border-black/5"
       }`}
     >
@@ -94,10 +111,27 @@ export default async function RecipesPage({
       <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">Cook tonight</h1>
       <p className="mb-4 text-sm text-ink/60">Ranked by what you already have. How much do you feel like cooking?</p>
 
-      <div className="mb-6 flex gap-2">
-        {tab("/recipes", "Cook something nice", !lowEnergy)}
-        {tab("/recipes?energy=low", "Keep it easy", lowEnergy)}
+      <div className="mb-3 flex gap-2">
+        {tab(href({ energy: null }), "Cook something nice", !lowEnergy)}
+        {tab(href({ energy: "low" }), "Keep it easy", lowEnergy)}
       </div>
+
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-ink/40">Cooking for a guest?</span>
+        {GUEST_DIETS.map((g) => tab(href({ guest: guest === g ? null : g }), g, guest === g))}
+        {guest && (
+          <a href={href({ guest: null })} className="text-xs text-ink/40 underline">
+            clear
+          </a>
+        )}
+      </div>
+
+      {guest && (
+        <p className="mb-6 rounded-xl bg-brand-50 p-3 text-sm text-brand-800">
+          Filtered to fit a <strong className="capitalize">{guest}</strong> guest — meals with conflicting
+          ingredients are hidden.
+        </p>
+      )}
 
       {error && (
         <p className="mb-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
