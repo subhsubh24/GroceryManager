@@ -95,12 +95,12 @@ export default function HomePage() {
           Your plan + shopping list are drafted from what you have and what&apos;s running low —
           across groceries and household essentials. Review, then order in a tap.
         </p>
-        <button
-          className="mt-4 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-brand-700 shadow-sm transition active:scale-[0.98]"
-          type="button"
+        <a
+          href="/digest"
+          className="mt-4 inline-block rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-brand-700 shadow-sm transition active:scale-[0.98]"
         >
-          Plan my week
-        </button>
+          See this week
+        </a>
       </section>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

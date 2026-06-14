@@ -15,7 +15,8 @@
     "./pantry": "./src/pantry/index.ts",
     "./personalization": "./src/personalization/index.ts",
     "./spend": "./src/spend/index.ts",
-    "./capture": "./src/capture/index.ts"
+    "./capture": "./src/capture/index.ts",
+    "./digest": "./src/digest/index.ts"
   },
   "scripts": {
     "lint": "echo \"(lint) @gm/core\"",
