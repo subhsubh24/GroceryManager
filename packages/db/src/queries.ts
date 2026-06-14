@@ -188,6 +188,34 @@ export async function setWeeklyBudgetCents(db: Querier, userId: string, cents: n
     });
 }
 
+/** Spoilage events with item names (PLAN §10 waste hub) — feeds summarizeWaste. */
+export async function loadWasteEvents(db: Querier, userId: string, sinceDays = 30) {
+  const since = new Date(Date.now() - sinceDays * 86_400_000);
+  const rows = await db
+    .select({
+      canonicalItemId: stockLedger.canonicalItemId,
+      name: canonicalItems.name,
+      baseQtyDelta: stockLedger.baseQtyDelta,
+      occurredAt: stockLedger.occurredAt,
+    })
+    .from(stockLedger)
+    .innerJoin(canonicalItems, eq(stockLedger.canonicalItemId, canonicalItems.id))
+    .where(
+      and(
+        eq(stockLedger.userId, userId),
+        eq(stockLedger.eventType, "spoilage"),
+        gte(stockLedger.occurredAt, since),
+      ),
+    )
+    .orderBy(desc(stockLedger.occurredAt));
+  return rows.map((r) => ({
+    canonicalItemId: r.canonicalItemId,
+    name: r.name,
+    baseQtyDelta: Number(r.baseQtyDelta),
+    occurredAt: r.occurredAt as Date,
+  }));
+}
+
 export interface GoogleAuthUpsert {
   email: string;
   name: string | null;

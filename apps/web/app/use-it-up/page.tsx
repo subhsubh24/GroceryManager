@@ -1,5 +1,6 @@
-import { getDb, getPantryView, loadWrappedInputs, withTenant } from "@gm/db";
-import { selectExpiringSoon } from "@gm/core/pantry";
+import { revalidatePath } from "next/cache";
+import { getDb, getPantryView, loadWasteEvents, withTenant } from "@gm/db";
+import { recordWaste, selectExpiringSoon, summarizeWaste } from "@gm/core/pantry";
 import { currentUserId } from "@/app/lib/tenant";
 import {
   annotateRecipe,
@@ -12,14 +13,26 @@ import {
 
 export const dynamic = "force-dynamic";
 
+async function markWasted(formData: FormData) {
+  "use server";
+  const canonicalItemId = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "") || null;
+  if (!canonicalItemId) return;
+  const userId = await currentUserId();
+  if (!userId) return;
+  await withTenant(getDb(), userId, (tx) => recordWaste(tx, userId, canonicalItemId, name));
+  revalidatePath("/use-it-up");
+}
+
 async function load() {
   try {
     const userId = await currentUserId();
     if (!userId) return { ready: false as const, error: null as string | null };
 
-    const [pantry, wrapped] = await withTenant(getDb(), userId, (tx) =>
-      Promise.all([getPantryView(tx, userId), loadWrappedInputs(tx, userId, 30)]),
+    const [pantry, wasteEvents] = await withTenant(getDb(), userId, (tx) =>
+      Promise.all([getPantryView(tx, userId), loadWasteEvents(tx, userId, 30)]),
     );
+    const waste = summarizeWaste(wasteEvents);
     const expiring = selectExpiringSoon(pantry, { domain: "grocery", withinDays: 5 });
 
     // Index every in-stock item (accurate coverage/missing), flagging the at-risk ones so the
@@ -72,7 +85,7 @@ async function load() {
       expiring,
       recipes,
       images,
-      spoilage30: wrapped.spoilageCount,
+      waste,
     };
   } catch (e) {
     return { ready: false as const, error: e instanceof Error ? e.message : String(e) };
@@ -103,11 +116,17 @@ export default async function UseItUpPage() {
         </p>
       )}
 
-      {data.ready && data.spoilage30 > 0 && (
-        <p className="mb-6 rounded-xl bg-zinc-100 p-3 text-sm text-zinc-700">
-          You&apos;ve let <strong>{data.spoilage30}</strong> item{data.spoilage30 === 1 ? "" : "s"} expire in the
-          last 30 days. Let&apos;s waste less.
-        </p>
+      {data.ready && data.waste.count > 0 && (
+        <div className="mb-6 rounded-xl bg-zinc-100 p-3 text-sm text-zinc-700">
+          You&apos;ve let <strong>{data.waste.count}</strong> item{data.waste.count === 1 ? "" : "s"} expire in
+          the last 30 days. Let&apos;s waste less.
+          {data.waste.byItem.some((i) => i.count > 1) && (
+            <div className="mt-1 text-xs text-zinc-500">
+              Repeat offenders: {data.waste.byItem.filter((i) => i.count > 1).map((i) => `${i.name} (×${i.count})`).join(", ")} —
+              I&apos;ve trimmed how much of these I&apos;ll suggest buying.
+            </div>
+          )}
+        </div>
       )}
 
       {data.ready && data.expiring.length === 0 && (
@@ -126,10 +145,23 @@ export default async function UseItUpPage() {
                 return (
                   <li
                     key={e.canonicalItemId}
-                    className="flex items-center justify-between rounded-xl border border-black/5 bg-white px-4 py-3 shadow-sm"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-black/5 bg-white px-4 py-3 shadow-sm"
                   >
-                    <span className="font-medium text-ink">{e.name}</span>
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${u.cls}`}>{u.text}</span>
+                    <span className="min-w-0 font-medium text-ink">{e.name}</span>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${u.cls}`}>{u.text}</span>
+                      <form action={markWasted}>
+                        <input type="hidden" name="id" value={e.canonicalItemId} />
+                        <input type="hidden" name="name" value={e.name} />
+                        <button
+                          type="submit"
+                          className="rounded-full border border-black/10 px-2.5 py-1 text-xs font-medium text-ink/60 transition hover:bg-zinc-50"
+                          title="Mark as wasted — removes it and teaches me to buy less"
+                        >
+                          Tossed it
+                        </button>
+                      </form>
+                    </div>
                   </li>
                 );
               })}
