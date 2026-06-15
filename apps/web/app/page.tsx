@@ -29,6 +29,13 @@ const SECTIONS: Section[] = [
     emoji: "🍳",
   },
   {
+    key: "import",
+    href: "/import",
+    title: "Import a recipe",
+    blurb: "Paste any recipe link or text — it's structured, matched to your pantry, and ready to cook.",
+    emoji: "📥",
+  },
+  {
     key: "list",
     href: "/list",
     title: "Shopping list",

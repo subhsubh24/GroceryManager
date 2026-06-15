@@ -116,7 +116,10 @@ export default async function RecipesPage({
 
   return (
     <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
-      <a href="/" className="text-sm text-brand-600">← Home</a>
+      <div className="flex items-center justify-between">
+        <a href="/" className="text-sm text-brand-600">← Home</a>
+        <a href="/import" className="text-sm font-medium text-brand-600">Import a recipe →</a>
+      </div>
       <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">Cook tonight</h1>
       <p className="mb-4 text-sm text-ink/60">Ranked by what you already have. How much do you feel like cooking?</p>
 

@@ -1,0 +1,182 @@
+/**
+ * Recipe import parsing (PLAN §10 "Recipe import (URL or photo)"). Cheap-first + pure:
+ * most recipe sites embed schema.org `Recipe` JSON-LD, so we extract that deterministically (free,
+ * reliable) and only fall back to the model (see import-llm.ts) for pages without it. Server-only
+ * (uses cheerio) — kept out of the @gm/core/recipe barrel so client bundles stay clean.
+ */
+import * as cheerio from "cheerio";
+import { z } from "zod";
+import type { ProviderRecipe } from "./provider.js";
+
+/** An imported recipe maps onto the same shape the rest of the app uses (so Cook Mode + matching
+ * reuse it), plus an optional human servings/yield string. */
+export interface ImportedRecipe extends ProviderRecipe {
+  servings?: string | null;
+}
+
+/** LLM output shape for the fallback path (pages with no JSON-LD / pasted text). */
+export const RecipeImportFields = z.object({
+  title: z.string(),
+  servings: z.string().nullable(),
+  ingredients: z.array(z.object({ name: z.string(), measure: z.string().nullable() })),
+  instructions: z.array(z.string()),
+});
+export type RecipeImportFields = z.infer<typeof RecipeImportFields>;
+
+type Json = Record<string, unknown>;
+
+function asArray<T>(v: T | T[] | undefined | null): T[] {
+  if (v == null) return [];
+  return Array.isArray(v) ? v : [v];
+}
+
+function typeMatches(node: Json, type: string): boolean {
+  const t = node["@type"];
+  const eq = (x: unknown) => typeof x === "string" && x.toLowerCase() === type.toLowerCase();
+  return Array.isArray(t) ? t.some(eq) : eq(t);
+}
+
+/** Flatten an arbitrary JSON-LD payload (object, array, or `@graph` container) into candidate nodes. */
+function collectNodes(parsed: unknown, out: Json[]): void {
+  if (Array.isArray(parsed)) {
+    for (const x of parsed) collectNodes(x, out);
+  } else if (parsed && typeof parsed === "object") {
+    const obj = parsed as Json;
+    out.push(obj);
+    if (Array.isArray(obj["@graph"])) collectNodes(obj["@graph"], out);
+  }
+}
+
+function firstString(v: unknown): string | undefined {
+  if (typeof v === "string") return v;
+  if (Array.isArray(v)) {
+    for (const x of v) {
+      const s = firstString(x);
+      if (s) return s;
+    }
+  }
+  return undefined;
+}
+
+/** image can be a URL string, an array, or an ImageObject `{ url }` (or arrays thereof). */
+function pickImageUrl(v: unknown): string | undefined {
+  if (typeof v === "string") return v;
+  if (Array.isArray(v)) {
+    for (const x of v) {
+      const s = pickImageUrl(x);
+      if (s) return s;
+    }
+    return undefined;
+  }
+  if (v && typeof v === "object" && typeof (v as Json).url === "string") return (v as Json).url as string;
+  return undefined;
+}
+
+/** recipeInstructions can be a string, an array of strings, HowToStep `{ text }`, or nested
+ * HowToSection `{ itemListElement }`. Normalize to newline-joined steps for splitSteps(). */
+function instructionsToText(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (!Array.isArray(v)) return "";
+  const steps: string[] = [];
+  for (const x of v) {
+    if (typeof x === "string") {
+      if (x.trim()) steps.push(x.trim());
+    } else if (x && typeof x === "object") {
+      const obj = x as Json;
+      if (Array.isArray(obj.itemListElement)) {
+        const sub = instructionsToText(obj.itemListElement);
+        if (sub) steps.push(sub);
+      } else {
+        const t = firstString(obj.text) ?? firstString(obj.name) ?? "";
+        if (t.trim()) steps.push(t.trim());
+      }
+    }
+  }
+  return steps.join("\n");
+}
+
+function yieldToServings(v: unknown): string | null {
+  if (typeof v === "string") return v;
+  if (typeof v === "number") return String(v);
+  if (Array.isArray(v)) {
+    const s = v.find((x) => typeof x === "string" || typeof x === "number");
+    return s != null ? String(s) : null;
+  }
+  return null;
+}
+
+/** Deterministically extract a recipe from a page's schema.org JSON-LD. Returns null when absent. */
+export function extractRecipeJsonLd(html: string, sourceUrl?: string): ImportedRecipe | null {
+  const $ = cheerio.load(html);
+  const nodes: Json[] = [];
+  $('script[type="application/ld+json"]').each((_, el) => {
+    const raw = $(el).text().trim();
+    if (!raw) return;
+    try {
+      collectNodes(JSON.parse(raw), nodes);
+    } catch {
+      // Some sites emit invalid or concatenated JSON in a block — skip it, try the others.
+    }
+  });
+
+  const recipe = nodes.find((n) => typeMatches(n, "Recipe"));
+  if (!recipe) return null;
+  const title = firstString(recipe.name)?.trim();
+  if (!title) return null;
+
+  const ingredients = asArray(recipe.recipeIngredient ?? recipe.ingredients)
+    .map((x) => (typeof x === "string" ? x.trim() : ""))
+    .filter((s) => s.length > 0)
+    .map((line) => ({ name: line }));
+
+  const instructions = instructionsToText(recipe.recipeInstructions);
+
+  return {
+    id: "import", // not persisted in v1 — rendered inline
+    title,
+    imageUrl: pickImageUrl(recipe.image),
+    sourceUrl,
+    instructions: instructions || undefined,
+    ingredients,
+    servings: yieldToServings(recipe.recipeYield),
+  };
+}
+
+/** Strip a page to compact text for the model fallback (drops nav/scripts/boilerplate). */
+export function recipeHtmlToText(html: string): string {
+  const $ = cheerio.load(html);
+  $("script, style, head, noscript, nav, footer, header, form, svg, iframe").remove();
+  const text = $("body").length ? $("body").text() : $.root().text();
+  return text
+    .split("\n")
+    .map((l) => l.replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .join("\n");
+}
+
+export function buildImportPrompt(text: string): string {
+  return (
+    "Extract this single recipe into the schema. Use only what's present; if there's no " +
+    "servings/yield, set servings to null. For each ingredient give the food name plus its measure " +
+    "(amount + unit) when stated, else measure null. instructions: an ordered array of step strings.\n\n" +
+    `--- RECIPE ---\n${text}\n--- END ---`
+  );
+}
+
+/** Pure: map validated LLM fields → an ImportedRecipe (steps joined for splitSteps, blanks dropped). */
+export function fieldsToImportedRecipe(f: RecipeImportFields, sourceUrl?: string): ImportedRecipe {
+  return {
+    id: "import",
+    title: f.title.trim(),
+    sourceUrl,
+    servings: f.servings,
+    instructions:
+      f.instructions
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .join("\n") || undefined,
+    ingredients: f.ingredients
+      .map((i) => ({ name: i.name.trim(), measure: i.measure?.trim() || undefined }))
+      .filter((i) => i.name.length > 0),
+  };
+}

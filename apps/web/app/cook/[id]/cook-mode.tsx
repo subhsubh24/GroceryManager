@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { extractTimerMinutes, scaleMeasure } from "@gm/core/recipe";
 
-type Ingredient = { name: string; measure?: string };
+type Ingredient = { name: string; measure?: string; inPantry?: boolean };
 
 // Wake Lock isn't reliably in TS 5.6's lib.dom — narrow it locally + feature-detect at runtime.
 type WakeLockSentinelLike = { release: () => Promise<void> };
@@ -106,7 +106,10 @@ export function CookMode({
         <ul className="space-y-1 text-sm">
           {ingredients.map((ing, i) => (
             <li key={`${ing.name}-${i}`} className="flex justify-between gap-4">
-              <span className="text-ink">{ing.name}</span>
+              <span className="text-ink">
+                {ing.inPantry ? <span className="text-brand-600" title="in your pantry">✓ </span> : null}
+                {ing.name}
+              </span>
               {ing.measure ? (
                 <span className="shrink-0 tabular-nums text-ink/60">{scaleMeasure(ing.measure, factor)}</span>
               ) : null}
