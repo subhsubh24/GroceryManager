@@ -1,8 +1,8 @@
-import { getDb, getPantryView, loadReorderInputs, loadWrappedInputs, withTenant } from "@gm/db";
-import { selectExpiringSoon } from "@gm/core/pantry";
-import { predictReorder } from "@gm/core/reorder";
-import { buildDigest } from "@gm/core/digest";
+import { loadEnv } from "@gm/config/env";
+import { getDb, withTenant } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
+import { buildDigestForUser } from "@/app/lib/digest";
+import { PushToggle } from "./push-toggle";
 
 export const dynamic = "force-dynamic";
 
@@ -12,51 +12,7 @@ async function load() {
   try {
     const userId = await currentUserId();
     if (!userId) return { ready: false as const, error: null as string | null };
-
-    const { pantry, reorder, wrapped } = await withTenant(getDb(), userId, async (tx) => ({
-      pantry: await getPantryView(tx, userId),
-      reorder: await loadReorderInputs(tx, userId),
-      wrapped: await loadWrappedInputs(tx, userId, 7),
-    }));
-
-    const now = new Date();
-    const expiring = selectExpiringSoon(pantry, { domain: "grocery", withinDays: 5 }).map((e) => ({
-      name: e.name,
-      reason: e.reason,
-      daysLeft: e.daysLeft,
-    }));
-    const reorderDue = reorder
-      .map((r) => ({
-        r,
-        pred: predictReorder(
-          {
-            baseQtyOnHand: r.baseQtyOnHand,
-            estimatedConsumptionRatePerDay: r.ratePerDay,
-            confidence: r.confidence,
-          },
-          {
-            enabled: r.enabled ?? false,
-            targetParQty: r.targetParQty,
-            reorderPointQty: r.reorderPointQty,
-            leadTimeDays: r.leadTimeDays ?? 2,
-            minIntervalDays: r.minIntervalDays ?? 7,
-          },
-          { asOf: now },
-        ),
-      }))
-      .filter((x) => x.pred.shouldReorder)
-      .map((x) => ({
-        name: x.r.name,
-        recommendQty: x.pred.recommendQty,
-        recommendByDate: x.pred.recommendByDate,
-      }));
-
-    const digest = buildDigest({
-      expiring,
-      reorderDue,
-      spentThisWeekCents: wrapped.purchases.reduce((s, p) => s + (p.totalCents ?? 0), 0),
-      homeCookedThisWeek: wrapped.mealLogs.length,
-    });
+    const digest = await withTenant(getDb(), userId, (tx) => buildDigestForUser(tx, userId));
     return { ready: true as const, error: null as string | null, digest };
   } catch (e) {
     return { ready: false as const, error: e instanceof Error ? e.message : String(e) };
@@ -130,6 +86,8 @@ export default async function DigestPage() {
               Nothing needs you right now. Enjoy the week. 🌿
             </p>
           )}
+
+          <PushToggle vapidPublicKey={loadEnv().VAPID_PUBLIC_KEY ?? null} />
         </div>
       )}
     </main>

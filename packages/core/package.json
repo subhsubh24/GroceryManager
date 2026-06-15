@@ -16,6 +16,7 @@
     "./crypto": "./src/crypto/index.ts",
     "./ingestion": "./src/ingestion/index.ts",
     "./pantry": "./src/pantry/index.ts",
+    "./push": "./src/push/index.ts",
     "./personalization": "./src/personalization/index.ts",
     "./spend": "./src/spend/index.ts",
     "./capture": "./src/capture/index.ts",

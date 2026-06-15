@@ -42,7 +42,7 @@ pnpm dev
 ## Status
 A working vertical slice runs end-to-end: pages are server-rendered against Postgres with
 **row-level-security** enforcement, and the Gemini-backed features below were verified against the
-real model. **204 core unit tests + full workspace typecheck + `next build` green.**
+real model. **209 core unit tests + full workspace typecheck + `next build` green.**
 
 **Built & tested**
 - **Pantry & depletion** — ledger-projected stock, confidence decay, expiring-soon.
@@ -55,11 +55,12 @@ real model. **204 core unit tests + full workspace typecheck + `next build` gree
 - **Personalization** — onboarding interview + always-learning preference ledger → UserModel.
 - **Spend / Grocery Wrapped / Waste hub / weekly Digest** — analytics + the Sunday briefing.
 - **One-cart ordering** — due staples + your active list merged into one cart, with a **keyless** path (copy-list + per-item Instacart search + Amazon Add-to-Cart); the official one-tap Instacart prefill drops in when a key is set.
+- **Web push** — service worker + subscription store + send; the digest cron pushes the weekly briefing / run-out nudges (never on a quiet week). Add VAPID keys to send.
 
 **Built; needs real infra/keys to exercise** — real-time Gmail push (watch-renew + Pub/Sub webhook +
 Vercel-cron route are built; just add a Pub/Sub topic — manual "Sync receipts now" + poll already work
-with just OAuth, see `docs/GMAIL_SETUP.md`), Instacart's *official* prefilled-list page + affiliate
-attribution (an optional upgrade over the keyless ordering path above), web-push delivery, and the
-§5.4 embedding stage (needs a catalog-embedding backfill).
+with just OAuth, see `docs/GMAIL_SETUP.md`), web push (built; add **VAPID keys** to deliver),
+Instacart's *official* prefilled-list page + affiliate attribution (an optional upgrade over the
+keyless ordering path above), and the §5.4 embedding stage (needs a catalog-embedding backfill).
 
 See the phased roadmap in `docs/PLAN.md` §10.

@@ -41,6 +41,12 @@ const EnvSchema = z.object({
   GMAIL_WEBHOOK_SECRET: z.string().optional(),
   CRON_SECRET: z.string().optional(),
 
+  // Web push (PLAN §10 proactive digest / run-out nudges). Generate once:
+  //   npx web-push generate-vapid-keys
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().default("mailto:admin@example.com"),
+
   // Integrations
   INSTACART_API_KEY: z.string().optional(),
   SPOONACULAR_API_KEY: z.string().optional(),

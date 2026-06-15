@@ -12,6 +12,7 @@ import {
   preferenceSignals,
   purchaseLineItems,
   purchases,
+  pushSubscriptions,
   recipes,
   reorderPolicies,
   shoppingListItems,
@@ -318,6 +319,43 @@ export async function setGmailWatch(
 export async function getUserIdByEmail(db: Querier, email: string): Promise<string | null> {
   const rows = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
   return rows[0]?.id ?? null;
+}
+
+/** Store a web-push subscription for a user (replacing any prior row with the same endpoint). */
+export async function savePushSubscription(
+  db: Querier,
+  userId: string,
+  sub: { endpoint: string; p256dh: string; auth: string },
+) {
+  await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, sub.endpoint));
+  await db.insert(pushSubscriptions).values({
+    userId,
+    endpoint: sub.endpoint,
+    keysP256dh: sub.p256dh,
+    keysAuth: sub.auth,
+  });
+}
+
+/** Remove a subscription by endpoint (on unsubscribe, or when the push service reports it gone). */
+export async function deletePushSubscription(db: Querier, endpoint: string) {
+  await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
+}
+
+export async function listPushSubscriptions(db: Querier, userId: string) {
+  return db
+    .select({
+      endpoint: pushSubscriptions.endpoint,
+      p256dh: pushSubscriptions.keysP256dh,
+      auth: pushSubscriptions.keysAuth,
+    })
+    .from(pushSubscriptions)
+    .where(eq(pushSubscriptions.userId, userId));
+}
+
+/** Users who have at least one push subscription (admin scope — for the digest cron to iterate). */
+export async function listUserIdsWithPush(db: Querier): Promise<string[]> {
+  const rows = await db.select({ userId: pushSubscriptions.userId }).from(pushSubscriptions);
+  return [...new Set(rows.map((r) => r.userId))];
 }
 
 /** The user's current active shopping list, creating an empty manual one if none exists (§7.1/§10). */
