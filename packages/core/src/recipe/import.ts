@@ -154,12 +154,22 @@ export function recipeHtmlToText(html: string): string {
     .join("\n");
 }
 
+const IMPORT_FIELD_RULES =
+  "Use only what's present; if there's no servings/yield, set servings to null. For each ingredient " +
+  "give the food name plus its measure (amount + unit) when stated, else measure null. instructions: " +
+  "an ordered array of step strings.";
+
 export function buildImportPrompt(text: string): string {
   return (
-    "Extract this single recipe into the schema. Use only what's present; if there's no " +
-    "servings/yield, set servings to null. For each ingredient give the food name plus its measure " +
-    "(amount + unit) when stated, else measure null. instructions: an ordered array of step strings.\n\n" +
+    `Extract this single recipe into the schema. ${IMPORT_FIELD_RULES}\n\n` +
     `--- RECIPE ---\n${text}\n--- END ---`
+  );
+}
+
+export function buildImportImagePrompt(): string {
+  return (
+    "Read the single recipe shown in the attached photo (a cookbook page or screenshot) and extract " +
+    `it into the schema. ${IMPORT_FIELD_RULES}`
   );
 }
 

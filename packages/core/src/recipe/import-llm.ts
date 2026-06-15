@@ -5,10 +5,11 @@
  * Cheap-first: for a URL, parse schema.org JSON-LD deterministically and only call the model when a
  * page has none; pasted text always goes to the model. Deps are injected so it's testable offline.
  */
-import type { GeminiClient } from "../llm/client.js";
+import type { GeminiClient, ImagePart } from "../llm/client.js";
 import { getGeminiClient } from "../llm/index.js";
 import {
   RecipeImportFields,
+  buildImportImagePrompt,
   buildImportPrompt,
   extractRecipeJsonLd,
   fieldsToImportedRecipe,
@@ -40,13 +41,28 @@ async function llmImport(client: GeminiClient, text: string, sourceUrl?: string)
   return fieldsToImportedRecipe(fields, sourceUrl);
 }
 
+async function visionImport(client: GeminiClient, image: ImagePart): Promise<ImportedRecipe> {
+  // Photos are harder than text → default to mid (Flash) for the vision read.
+  const fields = await client.generateStructured(RecipeImportFields, buildImportImagePrompt(), {
+    tier: "mid",
+    system: IMPORT_SYSTEM,
+    images: [image],
+  });
+  return fieldsToImportedRecipe(fields);
+}
+
 export async function importRecipe(
-  input: { url?: string; text?: string },
+  input: { url?: string; text?: string; image?: ImagePart },
   deps: ImportRecipeDeps = {},
 ): Promise<ImportRecipeResult> {
   const fetchImpl = deps.fetchImpl ?? fetch;
   const url = input.url?.trim();
   const text = input.text?.trim();
+
+  if (input.image) {
+    const client = deps.client ?? getGeminiClient();
+    return { recipe: await visionImport(client, input.image), method: "llm" };
+  }
 
   if (url) {
     const res = await fetchImpl(url, {

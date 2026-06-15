@@ -7,16 +7,32 @@ import { currentUserId } from "@/app/lib/tenant";
 import type { ImportState } from "./import-recipe";
 
 /**
- * Import a recipe from a URL or pasted text (JSON-LD first, Gemini fallback) and match it against
- * what's on hand. Pantry match is a best-effort bonus — failures there never block the import.
+ * Import a recipe from a URL, pasted text, or a photo (JSON-LD first for URLs, else Gemini — vision
+ * for photos) and match it against what's on hand. Pantry match is a best-effort bonus — failures
+ * there never block the import.
  */
 export async function importRecipeAction(_prev: ImportState, formData: FormData): Promise<ImportState> {
   const url = String(formData.get("url") ?? "").trim();
   const text = String(formData.get("text") ?? "").trim();
-  if (!url && !text) return { status: "idle" };
+  const imageFile = formData.get("image");
+  const hasImage = imageFile instanceof File && imageFile.size > 0;
+  if (!url && !text && !hasImage) return { status: "idle" };
 
   try {
-    const { recipe, method } = await importRecipe(url ? { url } : { text });
+    let input: Parameters<typeof importRecipe>[0];
+    if (url) {
+      input = { url };
+    } else if (imageFile instanceof File && imageFile.size > 0) {
+      if (imageFile.size > 6 * 1024 * 1024) {
+        return { status: "error", message: "That image is too large — keep it under ~6 MB." };
+      }
+      const buf = Buffer.from(await imageFile.arrayBuffer());
+      input = { image: { mimeType: imageFile.type || "image/jpeg", dataBase64: buf.toString("base64") } };
+    } else {
+      input = { text };
+    }
+
+    const { recipe, method } = await importRecipe(input);
     if (recipe.ingredients.length === 0 && !recipe.instructions) {
       return { status: "error", message: "Couldn't find a recipe there — try pasting the text instead." };
     }

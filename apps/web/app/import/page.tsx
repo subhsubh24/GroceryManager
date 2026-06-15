@@ -9,8 +9,8 @@ export default function ImportPage() {
       <a href="/recipes" className="text-sm text-brand-600">← Recipes</a>
       <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">Import a recipe</h1>
       <p className="mb-6 text-sm text-ink/60">
-        Paste a link or the recipe text — it&apos;s structured, matched to your pantry, and ready to
-        cook hands-free.
+        Paste a link, snap a cookbook page, or paste the text — it&apos;s structured, matched to your
+        pantry, and ready to cook hands-free.
       </p>
       <ImportRecipe action={importRecipeAction} />
     </main>
