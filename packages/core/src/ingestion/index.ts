@@ -4,3 +4,4 @@ export * from "./normalize.js";
 export * from "./db-ports.js";
 export * from "./llm-normalizer.js";
 export * from "./ingest.js";
+export * from "./gmail-sync.js";
