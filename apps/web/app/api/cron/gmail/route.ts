@@ -27,14 +27,16 @@ export async function GET(req: Request) {
   let ingested = 0;
   for (const userId of userIds) {
     try {
-      await withTenant(getDb(), userId, async (tx) => {
-        if (env.GMAIL_PUBSUB_TOPIC) {
-          await renewGmailWatch(tx, env, userId, env.GMAIL_PUBSUB_TOPIC);
-          renewed++;
-        }
-        const s = await syncGmailForUser(tx, env, userId, { maxMessages: 25 });
-        ingested += s.ingested;
-      });
+      // Poll first (uses the existing cursor → catches dropped pushes), THEN renew the watch
+      // (which preserves that cursor). Renewing first would skip un-synced history.
+      const s = await syncGmailForUser(getDb(), env, userId, { maxMessages: 25 });
+      ingested += s.ingested;
+      if (env.GMAIL_PUBSUB_TOPIC) {
+        await withTenant(getDb(), userId, (tx) =>
+          renewGmailWatch(tx, env, userId, env.GMAIL_PUBSUB_TOPIC!),
+        );
+        renewed++;
+      }
     } catch (e) {
       console.error(`[cron/gmail] user ${userId} failed`, e);
     }

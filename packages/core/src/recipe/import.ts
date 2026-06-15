@@ -184,9 +184,46 @@ const LEADING_UNIT =
  */
 export function cleanIngredientName(line: string): string {
   let s = (line.split(",")[0] ?? "").trim();
-  s = s.replace(LEADING_QTY, "").trimStart();
-  s = s.replace(LEADING_UNIT, "").trimStart();
+  const qty = LEADING_QTY.exec(s);
+  if (qty) {
+    s = s.slice(qty[0].length).trimStart();
+    // A unit word only counts as a unit when it FOLLOWED a quantity ("3 cloves garlic" → "garlic").
+    // Don't strip a leading word from an unquantified name ("gram flour", "cans of tomatoes", "g").
+    s = s.replace(LEADING_UNIT, "").trimStart();
+  }
   return s.trim();
+}
+
+/**
+ * SSRF guard for the URL-import path: only http(s) to a public host. Blocks loopback, link-local,
+ * private ranges, and cloud-metadata endpoints (the client `type="url"` input is trivially bypassed
+ * via a direct POST, so this must be enforced server-side). DNS-rebinding is out of scope for now.
+ */
+export function isPublicHttpUrl(raw: string): boolean {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== "http:" && u.protocol !== "https:") return false;
+  const host = u.hostname.toLowerCase();
+  if (
+    host === "localhost" ||
+    host.endsWith(".localhost") ||
+    host.endsWith(".local") ||
+    host.endsWith(".internal") ||
+    host === "metadata.google.internal"
+  ) {
+    return false;
+  }
+  if (/^(?:127|10|0)\./.test(host)) return false; // loopback / private / unspecified
+  if (/^192\.168\./.test(host)) return false;
+  if (/^169\.254\./.test(host)) return false; // link-local incl. cloud metadata 169.254.169.254
+  if (/^172\.(?:1[6-9]|2\d|3[01])\./.test(host)) return false;
+  if (host === "[::1]" || host === "::1") return false; // IPv6 loopback
+  if (host.startsWith("[fe80") || host.startsWith("[fc") || host.startsWith("[fd")) return false;
+  return true;
 }
 
 /** Pure: map validated LLM fields → an ImportedRecipe (steps joined for splitSteps, blanks dropped). */

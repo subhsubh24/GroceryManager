@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { loadEnv } from "@gm/config/env";
-import { getAdminDb, getDb, getUserIdByEmail, withTenant } from "@gm/db";
+import { getAdminDb, getDb, getUserIdByEmail } from "@gm/db";
 import { gmail } from "@gm/core/integrations";
 import { syncGmailForUser } from "@gm/core/ingestion";
 
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   try {
     const userId = await getUserIdByEmail(getAdminDb(), note.emailAddress);
     if (userId) {
-      await withTenant(getDb(), userId, (tx) => syncGmailForUser(tx, env, userId, { maxMessages: 10 }));
+      await syncGmailForUser(getDb(), env, userId, { maxMessages: 10 });
     }
   } catch (e) {
     // Ack anyway — retrying won't help a transient extract failure; the poll/cron will reconcile.

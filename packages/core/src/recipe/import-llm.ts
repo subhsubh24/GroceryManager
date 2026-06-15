@@ -13,6 +13,7 @@ import {
   buildImportPrompt,
   extractRecipeJsonLd,
   fieldsToImportedRecipe,
+  isPublicHttpUrl,
   recipeHtmlToText,
   type ImportedRecipe,
 } from "./import.js";
@@ -65,6 +66,9 @@ export async function importRecipe(
   }
 
   if (url) {
+    if (!isPublicHttpUrl(url)) {
+      throw new Error("That URL isn't allowed — paste a public http(s) recipe link.");
+    }
     const res = await fetchImpl(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; GroceryManager/1.0; +recipe-import)",

@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { loadEnv } from "@gm/config/env";
-import { getDb, withTenant } from "@gm/db";
+import { getDb } from "@gm/db";
 import { syncGmailForUser } from "@gm/core/ingestion";
 import { currentUserId } from "@/app/lib/tenant";
 
@@ -17,9 +17,7 @@ export async function syncGmailAction() {
 
   let query: string;
   try {
-    const summary = await withTenant(getDb(), userId, (tx) =>
-      syncGmailForUser(tx, loadEnv(), userId, { maxMessages: 10 }),
-    );
+    const summary = await syncGmailForUser(getDb(), loadEnv(), userId, { maxMessages: 10 });
     const p = new URLSearchParams({
       scanned: String(summary.scanned),
       ingested: String(summary.ingested),

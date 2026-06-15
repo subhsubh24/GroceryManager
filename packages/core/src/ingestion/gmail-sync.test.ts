@@ -30,6 +30,7 @@ describe("gmail sync summary accumulation", () => {
       deduped: 0,
       linesIngested: 0,
       needsReview: 0,
+      failed: 0,
     });
   });
 
@@ -42,6 +43,7 @@ describe("gmail sync summary accumulation", () => {
       deduped: 0,
       linesIngested: 0,
       needsReview: 0,
+      failed: 0,
     });
   });
 
@@ -54,6 +56,7 @@ describe("gmail sync summary accumulation", () => {
       deduped: 0,
       linesIngested: 5,
       needsReview: 2,
+      failed: 0,
     });
   });
 
@@ -72,6 +75,7 @@ describe("gmail sync summary accumulation", () => {
       deduped: 1,
       linesIngested: 5, // 3 + 2
       needsReview: 1,
+      failed: 0,
     });
   });
 });

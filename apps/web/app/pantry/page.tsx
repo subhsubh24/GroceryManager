@@ -41,7 +41,8 @@ export default async function PantryPage({
 }) {
   const { rows, connected, error } = await loadPantry();
   const sp = await searchParams;
-  const oauthConfigured = Boolean(loadEnv().GOOGLE_CLIENT_ID && loadEnv().GOOGLE_CLIENT_SECRET);
+  const env = loadEnv();
+  const oauthConfigured = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
 
   // Result banner from the sync action's redirect query string.
   let syncBanner: { kind: "ok" | "info" | "err"; text: string } | null = null;

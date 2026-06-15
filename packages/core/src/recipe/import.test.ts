@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { cleanIngredientName, extractRecipeJsonLd, fieldsToImportedRecipe } from "./import.js";
+import {
+  cleanIngredientName,
+  extractRecipeJsonLd,
+  fieldsToImportedRecipe,
+  isPublicHttpUrl,
+} from "./import.js";
 
 const page = (jsonLd: unknown) =>
   `<html><head><script type="application/ld+json">${JSON.stringify(jsonLd)}</script></head><body>x</body></html>`;
@@ -95,6 +100,33 @@ describe("cleanIngredientName", () => {
   it("leaves a plain food name (or unrecognized text) intact", () => {
     expect(cleanIngredientName("olive oil")).toBe("olive oil");
     expect(cleanIngredientName("salt to taste")).toBe("salt to taste");
+  });
+
+  it("does NOT strip a leading unit word when no quantity preceded it (regression)", () => {
+    expect(cleanIngredientName("gram flour")).toBe("gram flour"); // 'gram' = chickpea flour
+    expect(cleanIngredientName("cans of tomatoes")).toBe("cans of tomatoes");
+    expect(cleanIngredientName("g")).toBe("g"); // never collapses to empty
+  });
+});
+
+describe("isPublicHttpUrl (SSRF guard)", () => {
+  it("allows public http(s) URLs", () => {
+    expect(isPublicHttpUrl("https://cooking.example.com/recipe")).toBe(true);
+    expect(isPublicHttpUrl("http://example.org/r")).toBe(true);
+  });
+
+  it("blocks non-http schemes, loopback, private ranges, and cloud metadata", () => {
+    expect(isPublicHttpUrl("file:///etc/passwd")).toBe(false);
+    expect(isPublicHttpUrl("ftp://example.com")).toBe(false);
+    expect(isPublicHttpUrl("http://localhost:3000/x")).toBe(false);
+    expect(isPublicHttpUrl("http://127.0.0.1/x")).toBe(false);
+    expect(isPublicHttpUrl("http://10.0.0.5/x")).toBe(false);
+    expect(isPublicHttpUrl("http://192.168.1.1/x")).toBe(false);
+    expect(isPublicHttpUrl("http://172.16.0.1/x")).toBe(false);
+    expect(isPublicHttpUrl("http://169.254.169.254/latest/meta-data/")).toBe(false);
+    expect(isPublicHttpUrl("http://metadata.google.internal/")).toBe(false);
+    expect(isPublicHttpUrl("http://[::1]/x")).toBe(false);
+    expect(isPublicHttpUrl("not a url")).toBe(false);
   });
 });
 

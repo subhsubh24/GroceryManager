@@ -13,6 +13,7 @@ import {
   setGmailHistoryId,
   setGmailWatch,
   updateGoogleTokens,
+  withTenant,
   type Querier,
 } from "@gm/db";
 import { decryptSecret, encryptSecret } from "../crypto/index.js";
@@ -30,9 +31,17 @@ import { createLlmNormalizer } from "./llm-normalizer.js";
 import { ingestReceipt } from "./ingest.js";
 import { cleanReceiptText, extractReceipt } from "./receipt-parse.js";
 
-async function getValidAccessToken(db: Querier, env: Env, userId: string): Promise<string> {
-  const cred = await getGoogleCredential(db, userId);
-  if (!cred) throw new Error(`no google credential for user ${userId}`);
+/** A top-level DB handle (not a transaction) — syncGmailForUser opens its own per-message tx. */
+type DbHandle = Parameters<typeof withTenant>[0];
+type GoogleCredential = NonNullable<Awaited<ReturnType<typeof getGoogleCredential>>>;
+
+/** Exchange/refresh an access token from an already-loaded credential (avoids a second fetch). */
+async function accessTokenFromCred(
+  db: Querier,
+  env: Env,
+  userId: string,
+  cred: GoogleCredential,
+): Promise<string> {
   const key = env.TOKEN_ENC_KEY;
   if (!key) throw new Error("TOKEN_ENC_KEY not set");
 
@@ -51,21 +60,42 @@ async function getValidAccessToken(db: Querier, env: Env, userId: string): Promi
   throw new Error("no valid google token (need GOOGLE_CLIENT_ID/SECRET + a stored refresh token)");
 }
 
-/** Discover new receipt message ids for a user (history delta when known, else a bounded search). */
-async function discoverMessageIds(
+async function getValidAccessToken(db: Querier, env: Env, userId: string): Promise<string> {
+  const cred = await getGoogleCredential(db, userId);
+  if (!cred) throw new Error(`no google credential for user ${userId}`);
+  return accessTokenFromCred(db, env, userId, cred);
+}
+
+/** Fetch the credential once → a ready Gmail client + the current sync cursor (avoids double reads). */
+async function resolveGmailContext(
   db: Querier,
-  client: GmailClient,
+  env: Env,
   userId: string,
+): Promise<{ client: GmailClient; historyId: string | null }> {
+  const cred = await getGoogleCredential(db, userId);
+  if (!cred) throw new Error(`no google credential for user ${userId}`);
+  const token = await accessTokenFromCred(db, env, userId, cred);
+  return { client: new GmailClient(token), historyId: cred.historyId ?? null };
+}
+
+/**
+ * Discover new receipt message ids (history delta when we have a cursor, else a bounded search).
+ * Pure of DB writes: it returns the delta's next historyId so the caller advances the cursor only
+ * AFTER the batch is processed (otherwise a mid-batch failure would skip un-ingested receipts).
+ * The whole history delta is returned (no slice) so large deltas aren't silently truncated; the
+ * `maxSearch` bound applies only to the cursorless cold-start search.
+ */
+async function discoverMessageIds(
+  client: GmailClient,
   historyId: string | null | undefined,
-  max: number,
-): Promise<string[]> {
+  maxSearch: number,
+): Promise<{ ids: string[]; newHistoryId?: string }> {
   if (historyId) {
     const h = await client.historyMessageIds(historyId);
-    if (h.historyId) await setGmailHistoryId(db, userId, h.historyId);
-    return h.ids.slice(0, max);
+    return { ids: h.ids, newHistoryId: h.historyId };
   }
-  const r = await client.listMessageIds({ q: RECEIPT_QUERY, maxResults: max });
-  return r.ids;
+  const r = await client.listMessageIds({ q: RECEIPT_QUERY, maxResults: maxSearch });
+  return { ids: r.ids };
 }
 
 /** Discover new receipt messages for a user and hand each off to receipt-parse (worker queue path). */
@@ -75,18 +105,18 @@ export async function pollGmailForUser(
   userId: string,
   enqueue: (messageId: string) => Promise<void>,
 ): Promise<number> {
-  const token = await getValidAccessToken(db, env, userId);
-  const client = new GmailClient(token);
-  const cred = await getGoogleCredential(db, userId);
-  const ids = await discoverMessageIds(db, client, userId, cred?.historyId, 25);
+  const { client, historyId } = await resolveGmailContext(db, env, userId);
+  const { ids, newHistoryId } = await discoverMessageIds(client, historyId, 25);
   for (const id of ids) await enqueue(id);
+  // Safe to advance after enqueue: each id becomes a durable, retryable BullMQ job.
+  if (newHistoryId) await setGmailHistoryId(db, userId, newHistoryId);
   return ids.length;
 }
 
 /**
  * Register/refresh the Gmail Pub/Sub watch for a user (PLAN §5.1 — must be renewed ≤7 days). Persists
- * the returned historyId + expiry so the webhook + poll have a sync cursor. Run daily (worker cron or
- * the /api/cron/gmail route). No-op-safe: throws are caught by the caller per user.
+ * the expiry and seeds the sync cursor only on the first watch — an existing historyId is preserved so
+ * renewing never resets the cursor forward (which would make the fallback poll miss dropped pushes).
  */
 export async function renewGmailWatch(
   db: Querier,
@@ -94,12 +124,14 @@ export async function renewGmailWatch(
   userId: string,
   topicName: string,
 ): Promise<{ historyId: string; watchExpiresAt: Date }> {
-  const token = await getValidAccessToken(db, env, userId);
-  const client = new GmailClient(token);
-  const res = await client.watch(topicName);
+  const cred = await getGoogleCredential(db, userId);
+  if (!cred) throw new Error(`no google credential for user ${userId}`);
+  const token = await accessTokenFromCred(db, env, userId, cred);
+  const res = await new GmailClient(token).watch(topicName);
   const watchExpiresAt = new Date(Number(res.expiration));
-  await setGmailWatch(db, userId, { historyId: res.historyId, watchExpiresAt });
-  return { historyId: res.historyId, watchExpiresAt };
+  const historyId = cred.historyId ?? res.historyId; // keep an existing cursor; seed on cold start
+  await setGmailWatch(db, userId, { historyId, watchExpiresAt });
+  return { historyId, watchExpiresAt };
 }
 
 const SOURCE_BY_RETAILER = {
@@ -112,16 +144,19 @@ export type ParseReceiptResult =
   | { skipped: true }
   | ({ skipped: false } & Awaited<ReturnType<typeof ingestReceipt>>);
 
-/** Fetch one message, classify, and (if a receipt) run the extract→normalize→pantry chain. */
+/**
+ * Fetch one message, classify, and (if a receipt) run the extract→normalize→pantry chain. Pass a
+ * pre-resolved `client` to avoid re-reading the credential per message in a batch.
+ */
 export async function parseReceiptForUser(
   db: Querier,
   env: Env,
   userId: string,
   messageId: string,
+  client?: GmailClient,
 ): Promise<ParseReceiptResult> {
-  const token = await getValidAccessToken(db, env, userId);
-  const client = new GmailClient(token);
-  const msg = await client.getMessage(messageId);
+  const gmailClient = client ?? new GmailClient(await getValidAccessToken(db, env, userId));
+  const msg = await gmailClient.getMessage(messageId);
 
   const from = headerValue(msg.payload?.headers, "From");
   const subject = headerValue(msg.payload?.headers, "Subject");
@@ -159,10 +194,19 @@ export interface GmailSyncSummary {
   deduped: number; // receipts already ingested before (idempotent skip)
   linesIngested: number; // line items written across all receipts
   needsReview: number; // line items that couldn't be confidently resolved
+  failed: number; // messages that errored (isolated — didn't abort the batch)
 }
 
 export function emptyGmailSyncSummary(): GmailSyncSummary {
-  return { scanned: 0, receipts: 0, ingested: 0, deduped: 0, linesIngested: 0, needsReview: 0 };
+  return {
+    scanned: 0,
+    receipts: 0,
+    ingested: 0,
+    deduped: 0,
+    linesIngested: 0,
+    needsReview: 0,
+    failed: 0,
+  };
 }
 
 /** Pure: fold one parse result into the running summary (the worth-testing rollup logic). */
@@ -178,25 +222,38 @@ export function accumulateParseResult(s: GmailSyncSummary, r: ParseReceiptResult
 }
 
 /**
- * Inline sync: poll + parse a bounded batch immediately (no queue) and roll up a summary. Powers the
- * web "Sync receipts now" action so the auto-fill loop runs with zero Redis/worker. The background
- * worker uses `pollGmailForUser` + `parseReceiptForUser` for unbounded volume.
+ * Inline sync: discover + parse a batch immediately (no queue) and roll up a summary. Powers the web
+ * "Sync receipts now" action so the loop runs with zero Redis/worker. Takes a top-level DB handle and
+ * runs each message in its OWN tenant transaction, so one duplicate/parse error can't poison the rest
+ * of the batch; the history cursor is advanced only after the batch is attempted (never before work).
  */
 export async function syncGmailForUser(
-  db: Querier,
+  db: DbHandle,
   env: Env,
   userId: string,
   opts: { maxMessages?: number } = {},
 ): Promise<GmailSyncSummary> {
   const max = opts.maxMessages ?? 10;
-  const token = await getValidAccessToken(db, env, userId);
-  const client = new GmailClient(token);
-  const cred = await getGoogleCredential(db, userId);
-  const ids = await discoverMessageIds(db, client, userId, cred?.historyId, max);
+  // Resolve the client + cursor in a short tx (no network held inside the transaction).
+  const { client, historyId } = await withTenant(db, userId, (tx) =>
+    resolveGmailContext(tx, env, userId),
+  );
+  const { ids, newHistoryId } = await discoverMessageIds(client, historyId, max);
 
   const summary = emptyGmailSyncSummary();
   for (const id of ids) {
-    accumulateParseResult(summary, await parseReceiptForUser(db, env, userId, id));
+    try {
+      const r = await withTenant(db, userId, (tx) => parseReceiptForUser(tx, env, userId, id, client));
+      accumulateParseResult(summary, r);
+    } catch (e) {
+      // Isolated per message — a bad/duplicate one is logged + counted, not fatal to the batch.
+      summary.failed += 1;
+      console.error(`[gmail-sync] message ${id} failed`, e);
+    }
   }
+
+  // Advance the cursor after attempting the batch (failures isolated above), mirroring the worker's
+  // advance-then-best-effort durability so a poison message can't block the cursor forever.
+  if (newHistoryId) await withTenant(db, userId, (tx) => setGmailHistoryId(tx, userId, newHistoryId));
   return summary;
 }
