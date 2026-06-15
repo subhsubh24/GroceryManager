@@ -16,6 +16,8 @@ import {
   type ImportedRecipe,
 } from "./import.js";
 
+export { cleanIngredientName } from "./import.js";
+
 const IMPORT_SYSTEM =
   "You convert a single recipe (from a web page or pasted text) into structured fields. " +
   "Use only what's present; never invent ingredients or steps. Keep amounts as written.";

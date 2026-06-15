@@ -13,21 +13,26 @@ export interface CaptureResult {
   added: number;
 }
 
+/** Reason tag for the inserted list items (e.g. "recipe_need" for recipe gaps); defaults to manual. */
+type ListItemReason = NonNullable<(typeof shoppingListItems.$inferInsert)["reason"]>;
+
 export async function captureToList(
   db: Querier,
   userId: string,
   items: ParsedCaptureItem[],
+  opts: { reason?: ListItemReason } = {},
 ): Promise<CaptureResult> {
   if (items.length === 0) return { listId: null, added: 0 };
   const ports = createDbNormalizationPorts(db, userId);
   const listId = await getOrCreateActiveList(db, userId);
+  const reason = opts.reason ?? "manual";
 
   let added = 0;
   for (const item of items) {
     const [top] = await ports.trigramCandidates(item.name, 1);
     const canonicalItemId =
       top && top.score >= NORMALIZE.trigramThreshold ? top.id : await ports.createCanonical(item.name);
-    await db.insert(shoppingListItems).values({ shoppingListId: listId, canonicalItemId, reason: "manual" });
+    await db.insert(shoppingListItems).values({ shoppingListId: listId, canonicalItemId, reason });
     added += 1;
   }
   return { listId, added };

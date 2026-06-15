@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { CookMode } from "../cook/[id]/cook-mode.js";
+import { addNamesToListAction } from "@/app/lib/list-actions";
 
 export type ImportIngredient = { name: string; measure?: string; inPantry: boolean };
 
@@ -17,6 +18,7 @@ export type ImportState =
       sourceUrl?: string;
       steps: string[];
       ingredients: ImportIngredient[];
+      missing: string[];
       haveCount: number;
       totalCount: number;
     };
@@ -79,6 +81,29 @@ export function ImportRecipe({
               </a>
             )}
           </div>
+
+          {state.missing.length > 0 && (
+            <form
+              action={addNamesToListAction}
+              className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0 text-sm">
+                  <div className="font-medium text-ink">Missing {state.missing.length}</div>
+                  <div className="text-xs text-ink/50">{state.missing.join(", ")}</div>
+                </div>
+                {state.missing.map((m) => (
+                  <input key={m} type="hidden" name="name" value={m} />
+                ))}
+                <button
+                  type="submit"
+                  className="shrink-0 rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white"
+                >
+                  Add missing to list →
+                </button>
+              </div>
+            </form>
+          )}
 
           {/* Reuse Cook Mode: pantry ✓ on ingredients, ×scaling, steps with timers + wake-lock. */}
           <CookMode imageUrl={state.imageUrl} steps={state.steps} ingredients={state.ingredients} />

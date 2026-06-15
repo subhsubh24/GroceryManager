@@ -2,7 +2,7 @@
 
 import { getDb, getPantryView, withTenant } from "@gm/db";
 import { buildPantryIndex, splitSteps } from "@gm/core/recipe";
-import { importRecipe } from "@gm/core/recipe/import-llm";
+import { cleanIngredientName, importRecipe } from "@gm/core/recipe/import-llm";
 import { currentUserId } from "@/app/lib/tenant";
 import type { ImportState } from "./import-recipe";
 
@@ -42,6 +42,15 @@ export async function importRecipeAction(_prev: ImportState, formData: FormData)
       measure: i.measure,
       inPantry: has(i.name),
     }));
+    // Cleaned, de-duped food names for the "add missing to list" action.
+    const missing = Array.from(
+      new Set(
+        ingredients
+          .filter((i) => !i.inPantry)
+          .map((i) => cleanIngredientName(i.name))
+          .filter(Boolean),
+      ),
+    );
 
     return {
       status: "done",
@@ -52,6 +61,7 @@ export async function importRecipeAction(_prev: ImportState, formData: FormData)
       sourceUrl: recipe.sourceUrl,
       steps: splitSteps(recipe.instructions),
       ingredients,
+      missing,
       haveCount: ingredients.filter((i) => i.inPantry).length,
       totalCount: ingredients.length,
     };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractRecipeJsonLd, fieldsToImportedRecipe } from "./import.js";
+import { cleanIngredientName, extractRecipeJsonLd, fieldsToImportedRecipe } from "./import.js";
 
 const page = (jsonLd: unknown) =>
   `<html><head><script type="application/ld+json">${JSON.stringify(jsonLd)}</script></head><body>x</body></html>`;
@@ -76,6 +76,25 @@ describe("extractRecipeJsonLd", () => {
     expect(extractRecipeJsonLd(page({ "@type": "WebPage", name: "Not a recipe" }))).toBeNull();
     expect(extractRecipeJsonLd("<html><body>no json-ld here</body></html>")).toBeNull();
     expect(extractRecipeJsonLd('<script type="application/ld+json">{ broken json</script>')).toBeNull();
+  });
+});
+
+describe("cleanIngredientName", () => {
+  it("strips leading quantities and units", () => {
+    expect(cleanIngredientName("2 tomatoes")).toBe("tomatoes");
+    expect(cleanIngredientName("200 g chicken breast")).toBe("chicken breast");
+    expect(cleanIngredientName("1 1/2 cups flour")).toBe("flour");
+    expect(cleanIngredientName("½ tsp chili flakes")).toBe("chili flakes");
+  });
+
+  it("drops prep after a comma and the leading count+unit", () => {
+    expect(cleanIngredientName("3 cloves garlic, thinly sliced")).toBe("garlic");
+    expect(cleanIngredientName("garlic, minced")).toBe("garlic");
+  });
+
+  it("leaves a plain food name (or unrecognized text) intact", () => {
+    expect(cleanIngredientName("olive oil")).toBe("olive oil");
+    expect(cleanIngredientName("salt to taste")).toBe("salt to taste");
   });
 });
 

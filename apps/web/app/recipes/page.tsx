@@ -11,6 +11,7 @@ import {
 type Mood = "nice" | "easy" | "batch";
 import { dietExclusions, KNOWN_DIETS, projectUserModel } from "@gm/core/personalization";
 import { currentUserId } from "@/app/lib/tenant";
+import { addNamesToListAction } from "@/app/lib/list-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -185,9 +186,21 @@ export default async function RecipesPage({
               {r.missing.length > 0 && (
                 <div className="mt-1 text-xs text-ink/40">missing: {r.missing.join(", ")}</div>
               )}
-              <a href={`/cook/${r.id}`} className="mt-2 inline-block text-xs font-medium text-brand-600">
-                Cook mode →
-              </a>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <a href={`/cook/${r.id}`} className="text-xs font-medium text-brand-600">
+                  Cook mode →
+                </a>
+                {r.missing.length > 0 && (
+                  <form action={addNamesToListAction}>
+                    {r.missing.map((m) => (
+                      <input key={m} type="hidden" name="name" value={m} />
+                    ))}
+                    <button type="submit" className="text-xs font-medium text-brand-600">
+                      + Add {r.missing.length} missing to list
+                    </button>
+                  </form>
+                )}
+              </div>
             </div>
           </li>
         ))}

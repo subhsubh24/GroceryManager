@@ -163,6 +163,22 @@ export function buildImportPrompt(text: string): string {
   );
 }
 
+const LEADING_QTY = /^\s*(?:\d+\s+\d+\/\d+|\d+\/\d+|[½⅓⅔¼¾⅛⅜⅝⅞]|\d+(?:[.,]\d+)?)\s*/;
+const LEADING_UNIT =
+  /^(?:lbs?|pounds?|oz|ounces?|kgs?|g|grams?|cups?|tbsps?|tsps?|tablespoons?|teaspoons?|cloves?|cans?|bottles?|bunch(?:es)?|sticks?|heads?|slices?|mls?|l|liters?|litres?|packs?|packets?|jars?|bags?|boxes?|pinch(?:es)?|dash(?:es)?|sprigs?|handful)\b\.?\s*/i;
+
+/**
+ * Pure: reduce a recipe ingredient line to a food name for matching / list-add — drop prep after a
+ * comma ("garlic, sliced" → "garlic") and a leading quantity + unit ("3 cloves garlic" → "garlic").
+ * Best-effort: leaves anything it doesn't recognize intact (trigram matching is forgiving downstream).
+ */
+export function cleanIngredientName(line: string): string {
+  let s = (line.split(",")[0] ?? "").trim();
+  s = s.replace(LEADING_QTY, "").trimStart();
+  s = s.replace(LEADING_UNIT, "").trimStart();
+  return s.trim();
+}
+
 /** Pure: map validated LLM fields → an ImportedRecipe (steps joined for splitSteps, blanks dropped). */
 export function fieldsToImportedRecipe(f: RecipeImportFields, sourceUrl?: string): ImportedRecipe {
   return {
