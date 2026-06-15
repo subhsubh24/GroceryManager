@@ -42,7 +42,7 @@ pnpm dev
 ## Status
 A working vertical slice runs end-to-end: pages are server-rendered against Postgres with
 **row-level-security** enforcement, and the Gemini-backed features below were verified against the
-real model. **183 core unit tests + full workspace typecheck + `next build` green.**
+real model. **189 core unit tests + full workspace typecheck + `next build` green.**
 
 **Built & tested**
 - **Pantry & depletion** — ledger-projected stock, confidence decay, expiring-soon.
@@ -53,10 +53,11 @@ real model. **183 core unit tests + full workspace typecheck + `next build` gree
 - **Ingestion** — receipt → extraction → normalization cascade incl. the **LLM tiebreak**; idempotent.
 - **Personalization** — onboarding interview + always-learning preference ledger → UserModel.
 - **Spend / Grocery Wrapped / Waste hub / weekly Digest** — analytics + the Sunday briefing.
-- **One-cart ordering** — due staples + your active list merged into a single Instacart push.
+- **One-cart ordering** — due staples + your active list merged into one cart, with a **keyless** path (copy-list + per-item Instacart search + Amazon Add-to-Cart); the official one-tap Instacart prefill drops in when a key is set.
 
 **Wired but needs real infra/keys to exercise** — live Gmail watch/poll (OAuth + Pub/Sub),
-Instacart/Amazon ordering keys, web-push delivery, recipe import (URL/photo), and the §5.4
-embedding stage (needs a catalog-embedding backfill).
+Instacart's *official* prefilled-list page + affiliate attribution (an optional upgrade over the
+keyless ordering path above), web-push delivery, recipe import (URL/photo), and the §5.4 embedding
+stage (needs a catalog-embedding backfill).
 
 See the phased roadmap in `docs/PLAN.md` §10.

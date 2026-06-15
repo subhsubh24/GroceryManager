@@ -1,33 +1,77 @@
 import { loadEnv } from "@gm/config/env";
 import { getActiveListView, getDb, loadReorderInputs, withTenant } from "@gm/db";
-import { buildDraftOrders, type ReorderInputRow } from "@gm/core/reorder";
+import { buildDraftOrders, mergeInstacartItems, type ReorderInputRow } from "@gm/core/reorder";
+import { instacart } from "@gm/core/integrations";
 import { currentUserId } from "@/app/lib/tenant";
+import { CopyListButton } from "./copy-list-button";
 
 export const dynamic = "force-dynamic";
 
+const { buildInstacartSearchUrl, buildListText } = instacart;
+
 async function loadDraft() {
   try {
+    const env = loadEnv();
     const userId = await currentUserId();
-    if (!userId) return { draft: null, listItems: [], error: null as string | null };
+    if (!userId)
+      return { draft: null, listItems: [], hasInstacartKey: false, error: null as string | null };
     const { rows, list } = await withTenant(getDb(), userId, async (tx) => ({
       rows: (await loadReorderInputs(tx, userId)) as ReorderInputRow[],
       list: await getActiveListView(tx, userId),
     }));
-    const draft = buildDraftOrders(rows, { associateTag: loadEnv().AMAZON_ASSOCIATE_TAG });
+    const draft = buildDraftOrders(rows, { associateTag: env.AMAZON_ASSOCIATE_TAG });
     const listItems = list.filter((i) => !i.checked);
-    return { draft, listItems, error: null as string | null };
+    return {
+      draft,
+      listItems,
+      hasInstacartKey: Boolean(env.INSTACART_API_KEY),
+      error: null as string | null,
+    };
   } catch (e) {
-    return { draft: null, listItems: [], error: e instanceof Error ? e.message : String(e) };
+    return {
+      draft: null,
+      listItems: [],
+      hasInstacartKey: false,
+      error: e instanceof Error ? e.message : String(e),
+    };
   }
 }
 
 export default async function ListPage() {
-  const { draft, listItems, error } = await loadDraft();
+  const { draft, listItems, hasInstacartKey, error } = await loadDraft();
   const nothingDue =
     draft &&
     draft.instacart.items.length === 0 &&
     draft.amazon.items.length === 0 &&
     listItems.length === 0;
+
+  // The exact set the official push would order — reused for the keyless copy-list + search links.
+  const merged = draft
+    ? mergeInstacartItems(draft.instacart.items, listItems.map((i) => ({ name: i.name })))
+    : [];
+  const listText = buildListText(merged, "Your GroceryManager list");
+
+  // Keyless: each item name links to an Instacart search (how you'd shop it by hand). With a key,
+  // the one-tap prefill button does the work, so names stay plain text.
+  const itemLabel = (name: string, extra: string) =>
+    hasInstacartKey ? (
+      <>
+        {name}
+        {extra}
+      </>
+    ) : (
+      <>
+        <a
+          href={buildInstacartSearchUrl(name)}
+          target="_blank"
+          rel="noreferrer"
+          className="text-brand-700 hover:underline"
+        >
+          {name}
+        </a>
+        {extra}
+      </>
+    );
 
   return (
     <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
@@ -60,8 +104,10 @@ export default async function ListPage() {
             <ul className="mt-3 space-y-1 text-sm text-ink/70">
               {draft.instacart.items.map((i) => (
                 <li key={i.canonicalItemId}>
-                  {i.name}
-                  {i.recommendQty ? ` · ${Math.round(i.recommendQty)} ${i.unit ?? ""}` : ""}
+                  {itemLabel(
+                    i.name,
+                    i.recommendQty ? ` · ${Math.round(i.recommendQty)} ${i.unit ?? ""}` : "",
+                  )}
                 </li>
               ))}
             </ul>
@@ -71,20 +117,41 @@ export default async function ListPage() {
               <div className="text-xs font-medium uppercase tracking-wide text-ink/40">From your list</div>
               <ul className="mt-1 space-y-1 text-sm text-ink/70">
                 {listItems.map((i) => (
-                  <li key={i.id}>{i.name}</li>
+                  <li key={i.id}>{itemLabel(i.name, "")}</li>
                 ))}
               </ul>
             </div>
           )}
           <p className="mt-3 text-xs text-ink/50">Staples due + your list — one cart.</p>
-          <form action="/api/instacart" method="post" className="mt-3">
-            <button
-              type="submit"
-              className="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98]"
-            >
-              Shop with Instacart
-            </button>
-          </form>
+
+          {hasInstacartKey ? (
+            <form action="/api/instacart" method="post" className="mt-3">
+              <button
+                type="submit"
+                className="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98]"
+              >
+                Shop with Instacart
+              </button>
+            </form>
+          ) : (
+            <>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <CopyListButton text={listText} />
+                <a
+                  href="https://www.instacart.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm font-medium text-brand-600"
+                >
+                  Open Instacart →
+                </a>
+              </div>
+              <p className="mt-2 text-xs text-ink/50">
+                Copy your list and paste it into Instacart, or tap an item to search it. One-tap
+                prefill turns on once Instacart is connected.
+              </p>
+            </>
+          )}
         </section>
       )}
 

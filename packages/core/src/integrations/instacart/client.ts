@@ -40,6 +40,38 @@ export function buildShoppingListPayload(title: string, items: ListItemInput[]):
   };
 }
 
+/**
+ * Keyless deep-link into Instacart's public search for one item. Opening a search is exactly what a
+ * shopper does by hand — no API key, no scraping, no ToS issue. This is the no-key ordering fallback:
+ * the IDP shopping-list page (createShoppingListPage) needs an API key + ~30–40 day production
+ * approval; this needs neither, and the official prefill drops in transparently once a key exists.
+ */
+export function buildInstacartSearchUrl(query: string): string {
+  return `https://www.instacart.com/store/s?k=${encodeURIComponent(query.trim())}`;
+}
+
+function formatQty(n: number): string {
+  return Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
+}
+
+/**
+ * Plain-text checklist for clipboard / paste / print — the always-works keyless fallback (paste into
+ * Instacart, any grocery app, or notes). Blank names are skipped; quantity+unit are prefixed when set.
+ */
+export function buildListText(
+  items: { name: string; quantity?: number | null; unit?: string | null }[],
+  title = "Shopping list",
+): string {
+  const lines: string[] = [];
+  for (const it of items) {
+    const name = it.name?.trim();
+    if (!name) continue;
+    const qty = it.quantity != null ? `${formatQty(it.quantity)}${it.unit ? ` ${it.unit}` : ""} ` : "";
+    lines.push(`- ${qty}${name}`);
+  }
+  return [title, ...lines].join("\n");
+}
+
 const IDP_BASE = "https://connect.instacart.com/idp/v1";
 
 export class InstacartClient {
