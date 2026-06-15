@@ -84,9 +84,34 @@ one-tap fix, rather than silently guessing.
 - **Automatic background sync (optional):** the `services/workers` BullMQ worker runs the same
   `pollGmailForUser` + `parseReceiptForUser` on an hourly cron. Set `REDIS_URL` and run the worker
   to fill the pantry continuously without tapping. Same code path as the manual button.
-- **Real-time push (follow-up, not required):** Gmail `users.watch` + a Pub/Sub push webhook would
-  make ingestion instant. The hourly poll / manual sync already cover the functional need, so this
-  is a later optimization (the `watch-renew` worker + `/api/webhooks/gmail` route are still stubs).
+- **Real-time push (optional — instant ingestion):** Gmail `users.watch` → Pub/Sub → a push webhook
+  ingests the moment a receipt lands. Built and ready; it just needs a Pub/Sub topic (below). Not
+  required — the manual sync + cron/worker poll already cover the functional need.
+
+## Real-time push setup (optional)
+
+Makes receipts ingest instantly instead of on a poll. Works on Vercel with no separate worker.
+
+1. **Create a Pub/Sub topic** in the same Google Cloud project (`gmail-receipts`), and grant Gmail
+   permission to publish to it: add member `gmail-api-push@system.gserviceaccount.com` with role
+   **Pub/Sub Publisher** on the topic.
+2. **Add a push subscription** to that topic with delivery type **Push** and endpoint:
+   `https://<your-app>/api/webhooks/gmail?token=<GMAIL_WEBHOOK_SECRET>`
+3. **Set env:**
+   ```bash
+   GMAIL_PUBSUB_TOPIC=projects/<project-id>/topics/gmail-receipts
+   GMAIL_WEBHOOK_SECRET=$(openssl rand -base64 24)   # must match the ?token= in the push endpoint
+   CRON_SECRET=$(openssl rand -base64 24)            # guards the renew/poll cron route
+   ```
+4. **Renew the watch daily** (the watch expires ≤7 days). Either run the `services/workers` service
+   (its `watch-renew` cron does this), or — on Vercel — add to `vercel.json`:
+   ```json
+   { "crons": [{ "path": "/api/cron/gmail?key=<CRON_SECRET>", "schedule": "0 6 * * *" }] }
+   ```
+   The cron route renews each user's watch *and* runs a fallback poll (covers any dropped pushes).
+
+The webhook acks every delivery quickly and runs a bounded inline sync, so it stays within Pub/Sub's
+deadline and never double-counts (ingestion is idempotent per Gmail message id).
 
 ## Privacy & security
 

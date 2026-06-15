@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { bodyText, detectRetailer, extractBody, headerValue, isReceiptEmail, type GmailPart } from "./parse.js";
+import {
+  bodyText,
+  detectRetailer,
+  extractBody,
+  headerValue,
+  isReceiptEmail,
+  parsePubSubMessage,
+  type GmailPart,
+} from "./parse.js";
 
 const b64url = (s: string) => Buffer.from(s, "utf8").toString("base64url");
 
@@ -43,5 +51,21 @@ describe("gmail body extraction", () => {
     expect(html).toBe("<p>Bananas $1.99</p>");
     expect(text).toBe("Bananas $1.99");
     expect(bodyText(payload)).toBe("<p>Bananas $1.99</p>");
+  });
+});
+
+describe("parsePubSubMessage", () => {
+  const encode = (obj: unknown) => Buffer.from(JSON.stringify(obj), "utf8").toString("base64");
+
+  it("decodes a Gmail push notification", () => {
+    const body = { message: { data: encode({ emailAddress: "me@gmail.com", historyId: 4242 }) } };
+    expect(parsePubSubMessage(body)).toEqual({ emailAddress: "me@gmail.com", historyId: "4242" });
+  });
+
+  it("returns null for a malformed or empty body", () => {
+    expect(parsePubSubMessage({})).toBeNull();
+    expect(parsePubSubMessage({ message: { data: "" } })).toBeNull();
+    expect(parsePubSubMessage({ message: { data: "%%%not-base64-json%%%" } })).toBeNull();
+    expect(parsePubSubMessage({ message: { data: encode({ historyId: 1 }) } })).toBeNull(); // no email
   });
 });

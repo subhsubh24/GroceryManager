@@ -302,6 +302,24 @@ export async function setGmailHistoryId(db: Querier, userId: string, historyId: 
     .where(and(eq(oauthCredentials.userId, userId), eq(oauthCredentials.provider, "google")));
 }
 
+/** Persist the registered Gmail watch (historyId + expiry) after users.watch (PLAN §5.1). */
+export async function setGmailWatch(
+  db: Querier,
+  userId: string,
+  a: { historyId: string; watchExpiresAt: Date },
+) {
+  await db
+    .update(oauthCredentials)
+    .set({ historyId: a.historyId, watchExpiresAt: a.watchExpiresAt, updatedAt: new Date() })
+    .where(and(eq(oauthCredentials.userId, userId), eq(oauthCredentials.provider, "google")));
+}
+
+/** Map a Gmail address (from a Pub/Sub push) → userId. Admin/provisioning scope (cross-tenant). */
+export async function getUserIdByEmail(db: Querier, email: string): Promise<string | null> {
+  const rows = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
+  return rows[0]?.id ?? null;
+}
+
 /** The user's current active shopping list, creating an empty manual one if none exists (§7.1/§10). */
 export async function getOrCreateActiveList(db: Querier, userId: string): Promise<string> {
   const existing = await db

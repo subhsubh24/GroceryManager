@@ -8,7 +8,13 @@
  * accumulator (`accumulateParseResult`) is unit-tested; the network glue is thin.
  */
 import type { Env } from "@gm/config/env";
-import { getGoogleCredential, setGmailHistoryId, updateGoogleTokens, type Querier } from "@gm/db";
+import {
+  getGoogleCredential,
+  setGmailHistoryId,
+  setGmailWatch,
+  updateGoogleTokens,
+  type Querier,
+} from "@gm/db";
 import { decryptSecret, encryptSecret } from "../crypto/index.js";
 import {
   GmailClient,
@@ -75,6 +81,25 @@ export async function pollGmailForUser(
   const ids = await discoverMessageIds(db, client, userId, cred?.historyId, 25);
   for (const id of ids) await enqueue(id);
   return ids.length;
+}
+
+/**
+ * Register/refresh the Gmail Pub/Sub watch for a user (PLAN §5.1 — must be renewed ≤7 days). Persists
+ * the returned historyId + expiry so the webhook + poll have a sync cursor. Run daily (worker cron or
+ * the /api/cron/gmail route). No-op-safe: throws are caught by the caller per user.
+ */
+export async function renewGmailWatch(
+  db: Querier,
+  env: Env,
+  userId: string,
+  topicName: string,
+): Promise<{ historyId: string; watchExpiresAt: Date }> {
+  const token = await getValidAccessToken(db, env, userId);
+  const client = new GmailClient(token);
+  const res = await client.watch(topicName);
+  const watchExpiresAt = new Date(Number(res.expiration));
+  await setGmailWatch(db, userId, { historyId: res.historyId, watchExpiresAt });
+  return { historyId: res.historyId, watchExpiresAt };
 }
 
 const SOURCE_BY_RETAILER = {

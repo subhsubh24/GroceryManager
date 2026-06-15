@@ -73,3 +73,27 @@ export function bodyText(payload: GmailPart | undefined): string | null {
   const { html, text } = extractBody(payload);
   return html ?? text;
 }
+
+export interface PubSubNotification {
+  emailAddress: string;
+  historyId: string;
+}
+
+/**
+ * Decode a Gmail Pub/Sub push body → { emailAddress, historyId } (PLAN §5.1). The push delivers
+ * `message.data` as base64-encoded JSON. Pure; returns null for a malformed/empty body.
+ */
+export function parsePubSubMessage(body: unknown): PubSubNotification | null {
+  const data = (body as { message?: { data?: unknown } })?.message?.data;
+  if (typeof data !== "string" || !data) return null;
+  try {
+    const decoded = JSON.parse(Buffer.from(data, "base64").toString("utf8")) as {
+      emailAddress?: unknown;
+      historyId?: unknown;
+    };
+    if (typeof decoded.emailAddress !== "string" || !decoded.emailAddress) return null;
+    return { emailAddress: decoded.emailAddress, historyId: String(decoded.historyId ?? "") };
+  } catch {
+    return null;
+  }
+}

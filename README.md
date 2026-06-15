@@ -42,13 +42,13 @@ pnpm dev
 ## Status
 A working vertical slice runs end-to-end: pages are server-rendered against Postgres with
 **row-level-security** enforcement, and the Gemini-backed features below were verified against the
-real model. **199 core unit tests + full workspace typecheck + `next build` green.**
+real model. **204 core unit tests + full workspace typecheck + `next build` green.**
 
 **Built & tested**
 - **Pantry & depletion** — ledger-projected stock, confidence decay, expiring-soon.
 - **Reorder** — run-out prediction, staples autopilot, **par auto-tuning** (buy less of what you waste), draft orders.
 - **Recipes** — "cook what I have" match/rank, effort + **batch-cook** awareness, **diet/guest** filtering, Cook Mode (timers / wake-lock / scaling) + **substitutions**.
-- **Recipe import** — paste a URL or text → schema.org JSON-LD first (free), Gemini fallback → pantry-matched + straight into Cook Mode.
+- **Recipe import** — paste a URL/text *or snap a photo* → schema.org JSON-LD first (free), else Gemini (vision for photos) → pantry-matched + **add-missing-to-list** + straight into Cook Mode.
 - **Plan-my-week agent** — generator/evaluator over curated candidates (Flash → Pro), deterministic fallback floor.
 - **Vision pantry scan** — Gemini-vision detect → reconcile (presence strong, **absence ≠ depletion**).
 - **Ingestion** — receipt → extraction → normalization cascade incl. the **LLM tiebreak**; idempotent. **Gmail → pantry** runs from the app (Connect Gmail → Sync receipts now) *or* the background worker.
@@ -56,10 +56,10 @@ real model. **199 core unit tests + full workspace typecheck + `next build` gree
 - **Spend / Grocery Wrapped / Waste hub / weekly Digest** — analytics + the Sunday briefing.
 - **One-cart ordering** — due staples + your active list merged into one cart, with a **keyless** path (copy-list + per-item Instacart search + Amazon Add-to-Cart); the official one-tap Instacart prefill drops in when a key is set.
 
-**Wired but needs real infra/keys to exercise** — real-time Gmail push (Pub/Sub watch + webhook; the
-manual "Sync receipts now" + hourly worker already work with just OAuth — see `docs/GMAIL_SETUP.md`),
-Instacart's *official* prefilled-list page + affiliate attribution (an optional upgrade over the
-keyless ordering path above), web-push delivery, and the §5.4 embedding stage (needs a
-catalog-embedding backfill).
+**Built; needs real infra/keys to exercise** — real-time Gmail push (watch-renew + Pub/Sub webhook +
+Vercel-cron route are built; just add a Pub/Sub topic — manual "Sync receipts now" + poll already work
+with just OAuth, see `docs/GMAIL_SETUP.md`), Instacart's *official* prefilled-list page + affiliate
+attribution (an optional upgrade over the keyless ordering path above), web-push delivery, and the
+§5.4 embedding stage (needs a catalog-embedding backfill).
 
 See the phased roadmap in `docs/PLAN.md` §10.

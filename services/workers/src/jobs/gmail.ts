@@ -3,4 +3,9 @@
  * poll → extract → normalize → pantry chain is shared with the web app's manual "Sync receipts now"
  * action. This thin re-export keeps the worker's existing imports stable.
  */
-export { parseReceiptForUser, pollGmailForUser, syncGmailForUser } from "@gm/core/ingestion";
+export {
+  parseReceiptForUser,
+  pollGmailForUser,
+  renewGmailWatch,
+  syncGmailForUser,
+} from "@gm/core/ingestion";

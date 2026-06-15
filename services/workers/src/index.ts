@@ -14,7 +14,7 @@ import {
   receiptParseQueue,
   watchRenewQueue,
 } from "./queues.js";
-import { parseReceiptForUser, pollGmailForUser } from "./jobs/gmail.js";
+import { parseReceiptForUser, pollGmailForUser, renewGmailWatch } from "./jobs/gmail.js";
 
 const env = loadEnv();
 const db = getDb();
@@ -62,7 +62,28 @@ const workers = [
 
   new Worker(QUEUES.visionScan, stub("vision-scan"), { connection, concurrency: 2 }),
   new Worker(QUEUES.predictRecompute, stub("predict-recompute"), { connection }),
-  new Worker(QUEUES.watchRenew, stub("watch-renew"), { connection }),
+
+  new Worker(
+    QUEUES.watchRenew,
+    async () => {
+      if (!env.GMAIL_PUBSUB_TOPIC) {
+        console.log("[watch-renew] GMAIL_PUBSUB_TOPIC unset — skipping (manual/poll sync still works)");
+        return;
+      }
+      const userIds = await listGoogleUserIds(getAdminDb());
+      for (const userId of userIds) {
+        try {
+          const r = await withTenant(db, userId, (tx) =>
+            renewGmailWatch(tx, env, userId, env.GMAIL_PUBSUB_TOPIC!),
+          );
+          console.log(`[watch-renew] user ${userId}: expires ${r.watchExpiresAt.toISOString()}`);
+        } catch (e) {
+          console.error(`[watch-renew] user ${userId} failed`, e);
+        }
+      }
+    },
+    { connection },
+  ),
 ];
 
 async function registerCron() {

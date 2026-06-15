@@ -34,6 +34,12 @@ const EnvSchema = z.object({
   KMS_KEY_ID: z.string().optional(),
   // 32-byte base64 data key for encrypting OAuth tokens at rest (envelope-wrap via KMS in prod).
   TOKEN_ENC_KEY: z.string().optional(),
+  // Real-time Gmail push (PLAN §5.1): Pub/Sub topic for users.watch, a shared secret guarding the
+  // push webhook, and a secret guarding the Vercel-Cron renew/poll endpoint. All optional — the
+  // manual "Sync receipts now" + worker poll work without them.
+  GMAIL_PUBSUB_TOPIC: z.string().optional(), // projects/<project>/topics/<topic>
+  GMAIL_WEBHOOK_SECRET: z.string().optional(),
+  CRON_SECRET: z.string().optional(),
 
   // Integrations
   INSTACART_API_KEY: z.string().optional(),
