@@ -42,11 +42,12 @@ pnpm dev
 ## Status
 A working vertical slice runs end-to-end: pages are server-rendered against Postgres with
 **row-level-security** enforcement, and the Gemini-backed features below were verified against the
-real model. **209 core unit tests + full workspace typecheck + `next build` green.**
+real model. **212 core unit tests + full workspace typecheck + `next build` green.**
 
 **Built & tested**
 - **Pantry & depletion** — ledger-projected stock, confidence decay, expiring-soon.
-- **Reorder** — run-out prediction, staples autopilot, **par auto-tuning** (buy less of what you waste), draft orders.
+- **Reorder** — run-out prediction (purchase cadence **or declared dosage**), staples autopilot, **par auto-tuning** (buy less of what you waste), draft orders.
+- **Replenishment verticals** — groceries → Instacart; **household, personal-care & supplements** → Amazon (keyless Add-to-Cart). **Supplements** get **dosage-based depletion** (bottle size ÷ daily dose → accurate run-out from the first bottle, before any cadence exists).
 - **Recipes** — "cook what I have" match/rank, effort + **batch-cook** awareness, **diet/guest** filtering, Cook Mode (timers / wake-lock / scaling) + **substitutions**.
 - **Recipe import** — paste a URL/text *or snap a photo* → schema.org JSON-LD first (free), else Gemini (vision for photos) → pantry-matched + **add-missing-to-list** + straight into Cook Mode.
 - **Plan-my-week agent** — generator/evaluator over curated candidates (Flash → Pro), deterministic fallback floor.

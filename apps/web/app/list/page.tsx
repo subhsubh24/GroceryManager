@@ -157,7 +157,7 @@ export default async function ListPage() {
 
       {draft && draft.amazon.items.length > 0 && (
         <section className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-          <h2 className="font-semibold text-ink">Household &amp; care · Amazon</h2>
+          <h2 className="font-semibold text-ink">Household, care &amp; supplements · Amazon</h2>
           <ul className="mt-3 space-y-1 text-sm text-ink/70">
             {draft.amazon.items.map((i) => (
               <li key={i.canonicalItemId}>

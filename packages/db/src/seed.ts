@@ -37,7 +37,7 @@ const UNITS: UnitSeed[] = [
 type ItemSeed = {
   slug: string;
   name: string;
-  domain: "grocery" | "household" | "personal_care";
+  domain: "grocery" | "household" | "personal_care" | "supplement";
   category: string;
   baseUnit: string;
   perishability: "perishable" | "semi_perishable" | "shelf_stable";
@@ -45,6 +45,7 @@ type ItemSeed = {
   fridge?: number;
   freezer?: number;
   isStaple?: boolean;
+  unitsPerPackage?: number; // e.g. 120 capsules/bottle — powers dosage-based depletion (§6)
   aliases?: string[];
 };
 
@@ -65,6 +66,10 @@ const ITEMS: ItemSeed[] = [
   { slug: "shampoo", name: "shampoo", domain: "personal_care", category: "haircare", baseUnit: "ml", perishability: "shelf_stable", pantry: 1095, isStaple: true },
   { slug: "toothpaste", name: "toothpaste", domain: "personal_care", category: "oralcare", baseUnit: "ml", perishability: "shelf_stable", pantry: 730, isStaple: true },
   { slug: "facial-moisturizer", name: "facial moisturizer", domain: "personal_care", category: "skincare", baseUnit: "ml", perishability: "shelf_stable", pantry: 365, isStaple: true, aliases: ["moisturizer", "face cream"] },
+  // supplements (count-based, base unit "each" → dosage depletion: bottle size ÷ daily dose)
+  { slug: "vitamin-d3", name: "vitamin D3", domain: "supplement", category: "supplements", baseUnit: "each", perishability: "shelf_stable", pantry: 730, unitsPerPackage: 120, aliases: ["vitamin d", "d3"] },
+  { slug: "omega-3", name: "omega-3 fish oil", domain: "supplement", category: "supplements", baseUnit: "each", perishability: "shelf_stable", pantry: 730, unitsPerPackage: 90, aliases: ["fish oil", "omega 3"] },
+  { slug: "magnesium-glycinate", name: "magnesium glycinate", domain: "supplement", category: "supplements", baseUnit: "each", perishability: "shelf_stable", pantry: 730, unitsPerPackage: 120, aliases: ["magnesium"] },
 ];
 
 async function main() {
@@ -94,6 +99,7 @@ async function main() {
           shelfLifeFridgeDays: it.fridge ?? null,
           shelfLifeFreezerDays: it.freezer ?? null,
           isStaple: it.isStaple ?? false,
+          unitsPerPackage: it.unitsPerPackage != null ? String(it.unitsPerPackage) : null,
           aliases: it.aliases ?? [],
         })
         .onConflictDoNothing({ target: canonicalItems.slug });

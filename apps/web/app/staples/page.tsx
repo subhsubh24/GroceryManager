@@ -1,5 +1,11 @@
 import { revalidatePath } from "next/cache";
-import { getDb, loadReorderInputs, setReorderAutopilot, withTenant } from "@gm/db";
+import {
+  getDb,
+  loadReorderInputs,
+  setReorderAutopilot,
+  setReorderDosage,
+  withTenant,
+} from "@gm/db";
 import { defaultReorderPolicy, predictReorder } from "@gm/core/reorder";
 import { currentUserId } from "@/app/lib/tenant";
 
@@ -26,6 +32,19 @@ async function toggleAutopilot(formData: FormData) {
   revalidatePath("/staples");
 }
 
+async function setDosage(formData: FormData) {
+  "use server";
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  const raw = formData.get("dosesPerDay");
+  const n = raw == null || raw === "" ? null : Number(raw);
+  const dosesPerDay = n != null && Number.isFinite(n) && n > 0 ? n : null;
+  const userId = await currentUserId();
+  if (!userId) return;
+  await withTenant(getDb(), userId, (tx) => setReorderDosage(tx, userId, id, dosesPerDay));
+  revalidatePath("/staples");
+}
+
 async function load() {
   try {
     const userId = await currentUserId();
@@ -33,7 +52,9 @@ async function load() {
     const rows = await withTenant(getDb(), userId, (tx) => loadReorderInputs(tx, userId));
     const now = new Date();
     const items = rows
-      .filter((r) => r.ratePerDay != null || r.enabled) // consumables, or already managed
+      // consumables, already-managed, anything with a declared dose, or supplements (so a fresh
+      // supplement shows up to set its dose before any cadence exists).
+      .filter((r) => r.ratePerDay != null || r.enabled || r.dosesPerDay != null || r.domain === "supplement")
       .map((r) => {
         const enabled = r.enabled ?? false;
         const pred = predictReorder(
@@ -41,6 +62,7 @@ async function load() {
             baseQtyOnHand: r.baseQtyOnHand,
             estimatedConsumptionRatePerDay: r.ratePerDay,
             confidence: r.confidence,
+            dosesPerDay: r.dosesPerDay,
           },
           {
             enabled,
@@ -111,9 +133,33 @@ export default async function StaplesPage() {
                 <div className="font-medium text-ink">{i.name}</div>
                 <div className="text-xs text-ink/50">
                   {i.domain}
-                  {i.ratePerDay != null ? ` · ~${(i.ratePerDay * 7).toFixed(1)}/wk` : ""}
+                  {i.dosesPerDay != null
+                    ? ` · ${i.dosesPerDay}/day`
+                    : i.ratePerDay != null
+                      ? ` · ~${(i.ratePerDay * 7).toFixed(1)}/wk`
+                      : ""}
                   {i.enabled ? ` · next ~${fmtDate(i.pred.recommendByDate ?? i.pred.predictedRunOutAt)}` : ""}
                 </div>
+                <form action={setDosage} className="mt-1.5 flex items-center gap-1.5">
+                  <input type="hidden" name="id" value={i.canonicalItemId} />
+                  <input
+                    name="dosesPerDay"
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    defaultValue={i.dosesPerDay ?? ""}
+                    placeholder="0"
+                    aria-label={`Daily dose for ${i.name}`}
+                    className="w-14 rounded-lg border border-black/10 px-2 py-0.5 text-xs"
+                  />
+                  <span className="text-xs text-ink/40">/day dose</span>
+                  <button
+                    type="submit"
+                    className="rounded-lg bg-ink/5 px-2 py-0.5 text-xs font-medium text-ink/70"
+                  >
+                    Set
+                  </button>
+                </form>
               </div>
               <form action={toggleAutopilot}>
                 <input type="hidden" name="id" value={i.canonicalItemId} />

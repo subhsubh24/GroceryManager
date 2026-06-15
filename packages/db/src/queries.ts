@@ -456,6 +456,8 @@ export async function loadReorderInputs(db: Querier, userId: string) {
       reorderPointQty: reorderPolicies.reorderPointQty,
       leadTimeDays: reorderPolicies.leadTimeDays,
       minIntervalDays: reorderPolicies.minIntervalDays,
+      dosesPerDay: reorderPolicies.dosesPerDay,
+      unitsPerPackage: canonicalItems.unitsPerPackage,
     })
     .from(pantryStock)
     .innerJoin(canonicalItems, eq(pantryStock.canonicalItemId, canonicalItems.id))
@@ -483,9 +485,30 @@ export async function loadReorderInputs(db: Querier, userId: string) {
     leadTimeDays: r.leadTimeDays,
     minIntervalDays: r.minIntervalDays,
     lastSuggestedAt: null as Date | null,
-    packageQty: null as number | null,
+    packageQty: r.unitsPerPackage != null ? Number(r.unitsPerPackage) : null,
     asin: null as string | null,
+    dosesPerDay: r.dosesPerDay != null ? Number(r.dosesPerDay) : null,
+    unitsPerPackage: r.unitsPerPackage != null ? Number(r.unitsPerPackage) : null,
   }));
+}
+
+/** Set (or clear) the per-user daily dosage for an item — upserts the reorder policy row (§6). */
+export async function setReorderDosage(
+  db: Querier,
+  userId: string,
+  canonicalItemId: string,
+  dosesPerDay: number | null,
+) {
+  const value = dosesPerDay != null ? String(dosesPerDay) : null;
+  await db
+    .insert(reorderPolicies)
+    // A fresh row from setting a dose is NOT auto-enabled — dosage drives run-out prediction; the
+    // user still opts into autopilot ordering separately. On an existing row, leave `enabled` alone.
+    .values({ userId, canonicalItemId, enabled: false, dosesPerDay: value })
+    .onConflictDoUpdate({
+      target: [reorderPolicies.userId, reorderPolicies.canonicalItemId],
+      set: { dosesPerDay: value, updatedAt: new Date() },
+    });
 }
 
 /**

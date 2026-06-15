@@ -31,6 +31,7 @@ export async function buildDigestForUser(
           baseQtyOnHand: r.baseQtyOnHand,
           estimatedConsumptionRatePerDay: r.ratePerDay,
           confidence: r.confidence,
+          dosesPerDay: r.dosesPerDay,
         },
         {
           enabled: r.enabled ?? false,

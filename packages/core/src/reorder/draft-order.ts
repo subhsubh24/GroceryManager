@@ -26,6 +26,10 @@ export interface ReorderInputRow {
   lastSuggestedAt: Date | null;
   packageQty: number | null;
   asin: string | null;
+  /** Declared dosage (base units/day) — overrides learned cadence for run-out prediction (§6). */
+  dosesPerDay?: number | null;
+  /** Units per package (e.g. 60 capsules) — rounds the reorder quantity to whole packages. */
+  unitsPerPackage?: number | null;
 }
 
 export interface DraftOrders {
@@ -50,6 +54,7 @@ export function buildDraftOrders(
       baseQtyOnHand: r.baseQtyOnHand,
       estimatedConsumptionRatePerDay: r.ratePerDay,
       confidence: r.confidence,
+      dosesPerDay: r.dosesPerDay,
     };
     const policy: ReorderPolicySnapshot = {
       enabled: r.enabled ?? DEFAULTS.enabled,
@@ -58,7 +63,7 @@ export function buildDraftOrders(
       leadTimeDays: r.leadTimeDays ?? DEFAULTS.leadTimeDays,
       minIntervalDays: r.minIntervalDays ?? DEFAULTS.minIntervalDays,
       lastSuggestedAt: r.lastSuggestedAt,
-      packageQty: r.packageQty,
+      packageQty: r.packageQty ?? r.unitsPerPackage ?? null,
     };
     const pred = predictReorder(stock, policy);
     const lowOrOut = r.status === "low" || r.status === "out" || r.status === "expired_likely";

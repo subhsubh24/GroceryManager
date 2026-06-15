@@ -53,7 +53,7 @@ const updatedAt = () => ts("updated_at").defaultNow().notNull();
 // ---------------------------------------------------------------------------
 // Enums
 // ---------------------------------------------------------------------------
-export const domainEnum = pgEnum("domain", ["grocery", "household", "personal_care"]);
+export const domainEnum = pgEnum("domain", ["grocery", "household", "personal_care", "supplement"]);
 export const unitDimensionEnum = pgEnum("unit_dimension", ["MASS", "VOLUME", "COUNT", "DISCRETE"]);
 export const perishabilityEnum = pgEnum("perishability", ["perishable", "semi_perishable", "shelf_stable"]);
 export const retailerEnum = pgEnum("retailer", ["amazon", "whole_foods", "instacart", "other"]);
@@ -183,10 +183,12 @@ export const canonicalItems = pgTable(
     name: text("name").notNull(),
     slug: text("slug").notNull().unique(),
     domain: domainEnum("domain").default("grocery").notNull(),
-    category: text("category"), // produce/dairy/meat/pantry/cleaning/skincare/...
+    category: text("category"), // produce/dairy/meat/pantry/cleaning/skincare/supplements/...
     baseUnitId: uuid("base_unit_id")
       .notNull()
       .references(() => unitsOfMeasure.id),
+    // Units per retail package (e.g. 60 capsules/bottle) — powers dosage-based depletion (§6).
+    unitsPerPackage: qty("units_per_package"),
     shelfLifePantryDays: integer("shelf_life_pantry_days"),
     shelfLifeFridgeDays: integer("shelf_life_fridge_days"),
     shelfLifeFreezerDays: integer("shelf_life_freezer_days"),
@@ -528,6 +530,9 @@ export const reorderPolicies = pgTable(
     isStaple: boolean("is_staple").default(false).notNull(),
     targetParQty: qty("target_par_qty"),
     reorderPointQty: qty("reorder_point_qty"),
+    // Per-user dosage (e.g. 2 capsules/day) — deterministic depletion that beats cadence and works
+    // from the first package, before any purchase history exists (§6).
+    dosesPerDay: qty("doses_per_day"),
     leadTimeDays: integer("lead_time_days").default(2).notNull(),
     minIntervalDays: integer("min_interval_days").default(7).notNull(),
     preferredProductId: uuid("preferred_product_id").references(() => products.id),

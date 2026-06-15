@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { predictReorder, type ReorderPolicySnapshot, type StockSnapshot } from "./predict.js";
+import {
+  effectiveConsumptionRate,
+  predictReorder,
+  type ReorderPolicySnapshot,
+  type StockSnapshot,
+} from "./predict.js";
 
 const asOf = new Date(2026, 0, 10);
 
@@ -57,5 +62,28 @@ describe("predictReorder", () => {
   it("respects a disabled policy", () => {
     const r = predictReorder(stock({ baseQtyOnHand: 0 }), policy({ enabled: false }), { asOf });
     expect(r.shouldReorder).toBe(false);
+  });
+
+  it("uses a declared dosage to predict run-out even with no learned cadence (supplements)", () => {
+    // First bottle, no purchase history (rate null) but 2 capsules/day declared.
+    // 10 on hand / 2 per day = 5 days → order-by in ~3d (leadTime 2) ≤ horizon 3 → reorder.
+    const r = predictReorder(
+      stock({ baseQtyOnHand: 10, estimatedConsumptionRatePerDay: null, dosesPerDay: 2 }),
+      policy({ reorderPointQty: 0, targetParQty: null, packageQty: 60 }),
+      { asOf },
+    );
+    expect(r.predictedRunOutAt).toEqual(new Date(asOf.getTime() + 5 * 86_400_000));
+    expect(r.shouldReorder).toBe(true);
+  });
+});
+
+describe("effectiveConsumptionRate", () => {
+  it("prefers a positive declared dosage over the learned rate", () => {
+    expect(effectiveConsumptionRate(100, 2)).toBe(2);
+  });
+  it("falls back to the learned rate when no dosage is set or it's non-positive", () => {
+    expect(effectiveConsumptionRate(100, null)).toBe(100);
+    expect(effectiveConsumptionRate(100, 0)).toBe(100);
+    expect(effectiveConsumptionRate(null, undefined)).toBeNull();
   });
 });

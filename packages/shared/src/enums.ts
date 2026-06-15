@@ -2,7 +2,7 @@ import { z } from "zod";
 
 /** Shared string-literal enums. DB columns and LLM schemas both derive from these. */
 
-export const Domain = z.enum(["grocery", "household", "personal_care"]);
+export const Domain = z.enum(["grocery", "household", "personal_care", "supplement"]);
 export type Domain = z.infer<typeof Domain>;
 
 export const UnitDimension = z.enum(["MASS", "VOLUME", "COUNT", "DISCRETE"]);

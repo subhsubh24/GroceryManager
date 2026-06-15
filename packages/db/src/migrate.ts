@@ -30,6 +30,9 @@ async function main() {
     console.log("→ applying row-level security…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0002_rls.sql"), "utf8"));
 
+    console.log("→ supplements vertical + dosage columns…");
+    await sql.unsafe(readFileSync(join(pkgRoot, "sql/0003_supplements.sql"), "utf8"));
+
     console.log("✓ migrations complete");
   } finally {
     await sql.end();

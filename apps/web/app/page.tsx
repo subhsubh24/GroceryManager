@@ -64,6 +64,13 @@ const SECTIONS: Section[] = [
     emoji: "🧴",
   },
   {
+    key: "supplements",
+    href: "/staples",
+    title: "Supplements",
+    blurb: "Set your daily dose — it predicts run-out (even the first bottle) and reorders from Amazon in time.",
+    emoji: "💊",
+  },
+  {
     key: "staples",
     href: "/staples",
     title: "Staples autopilot",

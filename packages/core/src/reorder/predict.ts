@@ -9,6 +9,19 @@ export interface StockSnapshot {
   /** Learned base-units/day (EWMA from depletion); null disables run-out prediction. */
   estimatedConsumptionRatePerDay: number | null;
   confidence: number;
+  /** Known base-units/day from a declared dosage (e.g. 2 capsules/day) — overrides the learned rate. */
+  dosesPerDay?: number | null;
+}
+
+/**
+ * The consumption rate to predict with: a declared dosage wins over the learned cadence — it's
+ * deterministic and available from the very first package (before any purchase history exists, §6).
+ */
+export function effectiveConsumptionRate(
+  learnedRatePerDay: number | null,
+  dosesPerDay: number | null | undefined,
+): number | null {
+  return dosesPerDay != null && dosesPerDay > 0 ? dosesPerDay : learnedRatePerDay;
 }
 
 export interface ReorderPolicySnapshot {
@@ -44,7 +57,7 @@ export function predictReorder(
 ): ReorderPrediction {
   const asOf = opts.asOf ?? new Date();
   const horizonDays = opts.horizonDays ?? 3;
-  const rate = stock.estimatedConsumptionRatePerDay;
+  const rate = effectiveConsumptionRate(stock.estimatedConsumptionRatePerDay, stock.dosesPerDay);
 
   const predictedRunOutAt =
     rate && rate > 0 ? new Date(asOf.getTime() + (stock.baseQtyOnHand / rate) * DAY_MS) : null;
