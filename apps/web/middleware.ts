@@ -11,6 +11,8 @@ const { auth } = NextAuth(authConfig);
  */
 const PUBLIC = [
   /^\/$/,
+  /^\/signin(\/|$)/,
+  /^\/signup(\/|$)/,
   /^\/share(\/|$)/,
   /^\/api\/auth(\/|$)/,
   /^\/api\/webhooks(\/|$)/,
@@ -21,7 +23,7 @@ export default auth((req) => {
   if (req.auth) return; // signed in
   const { pathname } = req.nextUrl;
   if (PUBLIC.some((re) => re.test(pathname))) return;
-  const url = new URL("/api/auth/signin", req.nextUrl);
+  const url = new URL("/signin", req.nextUrl);
   url.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
   return NextResponse.redirect(url);
 });

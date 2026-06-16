@@ -122,6 +122,12 @@ export default async function HomePage() {
         {session ? (
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <span className="text-sm text-ink/60">Signed in{email ? ` as ${email}` : ""}</span>
+            <a
+              href="/profile"
+              className="rounded-xl border border-black/10 bg-white px-3 py-1.5 text-sm font-medium text-ink/70"
+            >
+              Profile
+            </a>
             <form
               action={async () => {
                 "use server";
@@ -137,12 +143,20 @@ export default async function HomePage() {
             </form>
           </div>
         ) : (
-          <a
-            href="/api/auth/signin"
-            className="mt-3 inline-block rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm"
-          >
-            Sign in with Google
-          </a>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <a
+              href="/signin"
+              className="inline-block rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm"
+            >
+              Sign in
+            </a>
+            <a
+              href="/signup"
+              className="inline-block rounded-xl border border-brand-200 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm"
+            >
+              Create account
+            </a>
+          </div>
         )}
       </header>
 

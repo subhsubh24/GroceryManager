@@ -124,6 +124,8 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   name: text("name"),
   image: text("image"),
+  // Credentials login (email + password). Null for Google-only / unset accounts. scrypt: salt:hex.
+  passwordHash: text("password_hash"),
   householdId: uuid("household_id"), // future: shared pantry
   role: text("role").default("user").notNull(),
   createdAt: createdAt(),

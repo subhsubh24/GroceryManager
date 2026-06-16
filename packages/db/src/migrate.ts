@@ -33,6 +33,9 @@ async function main() {
     console.log("→ supplements vertical + dosage columns…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0003_supplements.sql"), "utf8"));
 
+    console.log("→ credentials login (users.password_hash)…");
+    await sql.unsafe(readFileSync(join(pkgRoot, "sql/0004_password.sql"), "utf8"));
+
     console.log("✓ migrations complete");
   } finally {
     await sql.end();

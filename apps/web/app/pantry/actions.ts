@@ -4,7 +4,18 @@ import { redirect } from "next/navigation";
 import { loadEnv } from "@gm/config/env";
 import { getDb } from "@gm/db";
 import { backfillGmailForUser, syncGmailForUser, type GmailSyncSummary } from "@gm/core/ingestion";
+import { signIn } from "@/auth";
 import { currentUserId } from "@/app/lib/tenant";
+
+/**
+ * Start the Google OAuth flow for the optional "Connect Gmail" receipt feature. Login is now email +
+ * password, so the default sign-in page is /signin; this kicks off Google specifically (gmail.readonly
+ * scope) and links to the current user by email (upsertGoogleAuth upserts users by email). signIn
+ * throws a redirect to Google, so it runs outside any try/catch.
+ */
+export async function connectGmailAction() {
+  await signIn("google", { redirectTo: "/pantry" });
+}
 
 function summaryQuery(summary: GmailSyncSummary): string {
   return new URLSearchParams({

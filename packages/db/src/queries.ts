@@ -218,6 +218,48 @@ export async function loadWasteEvents(db: Querier, userId: string, sinceDays = 3
   }));
 }
 
+/**
+ * Load a user (by email) for credentials login — includes the password hash so the NextAuth
+ * `authorize` callback can verify it. Admin/provisioning scope (cross-tenant, like upsertGoogleAuth).
+ */
+export async function getUserByEmail(
+  db: Querier,
+  email: string,
+): Promise<{ id: string; email: string; name: string | null; passwordHash: string | null } | null> {
+  const rows = await db
+    .select({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      passwordHash: users.passwordHash,
+    })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/**
+ * Create a new credentials user (email + password). Admin/provisioning scope — a brand-new user row
+ * can't satisfy its own RLS WITH CHECK. The unique email constraint guards against races (callers
+ * should still check getUserByEmail first for a friendly error). Returns the new userId.
+ */
+export async function createUserWithPassword(
+  db: Querier,
+  a: { email: string; name: string | null; passwordHash: string },
+): Promise<string> {
+  const rows = await db
+    .insert(users)
+    .values({ email: a.email, name: a.name, passwordHash: a.passwordHash })
+    .returning({ id: users.id });
+  return rows[0]!.id;
+}
+
+/** Update a user's display name (profile edit). Admin scope so it works alongside provisioning. */
+export async function updateUserName(db: Querier, userId: string, name: string | null) {
+  await db.update(users).set({ name, updatedAt: new Date() }).where(eq(users.id, userId));
+}
+
 export interface GoogleAuthUpsert {
   email: string;
   name: string | null;

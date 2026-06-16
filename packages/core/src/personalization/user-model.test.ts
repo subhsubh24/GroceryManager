@@ -4,6 +4,9 @@ import {
   signalFromAllergen,
   signalFromCooked,
   signalFromOnboardingDiet,
+  signalFromProfileAge,
+  signalFromProfileGender,
+  signalFromProfileName,
   signalFromReorder,
   signalFromSkip,
   signalFromWaste,
@@ -50,5 +53,33 @@ describe("projectUserModel", () => {
   it("records quality preferences (organic)", () => {
     const m = projectUserModel([{ topic: "quality:organic", polarity: "positive", confidence: 0.6 }]);
     expect(m.qualityPrefs.organic).toBe(true);
+  });
+
+  it("projects profile facts (name / age / gender) from profile:* signals", () => {
+    const m = projectUserModel([
+      signalFromProfileName("Ada"),
+      signalFromProfileAge(34),
+      signalFromProfileGender("female"),
+    ]);
+    expect(m.name).toBe("Ada");
+    expect(m.ageYears).toBe(34);
+    expect(m.gender).toBe("female");
+  });
+
+  it("a higher-confidence profile edit overrides the original value", () => {
+    const m = projectUserModel([
+      signalFromProfileAge(34, 0.9), // signup
+      signalFromProfileAge(35, 0.99), // later profile edit wins
+    ]);
+    expect(m.ageYears).toBe(35);
+  });
+
+  it("ignores a blank or non-numeric profile fact", () => {
+    const m = projectUserModel([
+      signalFromProfileName("  "),
+      { topic: "profile:age", value: "not-a-number", polarity: "neutral", confidence: 0.9 },
+    ]);
+    expect(m.name).toBeUndefined();
+    expect(m.ageYears).toBeUndefined();
   });
 });
