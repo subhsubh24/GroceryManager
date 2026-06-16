@@ -1,23 +1,28 @@
 import { importRecipeAction } from "./actions";
 import { ImportRecipe } from "./import-recipe";
+import { PageHeader } from "@/app/components/page-header";
 
 export const dynamic = "force-dynamic";
 
 export default function ImportPage() {
   return (
     <main className="page">
-      <a href="/recipes" className="back-link">
-        <span aria-hidden>←</span> Recipes
-      </a>
-      <div className="mt-4 mb-6 animate-fade-in-up">
-        <p className="eyebrow">Import a recipe</p>
-        <h1 className="page-title mt-2">Import a recipe</h1>
-        <p className="page-subtitle">
-          Paste a link, snap a cookbook page, or paste the text — it&apos;s structured, matched to
-          your pantry, and ready to cook hands-free.
-        </p>
+      <PageHeader
+        accent="citrus"
+        emoji="📥"
+        eyebrow="Import a recipe"
+        title="Import a recipe"
+        subtitle={
+          <>
+            Paste a link, snap a cookbook page, or paste the text — it&apos;s structured, matched to
+            your pantry, and ready to cook hands-free.
+          </>
+        }
+        back={{ href: "/recipes", label: "Recipes" }}
+      />
+      <div className="mt-6">
+        <ImportRecipe action={importRecipeAction} />
       </div>
-      <ImportRecipe action={importRecipeAction} />
     </main>
   );
 }

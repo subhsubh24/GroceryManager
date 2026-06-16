@@ -4,6 +4,7 @@ import { buildDraftOrders, mergeInstacartItems, type ReorderInputRow } from "@gm
 import { instacart } from "@gm/core/integrations";
 import { currentUserId } from "@/app/lib/tenant";
 import { CopyListButton } from "./copy-list-button";
+import { PageHeader } from "@/app/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -75,20 +76,23 @@ export default async function ListPage() {
 
   return (
     <main className="page">
-      <div className="flex items-center justify-between">
-        <a href="/" className="back-link"><span aria-hidden>←</span> Home</a>
-        <div className="flex gap-4">
-          <a href="/capture" className="nav-link">Quick add →</a>
-          <a href="/staples" className="nav-link">Staples autopilot →</a>
-        </div>
-      </div>
-      <div className="mt-4 animate-fade-in-up">
-        <p className="eyebrow">Reorder</p>
-        <h1 className="page-title mt-2">Reorder</h1>
-        <p className="page-subtitle">
-          Drafted from what&apos;s running low — one tap to order, you confirm checkout.
-        </p>
-      </div>
+      <PageHeader
+        accent="brand"
+        emoji="🛒"
+        eyebrow="Reorder"
+        title="Reorder"
+        subtitle={
+          <>
+            Drafted from what&apos;s running low — one tap to order, you confirm checkout.
+          </>
+        }
+        topRight={
+          <div className="flex gap-4">
+            <a href="/capture" className="nav-link">Quick add →</a>
+            <a href="/staples" className="nav-link">Staples autopilot →</a>
+          </div>
+        }
+      />
 
       {error && (
         <p className="notice-warn mt-6 mb-4">

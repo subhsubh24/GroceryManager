@@ -8,6 +8,7 @@ import {
 } from "@gm/db";
 import { defaultReorderPolicy, predictReorder } from "@gm/core/reorder";
 import { currentUserId } from "@/app/lib/tenant";
+import { PageHeader } from "@/app/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -88,15 +89,19 @@ export default async function StaplesPage() {
 
   return (
     <main className="page">
-      <a href="/list" className="back-link"><span aria-hidden>←</span> Reorder</a>
-      <div className="mt-4 animate-fade-in-up">
-        <p className="eyebrow">Autopilot</p>
-        <h1 className="page-title mt-2">Staples autopilot</h1>
-        <p className="page-subtitle">
-          Turn on the things you always want around. They&apos;ll appear on your list automatically when
-          they&apos;re due — set and forget.
-        </p>
-      </div>
+      <PageHeader
+        accent="brand"
+        emoji="🔁"
+        eyebrow="Autopilot"
+        title="Staples autopilot"
+        subtitle={
+          <>
+            Turn on the things you always want around. They&apos;ll appear on your list automatically when
+            they&apos;re due — set and forget.
+          </>
+        }
+        back={{ href: "/list", label: "Reorder" }}
+      />
 
       {!data.ready && (
         <p className="notice-warn mt-6">

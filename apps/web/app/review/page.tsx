@@ -1,5 +1,6 @@
 import { getDb, getReviewQueue, withTenant } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
+import { PageHeader } from "@/app/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -19,14 +20,18 @@ export default async function ReviewPage() {
 
   return (
     <main className="page">
-      <a href="/pantry" className="back-link"><span aria-hidden>←</span> Pantry</a>
-      <div className="mt-4 animate-fade-in-up">
-        <p className="eyebrow">Review inbox</p>
-        <h1 className="page-title mt-2">Review inbox</h1>
-        <p className="page-subtitle">
-          Low-confidence items the app couldn&apos;t place with certainty. Confirming teaches it (the ratchet).
-        </p>
-      </div>
+      <PageHeader
+        accent="ocean"
+        emoji="📥"
+        eyebrow="Review inbox"
+        title="Review inbox"
+        subtitle={
+          <>
+            Low-confidence items the app couldn&apos;t place with certainty. Confirming teaches it (the ratchet).
+          </>
+        }
+        back={{ href: "/pantry", label: "Pantry" }}
+      />
 
       {error && (
         <p className="notice-warn mt-6">

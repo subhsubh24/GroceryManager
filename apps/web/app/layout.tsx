@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
 import { RegisterSW } from "./register-sw";
+import { BottomNav } from "./components/bottom-nav";
 
 // Body: Inter — clean, modern, highly legible at small sizes.
 const inter = Inter({
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <RegisterSW />
         {children}
+        <BottomNav />
       </body>
     </html>
   );

@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { getActiveListView, getDb, withTenant } from "@gm/db";
 import { captureToList, parseQuickCapture } from "@gm/core/capture";
 import { currentUserId } from "@/app/lib/tenant";
+import { PageHeader } from "@/app/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -38,15 +39,19 @@ export default async function CapturePage() {
 
   return (
     <main className="page">
-      <a href="/list" className="back-link"><span aria-hidden>←</span> Reorder</a>
-      <div className="mt-4 animate-fade-in-up">
-        <p className="eyebrow">Quick add</p>
-        <h1 className="page-title mt-2">Quick add</h1>
-        <p className="page-subtitle">
-          Just type it like you&apos;d say it — &ldquo;we&apos;re out of olive oil and need 2 lbs
-          chicken, some spinach.&rdquo; We&apos;ll sort it onto your list.
-        </p>
-      </div>
+      <PageHeader
+        accent="citrus"
+        emoji="✍️"
+        eyebrow="Quick add"
+        title="Quick add"
+        subtitle={
+          <>
+            Just type it like you&apos;d say it — &ldquo;we&apos;re out of olive oil and need 2 lbs
+            chicken, some spinach.&rdquo; We&apos;ll sort it onto your list.
+          </>
+        }
+        back={{ href: "/list", label: "Reorder" }}
+      />
 
       <form action={capture} className="mt-6 mb-8">
         <textarea

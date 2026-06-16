@@ -3,6 +3,7 @@ import { getDb, withTenant } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
 import { buildDigestForUser } from "@/app/lib/digest";
 import { PushToggle } from "./push-toggle";
+import { PageHeader } from "@/app/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -24,12 +25,13 @@ export default async function DigestPage() {
 
   return (
     <main className="page">
-      <a href="/" className="back-link"><span aria-hidden>←</span> Home</a>
-      <div className="mt-4 animate-fade-in-up">
-        <p className="eyebrow">This week</p>
-        <h1 className="page-title mt-2">This week</h1>
-        <p className="page-subtitle">Your Sunday briefing — what needs you, at a glance.</p>
-      </div>
+      <PageHeader
+        accent="grape"
+        emoji="🗒️"
+        eyebrow="This week"
+        title="This week"
+        subtitle="Your Sunday briefing — what needs you, at a glance."
+      />
 
       {!data.ready && (
         <p className="notice-warn mt-6">

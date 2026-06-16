@@ -14,6 +14,7 @@ import {
   signalFromProfileName,
 } from "@gm/core/personalization";
 import { currentUserId } from "@/app/lib/tenant";
+import { PageHeader } from "@/app/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -79,17 +80,18 @@ export default async function ProfilePage({
 
   return (
     <main className="page-narrow">
-      <a href="/" className="back-link">
-        <span aria-hidden>←</span> Home
-      </a>
-      <div className="mt-4 animate-fade-in-up">
-        <p className="eyebrow">Your account</p>
-        <h1 className="page-title mt-2">Your profile</h1>
-        <p className="page-subtitle">
-          Name, age, and gender — stored in your preference model so every plan and recipe can use
-          them.
-        </p>
-      </div>
+      <PageHeader
+        accent="brand"
+        emoji="👤"
+        eyebrow="Your account"
+        title="Your profile"
+        subtitle={
+          <>
+            Name, age, and gender — stored in your preference model so every plan and recipe can use
+            them.
+          </>
+        }
+      />
 
       {saved && <p className="notice-ok mt-6">Saved.</p>}
 

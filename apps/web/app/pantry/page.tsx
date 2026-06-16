@@ -2,6 +2,7 @@ import { loadEnv } from "@gm/config/env";
 import { getDb, getGoogleCredential, getPantryView, withTenant } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
 import { backfillGmailAction, connectGmailAction, syncGmailAction } from "./actions";
+import { PageHeader } from "@/app/components/page-header";
 
 export const dynamic = "force-dynamic";
 // Backfill parses several receipts inline (each an LLM call) — give it room beyond the 10s default.
@@ -76,19 +77,18 @@ export default async function PantryPage({
 
   return (
     <main className="page">
-      <a href="/" className="back-link">
-        <span aria-hidden>←</span> Home
-      </a>
-      <div className="mt-4 flex flex-wrap items-end justify-between gap-3 animate-fade-in-up">
-        <div>
-          <p className="eyebrow">Your kitchen</p>
-          <h1 className="page-title mt-2">Pantry</h1>
-        </div>
-        <div className="flex gap-4">
-          <a href="/use-it-up" className="nav-link">Use it up →</a>
-          <a href="/review" className="nav-link">Review inbox →</a>
-        </div>
-      </div>
+      <PageHeader
+        accent="brand"
+        emoji="🧺"
+        eyebrow="Your kitchen"
+        title="Pantry"
+        topRight={
+          <div className="flex gap-4">
+            <a href="/use-it-up" className="nav-link">Use it up →</a>
+            <a href="/review" className="nav-link">Review inbox →</a>
+          </div>
+        }
+      />
 
       {/* Receipts → pantry: connect Gmail once, then auto-fill from receipt emails. */}
       <section className="card-pad mt-6">

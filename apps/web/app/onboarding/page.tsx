@@ -16,6 +16,7 @@ import {
 } from "@gm/core/personalization";
 import { getGeminiClient } from "@gm/core/llm";
 import { currentUserId } from "@/app/lib/tenant";
+import { PageHeader } from "@/app/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -109,15 +110,18 @@ export default async function OnboardingPage() {
 
   return (
     <main className="page">
-      <a href="/" className="back-link"><span aria-hidden>←</span> Home</a>
-      <div className="mt-4 animate-fade-in-up">
-        <p className="eyebrow">Your taste</p>
-        <h1 className="page-title mt-2">Tell me your taste</h1>
-        <p className="page-subtitle">
-          A few quick questions so every plan, recipe, and reorder fits you. Add more anytime — I keep
-          learning from what you cook, skip, and reorder.
-        </p>
-      </div>
+      <PageHeader
+        accent="grape"
+        emoji="👋"
+        eyebrow="Your taste"
+        title="Tell me your taste"
+        subtitle={
+          <>
+            A few quick questions so every plan, recipe, and reorder fits you. Add more anytime — I keep
+            learning from what you cook, skip, and reorder.
+          </>
+        }
+      />
 
       {hasProfile && (
         <section className="card-pad bg-brand-50/60 mt-6 text-sm text-brand-900">

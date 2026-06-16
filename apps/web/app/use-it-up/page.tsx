@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { getDb, getPantryView, loadWasteEvents, withTenant } from "@gm/db";
 import { recordWaste, selectExpiringSoon, summarizeWaste } from "@gm/core/pantry";
 import { currentUserId } from "@/app/lib/tenant";
+import { PageHeader } from "@/app/components/page-header";
 import {
   annotateRecipe,
   buildPantryIndex,
@@ -104,14 +105,14 @@ export default async function UseItUpPage() {
 
   return (
     <main className="page">
-      <a href="/pantry" className="back-link"><span aria-hidden>←</span> Pantry</a>
-      <div className="mt-4 animate-fade-in-up">
-        <p className="eyebrow">Reduce waste</p>
-        <h1 className="page-title mt-2">Use it up</h1>
-        <p className="page-subtitle">
-          What&apos;s about to go bad — and meals to rescue it before it does.
-        </p>
-      </div>
+      <PageHeader
+        accent="berry"
+        emoji="♻️"
+        eyebrow="Reduce waste"
+        title="Use it up"
+        subtitle="What's about to go bad — and meals to rescue it before it does."
+        back={{ href: "/pantry", label: "Pantry" }}
+      />
 
       {!data.ready && (
         <p className="notice-warn mt-6">

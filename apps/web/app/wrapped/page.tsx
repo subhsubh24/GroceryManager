@@ -2,6 +2,7 @@ import { getDb, loadWrappedInputs, withTenant } from "@gm/db";
 import { buildWrapped, type WrappedStats } from "@gm/core/spend";
 import { ShareButton } from "./share-button.js";
 import { currentUserId } from "@/app/lib/tenant";
+import { PageHeader } from "@/app/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -46,15 +47,19 @@ export default async function WrappedPage() {
 
   return (
     <main className="page">
-      <a href="/spend" className="back-link"><span aria-hidden>←</span> Spending</a>
-      <div className="mt-4 animate-fade-in-up">
-        <p className="eyebrow">Your year in food</p>
-        <h1 className="page-title mt-2">Grocery Wrapped</h1>
-        <p className="page-subtitle">
-          {data.ready ? `Your ${data.stats.periodLabel} in food.` : "Your recent run in food."} Built only from
-          your own data.
-        </p>
-      </div>
+      <PageHeader
+        accent="sunset"
+        emoji="🎉"
+        eyebrow="Your year in food"
+        title="Grocery Wrapped"
+        subtitle={
+          <>
+            {data.ready ? `Your ${data.stats.periodLabel} in food.` : "Your recent run in food."} Built only from
+            your own data.
+          </>
+        }
+        back={{ href: "/spend", label: "Spending" }}
+      />
 
       {!data.ready && (
         <p className="notice-warn mt-6">
