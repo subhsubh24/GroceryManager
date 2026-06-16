@@ -46,21 +46,37 @@ export default async function ShareRecipePage({ params }: { params: Promise<{ id
   );
 
   return (
-    <main className="page-narrow">
+    <main className="page-narrow relative">
+      {/* Soft accent glow behind the hero. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-0 -z-10 h-56 w-[28rem] max-w-full -translate-x-1/2 -translate-y-16 rounded-[100%] bg-berry-300/25 blur-3xl"
+      />
       <div className="animate-fade-in-up">
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-gradient text-base shadow-brand">
-            🧺
-          </span>
-          <p className="text-sm font-semibold text-ink-800">GroceryManager</p>
+        <div className="flex items-center justify-between">
+          <a href="/" className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-gradient text-base shadow-brand">
+              🧺
+            </span>
+            <span className="text-sm font-semibold text-ink-800">GroceryManager</span>
+          </a>
+          <span className="pill-brand">Shared recipe</span>
         </div>
         {recipe.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={recipe.imageUrl} alt="" className="mt-4 h-56 w-full rounded-3xl object-cover shadow-card" />
-        ) : null}
-        <h1 className="mt-5 font-display text-3xl font-semibold tracking-tight text-ink-900">
-          {recipe.title}
-        </h1>
+          // Magazine-style hero: full-bleed image with a scrim and the title laid over it.
+          <div className="relative mt-4 overflow-hidden rounded-3xl shadow-lift">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={recipe.imageUrl} alt="" className="h-64 w-full object-cover sm:h-72" />
+            <div className="absolute inset-0 bg-gradient-to-t from-ink-900/85 via-ink-900/25 to-transparent" />
+            <h1 className="absolute inset-x-0 bottom-0 p-5 font-display text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
+              {recipe.title}
+            </h1>
+          </div>
+        ) : (
+          <h1 className="mt-5 font-display text-3xl font-semibold tracking-tight text-ink-900 sm:text-4xl">
+            {recipe.title}
+          </h1>
+        )}
       </div>
 
       <section className="card-pad mt-6">
@@ -99,18 +115,31 @@ export default async function ShareRecipePage({ params }: { params: Promise<{ id
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <ShareLinkButton title={recipe.title} />
-        <a href="/" className="nav-link">
-          Plan your week with GroceryManager →
-        </a>
-      </div>
-      {recipe.sourceUrl && (
-        <p className="mt-3 text-xs text-ink-400">
-          Source:{" "}
-          <a href={recipe.sourceUrl} target="_blank" rel="noreferrer" className="underline">
-            {recipe.sourceUrl}
+        {recipe.sourceUrl && (
+          <a href={recipe.sourceUrl} target="_blank" rel="noreferrer" className="nav-link">
+            View original source →
           </a>
-        </p>
-      )}
+        )}
+      </div>
+
+      {/* Conversion CTA — the share page is the growth surface; make the next step irresistible. */}
+      <section className="panel-brand mt-7">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="max-w-sm">
+            <h2 className="font-display text-xl font-semibold">Cook this without the chaos</h2>
+            <p className="mt-1 text-sm leading-relaxed text-white/90">
+              GroceryManager plans your week, fills your pantry from receipts, and shops the gaps in
+              a tap.
+            </p>
+          </div>
+          <a
+            href="/signup"
+            className="btn inline-flex shrink-0 bg-white px-5 py-3 text-base text-brand-700 shadow-lift hover:bg-white/95"
+          >
+            Try it free →
+          </a>
+        </div>
+      </section>
     </main>
   );
 }
