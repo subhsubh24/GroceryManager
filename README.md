@@ -42,7 +42,8 @@ pnpm dev
 ## Status
 A working vertical slice runs end-to-end: pages are server-rendered against Postgres with
 **row-level-security** enforcement, and the Gemini-backed features below were verified against the
-real model. **212 core unit tests + full workspace typecheck + `next build` green.**
+real model. **219 core unit tests + full workspace typecheck + `next build` green**, plus a gated
+**LLM eval harness** (golden fixtures + scorers + LLM-as-judge) that passes live against Gemini.
 
 **Built & tested**
 - **Pantry & depletion** — ledger-projected stock, confidence decay, expiring-soon.
@@ -57,6 +58,7 @@ real model. **212 core unit tests + full workspace typecheck + `next build` gree
 - **Spend / Grocery Wrapped / Waste hub / weekly Digest** — analytics + the Sunday briefing.
 - **One-cart ordering** — due staples + your active list merged into one cart, with a **keyless** path (copy-list + per-item Instacart search + Amazon Add-to-Cart); the official one-tap Instacart prefill drops in when a key is set.
 - **Web push** — service worker + subscription store + send; the digest cron pushes the weekly briefing / run-out nudges (never on a quiet week). Add VAPID keys to send.
+- **Eval harness (the ratchet, §8.5/§12)** — golden fixtures + deterministic scorers + LLM-as-judge gating receipt extraction & recipe import on pass-rate ≥ 0.8 and tracking tier-escalation. Run with `RUN_EVALS=1 … pnpm --filter @gm/core eval`. (It already caught + fixed an over-strict verifier that was forcing costly Pro escalation on fee/tax receipts.)
 
 **Built; needs real infra/keys to exercise** — real-time Gmail push (watch-renew + Pub/Sub webhook +
 Vercel-cron route are built; just add a Pub/Sub topic — manual "Sync receipts now" + poll already work

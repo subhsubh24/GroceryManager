@@ -27,7 +27,8 @@
   "scripts": {
     "lint": "echo \"(lint) @gm/core\"",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval": "RUN_EVALS=1 vitest run src/llm/evals"
   },
   "dependencies": {
     "@gm/config": "workspace:*",

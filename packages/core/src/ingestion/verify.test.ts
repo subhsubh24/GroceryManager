@@ -45,16 +45,22 @@ describe("verifyReceipt", () => {
     expect(v).toMatchObject({ ok: false });
   });
 
-  it("fails when line totals don't reconcile with the grand total", () => {
+  it("fails when line totals EXCEED the grand total (duplicated/hallucinated lines)", () => {
     const v = verifyReceipt(
-      receipt({ totalCents: 5000, lineItems: [line({ lineTotalCents: 399 })] }),
+      receipt({ totalCents: 399, lineItems: [line({ lineTotalCents: 1000 }), line({ lineTotalCents: 1000 })] }),
     );
     expect(v).toMatchObject({ ok: false });
   });
 
-  it("tolerates small rounding (tax/fees) within tolerance", () => {
+  it("passes when line totals are UNDER the grand total (tax, fees, tips, discounts)", () => {
+    // Delivery receipt: items 399¢, grand total 5000¢ (fees + tip) — normal, must not fail.
+    const v = verifyReceipt(receipt({ totalCents: 5000, lineItems: [line({ lineTotalCents: 399 })] }));
+    expect(v).toEqual({ ok: true });
+  });
+
+  it("tolerates small rounding over the total within tolerance", () => {
     const v = verifyReceipt(
-      receipt({ totalCents: 420, lineItems: [line({ lineTotalCents: 399 })] }), // 21¢ < 100¢ floor
+      receipt({ totalCents: 399, lineItems: [line({ lineTotalCents: 420 })] }), // 21¢ over < 100¢ floor
     );
     expect(v).toEqual({ ok: true });
   });

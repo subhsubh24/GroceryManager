@@ -37,14 +37,16 @@ export function verifyReceipt(r: ReceiptExtraction): VerifyVerdict {
     }
   }
 
-  // Reconcile line totals against the grand total when we have all the numbers.
+  // Reconcile against OVER-extraction only: line items summing to MORE than the grand total signals
+  // hallucinated or duplicated lines (a real error). Summing to LESS is normal — tax, delivery fees,
+  // tips, and discounts all sit between line items and the total — so we DON'T fail on it; doing so
+  // forced needless, costly tier escalation on ordinary receipts (caught by the eval harness).
   if (r.totalCents != null && r.lineItems.every((li) => li.lineTotalCents != null)) {
     const sum = r.lineItems.reduce((s, li) => s + (li.lineTotalCents ?? 0), 0);
-    const diff = Math.abs(sum - r.totalCents);
-    if (diff > totalsTolerance(r.totalCents)) {
+    if (sum - r.totalCents > totalsTolerance(r.totalCents)) {
       return {
         ok: false,
-        reason: `line totals (${sum}¢) don't reconcile with grand total (${r.totalCents}¢)`,
+        reason: `line totals (${sum}¢) exceed the grand total (${r.totalCents}¢) — likely duplicated lines`,
       };
     }
   }
