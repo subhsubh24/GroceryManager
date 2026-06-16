@@ -124,6 +124,15 @@ const SECTIONS: Section[] = [
     span: "lg:col-span-2",
   },
   {
+    key: "barcode",
+    href: "/barcode",
+    title: "Scan a barcode",
+    blurb: "Scan or type a UPC — we look it up and add it to your list.",
+    emoji: "📷",
+    tone: "plain",
+    span: "lg:col-span-2",
+  },
+  {
     key: "onboarding",
     href: "/onboarding",
     title: "Tell me your taste",

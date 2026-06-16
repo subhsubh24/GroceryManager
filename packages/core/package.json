@@ -9,6 +9,7 @@
     "./llm": "./src/llm/index.ts",
     "./reorder": "./src/reorder/index.ts",
     "./integrations": "./src/integrations/index.ts",
+    "./integrations/openfoodfacts": "./src/integrations/openfoodfacts/index.ts",
     "./recipe": "./src/recipe/index.ts",
     "./recipe/log-cook": "./src/recipe/log-cook.ts",
     "./recipe/substitute-llm": "./src/recipe/substitute-llm.ts",

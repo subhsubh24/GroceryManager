@@ -82,13 +82,18 @@ supplements.
   Client-only, keyless; pure `cleanTranscript` helper (+3 tests) via a client-safe leaf export
   (`@gm/core/capture/parse` — avoids pulling `@gm/db` into the client bundle). Review: client-bundle
   safety confirmed by the build — clean. Gates: typecheck, 296 core tests, `next build`.
+- **iter 7 — Barcode / UPC add (DONE):** `/barcode` — BarcodeDetector camera scan + manual UPC entry
+  → Open Food Facts lookup (keyless) → adds the product to the list via the existing session-scoped
+  path. Pure OFF client (`integrations/openfoodfacts`, +16 tests): UPC digit-validated, FIXED host
+  (no SSRF), 5s timeout, graceful null. Browser APIs typed w/o `any`/deps. Review: SSRF guard +
+  session scoping verified — clean (agent also fixed a name-fallback bug). Gates: typecheck, 312 core
+  tests, `next build` (`/barcode`).
 
 ## Next up (prioritized backlog — re-rank each iteration)
 > Selection rule under blind QA (no screen in this runner): prefer **data/AI/copy** wow over
 > **gesture-UI** wow. The "finish it all up" pass works down this list back-to-back.
-1. **Barcode / UPC add** — BarcodeDetector scan + manual UPC, Open Food Facts lookup → add to list (keyless). *Next pick.*
-2. **Discover — swipeable "for you" feed** — trains the taste model; buttons + keyboard primary,
-   pointer-drag enhancement (robust without visual QA).
+1. **Discover — swipeable "for you" feed** — trains the taste model; buttons + keyboard primary,
+   pointer-drag enhancement (robust without visual QA). *Final pick of the "finish it all up" pass.*
 
 ## Deferred (not buildable in this keyless/headless runner — need keys, scale, or a human eye)
 - **Instacart production API** (one-tap prefilled cart + Impact affiliate) — needs Instacart key.

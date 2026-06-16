@@ -89,6 +89,7 @@ export default async function ListPage() {
         topRight={
           <div className="flex gap-4">
             <a href="/capture" className="nav-link">Quick add →</a>
+            <a href="/barcode" className="nav-link">Scan a barcode →</a>
             <a href="/staples" className="nav-link">Staples autopilot →</a>
           </div>
         }
