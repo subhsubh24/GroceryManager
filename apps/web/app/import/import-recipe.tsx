@@ -33,49 +33,42 @@ export function ImportRecipe({
 
   return (
     <div className="space-y-6">
-      <form action={formAction} className="space-y-3 rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-        <input
-          name="url"
-          type="url"
-          placeholder="Paste a recipe URL…"
-          className="w-full rounded-xl border border-black/10 px-3 py-2.5 text-sm"
-        />
-        <div className="text-center text-xs text-ink/40">— or —</div>
-        <label className="block text-sm text-ink/60">
+      <form action={formAction} className="card-pad space-y-3">
+        <input name="url" type="url" placeholder="Paste a recipe URL…" className="input mt-0" />
+        <div className="flex items-center gap-3 text-center text-xs font-medium uppercase tracking-wide text-ink-300">
+          <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
+        </div>
+        <label className="block text-sm text-ink-500">
           Snap or upload a cookbook page
           <input
             name="image"
             type="file"
             accept="image/*"
             capture="environment"
-            className="mt-1 block w-full rounded-xl border border-black/10 px-3 py-2 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-brand-700"
+            className="input-file mt-1.5"
           />
         </label>
-        <div className="text-center text-xs text-ink/40">— or —</div>
+        <div className="flex items-center gap-3 text-center text-xs font-medium uppercase tracking-wide text-ink-300">
+          <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
+        </div>
         <textarea
           name="text"
           rows={5}
           placeholder="…paste the recipe text (ingredients + steps)"
-          className="w-full rounded-xl border border-black/10 px-3 py-2.5 text-sm"
+          className="input mt-0"
         />
-        <button
-          type="submit"
-          disabled={pending}
-          className="w-full rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98] disabled:opacity-50"
-        >
+        <button type="submit" disabled={pending} className="btn-primary btn-block">
           {pending ? "Importing…" : "Import recipe"}
         </button>
       </form>
 
-      {state.status === "error" && (
-        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">{state.message}</p>
-      )}
+      {state.status === "error" && <p className="notice-warn">{state.message}</p>}
 
       {state.status === "done" && (
         <div className="space-y-4">
           <div>
-            <h2 className="text-xl font-bold text-ink">{state.title}</h2>
-            <p className="mt-0.5 text-xs text-ink/50">
+            <h2 className="font-display text-2xl font-semibold text-ink-900">{state.title}</h2>
+            <p className="mt-1 text-xs text-ink-400">
               Imported via {state.method}
               {state.servings ? ` · ${state.servings}` : ""}
               {state.totalCount > 0
@@ -87,7 +80,7 @@ export function ImportRecipe({
                 href={state.sourceUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs font-medium text-brand-600"
+                className="text-xs font-semibold text-brand-700 hover:text-brand-800"
               >
                 View source →
               </a>
@@ -106,31 +99,22 @@ export function ImportRecipe({
                 ingredients: state.ingredients.map((i) => ({ name: i.name, measure: i.measure })),
               })}
             />
-            <button
-              type="submit"
-              className="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98]"
-            >
+            <button type="submit" className="btn-primary">
               Save to my recipes &amp; cook →
             </button>
           </form>
 
           {state.missing.length > 0 && (
-            <form
-              action={addNamesToListAction}
-              className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm"
-            >
+            <form action={addNamesToListAction} className="card p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0 text-sm">
-                  <div className="font-medium text-ink">Missing {state.missing.length}</div>
-                  <div className="text-xs text-ink/50">{state.missing.join(", ")}</div>
+                  <div className="font-semibold text-ink-900">Missing {state.missing.length}</div>
+                  <div className="text-xs text-ink-400">{state.missing.join(", ")}</div>
                 </div>
                 {state.missing.map((m) => (
                   <input key={m} type="hidden" name="name" value={m} />
                 ))}
-                <button
-                  type="submit"
-                  className="shrink-0 rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white"
-                >
+                <button type="submit" className="btn-dark shrink-0">
                   Add missing to list →
                 </button>
               </div>

@@ -23,13 +23,9 @@ export function SwapFinder({
         <input
           name="q"
           placeholder="Out of something? e.g. buttermilk"
-          className="min-w-0 flex-1 rounded-xl border border-black/10 px-3 py-2 text-sm"
+          className="min-w-0 flex-1 rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink-900 shadow-xs transition placeholder:text-ink-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20"
         />
-        <button
-          type="submit"
-          disabled={pending}
-          className="shrink-0 rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-        >
+        <button type="submit" disabled={pending} className="btn-dark shrink-0">
           {pending ? "…" : "Find a swap"}
         </button>
       </form>
@@ -38,20 +34,20 @@ export function SwapFinder({
         <div className="mt-3 text-sm">
           {state.subs.length > 0 ? (
             <>
-              <div className="mb-1 font-medium text-ink">
+              <div className="mb-1.5 font-semibold text-ink-800">
                 Swaps for {state.ingredient}
-                {state.source === "ai" && <span className="ml-1 text-xs text-ink/40">· AI suggestion</span>}
+                {state.source === "ai" && <span className="ml-1 text-xs font-normal text-ink-400">· AI suggestion</span>}
               </div>
-              <ul className="space-y-1 text-ink/70">
+              <ul className="space-y-1.5 text-ink-600">
                 {state.subs.map((s, i) => (
-                  <li key={i} className="rounded-lg bg-zinc-50 px-3 py-2">
+                  <li key={i} className="rounded-lg border border-line bg-cream/60 px-3 py-2">
                     {s.text}
                   </li>
                 ))}
               </ul>
             </>
           ) : (
-            <p className="text-ink/50">No swap found for {state.ingredient}.</p>
+            <p className="text-ink-400">No swap found for {state.ingredient}.</p>
           )}
         </div>
       )}

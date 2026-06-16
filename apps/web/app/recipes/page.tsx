@@ -107,87 +107,92 @@ export default async function RecipesPage({
   const tab = (h: string, label: string, active: boolean, cap = false) => (
     <a
       href={h}
-      className={`rounded-full px-3 py-1.5 text-sm font-medium ${cap ? "capitalize " : ""}${
-        active ? "bg-brand-500 text-white" : "bg-white text-ink/70 border border-black/5"
-      }`}
+      className={`tab ${cap ? "capitalize " : ""}${active ? "tab-active" : "tab-idle"}`}
     >
       {label}
     </a>
   );
 
   return (
-    <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
+    <main className="page">
       <div className="flex items-center justify-between">
-        <a href="/" className="text-sm text-brand-600">← Home</a>
-        <a href="/import" className="text-sm font-medium text-brand-600">Import a recipe →</a>
+        <a href="/" className="back-link"><span aria-hidden>←</span> Home</a>
+        <a href="/import" className="nav-link">Import a recipe →</a>
       </div>
-      <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">Cook tonight</h1>
-      <p className="mb-4 text-sm text-ink/60">Ranked by what you already have. How much do you feel like cooking?</p>
+      <div className="mt-4 animate-fade-in-up">
+        <p className="eyebrow">Cook tonight</p>
+        <h1 className="page-title mt-2">Cook tonight</h1>
+        <p className="page-subtitle">Ranked by what you already have. How much do you feel like cooking?</p>
+      </div>
 
-      <div className="mb-3 flex flex-wrap gap-2">
+      <div className="mt-5 mb-3 flex flex-wrap gap-2">
         {tab(href({ mood: "nice" }), "Cook something nice", mood === "nice")}
         {tab(href({ mood: "easy" }), "Keep it easy", mood === "easy")}
         {tab(href({ mood: "batch" }), "Batch & meal-prep", mood === "batch")}
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-ink/40">Cooking for a guest?</span>
+        <span className="text-xs font-medium text-ink-400">Cooking for a guest?</span>
         {GUEST_DIETS.map((g) => tab(href({ guest: guest === g ? null : g }), g, guest === g, true))}
         {guest && (
-          <a href={href({ guest: null })} className="text-xs text-ink/40 underline">
+          <a href={href({ guest: null })} className="text-xs text-ink-400 underline">
             clear
           </a>
         )}
       </div>
 
       {mood === "batch" && (
-        <p className="mb-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
+        <p className="notice-ok mb-4">
           Cook once, eat all week — favoring dishes that keep, reheat, and scale.
         </p>
       )}
       {guest && (
-        <p className="mb-6 rounded-xl bg-brand-50 p-3 text-sm text-brand-800">
+        <p className="notice-ok mb-6">
           Filtered to fit a <strong className="capitalize">{guest}</strong> guest — meals with conflicting
           ingredients are hidden.
         </p>
       )}
 
       {error && (
-        <p className="mb-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+        <p className="notice-warn mb-4">
           Couldn&apos;t load recipes (DB or provider). {error.slice(0, 120)}
         </p>
       )}
       {ranked.length === 0 && !error && (
-        <p className="rounded-xl bg-white p-5 text-sm text-ink/60 shadow-sm">
-          Add a few items to your pantry and suggestions will appear here.
-        </p>
+        <div className="empty-state mt-6">
+          <div className="empty-emoji">🍳</div>
+          <p className="text-sm font-medium text-ink-700">No suggestions yet</p>
+          <p className="mt-1 max-w-xs text-sm text-ink-400">
+            Add a few items to your pantry and suggestions will appear here.
+          </p>
+        </div>
       )}
 
       <ul className="space-y-3">
         {ranked.map((r) => (
-          <li key={r.id} className="flex gap-4 rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
+          <li key={r.id} className="card card-hover p-4 flex gap-4">
             {images.get(r.id) ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={images.get(r.id)} alt="" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
             ) : null}
             <div className="min-w-0">
-              <div className="font-medium text-ink">
+              <div className="font-medium text-ink-900">
                 {r.title}
                 {r.batchFriendly && (
-                  <span className="ml-2 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-normal text-emerald-700">
+                  <span className="pill-success ml-2 font-normal">
                     batch-friendly
                   </span>
                 )}
               </div>
-              <div className="text-xs text-ink/50">
+              <div className="text-xs text-ink-400">
                 have {r.haveCount}/{r.totalCore}
                 {r.usesExpiring > 0 ? ` · uses ${r.usesExpiring} expiring` : ""}
               </div>
               {r.missing.length > 0 && (
-                <div className="mt-1 text-xs text-ink/40">missing: {r.missing.join(", ")}</div>
+                <div className="mt-1 text-xs text-ink-400">missing: {r.missing.join(", ")}</div>
               )}
               <div className="mt-2 flex flex-wrap items-center gap-3">
-                <a href={`/cook/${r.id}`} className="text-xs font-medium text-brand-600">
+                <a href={`/cook/${r.id}`} className="text-xs font-medium text-brand-700">
                   Cook mode →
                 </a>
                 {r.missing.length > 0 && (
@@ -195,7 +200,7 @@ export default async function RecipesPage({
                     {r.missing.map((m) => (
                       <input key={m} type="hidden" name="name" value={m} />
                     ))}
-                    <button type="submit" className="text-xs font-medium text-brand-600">
+                    <button type="submit" className="text-xs font-medium text-brand-700">
                       + Add {r.missing.length} missing to list
                     </button>
                   </form>

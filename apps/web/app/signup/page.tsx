@@ -86,92 +86,76 @@ export default async function SignUpPage({
     exists: "An account with that email already exists. Try signing in.",
   };
   return (
-    <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-5 py-12">
-      <p className="text-sm font-medium text-brand-600">GroceryManager</p>
-      <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">Create your account</h1>
-      <p className="mt-1 text-sm text-ink/60">
-        A little about you so every plan and recipe fits — you can edit it anytime.
-      </p>
-
-      {error && (
-        <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
-          {errorText[error] ?? "Something went wrong. Try again."}
-        </p>
-      )}
-
-      <form action={registerAction} className="mt-6 space-y-4">
-        <label className="block">
-          <span className="text-sm font-medium text-ink">Email</span>
-          <input
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm"
-          />
-        </label>
-        <label className="block">
-          <span className="text-sm font-medium text-ink">Password</span>
-          <input
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            minLength={8}
-            required
-            className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm"
-          />
-          <span className="mt-1 block text-xs text-ink/40">At least 8 characters.</span>
-        </label>
-        <label className="block">
-          <span className="text-sm font-medium text-ink">Name</span>
-          <input
-            name="name"
-            type="text"
-            autoComplete="name"
-            className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm"
-          />
-        </label>
-        <div className="grid grid-cols-2 gap-4">
-          <label className="block">
-            <span className="text-sm font-medium text-ink">Age</span>
-            <input
-              name="age"
-              type="number"
-              min="1"
-              max="120"
-              className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm font-medium text-ink">Gender</span>
-            <select
-              name="gender"
-              defaultValue=""
-              className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm"
-            >
-              <option value="">—</option>
-              {GENDERS.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <button
-          type="submit"
-          className="w-full rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98]"
-        >
-          Create account
-        </button>
-      </form>
-
-      <p className="mt-6 text-center text-sm text-ink/60">
-        Already have an account?{" "}
-        <a href="/signin" className="font-medium text-brand-600">
-          Sign in
+    <main className="flex min-h-dvh flex-col items-center justify-center px-5 py-12">
+      <div className="w-full max-w-md animate-fade-in-up">
+        <a href="/" className="mx-auto flex w-fit items-center gap-2">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gradient text-lg shadow-brand">
+            🧺
+          </span>
         </a>
-      </p>
+        <div className="mt-6 text-center">
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-ink-900">
+            Create your account
+          </h1>
+          <p className="mt-2 text-sm text-ink-500">
+            A little about you so every plan and recipe fits — you can edit it anytime.
+          </p>
+        </div>
+
+        <div className="card-pad mt-7">
+          {error && <p className="notice-warn mb-4">{errorText[error] ?? "Something went wrong. Try again."}</p>}
+
+          <form action={registerAction} className="space-y-4">
+            <label className="block">
+              <span className="field-label">Email</span>
+              <input name="email" type="email" autoComplete="email" required className="input" />
+            </label>
+            <label className="block">
+              <span className="field-label">Password</span>
+              <input
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                minLength={8}
+                required
+                className="input"
+              />
+              <span className="field-hint">At least 8 characters.</span>
+            </label>
+            <label className="block">
+              <span className="field-label">Name</span>
+              <input name="name" type="text" autoComplete="name" className="input" />
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <label className="block">
+                <span className="field-label">Age</span>
+                <input name="age" type="number" min="1" max="120" className="input" />
+              </label>
+              <label className="block">
+                <span className="field-label">Gender</span>
+                <select name="gender" defaultValue="" className="select">
+                  <option value="">—</option>
+                  {GENDERS.map((g) => (
+                    <option key={g} value={g}>
+                      {g}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <button type="submit" className="btn-primary btn-block">
+              Create account
+            </button>
+          </form>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-ink-500">
+          Already have an account?{" "}
+          <a href="/signin" className="font-semibold text-brand-700 hover:text-brand-800">
+            Sign in
+          </a>
+        </p>
+      </div>
     </main>
   );
 }

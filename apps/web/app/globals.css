@@ -6,6 +6,243 @@
   color-scheme: light;
 }
 
-body {
-  @apply bg-cream text-ink antialiased;
+@layer base {
+  body {
+    @apply bg-cream text-ink antialiased;
+    /* Warm, barely-there ambient texture: two soft brand/amber glows over the cream canvas.
+       Fixed so it doesn't scroll, subtle enough to never compete with content. */
+    background-image:
+      radial-gradient(1100px 620px at 12% -8%, rgba(19, 161, 74, 0.07), transparent 60%),
+      radial-gradient(900px 560px at 100% 0%, rgba(214, 158, 46, 0.06), transparent 55%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* A single, consistent, accessible focus ring across the whole app. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500/55 ring-offset-2 ring-offset-cream;
+  }
+
+  ::selection {
+    @apply bg-brand-200/70 text-ink-900;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply text-balance;
+  }
+}
+
+@layer components {
+  /* ----------------------------------------------------------------------------
+     Page shell — consistent max width, padding, and entrance for every screen.
+  ---------------------------------------------------------------------------- */
+  .page {
+    @apply mx-auto min-h-dvh w-full max-w-3xl px-5 pb-20 pt-7 sm:px-6;
+  }
+  .page-narrow {
+    @apply mx-auto min-h-dvh w-full max-w-2xl px-5 pb-20 pt-7 sm:px-6;
+  }
+
+  /* Back / breadcrumb link with a sliding chevron. */
+  .back-link {
+    @apply inline-flex items-center gap-1 text-sm font-medium text-brand-700 transition-colors hover:text-brand-800;
+  }
+  .nav-link {
+    @apply inline-flex items-center gap-1 text-sm font-medium text-brand-700 transition-colors hover:text-brand-800;
+  }
+
+  /* Small eyebrow label above a page/hero title. */
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-brand-600;
+  }
+
+  /* Page + section titles. */
+  .page-title {
+    @apply text-[1.7rem] font-bold leading-tight tracking-tight text-ink-900 sm:text-3xl;
+  }
+  .page-subtitle {
+    @apply mt-1.5 max-w-2xl text-[0.95rem] leading-relaxed text-ink-500;
+  }
+  .section-title {
+    @apply text-base font-semibold tracking-tight text-ink-900;
+  }
+
+  /* ----------------------------------------------------------------------------
+     Surfaces — cards. `.card` is the base; `.card-hover` adds the lift on hover;
+     `.card-link` is the full interactive treatment for clickable cards.
+  ---------------------------------------------------------------------------- */
+  .card {
+    @apply rounded-2xl border border-line bg-surface shadow-card;
+  }
+  .card-pad {
+    @apply rounded-2xl border border-line bg-surface p-5 shadow-card sm:p-6;
+  }
+  .card-hover {
+    @apply transition duration-300 ease-spring hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-lift;
+  }
+  /* Pair `.card-link` with the `group` class on the element for the hover/focus child effects. */
+  .card-link {
+    @apply relative block overflow-hidden rounded-2xl border border-line bg-surface p-5 shadow-card transition duration-300 ease-spring hover:-translate-y-1 hover:border-brand-200 hover:shadow-lift focus-visible:-translate-y-1;
+  }
+
+  /* Brand "hero" surface — the green spotlight panel used across the app. */
+  .panel-brand {
+    @apply relative overflow-hidden rounded-3xl bg-brand-gradient p-6 text-white shadow-brand;
+  }
+  .panel-brand::after {
+    content: "";
+    @apply pointer-events-none absolute inset-0 bg-brand-sheen;
+  }
+  .panel-brand > * {
+    @apply relative;
+  }
+
+  /* ----------------------------------------------------------------------------
+     Buttons — primary / secondary / ghost / dark, plus a compact size.
+  ---------------------------------------------------------------------------- */
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition duration-200 ease-spring active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-brand-gradient text-white shadow-brand hover:shadow-brand-lift hover:brightness-[1.03];
+  }
+  .btn-secondary {
+    @apply btn border border-brand-200 bg-surface text-brand-700 shadow-xs hover:border-brand-300 hover:bg-brand-50;
+  }
+  .btn-ghost {
+    @apply btn border border-line bg-surface text-ink-600 shadow-xs hover:border-ink-200 hover:bg-ink-50;
+  }
+  .btn-dark {
+    @apply btn bg-ink-gradient text-white shadow-lift hover:brightness-110;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+  .btn-block {
+    @apply w-full;
+  }
+
+  /* ----------------------------------------------------------------------------
+     Form controls — clean inputs with a calm focus ring.
+  ---------------------------------------------------------------------------- */
+  .field-label {
+    @apply text-sm font-medium text-ink-700;
+  }
+  .field-hint {
+    @apply mt-1.5 block text-xs text-ink-400;
+  }
+  .input {
+    @apply mt-1.5 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink-900 shadow-xs transition placeholder:text-ink-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20;
+  }
+  textarea.input {
+    @apply leading-relaxed;
+  }
+  .select {
+    @apply input appearance-none bg-[length:1.1em] bg-[right_0.7rem_center] bg-no-repeat pr-9;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23737f8c' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  }
+
+  /* File input — styled "Choose file" affordance. */
+  .input-file {
+    @apply block w-full text-sm text-ink-500 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand-50 file:px-3.5 file:py-2 file:text-sm file:font-semibold file:text-brand-700 file:transition hover:file:bg-brand-100;
+  }
+
+  /* Checkbox / radio rows used in chip groups + lists. */
+  .control-accent {
+    @apply h-4 w-4 shrink-0 cursor-pointer accent-brand-500;
+  }
+
+  /* ----------------------------------------------------------------------------
+     Pills, chips, tabs, badges.
+  ---------------------------------------------------------------------------- */
+  .pill {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold;
+  }
+  .pill-brand {
+    @apply pill bg-brand-50 text-brand-700;
+  }
+  .pill-success {
+    @apply pill bg-success-soft text-success-ink;
+  }
+  .pill-warn {
+    @apply pill bg-warn-soft text-warn-ink;
+  }
+  .pill-danger {
+    @apply pill bg-danger-soft text-danger-ink;
+  }
+  .pill-muted {
+    @apply pill bg-ink-100 text-ink-500;
+  }
+
+  /* Selectable filter chip (label-wrapped checkbox). */
+  .chip {
+    @apply inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-medium text-ink-600 shadow-xs transition hover:border-brand-200 hover:text-ink-800 has-[:checked]:border-brand-300 has-[:checked]:bg-brand-50 has-[:checked]:text-brand-800;
+  }
+
+  /* Segmented filter tab (anchor-based). */
+  .tab {
+    @apply inline-flex items-center rounded-full border px-3.5 py-1.5 text-sm font-medium transition duration-200;
+  }
+  .tab-active {
+    @apply border-transparent bg-brand-gradient text-white shadow-brand;
+  }
+  .tab-idle {
+    @apply border-line bg-surface text-ink-600 shadow-xs hover:border-brand-200 hover:text-ink-800;
+  }
+
+  /* ----------------------------------------------------------------------------
+     Banners / notices.
+  ---------------------------------------------------------------------------- */
+  .notice {
+    @apply rounded-xl px-4 py-3 text-sm;
+  }
+  .notice-ok {
+    @apply notice bg-success-soft text-success-ink;
+  }
+  .notice-info {
+    @apply notice bg-ink-50 text-ink-600;
+  }
+  .notice-warn {
+    @apply notice bg-warn-soft text-warn-ink;
+  }
+  .notice-danger {
+    @apply notice bg-danger-soft text-danger-ink;
+  }
+
+  /* Empty-state card — a friendlier, centered placeholder. */
+  .empty-state {
+    @apply flex flex-col items-center rounded-2xl border border-dashed border-line bg-surface/70 px-6 py-12 text-center shadow-xs;
+  }
+  .empty-emoji {
+    @apply mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-2xl;
+  }
+
+  /* Row item — list rows (pantry, staples, list, etc.). */
+  .row {
+    @apply flex items-center justify-between gap-4 rounded-xl border border-line bg-surface px-4 py-3.5 shadow-xs transition duration-200 hover:border-brand-100 hover:shadow-sm;
+  }
+
+  /* Emoji tile used for feature icons / section glyphs. */
+  .tile {
+    @apply flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-xl ring-1 ring-inset ring-brand-100 transition duration-300 ease-spring;
+  }
+  .group:hover .tile {
+    @apply -rotate-3 scale-105 bg-brand-100;
+  }
+}
+
+@layer utilities {
+  /* Reduced-motion: respect the user's preference everywhere. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
 }

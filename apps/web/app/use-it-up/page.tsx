@@ -93,35 +93,38 @@ async function load() {
 }
 
 function urgencyLabel(reason: string, daysLeft: number | null): { text: string; cls: string } {
-  if (reason === "expired_likely") return { text: "likely expired", cls: "bg-zinc-200 text-zinc-700" };
-  if (daysLeft != null && daysLeft <= 0) return { text: "use today", cls: "bg-red-100 text-red-700" };
-  if (daysLeft === 1) return { text: "1 day left", cls: "bg-amber-100 text-amber-800" };
-  return { text: `${daysLeft} days left`, cls: "bg-amber-100 text-amber-800" };
+  if (reason === "expired_likely") return { text: "likely expired", cls: "pill-muted" };
+  if (daysLeft != null && daysLeft <= 0) return { text: "use today", cls: "pill-danger" };
+  if (daysLeft === 1) return { text: "1 day left", cls: "pill-warn" };
+  return { text: `${daysLeft} days left`, cls: "pill-warn" };
 }
 
 export default async function UseItUpPage() {
   const data = await load();
 
   return (
-    <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
-      <a href="/pantry" className="text-sm text-brand-600">← Pantry</a>
-      <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">Use it up</h1>
-      <p className="mb-6 text-sm text-ink/60">
-        What&apos;s about to go bad — and meals to rescue it before it does.
-      </p>
+    <main className="page">
+      <a href="/pantry" className="back-link"><span aria-hidden>←</span> Pantry</a>
+      <div className="mt-4 animate-fade-in-up">
+        <p className="eyebrow">Reduce waste</p>
+        <h1 className="page-title mt-2">Use it up</h1>
+        <p className="page-subtitle">
+          What&apos;s about to go bad — and meals to rescue it before it does.
+        </p>
+      </div>
 
       {!data.ready && (
-        <p className="mb-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+        <p className="notice-warn mt-6">
           Couldn&apos;t reach the database. {data.error?.slice(0, 120)}
         </p>
       )}
 
       {data.ready && data.waste.count > 0 && (
-        <div className="mb-6 rounded-xl bg-zinc-100 p-3 text-sm text-zinc-700">
+        <div className="notice-info mt-6">
           You&apos;ve let <strong>{data.waste.count}</strong> item{data.waste.count === 1 ? "" : "s"} expire in
           the last 30 days. Let&apos;s waste less.
           {data.waste.byItem.some((i) => i.count > 1) && (
-            <div className="mt-1 text-xs text-zinc-500">
+            <div className="mt-1 text-xs text-ink-400">
               Repeat offenders: {data.waste.byItem.filter((i) => i.count > 1).map((i) => `${i.name} (×${i.count})`).join(", ")} —
               I&apos;ve trimmed how much of these I&apos;ll suggest buying.
             </div>
@@ -130,32 +133,31 @@ export default async function UseItUpPage() {
       )}
 
       {data.ready && data.expiring.length === 0 && (
-        <p className="rounded-xl bg-white p-5 text-sm text-ink/60 shadow-sm">
-          Nothing about to spoil right now. 🌱
-        </p>
+        <div className="empty-state mt-6">
+          <div className="empty-emoji">🌱</div>
+          <p className="text-sm font-medium text-ink-700">Nothing about to spoil</p>
+          <p className="mt-1 max-w-xs text-sm text-ink-400">You&apos;re all caught up right now.</p>
+        </div>
       )}
 
       {data.ready && data.expiring.length > 0 && (
         <div className="space-y-8">
           <section>
-            <h2 className="mb-3 font-semibold text-ink">Expiring soon</h2>
+            <h2 className="section-title mb-3">Expiring soon</h2>
             <ul className="space-y-2">
               {data.expiring.map((e) => {
                 const u = urgencyLabel(e.reason, e.daysLeft);
                 return (
-                  <li
-                    key={e.canonicalItemId}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-black/5 bg-white px-4 py-3 shadow-sm"
-                  >
-                    <span className="min-w-0 font-medium text-ink">{e.name}</span>
+                  <li key={e.canonicalItemId} className="row">
+                    <span className="min-w-0 font-medium text-ink-900">{e.name}</span>
                     <div className="flex shrink-0 items-center gap-2">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${u.cls}`}>{u.text}</span>
+                      <span className={u.cls}>{u.text}</span>
                       <form action={markWasted}>
                         <input type="hidden" name="id" value={e.canonicalItemId} />
                         <input type="hidden" name="name" value={e.name} />
                         <button
                           type="submit"
-                          className="rounded-full border border-black/10 px-2.5 py-1 text-xs font-medium text-ink/60 transition hover:bg-zinc-50"
+                          className="btn-ghost btn-sm rounded-full"
                           title="Mark as wasted — removes it and teaches me to buy less"
                         >
                           Tossed it
@@ -169,22 +171,23 @@ export default async function UseItUpPage() {
           </section>
 
           <section>
-            <h2 className="mb-3 font-semibold text-ink">Cook these to use them up</h2>
+            <h2 className="section-title mb-3">Cook these to use them up</h2>
             {data.recipes.length === 0 ? (
-              <p className="rounded-xl bg-white p-5 text-sm text-ink/60 shadow-sm">
-                No matching rescue recipes right now — try the{" "}
-                <a href="/recipes" className="text-brand-600">
-                  full recipe list
-                </a>
-                .
-              </p>
+              <div className="empty-state mt-6">
+                <div className="empty-emoji">🍳</div>
+                <p className="text-sm font-medium text-ink-700">No matching rescue recipes right now</p>
+                <p className="mt-1 max-w-xs text-sm text-ink-400">
+                  Try the{" "}
+                  <a href="/recipes" className="text-brand-700">
+                    full recipe list
+                  </a>
+                  .
+                </p>
+              </div>
             ) : (
               <ul className="space-y-3">
                 {data.recipes.map((r) => (
-                  <li
-                    key={r.id}
-                    className="flex gap-4 rounded-2xl border border-black/5 bg-white p-4 shadow-sm"
-                  >
+                  <li key={r.id} className="card-pad flex gap-4">
                     {data.images.get(r.id) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -194,14 +197,14 @@ export default async function UseItUpPage() {
                       />
                     ) : null}
                     <div className="min-w-0">
-                      <div className="font-medium text-ink">{r.title}</div>
-                      <div className="text-xs text-brand-600">
+                      <div className="font-medium text-ink-900">{r.title}</div>
+                      <div className="text-xs text-brand-700">
                         uses {r.usesExpiring} expiring · have {r.haveCount}/{r.totalCore}
                       </div>
                       {r.missing.length > 0 && (
-                        <div className="mt-1 text-xs text-ink/40">missing: {r.missing.join(", ")}</div>
+                        <div className="mt-1 text-xs text-ink-400">missing: {r.missing.join(", ")}</div>
                       )}
-                      <a href={`/cook/${r.id}`} className="mt-2 inline-block text-xs font-medium text-brand-600">
+                      <a href={`/cook/${r.id}`} className="mt-2 inline-block text-xs font-medium text-brand-700">
                         Cook mode →
                       </a>
                     </div>

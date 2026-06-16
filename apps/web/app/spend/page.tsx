@@ -45,41 +45,43 @@ export default async function SpendPage() {
   const data = await load();
 
   return (
-    <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
-      <a href="/" className="text-sm text-brand-600">← Home</a>
-      <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">Spending</h1>
-      <p className="mb-4 text-sm text-ink/60">From your receipts — no bank link needed.</p>
-      <a
-        href="/wrapped"
-        className="mb-6 inline-block rounded-xl border border-brand-200 bg-white px-3 py-1.5 text-sm font-medium text-brand-700"
-      >
-        See your Grocery Wrapped →
-      </a>
+    <main className="page">
+      <a href="/" className="back-link"><span aria-hidden>←</span> Home</a>
+      <div className="mt-4 animate-fade-in-up">
+        <p className="eyebrow">Spending</p>
+        <h1 className="page-title mt-2">Spending</h1>
+        <p className="page-subtitle">From your receipts — no bank link needed.</p>
+        <a href="/wrapped" className="btn-secondary btn-sm mt-4 inline-flex">
+          See your Grocery Wrapped →
+        </a>
+      </div>
 
       {!data.ready && (
-        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+        <p className="notice-warn mt-6">
           Couldn&apos;t reach the database. {data.error?.slice(0, 120)}
         </p>
       )}
 
       {data.ready && data.empty && (
-        <p className="rounded-xl bg-white p-5 text-sm text-ink/60 shadow-sm">
-          No spend yet — once receipts land, this fills in.
-        </p>
+        <div className="empty-state mt-6">
+          <div className="empty-emoji">💸</div>
+          <p className="text-sm font-medium text-ink-700">No spend yet</p>
+          <p className="mt-1 max-w-xs text-sm text-ink-400">Once receipts land, this fills in.</p>
+        </div>
       )}
 
       {data.ready && !data.empty && (
         <div className="space-y-6">
           <section className="grid grid-cols-2 gap-4">
-            <div className="rounded-2xl bg-brand-500 p-5 text-white shadow-sm">
+            <div className="panel-brand !rounded-2xl p-5">
               <div className="text-xs uppercase tracking-wide text-white/80">This month</div>
-              <div className="mt-1 text-2xl font-bold">{fmt(data.thisMonth)}</div>
+              <div className="mt-1 font-display text-2xl font-bold">{fmt(data.thisMonth)}</div>
             </div>
-            <div className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-              <div className="text-xs uppercase tracking-wide text-ink/50">This week</div>
-              <div className="mt-1 text-2xl font-bold text-ink">{fmt(data.budget.actualCents)}</div>
+            <div className="card-pad">
+              <div className="text-xs uppercase tracking-wide text-ink-400">This week</div>
+              <div className="mt-1 text-2xl font-bold text-ink-900">{fmt(data.budget.actualCents)}</div>
               {data.budget.budgetCents != null && (
-                <div className={`mt-1 text-xs ${data.budget.overBudget ? "text-red-600" : "text-brand-600"}`}>
+                <div className={`mt-1 text-xs ${data.budget.overBudget ? "text-danger" : "text-success"}`}>
                   {data.budget.overBudget ? "over" : "under"} budget by {fmt(Math.abs(data.budget.deltaCents ?? 0))}
                 </div>
               )}
@@ -87,13 +89,13 @@ export default async function SpendPage() {
           </section>
 
           {data.top.length > 0 && (
-            <section className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-              <h2 className="font-semibold text-ink">Top items by spend</h2>
-              <ul className="mt-3 space-y-1 text-sm text-ink/70">
+            <section className="card-pad">
+              <h2 className="section-title">Top items by spend</h2>
+              <ul className="mt-3 space-y-1 text-sm text-ink-600">
                 {data.top.map((t) => (
                   <li key={t.canonicalItemId} className="flex justify-between">
                     <span>{t.name}</span>
-                    <span className="tabular-nums text-ink">{fmt(t.totalCents)}</span>
+                    <span className="tabular-nums text-ink-900">{fmt(t.totalCents)}</span>
                   </li>
                 ))}
               </ul>
@@ -101,12 +103,12 @@ export default async function SpendPage() {
           )}
 
           {data.cheaper.length > 0 && (
-            <section className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-              <h2 className="font-semibold text-ink">Cheaper elsewhere</h2>
-              <ul className="mt-3 space-y-1 text-sm text-ink/70">
+            <section className="card-pad">
+              <h2 className="section-title">Cheaper elsewhere</h2>
+              <ul className="mt-3 space-y-1 text-sm text-ink-600">
                 {data.cheaper.map((c) => (
                   <li key={c.canonicalItemId}>
-                    <span className="text-ink">{c.name}</span> — cheapest at{" "}
+                    <span className="text-ink-900">{c.name}</span> — cheapest at{" "}
                     <span className="font-medium">{retailerLabel(c.bestRetailer)}</span> ({fmt(c.bestCents)}), save{" "}
                     {fmt(c.savingsVsWorstCents)}
                   </li>

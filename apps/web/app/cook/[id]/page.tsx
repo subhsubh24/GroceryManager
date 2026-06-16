@@ -59,35 +59,40 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
   const { recipe, error } = await load(id);
 
   return (
-    <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
+    <main className="page">
       <div className="flex items-center justify-between">
-        <a href="/recipes" className="text-sm text-brand-600">← Recipes</a>
+        <a href="/recipes" className="back-link">
+          <span aria-hidden>←</span> Recipes
+        </a>
         {recipe && (
-          <a href={`/share/recipe/${id}`} className="text-sm font-medium text-brand-600">
+          <a href={`/share/recipe/${id}`} className="nav-link">
             Share →
           </a>
         )}
       </div>
 
       {!recipe ? (
-        <div className="mt-6 rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
+        <div className="notice-warn mt-6">
           {error ? `Couldn't load this recipe. ${error.slice(0, 120)}` : "Recipe not found."}
         </div>
       ) : (
         <>
-          <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">{recipe.title}</h1>
-          <p className="mb-6 text-sm text-ink/60">
-            Cook mode · screen stays awake · tap through each step.
-          </p>
-          <CookMode
-            imageUrl={recipe.imageUrl}
-            steps={splitSteps(recipe.instructions)}
-            ingredients={recipe.ingredients}
-          />
+          <div className="mt-4 animate-fade-in-up">
+            <p className="eyebrow">Cook mode</p>
+            <h1 className="page-title mt-2">{recipe.title}</h1>
+            <p className="page-subtitle">Screen stays awake · tap through each step.</p>
+          </div>
+          <div className="mt-6">
+            <CookMode
+              imageUrl={recipe.imageUrl}
+              steps={splitSteps(recipe.instructions)}
+              ingredients={recipe.ingredients}
+            />
+          </div>
 
-          <section className="mt-8 rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-            <h2 className="font-semibold text-ink">Out of something?</h2>
-            <p className="mt-0.5 mb-3 text-xs text-ink/50">Common swaps for this recipe — or look one up.</p>
+          <section className="card-pad mt-8">
+            <h2 className="section-title">Out of something?</h2>
+            <p className="mt-0.5 mb-3 text-xs text-ink-400">Common swaps for this recipe — or look one up.</p>
             {(() => {
               const known = recipe.ingredients
                 .map((i) => ({ name: i.name, subs: findSubstitutions(i.name) }))
@@ -96,11 +101,14 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
                 <ul className="mb-4 space-y-2">
                   {known.map((k) => (
                     <li key={k.name}>
-                      <details>
-                        <summary className="cursor-pointer text-sm font-medium text-ink">
-                          {k.name} <span className="text-xs font-normal text-brand-600">· swap</span>
+                      <details className="group rounded-xl border border-line bg-cream/50 px-3.5 py-2.5 transition open:bg-surface">
+                        <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-ink-800 marker:content-none">
+                          <span>
+                            {k.name} <span className="text-xs font-normal text-brand-600">· swap</span>
+                          </span>
+                          <span className="text-ink-300 transition group-open:rotate-180">▾</span>
                         </summary>
-                        <ul className="mt-1 space-y-1 pl-3 text-sm text-ink/70">
+                        <ul className="mt-2 space-y-1 pl-3 text-sm text-ink-600">
                           {k.subs.map((s, i) => (
                             <li key={i}>{s.text}</li>
                           ))}
@@ -114,30 +122,30 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
             <SwapFinder action={askSwap} />
           </section>
 
-          <form action={logThisCook} className="mt-6 rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
+          <form action={logThisCook} className="card-pad mt-6">
             <input type="hidden" name="id" value={id} />
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="min-w-0">
-                <div className="font-semibold text-ink">Made it?</div>
-                <div className="text-xs text-ink/50">
-                  Logs the meal, learns your taste, and draws down what you used.
+              <div className="flex min-w-0 items-start gap-3">
+                <div className="tile shrink-0">🍽️</div>
+                <div>
+                  <div className="section-title">Made it?</div>
+                  <div className="text-xs text-ink-400">
+                    Logs the meal, learns your taste, and draws down what you used.
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-ink/60">
+              <div className="flex items-center gap-2.5">
+                <label className="text-sm text-ink-500">
                   Servings
                   <input
                     name="servings"
                     type="number"
                     min="1"
                     defaultValue={1}
-                    className="ml-1.5 w-16 rounded-lg border border-black/10 px-2 py-1 text-sm"
+                    className="ml-1.5 w-16 rounded-lg border border-line bg-surface px-2 py-1 text-sm shadow-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20"
                   />
                 </label>
-                <button
-                  type="submit"
-                  className="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white transition active:scale-[0.98]"
-                >
+                <button type="submit" className="btn-primary">
                   I cooked this ✓
                 </button>
               </div>

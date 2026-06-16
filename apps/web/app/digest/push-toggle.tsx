@@ -97,49 +97,44 @@ export function PushToggle({ vapidPublicKey }: { vapidPublicKey: string | null }
   }
 
   return (
-    <section className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-      <h2 className="font-semibold text-ink">Get this as a notification</h2>
-      <p className="mt-0.5 mb-3 text-xs text-ink/50">
-        A weekly nudge when something&apos;s expiring or due to reorder — never on a quiet week.
-      </p>
-      {!supported ? (
-        <p className="text-xs text-ink/40">
-          This browser doesn&apos;t support web push. On iPhone, add the app to your Home Screen first.
-        </p>
-      ) : (
-        <div className="flex flex-wrap items-center gap-3">
-          {!subscribed ? (
-            <button
-              type="button"
-              onClick={enable}
-              disabled={busy}
-              className="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98] disabled:opacity-50"
-            >
-              {busy ? "…" : "Enable notifications"}
-            </button>
+    <section className="card-pad">
+      <div className="flex items-start gap-3">
+        <div className="tile shrink-0">🔔</div>
+        <div>
+          <h2 className="section-title">Get this as a notification</h2>
+          <p className="mt-0.5 mb-3 text-xs text-ink-400">
+            A weekly nudge when something&apos;s expiring or due to reorder — never on a quiet week.
+          </p>
+          {!supported ? (
+            <p className="text-xs text-ink-400">
+              This browser doesn&apos;t support web push. On iPhone, add the app to your Home Screen first.
+            </p>
           ) : (
-            <>
-              <button
-                type="button"
-                onClick={test}
-                disabled={busy}
-                className="rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-              >
-                {busy ? "…" : "Send a test"}
-              </button>
-              <button
-                type="button"
-                onClick={disable}
-                disabled={busy}
-                className="text-sm font-medium text-ink/50 underline-offset-2 hover:underline"
-              >
-                Turn off
-              </button>
-            </>
+            <div className="flex flex-wrap items-center gap-3">
+              {!subscribed ? (
+                <button type="button" onClick={enable} disabled={busy} className="btn-primary">
+                  {busy ? "…" : "Enable notifications"}
+                </button>
+              ) : (
+                <>
+                  <button type="button" onClick={test} disabled={busy} className="btn-dark">
+                    {busy ? "…" : "Send a test"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={disable}
+                    disabled={busy}
+                    className="text-sm font-medium text-ink-400 underline-offset-2 transition hover:text-ink-600 hover:underline disabled:opacity-50"
+                  >
+                    Turn off
+                  </button>
+                </>
+              )}
+            </div>
           )}
+          {msg && <p className="mt-3 text-sm text-ink-600">{msg}</p>}
         </div>
-      )}
-      {msg && <p className="mt-3 text-sm text-ink/70">{msg}</p>}
+      </div>
     </section>
   );
 }

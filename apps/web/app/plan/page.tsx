@@ -142,9 +142,7 @@ export default async function PlanPage({
   const tab = (href: string, label: string, active: boolean) => (
     <a
       href={href}
-      className={`rounded-full px-3 py-1.5 text-sm font-medium ${
-        active ? "bg-brand-500 text-white" : "bg-white text-ink/70 border border-black/5"
-      }`}
+      className={`tab ${active ? "tab-active" : "tab-idle"}`}
     >
       {label}
     </a>
@@ -156,29 +154,32 @@ export default async function PlanPage({
   const addToList = result?.plan.addToList ?? [];
 
   return (
-    <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
-      <a href="/" className="text-sm text-brand-600">← Home</a>
-      <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">Plan my week</h1>
-      <p className="mb-4 text-sm text-ink/60">
-        Five dinners built from what you have, using up what&apos;s about to expire first.
-      </p>
+    <main className="page">
+      <a href="/" className="back-link"><span aria-hidden>←</span> Home</a>
+      <div className="mt-4 animate-fade-in-up">
+        <p className="eyebrow">Your week</p>
+        <h1 className="page-title mt-2">Plan my week</h1>
+        <p className="page-subtitle">
+          Five dinners built from what you have, using up what&apos;s about to expire first.
+        </p>
+      </div>
 
-      <div className="mb-6 flex gap-2">
+      <div className="mt-5 mb-6 flex gap-2">
         {tab("/plan", "Normal week", !lowEnergy)}
         {tab("/plan?energy=low", "Low-energy week", lowEnergy)}
       </div>
 
       {!data.ready && (
-        <p className="mb-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+        <p className="notice-warn mb-4">
           Couldn&apos;t build a plan (DB or recipe provider). {data.error?.slice(0, 120)}
         </p>
       )}
 
       {result && (
         <div className="space-y-6">
-          <section className="rounded-2xl bg-brand-500 p-6 text-white shadow-sm">
+          <section className="panel-brand">
             <div className="mb-2 flex items-center gap-2">
-              <h2 className="text-lg font-semibold">Your week</h2>
+              <h2 className="font-display text-xl font-semibold">Your week</h2>
               <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium">
                 {result.source === "llm" ? "Planned by AI ✨" : "Auto-planned"}
               </span>
@@ -191,26 +192,26 @@ export default async function PlanPage({
               {dinners.map((d) => (
                 <li
                   key={`${d.day}-${d.recipeId}`}
-                  className="flex gap-4 rounded-2xl border border-black/5 bg-white p-4 shadow-sm"
+                  className="card card-hover p-4 flex gap-4"
                 >
                   {images.get(d.recipeId) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={images.get(d.recipeId)} alt="" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
                   ) : null}
                   <div className="min-w-0">
-                    <div className="text-xs font-medium uppercase tracking-wide text-brand-600">{d.day}</div>
-                    <div className="font-medium text-ink">{d.title}</div>
-                    <div className="text-xs text-ink/50">{d.reason}</div>
+                    <div className="text-xs font-medium uppercase tracking-wide text-brand-700">{d.day}</div>
+                    <div className="font-medium text-ink-900">{d.title}</div>
+                    <div className="text-xs text-ink-400">{d.reason}</div>
                     {d.usesExpiring.length > 0 && (
                       <div className="mt-1 flex flex-wrap gap-1">
                         {d.usesExpiring.map((n) => (
-                          <span key={n} className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-800">
+                          <span key={n} className="pill-warn">
                             uses {n}
                           </span>
                         ))}
                       </div>
                     )}
-                    <a href={`/cook/${d.recipeId}`} className="mt-2 inline-block text-xs font-medium text-brand-600">
+                    <a href={`/cook/${d.recipeId}`} className="mt-2 inline-block text-xs font-medium text-brand-700">
                       Cook mode →
                     </a>
                   </div>
@@ -220,30 +221,31 @@ export default async function PlanPage({
           )}
 
           {dinners.length === 0 && (
-            <p className="rounded-xl bg-white p-5 text-sm text-ink/60 shadow-sm">
-              Add a few items to your pantry and a weekly plan will appear here.
-            </p>
+            <div className="empty-state mt-6">
+              <div className="empty-emoji">🌱</div>
+              <p className="text-sm font-medium text-ink-700">No weekly plan yet</p>
+              <p className="mt-1 max-w-xs text-sm text-ink-400">
+                Add a few items to your pantry and a weekly plan will appear here.
+              </p>
+            </div>
           )}
 
           {addToList.length > 0 && (
-            <section className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-              <h2 className="mb-1 font-semibold text-ink">Shopping gap</h2>
-              <p className="mb-3 text-sm text-ink/60">
+            <section className="card-pad">
+              <h2 className="section-title mb-1">Shopping gap</h2>
+              <p className="mb-3 text-sm text-ink-500">
                 {addToList.length} item{addToList.length === 1 ? "" : "s"} you&apos;ll need for this week.
               </p>
               <div className="mb-4 flex flex-wrap gap-1.5">
                 {addToList.map((n) => (
-                  <span key={n} className="rounded-full bg-brand-50 px-2.5 py-1 text-xs text-brand-700">
+                  <span key={n} className="pill-brand">
                     {n}
                   </span>
                 ))}
               </div>
               <form action={addPlanItemsToList}>
                 <input type="hidden" name="items" value={JSON.stringify(addToList)} />
-                <button
-                  type="submit"
-                  className="rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white transition active:scale-[0.98]"
-                >
+                <button type="submit" className="btn-dark">
                   Add {addToList.length} to my list →
                 </button>
               </form>

@@ -78,49 +78,47 @@ export default async function ProfilePage({
   const model = data.ready ? data.model : null;
 
   return (
-    <main className="mx-auto min-h-dvh max-w-2xl px-5 pb-16 pt-8">
-      <a href="/" className="text-sm text-brand-600">
-        ← Home
+    <main className="page-narrow">
+      <a href="/" className="back-link">
+        <span aria-hidden>←</span> Home
       </a>
-      <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">Your profile</h1>
-      <p className="mb-6 text-sm text-ink/60">
-        Name, age, and gender — stored in your preference model so every plan and recipe can use them.
-      </p>
+      <div className="mt-4 animate-fade-in-up">
+        <p className="eyebrow">Your account</p>
+        <h1 className="page-title mt-2">Your profile</h1>
+        <p className="page-subtitle">
+          Name, age, and gender — stored in your preference model so every plan and recipe can use
+          them.
+        </p>
+      </div>
 
-      {saved && (
-        <p className="mb-4 rounded-xl bg-brand-50 p-3 text-sm text-brand-900">Saved.</p>
-      )}
+      {saved && <p className="notice-ok mt-6">Saved.</p>}
 
-      <form action={saveProfile} className="space-y-4">
+      <form action={saveProfile} className="card-pad mt-6 space-y-4">
         <label className="block">
-          <span className="text-sm font-medium text-ink">Name</span>
+          <span className="field-label">Name</span>
           <input
             name="name"
             type="text"
             defaultValue={model?.name ?? ""}
             autoComplete="name"
-            className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm"
+            className="input"
           />
         </label>
         <div className="grid grid-cols-2 gap-4">
           <label className="block">
-            <span className="text-sm font-medium text-ink">Age</span>
+            <span className="field-label">Age</span>
             <input
               name="age"
               type="number"
               min="1"
               max="120"
               defaultValue={model?.ageYears ?? ""}
-              className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm"
+              className="input"
             />
           </label>
           <label className="block">
-            <span className="text-sm font-medium text-ink">Gender</span>
-            <select
-              name="gender"
-              defaultValue={model?.gender ?? ""}
-              className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm"
-            >
+            <span className="field-label">Gender</span>
+            <select name="gender" defaultValue={model?.gender ?? ""} className="select">
               <option value="">—</option>
               {GENDERS.map((g) => (
                 <option key={g} value={g}>
@@ -130,16 +128,13 @@ export default async function ProfilePage({
             </select>
           </label>
         </div>
-        <button
-          type="submit"
-          className="rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white transition active:scale-[0.98]"
-        >
+        <button type="submit" className="btn-primary">
           Save profile
         </button>
       </form>
 
       {!data.ready && (
-        <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+        <p className="notice-warn mt-4">
           Couldn&apos;t reach the database. {data.error?.slice(0, 120)}
         </p>
       )}

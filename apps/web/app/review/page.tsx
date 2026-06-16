@@ -18,28 +18,35 @@ export default async function ReviewPage() {
   const { rows, error } = await loadReview();
 
   return (
-    <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
-      <a href="/pantry" className="text-sm text-brand-600">← Pantry</a>
-      <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">Review inbox</h1>
-      <p className="mb-6 text-sm text-ink/60">
-        Low-confidence items the app couldn&apos;t place with certainty. Confirming teaches it (the ratchet).
-      </p>
+    <main className="page">
+      <a href="/pantry" className="back-link"><span aria-hidden>←</span> Pantry</a>
+      <div className="mt-4 animate-fade-in-up">
+        <p className="eyebrow">Review inbox</p>
+        <h1 className="page-title mt-2">Review inbox</h1>
+        <p className="page-subtitle">
+          Low-confidence items the app couldn&apos;t place with certainty. Confirming teaches it (the ratchet).
+        </p>
+      </div>
 
       {error && (
-        <p className="mb-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+        <p className="notice-warn mt-6">
           Couldn&apos;t reach the database. Set <code>DATABASE_URL</code> and run the migrations/seed.
         </p>
       )}
 
       {rows.length === 0 && !error && (
-        <p className="rounded-xl bg-white p-5 text-sm text-ink/60 shadow-sm">Nothing to review. 🎉</p>
+        <div className="empty-state mt-6">
+          <div className="empty-emoji">🎉</div>
+          <p className="text-sm font-medium text-ink-700">Nothing to review</p>
+          <p className="mt-1 max-w-xs text-sm text-ink-400">You&apos;re all caught up.</p>
+        </div>
       )}
 
-      <ul className="space-y-2">
+      <ul className="mt-6 space-y-2">
         {rows.map((r) => (
-          <li key={r.id} className="rounded-xl border border-black/5 bg-white px-4 py-3 shadow-sm">
-            <div className="font-medium text-ink">{r.rawText}</div>
-            <div className="text-xs text-ink/50">
+          <li key={r.id} className="card p-4">
+            <div className="font-medium text-ink-900">{r.rawText}</div>
+            <div className="text-xs text-ink-400">
               {r.retailer}
               {r.canonicalName ? ` · best guess: ${r.canonicalName}` : " · no confident match"}
               {r.matchConfidence != null ? ` · ${Math.round(r.matchConfidence * 100)}% sure` : ""}

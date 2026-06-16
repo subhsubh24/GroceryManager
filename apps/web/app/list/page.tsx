@@ -74,34 +74,40 @@ export default async function ListPage() {
     );
 
   return (
-    <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
+    <main className="page">
       <div className="flex items-center justify-between">
-        <a href="/" className="text-sm text-brand-600">← Home</a>
+        <a href="/" className="back-link"><span aria-hidden>←</span> Home</a>
         <div className="flex gap-4">
-          <a href="/capture" className="text-sm font-medium text-brand-600">Quick add →</a>
-          <a href="/staples" className="text-sm font-medium text-brand-600">Staples autopilot →</a>
+          <a href="/capture" className="nav-link">Quick add →</a>
+          <a href="/staples" className="nav-link">Staples autopilot →</a>
         </div>
       </div>
-      <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">Reorder</h1>
-      <p className="mb-6 text-sm text-ink/60">
-        Drafted from what&apos;s running low — one tap to order, you confirm checkout.
-      </p>
+      <div className="mt-4 animate-fade-in-up">
+        <p className="eyebrow">Reorder</p>
+        <h1 className="page-title mt-2">Reorder</h1>
+        <p className="page-subtitle">
+          Drafted from what&apos;s running low — one tap to order, you confirm checkout.
+        </p>
+      </div>
 
       {error && (
-        <p className="mb-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+        <p className="notice-warn mt-6 mb-4">
           Couldn&apos;t reach the database. Set <code>DATABASE_URL</code> and run migrations/seed.
         </p>
       )}
 
       {nothingDue && !error && (
-        <p className="rounded-xl bg-white p-5 text-sm text-ink/60 shadow-sm">Nothing due right now. ✅</p>
+        <div className="empty-state mt-6">
+          <div className="empty-emoji">✅</div>
+          <p className="text-sm font-medium text-ink-700">Nothing due right now</p>
+        </div>
       )}
 
       {draft && (draft.instacart.items.length > 0 || listItems.length > 0) && (
-        <section className="mb-6 rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-          <h2 className="font-semibold text-ink">Groceries · Instacart</h2>
+        <section className="card-pad mt-6 mb-6">
+          <h2 className="section-title">Groceries · Instacart</h2>
           {draft.instacart.items.length > 0 && (
-            <ul className="mt-3 space-y-1 text-sm text-ink/70">
+            <ul className="mt-3 space-y-1 text-sm text-ink-500">
               {draft.instacart.items.map((i) => (
                 <li key={i.canonicalItemId}>
                   {itemLabel(
@@ -114,22 +120,19 @@ export default async function ListPage() {
           )}
           {listItems.length > 0 && (
             <div className="mt-3">
-              <div className="text-xs font-medium uppercase tracking-wide text-ink/40">From your list</div>
-              <ul className="mt-1 space-y-1 text-sm text-ink/70">
+              <div className="text-xs font-medium uppercase tracking-wide text-ink-400">From your list</div>
+              <ul className="mt-1 space-y-1 text-sm text-ink-500">
                 {listItems.map((i) => (
                   <li key={i.id}>{itemLabel(i.name, "")}</li>
                 ))}
               </ul>
             </div>
           )}
-          <p className="mt-3 text-xs text-ink/50">Staples due + your list — one cart.</p>
+          <p className="mt-3 text-xs text-ink-400">Staples due + your list — one cart.</p>
 
           {hasInstacartKey ? (
             <form action="/api/instacart" method="post" className="mt-3">
-              <button
-                type="submit"
-                className="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98]"
-              >
+              <button type="submit" className="btn-primary">
                 Shop with Instacart
               </button>
             </form>
@@ -141,12 +144,12 @@ export default async function ListPage() {
                   href="https://www.instacart.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-sm font-medium text-brand-600"
+                  className="nav-link"
                 >
                   Open Instacart →
                 </a>
               </div>
-              <p className="mt-2 text-xs text-ink/50">
+              <p className="mt-2 text-xs text-ink-400">
                 Copy your list and paste it into Instacart, or tap an item to search it. One-tap
                 prefill turns on once Instacart is connected.
               </p>
@@ -156,9 +159,9 @@ export default async function ListPage() {
       )}
 
       {draft && draft.amazon.items.length > 0 && (
-        <section className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-          <h2 className="font-semibold text-ink">Household, care &amp; supplements · Amazon</h2>
-          <ul className="mt-3 space-y-1 text-sm text-ink/70">
+        <section className="card-pad">
+          <h2 className="section-title">Household, care &amp; supplements · Amazon</h2>
+          <ul className="mt-3 space-y-1 text-sm text-ink-500">
             {draft.amazon.items.map((i) => (
               <li key={i.canonicalItemId}>
                 {i.name}
@@ -171,12 +174,12 @@ export default async function ListPage() {
               href={draft.amazon.addToCartUrl}
               target="_blank"
               rel="noreferrer"
-              className="mt-4 inline-block rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white"
+              className="btn-dark mt-4"
             >
               Add all to Amazon cart
             </a>
           ) : (
-            <p className="mt-3 text-xs text-ink/50">
+            <p className="mt-3 text-xs text-ink-400">
               The Add-to-Cart link appears once items have an ASIN (from the Amazon vertical).
             </p>
           )}

@@ -87,30 +87,37 @@ export default async function StaplesPage() {
   const recurring = data.ready ? data.items.filter((i) => i.enabled && i.pred.shouldReorder) : [];
 
   return (
-    <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
-      <a href="/list" className="text-sm text-brand-600">← Reorder</a>
-      <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">Staples autopilot</h1>
-      <p className="mb-6 text-sm text-ink/60">
-        Turn on the things you always want around. They&apos;ll appear on your list automatically when
-        they&apos;re due — set and forget.
-      </p>
+    <main className="page">
+      <a href="/list" className="back-link"><span aria-hidden>←</span> Reorder</a>
+      <div className="mt-4 animate-fade-in-up">
+        <p className="eyebrow">Autopilot</p>
+        <h1 className="page-title mt-2">Staples autopilot</h1>
+        <p className="page-subtitle">
+          Turn on the things you always want around. They&apos;ll appear on your list automatically when
+          they&apos;re due — set and forget.
+        </p>
+      </div>
 
       {!data.ready && (
-        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+        <p className="notice-warn mt-6">
           Couldn&apos;t reach the database. {data.error?.slice(0, 120)}
         </p>
       )}
 
       {data.ready && data.items.length === 0 && (
-        <p className="rounded-xl bg-white p-5 text-sm text-ink/60 shadow-sm">
-          Once the app has learned a buying rhythm for a few items, they&apos;ll show up here to put on
-          autopilot.
-        </p>
+        <div className="empty-state mt-6">
+          <div className="empty-emoji">🔁</div>
+          <p className="text-sm font-medium text-ink-700">No staples yet</p>
+          <p className="mt-1 max-w-xs text-sm text-ink-400">
+            Once the app has learned a buying rhythm for a few items, they&apos;ll show up here to put on
+            autopilot.
+          </p>
+        </div>
       )}
 
       {recurring.length > 0 && (
-        <section className="mb-6 rounded-2xl bg-brand-500 p-5 text-white shadow-sm">
-          <h2 className="font-semibold">Coming up on your list</h2>
+        <section className="panel-brand mt-6">
+          <h2 className="font-display text-lg font-semibold">Coming up on your list</h2>
           <ul className="mt-2 space-y-1 text-sm text-white/90">
             {recurring.map((i) => (
               <li key={`due-${i.canonicalItemId}`}>
@@ -123,15 +130,12 @@ export default async function StaplesPage() {
       )}
 
       {data.ready && data.items.length > 0 && (
-        <ul className="space-y-2">
+        <ul className="mt-6 space-y-2">
           {data.items.map((i) => (
-            <li
-              key={i.canonicalItemId}
-              className="flex items-center justify-between gap-4 rounded-xl border border-black/5 bg-white px-4 py-3 shadow-sm"
-            >
+            <li key={i.canonicalItemId} className="row items-start">
               <div className="min-w-0">
-                <div className="font-medium text-ink">{i.name}</div>
-                <div className="text-xs text-ink/50">
+                <div className="font-medium text-ink-900">{i.name}</div>
+                <div className="text-xs text-ink-400">
                   {i.domain}
                   {i.dosesPerDay != null
                     ? ` · ${i.dosesPerDay}/day`
@@ -150,13 +154,10 @@ export default async function StaplesPage() {
                     defaultValue={i.dosesPerDay ?? ""}
                     placeholder="0"
                     aria-label={`Daily dose for ${i.name}`}
-                    className="w-14 rounded-lg border border-black/10 px-2 py-0.5 text-xs"
+                    className="w-16 rounded-lg border border-line bg-surface px-2 py-1 text-xs shadow-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20"
                   />
-                  <span className="text-xs text-ink/40">/day dose</span>
-                  <button
-                    type="submit"
-                    className="rounded-lg bg-ink/5 px-2 py-0.5 text-xs font-medium text-ink/70"
-                  >
+                  <span className="text-xs text-ink-400">/day dose</span>
+                  <button type="submit" className="btn-ghost btn-sm">
                     Set
                   </button>
                 </form>
@@ -168,11 +169,11 @@ export default async function StaplesPage() {
                 <input type="hidden" name="rate" value={i.ratePerDay != null ? String(i.ratePerDay) : ""} />
                 <button
                   type="submit"
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${
+                  className={
                     i.enabled
-                      ? "bg-brand-50 text-brand-700 border border-brand-200"
-                      : "bg-ink text-white"
-                  }`}
+                      ? "btn-secondary btn-sm rounded-full"
+                      : "btn-dark btn-sm rounded-full"
+                  }
                 >
                   {i.enabled ? "On autopilot ✓" : "Turn on"}
                 </button>

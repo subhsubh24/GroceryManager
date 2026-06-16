@@ -25,11 +25,7 @@ export function ShareButton({ text }: { text: string }) {
   }
 
   return (
-    <button
-      type="button"
-      onClick={onShare}
-      className="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98]"
-    >
+    <button type="button" onClick={onShare} className="btn-primary">
       {copied ? "Copied to clipboard ✓" : "Share my Wrapped"}
     </button>
   );

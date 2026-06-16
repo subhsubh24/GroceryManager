@@ -31,13 +31,9 @@ function shareText(s: WrappedStats): string {
 
 function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div
-      className={`rounded-2xl p-5 shadow-sm ${
-        accent ? "bg-brand-500 text-white" : "border border-black/5 bg-white text-ink"
-      }`}
-    >
-      <div className={`text-3xl font-bold tabular-nums ${accent ? "" : "text-ink"}`}>{value}</div>
-      <div className={`mt-1 text-xs uppercase tracking-wide ${accent ? "text-white/80" : "text-ink/50"}`}>
+    <div className={accent ? "panel-brand !rounded-2xl p-5" : "card-pad"}>
+      <div className="font-display text-3xl font-bold tabular-nums">{value}</div>
+      <div className={`mt-1 text-xs uppercase tracking-wide ${accent ? "text-white/80" : "text-ink-400"}`}>
         {label}
       </div>
     </div>
@@ -49,24 +45,31 @@ export default async function WrappedPage() {
   const empty = data.ready && data.stats.homeCookedMeals === 0 && data.stats.totalSpentCents === 0;
 
   return (
-    <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
-      <a href="/spend" className="text-sm text-brand-600">← Spending</a>
-      <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">Grocery Wrapped</h1>
-      <p className="mb-6 text-sm text-ink/60">
-        {data.ready ? `Your ${data.stats.periodLabel} in food.` : "Your recent run in food."} Built only from
-        your own data.
-      </p>
+    <main className="page">
+      <a href="/spend" className="back-link"><span aria-hidden>←</span> Spending</a>
+      <div className="mt-4 animate-fade-in-up">
+        <p className="eyebrow">Your year in food</p>
+        <h1 className="page-title mt-2">Grocery Wrapped</h1>
+        <p className="page-subtitle">
+          {data.ready ? `Your ${data.stats.periodLabel} in food.` : "Your recent run in food."} Built only from
+          your own data.
+        </p>
+      </div>
 
       {!data.ready && (
-        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+        <p className="notice-warn mt-6">
           Couldn&apos;t reach the database. {data.error?.slice(0, 120)}
         </p>
       )}
 
       {empty && (
-        <p className="rounded-xl bg-white p-5 text-sm text-ink/60 shadow-sm">
-          Cook a few meals and let some receipts land — your Wrapped fills in here.
-        </p>
+        <div className="empty-state mt-6">
+          <div className="empty-emoji">🎉</div>
+          <p className="text-sm font-medium text-ink-700">Your Wrapped is on its way</p>
+          <p className="mt-1 max-w-xs text-sm text-ink-400">
+            Cook a few meals and let some receipts land — your Wrapped fills in here.
+          </p>
+        </div>
       )}
 
       {data.ready && !empty && (
@@ -79,15 +82,15 @@ export default async function WrappedPage() {
           </section>
 
           {data.stats.topRecipes.length > 0 && (
-            <section className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-              <h2 className="font-semibold text-ink">Your top recipes</h2>
-              <ol className="mt-3 space-y-1 text-sm text-ink/70">
+            <section className="card-pad">
+              <h2 className="section-title">Your top recipes</h2>
+              <ol className="mt-3 space-y-1 text-sm text-ink-600">
                 {data.stats.topRecipes.map((r, i) => (
                   <li key={r.title} className="flex justify-between">
                     <span>
                       {i + 1}. {r.title}
                     </span>
-                    <span className="tabular-nums text-ink/50">×{r.count}</span>
+                    <span className="tabular-nums text-ink-400">×{r.count}</span>
                   </li>
                 ))}
               </ol>
@@ -96,7 +99,7 @@ export default async function WrappedPage() {
 
           <div className="flex items-center gap-3">
             <ShareButton text={shareText(data.stats)} />
-            <span className="text-xs text-ink/40">Savings are a friendly estimate, not exact.</span>
+            <span className="text-xs text-ink-400">Savings are a friendly estimate, not exact.</span>
           </div>
         </div>
       )}

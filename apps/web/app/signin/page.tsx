@@ -29,54 +29,63 @@ export default async function SignInPage({
 }) {
   const { error } = await searchParams;
   return (
-    <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-5 py-12">
-      <p className="text-sm font-medium text-brand-600">GroceryManager</p>
-      <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">Welcome back</h1>
-      <p className="mt-1 text-sm text-ink/60">Sign in with your email and password.</p>
-
-      {error && (
-        <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
-          {error === "missing"
-            ? "Please enter your email and password."
-            : "That email and password don't match. Try again."}
-        </p>
-      )}
-
-      <form action={signInAction} className="mt-6 space-y-4">
-        <label className="block">
-          <span className="text-sm font-medium text-ink">Email</span>
-          <input
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm"
-          />
-        </label>
-        <label className="block">
-          <span className="text-sm font-medium text-ink">Password</span>
-          <input
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm"
-          />
-        </label>
-        <button
-          type="submit"
-          className="w-full rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98]"
-        >
-          Sign in
-        </button>
-      </form>
-
-      <p className="mt-6 text-center text-sm text-ink/60">
-        No account?{" "}
-        <a href="/signup" className="font-medium text-brand-600">
-          Create one
+    <main className="flex min-h-dvh flex-col items-center justify-center px-5 py-12">
+      <div className="w-full max-w-sm animate-fade-in-up">
+        <a href="/" className="mx-auto flex w-fit items-center gap-2">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gradient text-lg shadow-brand">
+            🧺
+          </span>
         </a>
-      </p>
+        <div className="mt-6 text-center">
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-ink-900">
+            Welcome back
+          </h1>
+          <p className="mt-2 text-sm text-ink-500">Sign in with your email and password.</p>
+        </div>
+
+        <div className="card-pad mt-7">
+          {error && (
+            <p className="notice-warn mb-4">
+              {error === "missing"
+                ? "Please enter your email and password."
+                : "That email and password don't match. Try again."}
+            </p>
+          )}
+
+          <form action={signInAction} className="space-y-4">
+            <label className="block">
+              <span className="field-label">Email</span>
+              <input
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="input"
+              />
+            </label>
+            <label className="block">
+              <span className="field-label">Password</span>
+              <input
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className="input"
+              />
+            </label>
+            <button type="submit" className="btn-primary btn-block">
+              Sign in
+            </button>
+          </form>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-ink-500">
+          No account?{" "}
+          <a href="/signup" className="font-semibold text-brand-700 hover:text-brand-800">
+            Create one
+          </a>
+        </p>
+      </div>
     </main>
   );
 }

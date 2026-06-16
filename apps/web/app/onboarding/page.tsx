@@ -101,23 +101,26 @@ export default async function OnboardingPage() {
     model && (model.diets.length || model.allergens.length || model.loves.length || model.dislikes.length);
 
   const chk = (name: string, value: string) => (
-    <label key={value} className="flex items-center gap-1.5 rounded-full border border-black/5 bg-white px-3 py-1.5 text-sm text-ink/80">
-      <input type="checkbox" name={name} value={value} />
+    <label key={value} className="chip">
+      <input type="checkbox" name={name} value={value} className="control-accent" />
       <span className="capitalize">{value}</span>
     </label>
   );
 
   return (
-    <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
-      <a href="/" className="text-sm text-brand-600">← Home</a>
-      <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">Tell me your taste</h1>
-      <p className="mb-6 text-sm text-ink/60">
-        A few quick questions so every plan, recipe, and reorder fits you. Add more anytime — I keep
-        learning from what you cook, skip, and reorder.
-      </p>
+    <main className="page">
+      <a href="/" className="back-link"><span aria-hidden>←</span> Home</a>
+      <div className="mt-4 animate-fade-in-up">
+        <p className="eyebrow">Your taste</p>
+        <h1 className="page-title mt-2">Tell me your taste</h1>
+        <p className="page-subtitle">
+          A few quick questions so every plan, recipe, and reorder fits you. Add more anytime — I keep
+          learning from what you cook, skip, and reorder.
+        </p>
+      </div>
 
       {hasProfile && (
-        <section className="mb-6 rounded-2xl bg-brand-50 p-4 text-sm text-brand-900">
+        <section className="card-pad bg-brand-50/60 mt-6 text-sm text-brand-900">
           <div className="font-medium">Your profile so far</div>
           <div className="mt-1 text-brand-800/80">
             {model!.diets.length > 0 && <span>Diet: {model!.diets.join(", ")}. </span>}
@@ -128,82 +131,79 @@ export default async function OnboardingPage() {
         </section>
       )}
 
-      <form action={saveOnboarding} className="space-y-6">
-        <fieldset className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-          <legend className="px-1 text-sm font-semibold text-ink">Any diets?</legend>
+      <form action={saveOnboarding} className="mt-6 space-y-6">
+        <fieldset className="card-pad">
+          <legend className="section-title px-1">Any diets?</legend>
           <div className="mt-2 flex flex-wrap gap-2">{DIETS.map((d) => chk("diets", d))}</div>
         </fieldset>
 
-        <fieldset className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-          <legend className="px-1 text-sm font-semibold text-ink">Allergies to avoid?</legend>
+        <fieldset className="card-pad">
+          <legend className="section-title px-1">Allergies to avoid?</legend>
           <div className="mt-2 flex flex-wrap gap-2">{ALLERGENS.map((a) => chk("allergens", a))}</div>
         </fieldset>
 
-        <fieldset className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-          <legend className="px-1 text-sm font-semibold text-ink">Cuisines you love?</legend>
+        <fieldset className="card-pad">
+          <legend className="section-title px-1">Cuisines you love?</legend>
           <div className="mt-2 flex flex-wrap gap-2">{CUISINES.map((c) => chk("lovedCuisines", c))}</div>
         </fieldset>
 
-        <fieldset className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-          <legend className="px-1 text-sm font-semibold text-ink">Quality preferences?</legend>
+        <fieldset className="card-pad">
+          <legend className="section-title px-1">Quality preferences?</legend>
           <div className="mt-2 flex flex-wrap gap-2">{QUALITY.map((q) => chk("qualityPrefs", q))}</div>
         </fieldset>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="text-sm font-medium text-ink">Ingredients you love</span>
+            <span className="field-label">Ingredients you love</span>
             <input
               name="lovedIngredients"
               placeholder="salmon, basil, feta"
-              className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm"
+              className="input"
             />
           </label>
           <label className="block">
-            <span className="text-sm font-medium text-ink">Ingredients you avoid</span>
+            <span className="field-label">Ingredients you avoid</span>
             <input
               name="dislikedIngredients"
               placeholder="cilantro, olives"
-              className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm"
+              className="input"
             />
           </label>
         </div>
 
         <label className="block">
-          <span className="text-sm font-medium text-ink">Anything else? (in your own words)</span>
+          <span className="field-label">Anything else? (in your own words)</span>
           <textarea
             name="freeText"
             rows={3}
             placeholder="We're mostly vegetarian, love spicy Thai, hate mushrooms, and try to eat in on weeknights."
-            className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm"
+            className="input"
           />
-          <span className="mt-1 block text-xs text-ink/40">I&apos;ll read this and pull out your preferences.</span>
+          <span className="field-hint">I&apos;ll read this and pull out your preferences.</span>
         </label>
 
         <label className="block max-w-xs">
-          <span className="text-sm font-medium text-ink">Weekly grocery budget (optional)</span>
+          <span className="field-label">Weekly grocery budget (optional)</span>
           <div className="mt-1 flex items-center gap-1">
-            <span className="text-ink/50">$</span>
+            <span className="text-ink-400">$</span>
             <input
               name="budget"
               type="number"
               min="0"
               step="5"
               placeholder="120"
-              className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm"
+              className="input"
             />
           </div>
         </label>
 
-        <button
-          type="submit"
-          className="rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white transition active:scale-[0.98]"
-        >
+        <button type="submit" className="btn-primary">
           Save & plan my week →
         </button>
       </form>
 
       {!data.ready && (
-        <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+        <p className="notice-warn mt-4">
           Couldn&apos;t reach the database. {data.error?.slice(0, 120)}
         </p>
       )}

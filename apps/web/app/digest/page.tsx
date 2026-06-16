@@ -23,35 +23,38 @@ export default async function DigestPage() {
   const data = await load();
 
   return (
-    <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
-      <a href="/" className="text-sm text-brand-600">← Home</a>
-      <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">This week</h1>
-      <p className="mb-6 text-sm text-ink/60">Your Sunday briefing — what needs you, at a glance.</p>
+    <main className="page">
+      <a href="/" className="back-link"><span aria-hidden>←</span> Home</a>
+      <div className="mt-4 animate-fade-in-up">
+        <p className="eyebrow">This week</p>
+        <h1 className="page-title mt-2">This week</h1>
+        <p className="page-subtitle">Your Sunday briefing — what needs you, at a glance.</p>
+      </div>
 
       {!data.ready && (
-        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+        <p className="notice-warn mt-6">
           Couldn&apos;t reach the database. {data.error?.slice(0, 120)}
         </p>
       )}
 
       {data.ready && (
         <div className="space-y-6">
-          <section className="rounded-2xl bg-brand-500 p-6 text-white shadow-sm">
-            <h2 className="text-lg font-semibold">{data.digest.headline}</h2>
+          <section className="panel-brand">
+            <h2 className="font-display text-xl font-semibold">{data.digest.headline}</h2>
             <p className="mt-1 text-sm text-white/90">{data.digest.subline}</p>
           </section>
 
           {data.digest.topReorder.length > 0 && (
-            <section className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
+            <section className="card-pad">
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="font-semibold text-ink">Reorder soon</h2>
-                <a href="/list" className="text-sm font-medium text-brand-600">Review →</a>
+                <h2 className="section-title">Reorder soon</h2>
+                <a href="/list" className="nav-link">Review →</a>
               </div>
-              <ul className="space-y-1 text-sm text-ink/70">
+              <ul className="space-y-1 text-sm text-ink-600">
                 {data.digest.topReorder.map((r) => (
                   <li key={`re-${r.name}`} className="flex justify-between">
                     <span>{r.name}</span>
-                    <span className="text-ink/50">{fmtDate(r.recommendByDate) ?? ""}</span>
+                    <span className="text-ink-400">{fmtDate(r.recommendByDate) ?? ""}</span>
                   </li>
                 ))}
               </ul>
@@ -59,16 +62,16 @@ export default async function DigestPage() {
           )}
 
           {data.digest.topExpiring.length > 0 && (
-            <section className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
+            <section className="card-pad">
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="font-semibold text-ink">Use it up</h2>
-                <a href="/use-it-up" className="text-sm font-medium text-brand-600">Recipes →</a>
+                <h2 className="section-title">Use it up</h2>
+                <a href="/use-it-up" className="nav-link">Recipes →</a>
               </div>
-              <ul className="space-y-1 text-sm text-ink/70">
+              <ul className="space-y-1 text-sm text-ink-600">
                 {data.digest.topExpiring.map((e) => (
                   <li key={`ex-${e.name}`} className="flex justify-between">
                     <span>{e.name}</span>
-                    <span className="text-ink/50">
+                    <span className="text-ink-400">
                       {e.reason === "expired_likely"
                         ? "likely expired"
                         : e.daysLeft != null && e.daysLeft <= 0
@@ -82,9 +85,11 @@ export default async function DigestPage() {
           )}
 
           {data.digest.isQuiet && (
-            <p className="rounded-xl bg-white p-5 text-sm text-ink/60 shadow-sm">
-              Nothing needs you right now. Enjoy the week. 🌿
-            </p>
+            <div className="empty-state mt-6">
+              <div className="empty-emoji">🌿</div>
+              <p className="text-sm font-medium text-ink-700">Nothing needs you right now</p>
+              <p className="mt-1 max-w-xs text-sm text-ink-400">Enjoy the week.</p>
+            </div>
           )}
 
           <PushToggle vapidPublicKey={loadEnv().VAPID_PUBLIC_KEY ?? null} />

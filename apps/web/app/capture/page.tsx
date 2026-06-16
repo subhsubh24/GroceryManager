@@ -37,51 +37,50 @@ export default async function CapturePage() {
   const data = await load();
 
   return (
-    <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
-      <a href="/list" className="text-sm text-brand-600">← Reorder</a>
-      <h1 className="mt-2 mb-1 text-2xl font-bold text-ink">Quick add</h1>
-      <p className="mb-5 text-sm text-ink/60">
-        Just type it like you&apos;d say it — &ldquo;we&apos;re out of olive oil and need 2 lbs
-        chicken, some spinach.&rdquo; We&apos;ll sort it onto your list.
-      </p>
+    <main className="page">
+      <a href="/list" className="back-link"><span aria-hidden>←</span> Reorder</a>
+      <div className="mt-4 animate-fade-in-up">
+        <p className="eyebrow">Quick add</p>
+        <h1 className="page-title mt-2">Quick add</h1>
+        <p className="page-subtitle">
+          Just type it like you&apos;d say it — &ldquo;we&apos;re out of olive oil and need 2 lbs
+          chicken, some spinach.&rdquo; We&apos;ll sort it onto your list.
+        </p>
+      </div>
 
-      <form action={capture} className="mb-8">
+      <form action={capture} className="mt-6 mb-8">
         <textarea
           name="text"
           rows={3}
           placeholder="we're out of milk and need taco stuff…"
-          className="w-full rounded-2xl border border-black/10 bg-white p-4 text-sm text-ink shadow-sm outline-none focus:border-brand-300"
+          className="input"
         />
-        <button
-          type="submit"
-          className="mt-3 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98]"
-        >
+        <button type="submit" className="btn-primary mt-3">
           Add to list
         </button>
       </form>
 
       {!data.ready && (
-        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+        <p className="notice-warn">
           Couldn&apos;t reach the database. {data.error?.slice(0, 120)}
         </p>
       )}
 
       {data.ready && (
         <section>
-          <h2 className="mb-3 font-semibold text-ink">On your list</h2>
+          <h2 className="section-title mb-3">On your list</h2>
           {data.items.length === 0 ? (
-            <p className="rounded-xl bg-white p-5 text-sm text-ink/60 shadow-sm">
-              Nothing yet — add a few things above.
-            </p>
+            <div className="empty-state mt-6">
+              <div className="empty-emoji">🛒</div>
+              <p className="text-sm font-medium text-ink-700">Nothing yet</p>
+              <p className="mt-1 max-w-xs text-sm text-ink-400">Add a few things above.</p>
+            </div>
           ) : (
             <ul className="space-y-2">
               {data.items.map((i) => (
-                <li
-                  key={i.id}
-                  className="flex items-center justify-between rounded-xl border border-black/5 bg-white px-4 py-3 shadow-sm"
-                >
-                  <span className={`text-ink ${i.checked ? "line-through opacity-50" : ""}`}>{i.name}</span>
-                  <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
+                <li key={i.id} className="row">
+                  <span className={`text-ink-900 ${i.checked ? "line-through opacity-50" : ""}`}>{i.name}</span>
+                  <span className="pill-brand">
                     {REASON_LABEL[i.reason] ?? i.reason}
                   </span>
                 </li>
