@@ -103,12 +103,13 @@ Makes receipts ingest instantly instead of on a poll. Works on Vercel with no se
    GMAIL_WEBHOOK_SECRET=$(openssl rand -base64 24)   # must match the ?token= in the push endpoint
    CRON_SECRET=$(openssl rand -base64 24)            # guards the renew/poll cron route
    ```
-4. **Renew the watch daily** (the watch expires ≤7 days). Either run the `services/workers` service
-   (its `watch-renew` cron does this), or — on Vercel — add to `vercel.json`:
-   ```json
-   { "crons": [{ "path": "/api/cron/gmail?key=<CRON_SECRET>", "schedule": "0 6 * * *" }] }
-   ```
-   The cron route renews each user's watch *and* runs a fallback poll (covers any dropped pushes).
+4. **Renew the watch daily** (the watch expires ≤7 days). On Vercel this is already wired:
+   `apps/web/vercel.json` schedules `/api/cron/gmail` daily (and `/api/cron/digest` weekly). Set
+   `CRON_SECRET` in your Vercel project env and Vercel automatically sends
+   `Authorization: Bearer <CRON_SECRET>` with each cron call, which the route verifies. (Set the
+   Vercel project **Root Directory** to `apps/web`.) Or, if you run the `services/workers` service,
+   its `watch-renew` cron does the same. To trigger manually: `curl ".../api/cron/gmail?key=<CRON_SECRET>"`.
+   The cron renews each user's watch *and* runs a fallback poll (covers any dropped pushes).
 
 The webhook acks every delivery quickly and runs a bounded inline sync, so it stays within Pub/Sub's
 deadline and never double-counts (ingestion is idempotent per Gmail message id).

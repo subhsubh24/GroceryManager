@@ -28,3 +28,10 @@ jobs:
 
       - name: Test
         run: pnpm -r run test
+
+      - name: Build
+        run: pnpm --filter @gm/web build
+        env:
+          # Pages are force-dynamic (env read at request time), but set a dummy so any build-time
+          # loadEnv() validation passes. No real secrets needed — the build doesn't hit the network.
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db
