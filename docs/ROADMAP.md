@@ -104,6 +104,11 @@ supplements.
   9/9 cross-household isolation suite; rebuilt on the current base after the first worktree attempt was
   discarded for branching off 18-commits-stale main; the stale auto-created billing PR #3 was closed
   and all work re-landed directly on the branch).
+- **iter 10 — First-run + finalize (DONE):** data-aware getting-started checklist + PWA install
+  prompt (the two real first-impression gaps), a bento coherence fix, and a refreshed README. The
+  product is judged **feature-complete for this scope** — further additions would be sprawl, not
+  improvement — so the loop **converges** here and the PR (`claude/busy-turing-XkEQX` → `main`) is
+  opened. Gates: typecheck, 330 core tests, `next build`.
 
 ## Next up
 **The keyless, blind-safe backlog is COMPLETE** (iters 1–8 shipped this session). Everything still

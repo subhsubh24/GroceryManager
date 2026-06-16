@@ -43,7 +43,7 @@ The `dev` / `start` / `db:*` / worker scripts **auto-load the root `.env`** (via
 ## Status
 A working vertical slice runs end-to-end: pages are server-rendered against Postgres with
 **row-level-security** enforcement, and the Gemini-backed features below were verified against the
-real model. **230 core unit tests + full workspace typecheck + `next build` green**, plus a gated
+real model. **330 core unit tests + full workspace typecheck + `next build` green**, plus a gated
 **LLM eval harness** (golden fixtures + scorers + LLM-as-judge) that passes live against Gemini.
 
 **Deterministic math never rides on token prediction:** unit conversion, totals reconciliation,
@@ -52,7 +52,7 @@ code-execution tool** so prices→cents and totals are computed by executed Pyth
 at the cheapest tier, no regression).
 
 **Built & tested**
-- **Accounts & isolation** — Google sign-in is **required** (middleware-gated; public landing + share pages excepted); every page + query is scoped to the signed-in user via Postgres **RLS** + `withTenant`. Share the app — each person uses their own isolated account.
+- **Accounts & isolation** — **email + password** sign-up with a profile (name/age/gender stored in the semantic layer as `profile:*` signals); middleware-gated (public landing + share pages excepted); every page + query is scoped to the signed-in user via Postgres **RLS** + `withTenant`. (Google is kept only for the optional Gmail receipt connect.)
 - **Pantry & depletion** — ledger-projected stock, confidence decay, expiring-soon.
 - **Reorder** — run-out prediction (purchase cadence **or declared dosage**), staples autopilot, **par auto-tuning** (buy less of what you waste), draft orders.
 - **Replenishment verticals** — groceries → Instacart; **household, personal-care & supplements** → Amazon (keyless Add-to-Cart). **Supplements** get **dosage-based depletion** (bottle size ÷ daily dose → accurate run-out from the first bottle, before any cadence exists).
@@ -66,6 +66,10 @@ at the cheapest tier, no regression).
 - **One-cart ordering** — due staples + your active list merged into one cart, with a **keyless** path (copy-list + per-item Instacart search + Amazon Add-to-Cart); the official one-tap Instacart prefill drops in when a key is set.
 - **Web push** — service worker + subscription store + send; the digest cron pushes the weekly briefing / run-out nudges (never on a quiet week). Add VAPID keys to send.
 - **Offline PWA** — the service worker caches the shell + last-seen pages, so the pantry & shopping list work offline in-store; installable + push-ready.
+- **Design & experience** — a bold, food-forward design system (Inter + Fraunces, animated aurora hero, **bento** landing, accent-themed pages, frosted mobile tab bar, micro-interactions) with **dark mode** (system-aware + a global toggle), a data-aware **first-run getting-started** checklist, and a **PWA install** prompt (incl. an iOS "Add to Home Screen" hint).
+- **Cook & discover** — **My Cookbook** (save recipes) + a public **shareable cookbook** (growth), **Recipe Remix** (one-tap healthier / cheaper / faster / vegan — keyless table + optional LLM), and a swipeable **Discover** feed where each like/skip trains your taste model.
+- **Habit & growth** — a **cooking streak** + weekly stats, **referrals** (personal invite links + signup attribution), **voice** quick-capture (Web Speech), and **barcode / UPC** add (Open Food Facts, keyless).
+- **Platform (flag-gated / scaffolds; default off)** — opt-in **shared household** shopping list (`FEATURE_HOUSEHOLDS`; command-specific RLS with cross-household isolation tests), a **premium/billing** scaffold (`FEATURE_BILLING`; entitlements + `/upgrade`, no Stripe yet), and a **native (Expo) app** skeleton (`apps/mobile`, reuses `packages/core` — excluded from the workspace until initialized).
 - **Eval harness (the ratchet, §8.5/§12)** — golden fixtures + deterministic scorers + LLM-as-judge gating receipt extraction & recipe import on pass-rate ≥ 0.8 and tracking tier-escalation. Run with `RUN_EVALS=1 … pnpm --filter @gm/core eval`. (It already caught + fixed an over-strict verifier that was forcing costly Pro escalation on fee/tax receipts.)
 
 **Built; needs real infra/keys to exercise** — real-time Gmail push (watch-renew + Pub/Sub webhook +
