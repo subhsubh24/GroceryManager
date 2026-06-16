@@ -206,6 +206,121 @@ export async function getUserIdByCookbookToken(db: Querier, token: string): Prom
   return rows[0]?.userId ?? null;
 }
 
+// ---- Referrals: invite a friend; both are credited when they join (PLAN §10 growth) ----
+// Referrals ride the preference ledger (no new table), mirroring the cookbook share token:
+//   • referral_code  — one row per user, value = their stable invite code (tenant-scoped mint).
+//   • referral_joined — one row PER credited friend on the REFERRER, value = the new user's id.
+//   • referred_by     — one row on the NEW user, value = the referrer's id (their side of the credit).
+// polarity "neutral"/source "rating" keep these valid ledger rows; the unprefixed topics mean
+// projectUserModel ignores them (they never pollute the taste model). Attribution runs at signup
+// with the admin connection (it writes a row for the *referrer*, a different tenant) and is
+// best-effort + idempotent — it must never block or break the signup path.
+
+const REFERRAL_CODE_TOPIC = "referral_code";
+const REFERRAL_JOINED_TOPIC = "referral_joined";
+const REFERRED_BY_TOPIC = "referred_by";
+
+/**
+ * The user's stable referral code, creating one on first use. Idempotent: returns the existing code if
+ * a `referral_code` signal already exists, else mints `randomBytes(9).toString("base64url")` (~12
+ * url-safe chars, no padding) and appends it. Tenant-scoped — call inside `withTenant`, so the INSERT
+ * satisfies the RLS WITH CHECK (`user_id = app_current_user_id()`). Mirrors getOrCreateCookbookShareToken.
+ */
+export async function getOrCreateReferralCode(db: Querier, userId: string): Promise<string> {
+  const existing = await db
+    .select({ value: preferenceSignals.value })
+    .from(preferenceSignals)
+    .where(and(eq(preferenceSignals.userId, userId), eq(preferenceSignals.topic, REFERRAL_CODE_TOPIC)))
+    .limit(1);
+  const current = existing[0]?.value;
+  if (typeof current === "string" && current.length > 0) return current;
+
+  const code = randomBytes(9).toString("base64url");
+  await db.insert(preferenceSignals).values({
+    userId,
+    topic: REFERRAL_CODE_TOPIC,
+    value: code,
+    polarity: "neutral",
+    source: "rating",
+    confidence: 1,
+  });
+  return code;
+}
+
+/**
+ * Resolve a referral code → the single owning (referrer) userId, or null. Parameterized `eq` on the
+ * code value (never string-concatenated). Called at signup with the admin connection (the new user has
+ * no session yet); the returned userId is the only thing that reaches the subsequent credit write.
+ */
+export async function getUserIdByReferralCode(db: Querier, code: string): Promise<string | null> {
+  const rows = await db
+    .select({ userId: preferenceSignals.userId })
+    .from(preferenceSignals)
+    .where(and(eq(preferenceSignals.topic, REFERRAL_CODE_TOPIC), eq(preferenceSignals.value, code)))
+    .limit(1);
+  return rows[0]?.userId ?? null;
+}
+
+/**
+ * Credit a referral when `newUserId` signs up via `referrerUserId`'s link — best-effort attribution.
+ * Called with the ADMIN connection (`getAdminDb()`) because it writes a `referral_joined` row for the
+ * *referrer* (a different tenant than the new user). Guards:
+ *   • self-referral (referrer === new user) → no-op.
+ *   • idempotent — if a `referral_joined` row for (referrer, value=newUserId) already exists, return
+ *     without writing, so a re-run never double-credits.
+ * Otherwise inserts both sides of the credit: the referrer's `referral_joined` and the new user's
+ * `referred_by`. (valid polarity/source; confidence 1.) The caller wraps this in try/catch — it must
+ * never throw out to the signup path.
+ */
+export async function recordReferral(
+  db: Querier,
+  referrerUserId: string,
+  newUserId: string,
+): Promise<void> {
+  if (!referrerUserId || !newUserId || referrerUserId === newUserId) return;
+
+  const already = await db
+    .select({ id: preferenceSignals.id })
+    .from(preferenceSignals)
+    .where(
+      and(
+        eq(preferenceSignals.userId, referrerUserId),
+        eq(preferenceSignals.topic, REFERRAL_JOINED_TOPIC),
+        eq(preferenceSignals.value, newUserId),
+      ),
+    )
+    .limit(1);
+  if (already.length > 0) return; // already credited — no double credit
+
+  await db.insert(preferenceSignals).values([
+    {
+      userId: referrerUserId,
+      topic: REFERRAL_JOINED_TOPIC,
+      value: newUserId,
+      polarity: "neutral",
+      source: "rating",
+      confidence: 1,
+    },
+    {
+      userId: newUserId,
+      topic: REFERRED_BY_TOPIC,
+      value: referrerUserId,
+      polarity: "neutral",
+      source: "rating",
+      confidence: 1,
+    },
+  ]);
+}
+
+/** How many friends have joined via this user's link — count of their `referral_joined` rows. */
+export async function countReferralsJoined(db: Querier, userId: string): Promise<number> {
+  const rows = await db
+    .select({ id: preferenceSignals.id })
+    .from(preferenceSignals)
+    .where(and(eq(preferenceSignals.userId, userId), eq(preferenceSignals.topic, REFERRAL_JOINED_TOPIC)));
+  return rows.length;
+}
+
 /** Upsert the projected UserModel (cleanly-mappable fields). */
 export async function persistUserModel(
   db: Querier,

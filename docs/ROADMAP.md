@@ -71,14 +71,19 @@ supplements.
   cooks-this-week, and an 8-week mini-bar on `/digest`, plus a 🔥 streak chip in the signed-in home
   header. Pure UTC-day core (`recipe/streak.ts`, +15 tests), keyless. Review: streak/week math
   verified sound — clean. Gates: typecheck, 289 core tests, `next build`.
+- **iter 5 — Referrals (DONE):** per-user invite code (`referral_code` signal) → `/invite` page
+  (copy/share link + "N friends joined"); `?ref=` on `/signup` attributes the referral via the admin
+  connection (idempotent, self-referral-guarded), wrapped best-effort so it can NEVER break signup.
+  Landing bento entry added. Pure core (`personalization/referral.ts`, +4 tests). Review: signup
+  try/catch boundary + cross-user write verified safe — clean. Gates: typecheck, 293 core tests,
+  `next build` (`/invite`).
 
 ## Next up (prioritized backlog — re-rank each iteration)
 > Selection rule under blind QA (no screen in this runner): prefer **data/AI/copy** wow over
 > **gesture-UI** wow. The "finish it all up" pass works down this list back-to-back.
-1. **Referrals** — invite link/token → both get a perk; attribute on signup. Growth + $$. *Next pick.*
-2. **Voice quick-capture** — add Web Speech to `/capture` (graceful fallback to text). Small, keyless.
-3. **Barcode / UPC add** — BarcodeDetector + Open Food Facts lookup → pantry add (manual fallback).
-4. **Discover — swipeable "for you" feed** — trains the taste model; buttons + keyboard primary,
+1. **Voice quick-capture** — add Web Speech to `/capture` (graceful fallback to text). Small, keyless. *Next pick.*
+2. **Barcode / UPC add** — BarcodeDetector + Open Food Facts lookup → pantry add (manual fallback).
+3. **Discover — swipeable "for you" feed** — trains the taste model; buttons + keyboard primary,
    pointer-drag enhancement (robust without visual QA).
 
 ## Deferred (not buildable in this keyless/headless runner — need keys, scale, or a human eye)

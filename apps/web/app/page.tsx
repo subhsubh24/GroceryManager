@@ -61,6 +61,15 @@ const SECTIONS: Section[] = [
     span: "lg:col-span-2",
   },
   {
+    key: "invite",
+    href: "/invite",
+    title: "Invite friends",
+    blurb: "Share GroceryManager — you both get a perk when they join.",
+    emoji: "🎁",
+    tone: "plain",
+    span: "lg:col-span-2",
+  },
+  {
     key: "scan",
     href: "/scan",
     title: "Scan my fridge",

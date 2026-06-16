@@ -6,10 +6,13 @@ import {
   getAdminDb,
   getDb,
   getUserByEmail,
+  getUserIdByReferralCode,
+  recordReferral,
   withTenant,
 } from "@gm/db";
 import { hashPassword } from "@gm/core/crypto";
 import {
+  isValidReferralCode,
   signalFromProfileAge,
   signalFromProfileGender,
   signalFromProfileName,
@@ -32,6 +35,7 @@ async function registerAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const ageRaw = String(formData.get("age") ?? "").trim();
   const gender = String(formData.get("gender") ?? "").trim();
+  const ref = String(formData.get("ref") ?? "").trim();
   const age = Number(ageRaw);
 
   if (!email || !password) redirect("/signup?error=missing");
@@ -66,6 +70,20 @@ async function registerAction(formData: FormData) {
     }
   });
 
+  // Referral attribution — STRICTLY best-effort. The user already exists and is about to be signed in;
+  // crediting the referrer must NEVER block or break signup. So everything below is wrapped in a single
+  // try/catch that swallows any error (bad/unknown code, DB hiccup) and falls through to the normal
+  // sign-in. The write uses the admin connection (it credits the *referrer*, a different tenant) and is
+  // idempotent inside recordReferral. Runs BEFORE signIn's redirect, but can't throw out of the action.
+  if (ref && isValidReferralCode(ref)) {
+    try {
+      const referrerUserId = await getUserIdByReferralCode(getAdminDb(), ref);
+      if (referrerUserId) await recordReferral(getAdminDb(), referrerUserId, userId);
+    } catch {
+      /* attribution is best-effort — never let it interfere with signup */
+    }
+  }
+
   try {
     await signIn("credentials", { email, password, redirectTo: "/" });
   } catch (e) {
@@ -77,9 +95,12 @@ async function registerAction(formData: FormData) {
 export default async function SignUpPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; ref?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, ref } = await searchParams;
+  // Carry a valid `?ref=` invite code through the form (hidden field) without changing the visible UX.
+  // Validated here so junk never reaches the action; the action re-validates + resolves it best-effort.
+  const refCode = typeof ref === "string" && isValidReferralCode(ref) ? ref : null;
   const errorText: Record<string, string> = {
     missing: "Please enter an email and password.",
     weak: "Password must be at least 8 characters.",
@@ -106,6 +127,7 @@ export default async function SignUpPage({
           {error && <p className="notice-warn mb-4">{errorText[error] ?? "Something went wrong. Try again."}</p>}
 
           <form action={registerAction} className="space-y-4">
+            {refCode && <input type="hidden" name="ref" value={refCode} />}
             <label className="block">
               <span className="field-label">Email</span>
               <input name="email" type="email" autoComplete="email" required className="input" />
