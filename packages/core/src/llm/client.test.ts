@@ -1,5 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { extractJsonValue } from "./client.js";
+import { extractJsonValue, l2normalize } from "./client.js";
+
+describe("l2normalize", () => {
+  it("scales a vector to unit length", () => {
+    const v = l2normalize([3, 4]); // |[3,4]| = 5
+    expect(v[0]).toBeCloseTo(0.6);
+    expect(v[1]).toBeCloseTo(0.8);
+    expect(Math.hypot(...v)).toBeCloseTo(1);
+  });
+
+  it("returns zeros for a zero vector (no NaN)", () => {
+    expect(l2normalize([0, 0, 0])).toEqual([0, 0, 0]);
+  });
+
+  it("leaves an already-normalized vector unit-length", () => {
+    expect(Math.hypot(...l2normalize([0, 1]))).toBeCloseTo(1);
+  });
+});
 
 describe("extractJsonValue (code-execution output parsing)", () => {
   it("parses clean JSON", () => {

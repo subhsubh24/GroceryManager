@@ -42,7 +42,7 @@ pnpm dev
 ## Status
 A working vertical slice runs end-to-end: pages are server-rendered against Postgres with
 **row-level-security** enforcement, and the Gemini-backed features below were verified against the
-real model. **224 core unit tests + full workspace typecheck + `next build` green**, plus a gated
+real model. **227 core unit tests + full workspace typecheck + `next build` green**, plus a gated
 **LLM eval harness** (golden fixtures + scorers + LLM-as-judge) that passes live against Gemini.
 
 **Deterministic math never rides on token prediction:** unit conversion, totals reconciliation,
@@ -58,7 +58,7 @@ at the cheapest tier, no regression).
 - **Recipe import** — paste a URL/text *or snap a photo* → schema.org JSON-LD first (free), else Gemini (vision for photos) → pantry-matched + **add-missing-to-list** + straight into Cook Mode.
 - **Plan-my-week agent** — generator/evaluator over curated candidates (Flash → Pro), deterministic fallback floor.
 - **Vision pantry scan** — Gemini-vision detect → reconcile (presence strong, **absence ≠ depletion**).
-- **Ingestion** — receipt → extraction → normalization cascade incl. the **LLM tiebreak**; idempotent. **Gmail → pantry** runs from the app (Connect Gmail → Sync receipts now) *or* the background worker.
+- **Ingestion** — receipt → extraction → full §5.4 normalization cascade (trigram → **embedding** semantic match via gemini-embedding-001 → **LLM tiebreak**); idempotent. **Gmail → pantry** runs from the app (Connect Gmail → Sync receipts now) *or* the background worker.
 - **Personalization** — onboarding interview + always-learning preference ledger → UserModel.
 - **Spend / Grocery Wrapped / Waste hub / weekly Digest** — analytics + the Sunday briefing.
 - **One-cart ordering** — due staples + your active list merged into one cart, with a **keyless** path (copy-list + per-item Instacart search + Amazon Add-to-Cart); the official one-tap Instacart prefill drops in when a key is set.
@@ -69,6 +69,8 @@ at the cheapest tier, no regression).
 Vercel-cron route are built; just add a Pub/Sub topic — manual "Sync receipts now" + poll already work
 with just OAuth, see `docs/GMAIL_SETUP.md`), web push (built; add **VAPID keys** to deliver),
 Instacart's *official* prefilled-list page + affiliate attribution (an optional upgrade over the
-keyless ordering path above), and the §5.4 embedding stage (needs a catalog-embedding backfill).
+keyless ordering path above). The §5.4 semantic-match stage is wired + calibrated (gemini-embedding-001,
+L2-normalized, threshold tuned against live pairs) — run `pnpm --filter @gm/workers backfill:embeddings`
+to populate the catalog vectors and it activates.
 
 See the phased roadmap in `docs/PLAN.md` §10.

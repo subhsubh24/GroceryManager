@@ -25,7 +25,7 @@ import {
   isReceiptEmail,
 } from "../integrations/gmail/index.js";
 import { refreshGoogleAccessToken } from "../integrations/google/oauth.js";
-import { getGeminiClient } from "../llm/index.js";
+import { createGeminiEmbedder, getGeminiClient } from "../llm/index.js";
 import { createDbNormalizationPorts } from "./db-ports.js";
 import { createLlmNormalizer } from "./llm-normalizer.js";
 import { ingestReceipt } from "./ingest.js";
@@ -167,9 +167,12 @@ export async function parseReceiptForUser(
   if (!html) return { skipped: true };
 
   const geminiClient = getGeminiClient();
-  // Light up the §5.4 cascade's LLM tiebreak/create stage (otherwise everything below the
-  // trigram/embedding thresholds defers straight to the Review inbox).
-  const ports = createDbNormalizationPorts(db, userId, { llm: createLlmNormalizer(geminiClient) });
+  // Full §5.4 cascade: trigram → embedding (gemini-embedding-001 semantic match) → LLM tiebreak/
+  // create. Embedding + LLM only run for lines the cheaper stages miss, so cost stays bounded.
+  const ports = createDbNormalizationPorts(db, userId, {
+    embed: createGeminiEmbedder(geminiClient),
+    llm: createLlmNormalizer(geminiClient),
+  });
   const result = await ingestReceipt(
     {
       db,

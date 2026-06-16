@@ -10,7 +10,7 @@
  */
 import { GoogleGenAI, type Content, type Part } from "@google/genai";
 import { loadEnv, useVertex, type Env } from "@gm/config/env";
-import type { GeminiTier } from "@gm/config/constants";
+import { EMBEDDING_DIM, EMBEDDING_MODEL, type GeminiTier } from "@gm/config/constants";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { nextTier, resolveModel, thinkingBudgetFor } from "./models.js";
@@ -189,6 +189,37 @@ export class GeminiClient {
 
     throw new VerificationExhaustedError(lastErr, attempts);
   }
+
+  /**
+   * Embed text to a normalized EMBEDDING_DIM-d vector (gemini-embedding-001, MRL-truncated). Powers
+   * the §5.4 semantic match stage. MRL-truncated vectors come back un-normalized, so we L2-normalize
+   * (required before cosine comparison against the pgvector index).
+   */
+  async embed(text: string): Promise<number[]> {
+    const res = await this.ai.models.embedContent({
+      model: EMBEDDING_MODEL,
+      contents: text,
+      config: { outputDimensionality: EMBEDDING_DIM },
+    });
+    const values = res.embeddings?.[0]?.values;
+    if (!values || values.length === 0) throw new Error(`empty embedding from ${EMBEDDING_MODEL}`);
+    return l2normalize(values);
+  }
+}
+
+/** L2-normalize a vector (required for MRL-truncated embeddings before cosine comparison). */
+export function l2normalize(v: number[]): number[] {
+  let sum = 0;
+  for (const x of v) sum += x * x;
+  const norm = Math.sqrt(sum);
+  return norm === 0 ? v.slice() : v.map((x) => x / norm);
+}
+
+/** An `embed` adapter for the §5.4 cascade (createDbNormalizationPorts deps.embed). */
+export function createGeminiEmbedder(
+  client: GeminiClient = getGeminiClient(),
+): (text: string) => Promise<number[]> {
+  return (text) => client.embed(text);
 }
 
 export class VerificationExhaustedError extends Error {

@@ -2,7 +2,7 @@
  * Read-model query helpers for the UI (PLAN §5/§7). Kept in @gm/db so the web app stays
  * thin (no direct Drizzle import). Per-user; userId optional until Auth is wired.
  */
-import { and, desc, eq, gte } from "drizzle-orm";
+import { and, desc, eq, gte, isNull } from "drizzle-orm";
 import type { Querier } from "./client.js";
 import {
   canonicalItems,
@@ -356,6 +356,18 @@ export async function listPushSubscriptions(db: Querier, userId: string) {
 export async function listUserIdsWithPush(db: Querier): Promise<string[]> {
   const rows = await db.select({ userId: pushSubscriptions.userId }).from(pushSubscriptions);
   return [...new Set(rows.map((r) => r.userId))];
+}
+
+/** Catalog items with no embedding yet (for the §5.4 backfill). Shared catalog — admin scope. */
+export async function listItemsNeedingEmbedding(db: Querier): Promise<{ id: string; name: string }[]> {
+  return db
+    .select({ id: canonicalItems.id, name: canonicalItems.name })
+    .from(canonicalItems)
+    .where(isNull(canonicalItems.embedding));
+}
+
+export async function setItemEmbedding(db: Querier, id: string, embedding: number[]) {
+  await db.update(canonicalItems).set({ embedding }).where(eq(canonicalItems.id, id));
 }
 
 /** The user's current active shopping list, creating an empty manual one if none exists (§7.1/§10). */
