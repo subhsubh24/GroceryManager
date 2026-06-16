@@ -1,5 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { parseQuickCapture } from "./parse.js";
+import { cleanTranscript, parseQuickCapture } from "./parse.js";
+
+describe("cleanTranscript", () => {
+  it("returns '' for empty/nullish input", () => {
+    expect(cleanTranscript("")).toBe("");
+    expect(cleanTranscript(null)).toBe("");
+    expect(cleanTranscript(undefined)).toBe("");
+    expect(cleanTranscript("   ")).toBe("");
+  });
+
+  it("collapses whitespace and trims", () => {
+    expect(cleanTranscript("  milk   and   eggs  ")).toBe("milk and eggs");
+    expect(cleanTranscript("two\nlbs\tchicken")).toBe("two lbs chicken");
+  });
+
+  it("strips a single trailing period only", () => {
+    expect(cleanTranscript("we need milk.")).toBe("we need milk");
+    expect(cleanTranscript("milk and eggs..")).toBe("milk and eggs.");
+    expect(cleanTranscript("3.5 lbs chicken")).toBe("3.5 lbs chicken");
+  });
+});
 
 describe("parseQuickCapture", () => {
   it("returns [] for empty input", () => {

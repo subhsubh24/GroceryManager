@@ -3,6 +3,7 @@ import { getActiveListView, getDb, withTenant } from "@gm/db";
 import { captureToList, parseQuickCapture } from "@gm/core/capture";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
+import { CaptureForm } from "./capture-form";
 
 export const dynamic = "force-dynamic";
 
@@ -53,17 +54,7 @@ export default async function CapturePage() {
         back={{ href: "/list", label: "Reorder" }}
       />
 
-      <form action={capture} className="mt-6 mb-8">
-        <textarea
-          name="text"
-          rows={3}
-          placeholder="we're out of milk and need taco stuff…"
-          className="input"
-        />
-        <button type="submit" className="btn-primary mt-3">
-          Add to list
-        </button>
-      </form>
+      <CaptureForm action={capture} />
 
       {!data.ready && (
         <p className="notice-warn">

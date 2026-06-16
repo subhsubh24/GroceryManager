@@ -77,13 +77,17 @@ supplements.
   Landing bento entry added. Pure core (`personalization/referral.ts`, +4 tests). Review: signup
   try/catch boundary + cross-user write verified safe — clean. Gates: typecheck, 293 core tests,
   `next build` (`/invite`).
+- **iter 6 — Voice quick-capture (DONE):** feature-detected Web Speech mic on `/capture` that
+  dictates into the existing text field (typed input unaffected; hidden when unsupported).
+  Client-only, keyless; pure `cleanTranscript` helper (+3 tests) via a client-safe leaf export
+  (`@gm/core/capture/parse` — avoids pulling `@gm/db` into the client bundle). Review: client-bundle
+  safety confirmed by the build — clean. Gates: typecheck, 296 core tests, `next build`.
 
 ## Next up (prioritized backlog — re-rank each iteration)
 > Selection rule under blind QA (no screen in this runner): prefer **data/AI/copy** wow over
 > **gesture-UI** wow. The "finish it all up" pass works down this list back-to-back.
-1. **Voice quick-capture** — add Web Speech to `/capture` (graceful fallback to text). Small, keyless. *Next pick.*
-2. **Barcode / UPC add** — BarcodeDetector + Open Food Facts lookup → pantry add (manual fallback).
-3. **Discover — swipeable "for you" feed** — trains the taste model; buttons + keyboard primary,
+1. **Barcode / UPC add** — BarcodeDetector scan + manual UPC, Open Food Facts lookup → add to list (keyless). *Next pick.*
+2. **Discover — swipeable "for you" feed** — trains the taste model; buttons + keyboard primary,
    pointer-drag enhancement (robust without visual QA).
 
 ## Deferred (not buildable in this keyless/headless runner — need keys, scale, or a human eye)

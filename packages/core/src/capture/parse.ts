@@ -89,6 +89,16 @@ function splitQty(phrase: string): { qtyText?: string; rest: string } {
   return { qtyText: num, rest };
 }
 
+/**
+ * Tidy a raw speech-to-text transcript before it lands in the quick-add field: collapse runs of
+ * whitespace, trim, and drop a single trailing sentence period (dictation engines tend to append
+ * one). Pure + presentation-only — the parser above stays the source of truth for splitting.
+ */
+export function cleanTranscript(text: string | null | undefined): string {
+  if (!text) return "";
+  return text.replace(/\s+/g, " ").trim().replace(/\.$/, "").trim();
+}
+
 export function parseQuickCapture(text: string | null | undefined): ParsedCaptureItem[] {
   if (!text || !text.trim()) return [];
   const phrases = text
