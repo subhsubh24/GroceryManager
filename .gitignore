@@ -32,3 +32,6 @@ coverage/
 # local artifacts
 /tmp/
 *.local
+
+# claude code agent worktrees (transient, harness-managed)
+.claude/worktrees/
