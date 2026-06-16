@@ -395,7 +395,7 @@ export default async function HomePage() {
             </div>
             <a
               href="/plan"
-              className="btn inline-flex shrink-0 bg-white px-5 py-3 text-base text-brand-700 shadow-lift hover:bg-white/95"
+              className="btn inline-flex shrink-0 bg-white px-5 py-3 text-base text-[#0a6e33] shadow-lift hover:bg-white/95"
             >
               Plan my week →
             </a>

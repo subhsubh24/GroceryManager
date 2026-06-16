@@ -134,7 +134,7 @@ export default async function ShareRecipePage({ params }: { params: Promise<{ id
           </div>
           <a
             href="/signup"
-            className="btn inline-flex shrink-0 bg-white px-5 py-3 text-base text-brand-700 shadow-lift hover:bg-white/95"
+            className="btn inline-flex shrink-0 bg-white px-5 py-3 text-base text-[#0a6e33] shadow-lift hover:bg-white/95"
           >
             Try it free →
           </a>

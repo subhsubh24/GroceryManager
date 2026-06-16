@@ -13,11 +13,11 @@ export type Accent = "brand" | "berry" | "grape" | "ocean" | "citrus" | "sunset"
 // Full, literal class strings per accent so Tailwind's JIT picks them up (no interpolated fragments).
 const ACCENT: Record<Accent, { badge: string; eyebrow: string; glow: string }> = {
   brand: { badge: "bg-brand-gradient shadow-brand", eyebrow: "text-brand-600", glow: "bg-brand-400/25" },
-  berry: { badge: "bg-berry-gradient shadow-berry", eyebrow: "text-berry-600", glow: "bg-berry-400/25" },
-  grape: { badge: "bg-grape-gradient shadow-grape", eyebrow: "text-grape-600", glow: "bg-grape-400/25" },
-  ocean: { badge: "bg-ocean-gradient shadow-ocean", eyebrow: "text-ocean-600", glow: "bg-ocean-400/25" },
-  citrus: { badge: "bg-citrus-gradient shadow-citrus", eyebrow: "text-citrus-700", glow: "bg-citrus-300/30" },
-  sunset: { badge: "bg-sunset-gradient shadow-citrus", eyebrow: "text-berry-600", glow: "bg-berry-300/25" },
+  berry: { badge: "bg-berry-gradient shadow-berry", eyebrow: "text-berry-600 dark:text-berry-400", glow: "bg-berry-400/25" },
+  grape: { badge: "bg-grape-gradient shadow-grape", eyebrow: "text-grape-600 dark:text-grape-400", glow: "bg-grape-400/25" },
+  ocean: { badge: "bg-ocean-gradient shadow-ocean", eyebrow: "text-ocean-600 dark:text-ocean-400", glow: "bg-ocean-400/25" },
+  citrus: { badge: "bg-citrus-gradient shadow-citrus", eyebrow: "text-citrus-700 dark:text-citrus-300", glow: "bg-citrus-300/30" },
+  sunset: { badge: "bg-sunset-gradient shadow-citrus", eyebrow: "text-berry-600 dark:text-berry-400", glow: "bg-berry-300/25" },
 };
 
 export function PageHeader({

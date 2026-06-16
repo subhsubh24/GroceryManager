@@ -3,6 +3,10 @@ import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
 import { RegisterSW } from "./register-sw";
 import { BottomNav } from "./components/bottom-nav";
+import { ThemeToggle } from "./components/theme-toggle";
+
+// Runs before paint to set the theme class — prevents a flash of the wrong theme on load.
+const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();`;
 
 // Body: Inter — clean, modern, highly legible at small sizes.
 const inter = Inter({
@@ -31,18 +35,23 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#13a14a",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#13a14a" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1216" },
+  ],
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
+    <html lang="en" className={`${inter.variable} ${fraunces.variable}`} suppressHydrationWarning>
       <body>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <RegisterSW />
         {children}
         <BottomNav />
+        <ThemeToggle />
       </body>
     </html>
   );

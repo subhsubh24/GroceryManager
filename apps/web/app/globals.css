@@ -4,6 +4,87 @@
 
 :root {
   color-scheme: light;
+
+  /* Neutrals + brand as space-separated RGB so Tailwind's `rgb(var(--x) / <alpha>)` tokens work. */
+  --cream: 250 248 243;
+  --surface: 255 255 255;
+  --line: 236 231 221;
+
+  --ink-50: 244 245 246;
+  --ink-100: 230 232 234;
+  --ink-200: 203 208 213;
+  --ink-300: 163 172 181;
+  --ink-400: 115 127 140;
+  --ink-500: 82 93 106;
+  --ink-600: 60 70 81;
+  --ink-700: 43 51 61;
+  --ink-800: 29 37 48;
+  --ink-900: 20 26 34;
+
+  --brand-50: 236 250 240;
+  --brand-100: 205 242 218;
+  --brand-200: 159 230 184;
+  --brand-300: 98 211 144;
+  --brand-400: 47 188 103;
+  --brand-500: 19 161 74;
+  --brand-600: 12 138 62;
+  --brand-700: 10 110 51;
+  --brand-800: 10 87 43;
+  --brand-900: 9 63 33;
+
+  --success: 12 138 62;
+  --success-soft: 236 250 240;
+  --success-ink: 10 87 43;
+  --warn: 182 121 26;
+  --warn-soft: 253 244 227;
+  --warn-ink: 138 90 18;
+  --danger: 192 57 43;
+  --danger-soft: 253 236 234;
+  --danger-ink: 142 38 27;
+}
+
+/* Dark theme — deep warm-neutral canvas; the ink scale inverts, brand lightens so green text/links
+   stay readable, and soft semantic tints go dark. Vivid gradients (literal hex) are unchanged. */
+.dark {
+  color-scheme: dark;
+
+  --cream: 15 18 22;
+  --surface: 24 28 34;
+  --line: 42 49 59;
+
+  /* Inverted: 900 = lightest (primary text), 50 = darkest (subtlest surface). */
+  --ink-50: 29 34 41;
+  --ink-100: 38 43 51;
+  --ink-200: 54 61 70;
+  --ink-300: 75 83 93;
+  --ink-400: 124 134 148;
+  --ink-500: 150 159 171;
+  --ink-600: 176 184 194;
+  --ink-700: 205 210 216;
+  --ink-800: 230 233 236;
+  --ink-900: 244 246 248;
+
+  /* Lightened brand ramp so brand-700 (links) reads on dark; brand-50 becomes a dark green tint. */
+  --brand-50: 16 42 27;
+  --brand-100: 20 58 36;
+  --brand-200: 28 84 53;
+  --brand-300: 45 125 79;
+  --brand-400: 52 168 102;
+  --brand-500: 47 188 103;
+  --brand-600: 96 209 140;
+  --brand-700: 127 224 163;
+  --brand-800: 175 238 198;
+  --brand-900: 210 246 224;
+
+  --success: 52 211 153;
+  --success-soft: 15 42 28;
+  --success-ink: 110 231 183;
+  --warn: 251 191 36;
+  --warn-soft: 42 34 14;
+  --warn-ink: 252 211 77;
+  --danger: 248 113 113;
+  --danger-soft: 45 22 20;
+  --danger-ink: 252 165 165;
 }
 
 @layer base {
@@ -22,6 +103,14 @@
     background-attachment: fixed;
     background-repeat: no-repeat;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* On the dark canvas the same glows want a touch more presence to read as an aurora. */
+  .dark body {
+    background-image:
+      radial-gradient(1100px 640px at 8% -10%, rgba(19, 161, 74, 0.17), transparent 60%),
+      radial-gradient(880px 560px at 100% -4%, rgba(132, 204, 22, 0.11), transparent 55%),
+      radial-gradient(820px 620px at 96% 102%, rgba(34, 211, 238, 0.09), transparent 55%);
   }
 
   /* A single, consistent, accessible focus ring across the whole app. */
@@ -321,6 +410,23 @@
   .dot-live {
     @apply h-2 w-2 rounded-full bg-brand-500 animate-pulse-ring;
   }
+}
+
+/* ----------------------------------------------------------------------------
+   Dark-mode tweaks that can't ride the color variables alone. Plain (unlayered)
+   rules so they win over the @layer component definitions.
+---------------------------------------------------------------------------- */
+.dark .glass-nav {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.dark .glass {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+/* The dark button is near-black; on a dark canvas it would vanish — flip it to a light chip. */
+.dark .btn-dark {
+  background-image: none;
+  background-color: rgb(var(--ink-900));
+  color: rgb(var(--cream));
 }
 
 @layer utilities {

@@ -9,21 +9,23 @@ import type { Config } from "tailwindcss";
  */
 export default {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        // Brand — a warm, garden-fresh green. 500 is the primary; the ramp stays cohesive.
+        // Brand — a warm, garden-fresh green. Variable-backed so the ramp flips cleanly in dark mode
+        // (700 is link text, 50 a chip tint, etc.); the literal-hex *gradients* below stay vivid on dark.
         brand: {
-          50: "#ecfaf0",
-          100: "#cdf2da",
-          200: "#9fe6b8",
-          300: "#62d390",
-          400: "#2fbc67",
-          500: "#13a14a", // primary
-          600: "#0c8a3e",
-          700: "#0a6e33",
-          800: "#0a572b",
-          900: "#093f21",
+          50: "rgb(var(--brand-50) / <alpha-value>)",
+          100: "rgb(var(--brand-100) / <alpha-value>)",
+          200: "rgb(var(--brand-200) / <alpha-value>)",
+          300: "rgb(var(--brand-300) / <alpha-value>)",
+          400: "rgb(var(--brand-400) / <alpha-value>)",
+          500: "rgb(var(--brand-500) / <alpha-value>)", // primary
+          600: "rgb(var(--brand-600) / <alpha-value>)",
+          700: "rgb(var(--brand-700) / <alpha-value>)",
+          800: "rgb(var(--brand-800) / <alpha-value>)",
+          900: "rgb(var(--brand-900) / <alpha-value>)",
         },
         // Citrus — a zesty lime/chartreuse that pairs with brand for fresh, energetic duotones.
         citrus: {
@@ -77,29 +79,42 @@ export default {
           800: "#155e75",
           900: "#164e63",
         },
-        // Ink — text + dark surfaces. A slightly warm, desaturated slate (not pure black).
+        // Ink — the neutral text/background scale (variable-backed; the ramp inverts in dark mode so
+        // ink-900 stays "primary text" and ink-50 stays "subtlest surface" in both themes).
         ink: {
-          DEFAULT: "#1d2530",
-          50: "#f4f5f6",
-          100: "#e6e8ea",
-          200: "#cbd0d5",
-          300: "#a3acb5",
-          400: "#737f8c",
-          500: "#525d6a",
-          600: "#3c4651",
-          700: "#2b333d",
-          800: "#1d2530",
-          900: "#141a22",
+          DEFAULT: "rgb(var(--ink-800) / <alpha-value>)",
+          50: "rgb(var(--ink-50) / <alpha-value>)",
+          100: "rgb(var(--ink-100) / <alpha-value>)",
+          200: "rgb(var(--ink-200) / <alpha-value>)",
+          300: "rgb(var(--ink-300) / <alpha-value>)",
+          400: "rgb(var(--ink-400) / <alpha-value>)",
+          500: "rgb(var(--ink-500) / <alpha-value>)",
+          600: "rgb(var(--ink-600) / <alpha-value>)",
+          700: "rgb(var(--ink-700) / <alpha-value>)",
+          800: "rgb(var(--ink-800) / <alpha-value>)",
+          900: "rgb(var(--ink-900) / <alpha-value>)",
         },
         // Canvas + raised surfaces. "cream" is the page; "surface" is a card.
-        cream: "#faf8f3",
-        surface: "#ffffff",
+        cream: "rgb(var(--cream) / <alpha-value>)",
+        surface: "rgb(var(--surface) / <alpha-value>)",
         // Hairline borders, tuned warm so they sit on cream without going grey-blue.
-        line: "#ece7dd",
-        // Semantic accents (kept muted + premium, with soft tints for backgrounds).
-        success: { DEFAULT: "#0c8a3e", soft: "#ecfaf0", ink: "#0a572b" },
-        warn: { DEFAULT: "#b6791a", soft: "#fdf4e3", ink: "#8a5a12" },
-        danger: { DEFAULT: "#c0392b", soft: "#fdecea", ink: "#8e261b" },
+        line: "rgb(var(--line) / <alpha-value>)",
+        // Semantic accents (variable-backed: brighter on dark, soft tints go dark).
+        success: {
+          DEFAULT: "rgb(var(--success) / <alpha-value>)",
+          soft: "rgb(var(--success-soft) / <alpha-value>)",
+          ink: "rgb(var(--success-ink) / <alpha-value>)",
+        },
+        warn: {
+          DEFAULT: "rgb(var(--warn) / <alpha-value>)",
+          soft: "rgb(var(--warn-soft) / <alpha-value>)",
+          ink: "rgb(var(--warn-ink) / <alpha-value>)",
+        },
+        danger: {
+          DEFAULT: "rgb(var(--danger) / <alpha-value>)",
+          soft: "rgb(var(--danger-soft) / <alpha-value>)",
+          ink: "rgb(var(--danger-ink) / <alpha-value>)",
+        },
       },
       borderRadius: {
         xl: "0.875rem",

@@ -165,7 +165,7 @@ export function CookMode({
                 type="button"
                 onClick={() => setStepIndex((i) => Math.min(total - 1, i + 1))}
                 disabled={stepIndex >= total - 1}
-                className="flex-1 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-brand-700 shadow-sm transition hover:bg-white/95 active:scale-[0.97] disabled:opacity-40"
+                className="flex-1 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-[#0a6e33] shadow-sm transition hover:bg-white/95 active:scale-[0.97] disabled:opacity-40"
               >
                 Next →
               </button>
