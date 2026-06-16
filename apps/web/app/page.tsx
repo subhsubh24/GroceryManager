@@ -178,6 +178,15 @@ const SECTIONS: Section[] = [
     span: "lg:col-span-2",
   },
   {
+    key: "upgrade",
+    href: "/upgrade",
+    title: "Go Premium",
+    blurb: "Unlock the AI planner, unlimited Discover, and recipe remix — and support the app.",
+    emoji: "⭐",
+    tone: "plain",
+    span: "lg:col-span-2",
+  },
+  {
     key: "use-it-up",
     href: "/use-it-up",
     title: "Use it up",
