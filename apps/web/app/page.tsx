@@ -1,3 +1,5 @@
+import { auth, signOut } from "@/auth";
+
 type Section = {
   key: string;
   href: string;
@@ -107,7 +109,9 @@ const SECTIONS: Section[] = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await auth();
+  const email = (session?.user as { email?: string } | undefined)?.email ?? null;
   return (
     <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
       <header className="mb-8">
@@ -115,12 +119,31 @@ export default function HomePage() {
         <h1 className="mt-1 text-3xl font-bold tracking-tight text-ink">
           Never stress about groceries or cooking.
         </h1>
-        <a
-          href="/api/auth/signin"
-          className="mt-3 inline-block rounded-xl border border-brand-200 bg-white px-3 py-1.5 text-sm font-medium text-brand-700"
-        >
-          Connect Gmail
-        </a>
+        {session ? (
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <span className="text-sm text-ink/60">Signed in{email ? ` as ${email}` : ""}</span>
+            <form
+              action={async () => {
+                "use server";
+                await signOut({ redirectTo: "/" });
+              }}
+            >
+              <button
+                type="submit"
+                className="rounded-xl border border-black/10 bg-white px-3 py-1.5 text-sm font-medium text-ink/70"
+              >
+                Sign out
+              </button>
+            </form>
+          </div>
+        ) : (
+          <a
+            href="/api/auth/signin"
+            className="mt-3 inline-block rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm"
+          >
+            Sign in with Google
+          </a>
+        )}
       </header>
 
       {/* Weekly autopilot hero */}

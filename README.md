@@ -51,6 +51,7 @@ code-execution tool** so prices→cents and totals are computed by executed Pyth
 at the cheapest tier, no regression).
 
 **Built & tested**
+- **Accounts & isolation** — Google sign-in is **required** (middleware-gated; public landing + share pages excepted); every page + query is scoped to the signed-in user via Postgres **RLS** + `withTenant`. Share the app — each person uses their own isolated account.
 - **Pantry & depletion** — ledger-projected stock, confidence decay, expiring-soon.
 - **Reorder** — run-out prediction (purchase cadence **or declared dosage**), staples autopilot, **par auto-tuning** (buy less of what you waste), draft orders.
 - **Replenishment verticals** — groceries → Instacart; **household, personal-care & supplements** → Amazon (keyless Add-to-Cart). **Supplements** get **dosage-based depletion** (bottle size ÷ daily dose → accurate run-out from the first bottle, before any cadence exists).

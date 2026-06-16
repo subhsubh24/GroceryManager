@@ -1,22 +1,14 @@
 import NextAuth from "next-auth";
-import Google from "next-auth/providers/google";
 import { encryptSecret } from "@gm/core/crypto";
 import { getAdminDb, upsertGoogleAuth } from "@gm/db";
+import { authConfig } from "./auth.config";
 
-/** Read-only Gmail + identity. Offline access + consent prompt to get a refresh token. */
-const GMAIL_SCOPE = "openid email profile https://www.googleapis.com/auth/gmail.readonly";
-
+/** Full (Node-runtime) auth: the edge-safe base + the DB-backed jwt callback. Used by the API route
+ * handler and server components; middleware uses the base config only (no DB). */
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret: process.env.AUTH_SECRET,
-  session: { strategy: "jwt" },
-  providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-      authorization: { params: { scope: GMAIL_SCOPE, access_type: "offline", prompt: "consent" } },
-    }),
-  ],
+  ...authConfig,
   callbacks: {
+    ...authConfig.callbacks,
     // On first sign-in, provision the user + encrypted tokens on the admin connection (a brand-new
     // user row can't satisfy its own RLS WITH CHECK), and stamp the userId onto the JWT.
     async jwt({ token, account, user }) {
@@ -38,13 +30,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       }
       return token;
-    },
-    // Expose the userId so server components can scope queries (withTenant).
-    async session({ session, token }) {
-      if (session.user && typeof token.uid === "string") {
-        (session.user as { id?: string }).id = token.uid;
-      }
-      return session;
     },
   },
 });
