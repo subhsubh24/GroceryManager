@@ -13,6 +13,7 @@ import {
   purchaseLineItems,
   purchases,
   pushSubscriptions,
+  recipeIngredients,
   recipes,
   reorderPolicies,
   shoppingListItems,
@@ -368,6 +369,75 @@ export async function listItemsNeedingEmbedding(db: Querier): Promise<{ id: stri
 
 export async function setItemEmbedding(db: Querier, id: string, embedding: number[]) {
   await db.update(canonicalItems).set({ embedding }).where(eq(canonicalItems.id, id));
+}
+
+export interface ImportedRecipeRow {
+  title: string;
+  imageUrl?: string | null;
+  sourceUrl?: string | null;
+  instructions?: string | null;
+  ingredients: { name: string; measure?: string | null }[];
+}
+
+/** Persist an imported recipe (provider "user") + its ingredient lines; returns the recipe id.
+ * Deduped by source URL when present so re-importing the same link reuses the row (§10). */
+export async function saveImportedRecipe(db: Querier, recipe: ImportedRecipeRow): Promise<string> {
+  if (recipe.sourceUrl) {
+    const existing = await db
+      .select({ id: recipes.id })
+      .from(recipes)
+      .where(and(eq(recipes.provider, "user"), eq(recipes.externalId, recipe.sourceUrl)))
+      .limit(1);
+    if (existing[0]) return existing[0].id;
+  }
+  const [row] = await db
+    .insert(recipes)
+    .values({
+      provider: "user",
+      externalId: recipe.sourceUrl ?? null,
+      title: recipe.title,
+      imageUrl: recipe.imageUrl ?? null,
+      instructions: recipe.instructions ?? null, // jsonb stores the steps blob as a string
+      sourceUrl: recipe.sourceUrl ?? null,
+    })
+    .returning({ id: recipes.id });
+  const recipeId = row!.id;
+  if (recipe.ingredients.length) {
+    await db.insert(recipeIngredients).values(
+      recipe.ingredients
+        .filter((i) => i.name.trim())
+        .map((i) => ({ recipeId, rawText: i.measure ? `${i.measure} ${i.name}` : i.name })),
+    );
+  }
+  return recipeId;
+}
+
+/** Load a persisted recipe (by uuid) into the shape Cook Mode / share pages use. */
+export async function loadRecipeForCook(db: Querier, id: string) {
+  const [r] = await db
+    .select({
+      id: recipes.id,
+      title: recipes.title,
+      imageUrl: recipes.imageUrl,
+      instructions: recipes.instructions,
+      sourceUrl: recipes.sourceUrl,
+    })
+    .from(recipes)
+    .where(eq(recipes.id, id))
+    .limit(1);
+  if (!r) return null;
+  const ings = await db
+    .select({ rawText: recipeIngredients.rawText })
+    .from(recipeIngredients)
+    .where(eq(recipeIngredients.recipeId, id));
+  return {
+    id: r.id,
+    title: r.title,
+    imageUrl: r.imageUrl ?? undefined,
+    instructions: typeof r.instructions === "string" ? r.instructions : undefined,
+    sourceUrl: r.sourceUrl ?? undefined,
+    ingredients: ings.map((x) => ({ name: x.rawText })),
+  };
 }
 
 /** The user's current active shopping list, creating an empty manual one if none exists (§7.1/§10). */

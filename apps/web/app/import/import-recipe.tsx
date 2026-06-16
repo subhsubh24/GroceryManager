@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { CookMode } from "../cook/[id]/cook-mode.js";
 import { addNamesToListAction } from "@/app/lib/list-actions";
+import { saveImportedRecipeAction } from "./actions";
 
 export type ImportIngredient = { name: string; measure?: string; inPantry: boolean };
 
@@ -92,6 +93,26 @@ export function ImportRecipe({
               </a>
             )}
           </div>
+
+          <form action={saveImportedRecipeAction}>
+            <input
+              type="hidden"
+              name="recipe"
+              value={JSON.stringify({
+                title: state.title,
+                imageUrl: state.imageUrl,
+                sourceUrl: state.sourceUrl,
+                instructions: state.steps.join("\n"),
+                ingredients: state.ingredients.map((i) => ({ name: i.name, measure: i.measure })),
+              })}
+            />
+            <button
+              type="submit"
+              className="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98]"
+            >
+              Save to my recipes &amp; cook →
+            </button>
+          </form>
 
           {state.missing.length > 0 && (
             <form

@@ -25,6 +25,8 @@ import { UnitConverter, type Dimension } from "../units/index.js";
 import { planConsumption, type BaseQtyResolver, type ConsumeIngredient } from "./consume.js";
 
 export interface CookRecipeInput {
+  /** Pre-resolved recipe row id (persisted/imported recipes) — skips the provider upsert. */
+  recipeId?: string;
   externalId: string;
   title: string;
   imageUrl?: string | null;
@@ -48,13 +50,17 @@ export async function logCook(
 ): Promise<LogCookResult> {
   const servings = opts.servingsMade && opts.servingsMade > 0 ? opts.servingsMade : 1;
 
-  // 1. Upsert the recipe header (dedupe by provider + externalId).
-  const existing = await db
-    .select({ id: recipes.id })
-    .from(recipes)
-    .where(and(eq(recipes.provider, "themealdb"), eq(recipes.externalId, recipe.externalId)))
-    .limit(1);
-  let recipeId = existing[0]?.id;
+  // 1. Resolve the recipe header. Persisted/imported recipes pass their id directly; provider
+  //    recipes are upserted (deduped by provider + externalId).
+  let recipeId = recipe.recipeId;
+  if (!recipeId) {
+    const existing = await db
+      .select({ id: recipes.id })
+      .from(recipes)
+      .where(and(eq(recipes.provider, "themealdb"), eq(recipes.externalId, recipe.externalId)))
+      .limit(1);
+    recipeId = existing[0]?.id;
+  }
   if (!recipeId) {
     const [row] = await db
       .insert(recipes)

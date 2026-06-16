@@ -1,6 +1,7 @@
 "use server";
 
-import { getDb, getPantryView, withTenant } from "@gm/db";
+import { redirect } from "next/navigation";
+import { getDb, getPantryView, saveImportedRecipe, withTenant } from "@gm/db";
 import { buildPantryIndex, splitSteps } from "@gm/core/recipe";
 import { cleanIngredientName, importRecipe } from "@gm/core/recipe/import-llm";
 import { currentUserId } from "@/app/lib/tenant";
@@ -84,4 +85,34 @@ export async function importRecipeAction(_prev: ImportState, formData: FormData)
   } catch (e) {
     return { status: "error", message: e instanceof Error ? e.message : String(e) };
   }
+}
+
+/**
+ * Persist an imported recipe (from the client's parsed result, passed as JSON) to "my recipes" and
+ * jump into Cook Mode for it. `redirect` runs after the try/catch (it throws to do its work).
+ */
+export async function saveImportedRecipeAction(formData: FormData) {
+  const raw = String(formData.get("recipe") ?? "");
+  let parsed: {
+    title?: string;
+    imageUrl?: string;
+    sourceUrl?: string;
+    instructions?: string;
+    ingredients?: { name: string; measure?: string }[];
+  } = {};
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    redirect("/import?error=" + encodeURIComponent("Couldn't read the recipe to save."));
+  }
+  if (!parsed.title) redirect("/import?error=" + encodeURIComponent("Nothing to save."));
+
+  const id = await saveImportedRecipe(getDb(), {
+    title: parsed.title!,
+    imageUrl: parsed.imageUrl ?? null,
+    sourceUrl: parsed.sourceUrl ?? null,
+    instructions: parsed.instructions ?? null,
+    ingredients: parsed.ingredients ?? [],
+  });
+  redirect(`/cook/${id}`);
 }

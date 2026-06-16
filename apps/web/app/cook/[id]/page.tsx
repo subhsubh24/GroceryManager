@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 import { getDb, withTenant } from "@gm/db";
-import { findSubstitutions, splitSteps, TheMealDBProvider } from "@gm/core/recipe";
+import { findSubstitutions, splitSteps } from "@gm/core/recipe";
 import { logCook } from "@gm/core/recipe/log-cook";
 import { getSubstitutions } from "@gm/core/recipe/substitute-llm";
 import { currentUserId } from "@/app/lib/tenant";
+import { isPersistedRecipeId, loadRecipeAnySource } from "@/app/lib/recipe";
 import { CookMode } from "./cook-mode.js";
 import { SwapFinder, type SwapState } from "./swap-finder.js";
 
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 async function load(id: string) {
   try {
-    const recipe = await new TheMealDBProvider().getById(id);
+    const recipe = await loadRecipeAnySource(id);
     return { recipe, error: null as string | null };
   } catch (e) {
     return { recipe: null, error: e instanceof Error ? e.message : String(e) };
@@ -33,13 +34,14 @@ async function logThisCook(formData: FormData) {
   if (!id) return;
   const userId = await currentUserId();
   if (!userId) return;
-  const recipe = await new TheMealDBProvider().getById(id);
+  const recipe = await loadRecipeAnySource(id);
   if (!recipe) return;
   await withTenant(getDb(), userId, (tx) =>
     logCook(
       tx,
       userId,
       {
+        recipeId: isPersistedRecipeId(id) ? id : undefined,
         externalId: recipe.id,
         title: recipe.title,
         imageUrl: recipe.imageUrl,
@@ -58,7 +60,14 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
 
   return (
     <main className="mx-auto min-h-dvh max-w-3xl px-5 pb-16 pt-8">
-      <a href="/recipes" className="text-sm text-brand-600">← Recipes</a>
+      <div className="flex items-center justify-between">
+        <a href="/recipes" className="text-sm text-brand-600">← Recipes</a>
+        {recipe && (
+          <a href={`/share/recipe/${id}`} className="text-sm font-medium text-brand-600">
+            Share →
+          </a>
+        )}
+      </div>
 
       {!recipe ? (
         <div className="mt-6 rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
