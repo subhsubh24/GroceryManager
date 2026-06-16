@@ -7,6 +7,7 @@ import {
 } from "@gm/db";
 import { budgetVsActual, cheaperRetailer, spendByPeriod, topItemsBySpend } from "@gm/core/spend";
 import { currentUserId } from "@/app/lib/tenant";
+import { PageHeader } from "@/app/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -46,15 +47,17 @@ export default async function SpendPage() {
 
   return (
     <main className="page">
-      <a href="/" className="back-link"><span aria-hidden>←</span> Home</a>
-      <div className="mt-4 animate-fade-in-up">
-        <p className="eyebrow">Spending</p>
-        <h1 className="page-title mt-2">Spending</h1>
-        <p className="page-subtitle">From your receipts — no bank link needed.</p>
-        <a href="/wrapped" className="btn-secondary btn-sm mt-4 inline-flex">
+      <PageHeader
+        accent="ocean"
+        emoji="💸"
+        eyebrow="Spending"
+        title="Spending"
+        subtitle="From your receipts — no bank link needed."
+      >
+        <a href="/wrapped" className="btn-secondary btn-sm inline-flex">
           See your Grocery Wrapped →
         </a>
-      </div>
+      </PageHeader>
 
       {!data.ready && (
         <p className="notice-warn mt-6">

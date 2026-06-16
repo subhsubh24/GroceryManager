@@ -18,6 +18,7 @@ import { dietExclusions, projectUserModel } from "@gm/core/personalization";
 import { geminiPlanGenerator, planWeek, type PlanCandidate } from "@gm/core/agent";
 import { captureToList } from "@gm/core/capture";
 import { currentUserId } from "@/app/lib/tenant";
+import { PageHeader } from "@/app/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -155,16 +156,15 @@ export default async function PlanPage({
 
   return (
     <main className="page">
-      <a href="/" className="back-link"><span aria-hidden>←</span> Home</a>
-      <div className="mt-4 animate-fade-in-up">
-        <p className="eyebrow">Your week</p>
-        <h1 className="page-title mt-2">Plan my week</h1>
-        <p className="page-subtitle">
-          Five dinners built from what you have, using up what&apos;s about to expire first.
-        </p>
-      </div>
+      <PageHeader
+        accent="grape"
+        emoji="🗓️"
+        eyebrow="Your week"
+        title="Plan my week"
+        subtitle="Five dinners built from what you have, using up what's about to expire first."
+      />
 
-      <div className="mt-5 mb-6 flex gap-2">
+      <div className="mt-6 mb-6 flex gap-2">
         {tab("/plan", "Normal week", !lowEnergy)}
         {tab("/plan?energy=low", "Low-energy week", lowEnergy)}
       </div>

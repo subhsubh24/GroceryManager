@@ -12,6 +12,7 @@ type Mood = "nice" | "easy" | "batch";
 import { dietExclusions, KNOWN_DIETS, projectUserModel } from "@gm/core/personalization";
 import { currentUserId } from "@/app/lib/tenant";
 import { addNamesToListAction } from "@/app/lib/list-actions";
+import { PageHeader } from "@/app/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -115,17 +116,20 @@ export default async function RecipesPage({
 
   return (
     <main className="page">
-      <div className="flex items-center justify-between">
-        <a href="/" className="back-link"><span aria-hidden>←</span> Home</a>
-        <a href="/import" className="nav-link">Import a recipe →</a>
-      </div>
-      <div className="mt-4 animate-fade-in-up">
-        <p className="eyebrow">Cook tonight</p>
-        <h1 className="page-title mt-2">Cook tonight</h1>
-        <p className="page-subtitle">Ranked by what you already have. How much do you feel like cooking?</p>
-      </div>
+      <PageHeader
+        accent="berry"
+        emoji="🍳"
+        eyebrow="Cook tonight"
+        title="Cook tonight"
+        subtitle="Ranked by what you already have. How much do you feel like cooking?"
+        topRight={
+          <a href="/import" className="nav-link">
+            Import a recipe →
+          </a>
+        }
+      />
 
-      <div className="mt-5 mb-3 flex flex-wrap gap-2">
+      <div className="mt-6 mb-3 flex flex-wrap gap-2">
         {tab(href({ mood: "nice" }), "Cook something nice", mood === "nice")}
         {tab(href({ mood: "easy" }), "Keep it easy", mood === "easy")}
         {tab(href({ mood: "batch" }), "Batch & meal-prep", mood === "batch")}

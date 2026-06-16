@@ -64,9 +64,9 @@
     @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-brand-600;
   }
 
-  /* Page + section titles. */
+  /* Page + section titles. Display serif on the page title unifies it with the landing hero. */
   .page-title {
-    @apply text-[1.7rem] font-bold leading-tight tracking-tight text-ink-900 sm:text-3xl;
+    @apply font-display text-[1.85rem] font-semibold leading-[1.08] tracking-tight text-ink-900 sm:text-[2.3rem];
   }
   .page-subtitle {
     @apply mt-1.5 max-w-2xl text-[0.95rem] leading-relaxed text-ink-500;
