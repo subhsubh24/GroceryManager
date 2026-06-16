@@ -1,0 +1,100 @@
+name: Build Loop
+
+# Autonomous hourly build loop. Each run builds/tunes exactly ONE feature (for wow / stickiness /
+# monetization), self-reviews, runs the full gate, updates docs/ROADMAP.md (the durable memory), and
+# commits to the feature branch. This replaces the in-session heartbeat, which couldn't survive the
+# ephemeral container being reclaimed — GitHub's scheduler runs independently of any session.
+#
+# ACTIVATION (important):
+#   1. Add a repository secret named ANTHROPIC_API_KEY (Settings → Secrets and variables → Actions).
+#   2. GitHub only runs scheduled workflows from the DEFAULT branch, so this file must reach `main`
+#      (merge the feature branch / PR) before the hourly schedule fires.
+#   3. Test it anytime from the Actions tab → "Build Loop" → "Run workflow" (workflow_dispatch).
+# PAUSE/STOP: Actions tab → "Build Loop" → "···" → Disable workflow (or delete this file).
+
+on:
+  schedule:
+    - cron: "0 * * * *" # top of every hour (UTC); GitHub may delay runs under load
+  workflow_dispatch: {} # manual "Run workflow" button
+
+permissions:
+  contents: write # push the iteration's commit to the feature branch
+
+concurrency:
+  group: build-loop # never run two iterations at once
+  cancel-in-progress: false
+
+env:
+  # Pages are force-dynamic (env is read at request time), but a dummy keeps any build-time
+  # loadEnv() validation happy. No real secrets needed — the build never hits the network.
+  DATABASE_URL: postgresql://user:pass@localhost:5432/db
+
+jobs:
+  iterate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: claude/busy-turing-XkEQX
+          fetch-depth: 0 # full history so commits/pushes are clean
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure git identity
+        run: |
+          git config user.name "claude-build-loop"
+          git config user.email "claude-build-loop@users.noreply.github.com"
+
+      - name: Run one build-loop iteration
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: |
+            --allowedTools "Bash,Edit,Write,Read,Glob,Grep,MultiEdit,TodoWrite"
+            --max-turns 120
+            --model opus
+          prompt: |
+            Run ONE iteration of the GroceryManager autonomous build loop. The repo (branch
+            claude/busy-turing-XkEQX) is already checked out and dependencies are installed.
+
+            STEP 1 — Memory: Read docs/ROADMAP.md. It holds the feature inventory, the iteration log,
+            and the prioritized "Next up" backlog (the durable memory across runs).
+
+            STEP 2 — Build ONE thing: Take the top "Next up" item — or pick a higher-impact feature
+            for wow / stickiness / monetization, or a tuning of an existing feature (if you deviate,
+            justify it in the ROADMAP). Build exactly one feature or one focused tuning. Rules:
+            additive only; never break existing flows; keyless-first (degrade gracefully with no API
+            keys); reuse existing patterns and the design system; prefer data/AI/copy "wow" over
+            gesture-heavy UI (this runner cannot visually QA).
+
+            STEP 3 — Review: Code-review your own diff for correctness and security (especially
+            anything public-facing, data exposure, or SQL). Fix what you find.
+
+            STEP 4 — Gate (must be green BEFORE committing). Run:
+              pnpm -r run typecheck
+              pnpm -r run test
+              pnpm --filter @gm/web build
+            Fix any failures. If you cannot make it green after a reasonable attempt, revert the
+            feature changes and make a smaller safe improvement (or just refine ROADMAP notes).
+            NEVER commit a red tree.
+
+            STEP 5 — Update memory: In docs/ROADMAP.md mark the item DONE in the iteration log (note
+            the gate results and any review fix), re-rank "Next up", and pick the next item.
+
+            STEP 6 — Ship: Commit with a clear message ("Feature: ... — gates: ...") and push to
+            origin/claude/busy-turing-XkEQX.
+
+            Constraints: exactly ONE feature per run; do NOT touch main; do NOT add new external
+            services or API keys; do NOT weaken auth or middleware; keep the diff focused.

@@ -5,9 +5,11 @@ Each iteration: (1) build one feature or tune one, for **wow / stickiness / mone
 (2) code-review it; (3) run the test + eval harness; (4) re-assess all features and pick the next.
 It's committed so the loop survives session/container loss — on resume, read this first and continue.
 
-> **Environment note:** this runner has **no scheduler tool** (no cron / wakeup). The hourly cadence
-> is driven by a best-effort heartbeat while the session is alive; if the container is reclaimed,
-> re-trigger `/loop` and continue from the "Next up" section below.
+> **How this loop runs:** a scheduled GitHub Actions workflow (`.github/workflows/build-loop.yml`,
+> hourly cron) runs one iteration per fire via `anthropics/claude-code-action`, independent of any
+> chat session. It must live on the **default branch** to fire, and needs the repo secret
+> `ANTHROPIC_API_KEY`. Each run: read this file → build/tune ONE feature → self-review → gate
+> (typecheck + tests + web build) → update this file → commit + push to `claude/busy-turing-XkEQX`.
 
 ## North star
 Be the one app that quietly handles groceries + cooking — and is delightful enough that a
