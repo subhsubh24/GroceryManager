@@ -22,7 +22,7 @@
 ## Monorepo layout
 ```
 apps/web            # Next.js 15 PWA (UI + BFF)
-packages/core       # engines: ingestion · pantry · reorder · recipe · agent · units · llm · personalization
+packages/core       # engines: ingestion · pantry · reorder · recipe · agent · vision · units · llm · personalization
 packages/db         # Drizzle schema + migrations + seed
 packages/shared     # shared Zod schemas + types
 packages/config     # env + constants
@@ -40,4 +40,39 @@ pnpm dev
 ```
 
 ## Status
-Phase 0 (scaffold) in progress — see the phased roadmap in `docs/PLAN.md` §10.
+A working vertical slice runs end-to-end: pages are server-rendered against Postgres with
+**row-level-security** enforcement, and the Gemini-backed features below were verified against the
+real model. **230 core unit tests + full workspace typecheck + `next build` green**, plus a gated
+**LLM eval harness** (golden fixtures + scorers + LLM-as-judge) that passes live against Gemini.
+
+**Deterministic math never rides on token prediction:** unit conversion, totals reconciliation,
+depletion, spend, and dosage are pure, tested TypeScript; and receipt extraction runs the **Gemini
+code-execution tool** so prices→cents and totals are computed by executed Python (verified: 3/3 evals
+at the cheapest tier, no regression).
+
+**Built & tested**
+- **Accounts & isolation** — Google sign-in is **required** (middleware-gated; public landing + share pages excepted); every page + query is scoped to the signed-in user via Postgres **RLS** + `withTenant`. Share the app — each person uses their own isolated account.
+- **Pantry & depletion** — ledger-projected stock, confidence decay, expiring-soon.
+- **Reorder** — run-out prediction (purchase cadence **or declared dosage**), staples autopilot, **par auto-tuning** (buy less of what you waste), draft orders.
+- **Replenishment verticals** — groceries → Instacart; **household, personal-care & supplements** → Amazon (keyless Add-to-Cart). **Supplements** get **dosage-based depletion** (bottle size ÷ daily dose → accurate run-out from the first bottle, before any cadence exists).
+- **Recipes** — "cook what I have" match/rank, effort + **batch-cook** awareness, **diet/guest** filtering, Cook Mode (timers / wake-lock / scaling) + **substitutions**.
+- **Recipe import** — paste a URL/text *or snap a photo* → schema.org JSON-LD first (free), else Gemini (vision for photos) → pantry-matched + **add-missing-to-list** + Cook Mode, **save to your library**, and a public **shareable page** (keyless one-tap shop).
+- **Plan-my-week agent** — generator/evaluator over curated candidates (Flash → Pro), deterministic fallback floor.
+- **Vision pantry scan** — Gemini-vision detect → reconcile (presence strong, **absence ≠ depletion**).
+- **Ingestion** — receipt → extraction → full §5.4 normalization cascade (trigram → **embedding** semantic match via gemini-embedding-001 → **LLM tiebreak**); idempotent. **Gmail → pantry** from the app (Sync receipts now / **import past receipts** to seed history) *or* the background worker.
+- **Personalization** — onboarding interview + always-learning preference ledger → UserModel.
+- **Spend / Grocery Wrapped / Waste hub / weekly Digest** — analytics + the Sunday briefing.
+- **One-cart ordering** — due staples + your active list merged into one cart, with a **keyless** path (copy-list + per-item Instacart search + Amazon Add-to-Cart); the official one-tap Instacart prefill drops in when a key is set.
+- **Web push** — service worker + subscription store + send; the digest cron pushes the weekly briefing / run-out nudges (never on a quiet week). Add VAPID keys to send.
+- **Offline PWA** — the service worker caches the shell + last-seen pages, so the pantry & shopping list work offline in-store; installable + push-ready.
+- **Eval harness (the ratchet, §8.5/§12)** — golden fixtures + deterministic scorers + LLM-as-judge gating receipt extraction & recipe import on pass-rate ≥ 0.8 and tracking tier-escalation. Run with `RUN_EVALS=1 … pnpm --filter @gm/core eval`. (It already caught + fixed an over-strict verifier that was forcing costly Pro escalation on fee/tax receipts.)
+
+**Built; needs real infra/keys to exercise** — real-time Gmail push (watch-renew + Pub/Sub webhook +
+Vercel-cron route are built; just add a Pub/Sub topic — manual "Sync receipts now" + poll already work
+with just OAuth, see `docs/GMAIL_SETUP.md`), web push (built; add **VAPID keys** to deliver),
+Instacart's *official* prefilled-list page + affiliate attribution (an optional upgrade over the
+keyless ordering path above). The §5.4 semantic-match stage is wired + calibrated (gemini-embedding-001,
+L2-normalized, threshold tuned against live pairs) — run `pnpm --filter @gm/workers backfill:embeddings`
+to populate the catalog vectors and it activates.
+
+See the phased roadmap in `docs/PLAN.md` §10.

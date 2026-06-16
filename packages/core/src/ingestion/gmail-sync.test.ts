@@ -1,0 +1,114 @@
+import { describe, expect, it } from "vitest";
+import {
+  accumulateParseResult,
+  collectBackfillIds,
+  emptyGmailSyncSummary,
+  receiptQuerySince,
+  type ParseReceiptResult,
+} from "./gmail-sync.js";
+
+describe("receiptQuerySince", () => {
+  it("appends a Gmail after: date filter", () => {
+    const q = receiptQuerySince(30, new Date(Date.UTC(2026, 5, 16))); // Jun 16 → May 17
+    expect(q).toMatch(/after:2026\/5\/17$/);
+  });
+});
+
+describe("collectBackfillIds", () => {
+  const pagedClient = (pages: { ids: string[]; nextPageToken?: string }[]) => {
+    let i = 0;
+    return { listMessageIds: async () => pages[i++] ?? { ids: [] } };
+  };
+
+  it("pages until no token, capped", async () => {
+    const client = pagedClient([
+      { ids: ["a", "b"], nextPageToken: "p2" },
+      { ids: ["c", "d"], nextPageToken: "p3" },
+      { ids: ["e"] },
+    ]);
+    expect(await collectBackfillIds(client, "q", 10)).toEqual(["a", "b", "c", "d", "e"]);
+  });
+
+  it("stops at the cap mid-pages", async () => {
+    const client = pagedClient([
+      { ids: ["a", "b"], nextPageToken: "p2" },
+      { ids: ["c", "d"], nextPageToken: "p3" },
+    ]);
+    expect(await collectBackfillIds(client, "q", 3)).toEqual(["a", "b", "c"]);
+  });
+});
+
+const ingested = (lines: number, review = 0): ParseReceiptResult => ({
+  skipped: false,
+  deduped: false,
+  purchaseId: "p",
+  linesIngested: lines,
+  needsReview: review,
+});
+const deduped: ParseReceiptResult = {
+  skipped: false,
+  deduped: true,
+  purchaseId: "p",
+  linesIngested: 0,
+  needsReview: 0,
+};
+const skipped: ParseReceiptResult = { skipped: true };
+
+describe("gmail sync summary accumulation", () => {
+  it("starts at zero", () => {
+    expect(emptyGmailSyncSummary()).toEqual({
+      scanned: 0,
+      receipts: 0,
+      ingested: 0,
+      deduped: 0,
+      linesIngested: 0,
+      needsReview: 0,
+      failed: 0,
+    });
+  });
+
+  it("counts a skipped (non-receipt) message as scanned only", () => {
+    const s = accumulateParseResult(emptyGmailSyncSummary(), skipped);
+    expect(s).toEqual({
+      scanned: 1,
+      receipts: 0,
+      ingested: 0,
+      deduped: 0,
+      linesIngested: 0,
+      needsReview: 0,
+      failed: 0,
+    });
+  });
+
+  it("counts a freshly ingested receipt with its line + review totals", () => {
+    const s = accumulateParseResult(emptyGmailSyncSummary(), ingested(5, 2));
+    expect(s).toEqual({
+      scanned: 1,
+      receipts: 1,
+      ingested: 1,
+      deduped: 0,
+      linesIngested: 5,
+      needsReview: 2,
+      failed: 0,
+    });
+  });
+
+  it("counts an already-seen receipt as deduped, not ingested (idempotency)", () => {
+    const s = accumulateParseResult(emptyGmailSyncSummary(), deduped);
+    expect(s).toMatchObject({ scanned: 1, receipts: 1, ingested: 0, deduped: 1 });
+  });
+
+  it("rolls up a mixed batch correctly", () => {
+    const results = [ingested(3, 1), skipped, deduped, ingested(2, 0), skipped];
+    const s = results.reduce(accumulateParseResult, emptyGmailSyncSummary());
+    expect(s).toEqual({
+      scanned: 5,
+      receipts: 3, // two ingested + one deduped
+      ingested: 2,
+      deduped: 1,
+      linesIngested: 5, // 3 + 2
+      needsReview: 1,
+      failed: 0,
+    });
+  });
+});

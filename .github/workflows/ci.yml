@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm -r run typecheck
+
+      - name: Test
+        run: pnpm -r run test
+
+      - name: Build
+        run: pnpm --filter @gm/web build
+        env:
+          # Pages are force-dynamic (env read at request time), but set a dummy so any build-time
+          # loadEnv() validation passes. No real secrets needed — the build doesn't hit the network.
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db

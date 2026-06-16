@@ -1,0 +1,68 @@
+import { describe, expect, it } from "vitest";
+import {
+  budgetVsActual,
+  cheaperRetailer,
+  spendByPeriod,
+  topItemsBySpend,
+  unitPriceTrends,
+} from "./analyze.js";
+
+const d = (s: string) => new Date(s + "T12:00:00Z");
+
+describe("spendByPeriod", () => {
+  it("groups by month, newest first, skipping null totals", () => {
+    const out = spendByPeriod(
+      [
+        { purchasedAt: d("2026-06-02"), totalCents: 1000 },
+        { purchasedAt: d("2026-06-20"), totalCents: 500 },
+        { purchasedAt: d("2026-05-10"), totalCents: 700 },
+        { purchasedAt: d("2026-06-25"), totalCents: null },
+      ],
+      "month",
+    );
+    expect(out[0]).toEqual({ periodStart: "2026-06-01", totalCents: 1500 });
+    expect(out[1]).toEqual({ periodStart: "2026-05-01", totalCents: 700 });
+  });
+});
+
+describe("topItemsBySpend", () => {
+  it("sums per item and ranks", () => {
+    const out = topItemsBySpend([
+      { canonicalItemId: "milk", name: "whole milk", lineTotalCents: 300 },
+      { canonicalItemId: "milk", name: "whole milk", lineTotalCents: 350 },
+      { canonicalItemId: "eggs", name: "large egg", lineTotalCents: 500 },
+    ]);
+    expect(out[0]).toEqual({ canonicalItemId: "milk", name: "whole milk", totalCents: 650 });
+    expect(out[1]!.canonicalItemId).toBe("eggs");
+  });
+});
+
+describe("cheaperRetailer", () => {
+  it("finds the cheapest retailer + savings for items bought at ≥2 retailers", () => {
+    const out = cheaperRetailer([
+      { canonicalItemId: "milk", name: "whole milk", retailer: "whole_foods", unitPriceCents: 449 },
+      { canonicalItemId: "milk", name: "whole milk", retailer: "instacart", unitPriceCents: 399 },
+      { canonicalItemId: "eggs", name: "large egg", retailer: "whole_foods", unitPriceCents: 599 }, // only one retailer → excluded
+    ]);
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({ canonicalItemId: "milk", bestRetailer: "instacart", bestCents: 399, savingsVsWorstCents: 50 });
+  });
+});
+
+describe("unitPriceTrends", () => {
+  it("computes latest/avg/min/max chronologically", () => {
+    const out = unitPriceTrends([
+      { canonicalItemId: "milk", name: "whole milk", unitPriceCents: 400, purchasedAt: d("2026-06-01") },
+      { canonicalItemId: "milk", name: "whole milk", unitPriceCents: 300, purchasedAt: d("2026-06-15") },
+    ]);
+    expect(out[0]).toMatchObject({ latestCents: 300, avgCents: 350, minCents: 300, maxCents: 400 });
+  });
+});
+
+describe("budgetVsActual", () => {
+  it("flags over/under budget", () => {
+    expect(budgetVsActual(5000, 4000)).toMatchObject({ deltaCents: 1000, overBudget: true });
+    expect(budgetVsActual(3000, 4000)).toMatchObject({ deltaCents: -1000, overBudget: false });
+    expect(budgetVsActual(3000, null)).toMatchObject({ budgetCents: null, overBudget: false });
+  });
+});
