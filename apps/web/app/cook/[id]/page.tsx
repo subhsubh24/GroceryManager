@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
-import { getDb, withTenant } from "@gm/db";
+import { getDb, isRecipeSaved, withTenant } from "@gm/db";
 import { findSubstitutions, splitSteps } from "@gm/core/recipe";
 import { logCook } from "@gm/core/recipe/log-cook";
 import { getSubstitutions } from "@gm/core/recipe/substitute-llm";
 import { currentUserId } from "@/app/lib/tenant";
 import { isPersistedRecipeId, loadRecipeAnySource } from "@/app/lib/recipe";
+import { SaveButton } from "@/app/cookbook/save-button";
 import { CookMode } from "./cook-mode.js";
 import { SwapFinder, type SwapState } from "./swap-finder.js";
 
@@ -13,9 +14,14 @@ export const dynamic = "force-dynamic";
 async function load(id: string) {
   try {
     const recipe = await loadRecipeAnySource(id);
-    return { recipe, error: null as string | null };
+    let saved = false;
+    if (recipe) {
+      const userId = await currentUserId();
+      if (userId) saved = await withTenant(getDb(), userId, (tx) => isRecipeSaved(tx, userId, recipe.id));
+    }
+    return { recipe, saved, error: null as string | null };
   } catch (e) {
-    return { recipe: null, error: e instanceof Error ? e.message : String(e) };
+    return { recipe: null, saved: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
@@ -56,7 +62,7 @@ async function logThisCook(formData: FormData) {
 
 export default async function CookPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { recipe, error } = await load(id);
+  const { recipe, saved, error } = await load(id);
 
   return (
     <main className="page">
@@ -79,7 +85,13 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
         <>
           <div className="mt-4 animate-fade-in-up">
             <p className="eyebrow">Cook mode</p>
-            <h1 className="page-title mt-2">{recipe.title}</h1>
+            <div className="mt-2 flex items-start justify-between gap-3">
+              <h1 className="page-title">{recipe.title}</h1>
+              <SaveButton
+                recipe={{ id: recipe.id, title: recipe.title, imageUrl: recipe.imageUrl, cuisine: recipe.cuisine }}
+                initialSaved={saved}
+              />
+            </div>
             <p className="page-subtitle">Screen stays awake · tap through each step.</p>
           </div>
           <div className="mt-6">

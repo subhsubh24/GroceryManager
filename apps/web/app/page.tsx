@@ -37,6 +37,15 @@ const SECTIONS: Section[] = [
     tag: "Tonight",
   },
   {
+    key: "cookbook",
+    href: "/cookbook",
+    title: "My Cookbook",
+    blurb: "Save the recipes you love and cook them again in a tap.",
+    emoji: "📖",
+    tone: "plain",
+    span: "lg:col-span-2",
+  },
+  {
     key: "scan",
     href: "/scan",
     title: "Scan my fridge",

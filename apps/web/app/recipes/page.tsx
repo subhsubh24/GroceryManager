@@ -1,4 +1,5 @@
-import { getDb, getPantryView, loadPreferenceSignals, withTenant } from "@gm/db";
+import { getDb, getPantryView, loadPreferenceSignals, loadSavedRecipes, withTenant } from "@gm/db";
+import { dedupeSaved } from "@gm/core/recipe";
 import {
   annotateRecipe,
   buildPantryIndex,
@@ -13,6 +14,7 @@ import { dietExclusions, KNOWN_DIETS, projectUserModel } from "@gm/core/personal
 import { currentUserId } from "@/app/lib/tenant";
 import { addNamesToListAction } from "@/app/lib/list-actions";
 import { PageHeader } from "@/app/components/page-header";
+import { SaveButton } from "@/app/cookbook/save-button";
 
 export const dynamic = "force-dynamic";
 
@@ -20,17 +22,22 @@ export const dynamic = "force-dynamic";
 const GUEST_DIETS = ["vegan", "vegetarian", "gluten-free", "dairy-free", "pescatarian"];
 
 async function loadRecipes(mood: Mood, guest: string | null) {
+  const emptySaved = new Set<string>();
   try {
     const userId = await currentUserId();
-    if (!userId) return { ranked: [], images: new Map<string, string>(), error: null as string | null };
+    if (!userId)
+      return { ranked: [], images: new Map<string, string>(), savedIds: emptySaved, error: null as string | null };
 
-    // Read pantry + taste signals together in one tenant tx; the provider fetch happens after.
-    const { pantry, signals } = await withTenant(getDb(), userId, async (tx) => ({
+    // Read pantry + taste signals + saved recipes together in one tenant tx; provider fetch is after.
+    const { pantry, signals, saved } = await withTenant(getDb(), userId, async (tx) => ({
       pantry: await getPantryView(tx, userId),
       signals: await loadPreferenceSignals(tx, userId),
+      saved: await loadSavedRecipes(tx, userId),
     }));
+    const savedIds = new Set(dedupeSaved(saved).map((r) => r.id));
     const inStock = pantry.filter((p) => p.status === "in_stock" || p.status === "low");
-    if (inStock.length === 0) return { ranked: [], images: new Map<string, string>(), error: null as string | null };
+    if (inStock.length === 0)
+      return { ranked: [], images: new Map<string, string>(), savedIds, error: null as string | null };
 
     const idx = buildPantryIndex(
       inStock.map((p) => ({
@@ -79,9 +86,14 @@ async function loadRecipes(mood: Mood, guest: string | null) {
         cuisineAffinity: model.cuisineAffinity,
       },
     });
-    return { ranked, images, error: null as string | null };
+    return { ranked, images, savedIds, error: null as string | null };
   } catch (e) {
-    return { ranked: [], images: new Map<string, string>(), error: e instanceof Error ? e.message : String(e) };
+    return {
+      ranked: [],
+      images: new Map<string, string>(),
+      savedIds: emptySaved,
+      error: e instanceof Error ? e.message : String(e),
+    };
   }
 }
 
@@ -93,7 +105,7 @@ export default async function RecipesPage({
   const sp = await searchParams;
   const mood: Mood = sp.mood === "easy" ? "easy" : sp.mood === "batch" ? "batch" : "nice";
   const guest = sp.guest && KNOWN_DIETS.includes(sp.guest.toLowerCase()) ? sp.guest.toLowerCase() : null;
-  const { ranked, error, images } = await loadRecipes(mood, guest);
+  const { ranked, error, images, savedIds } = await loadRecipes(mood, guest);
 
   const href = (over: { mood?: Mood; guest?: string | null }) => {
     const m = over.mood === undefined ? mood : over.mood;
@@ -123,9 +135,14 @@ export default async function RecipesPage({
         title="Cook tonight"
         subtitle="Ranked by what you already have. How much do you feel like cooking?"
         topRight={
-          <a href="/import" className="nav-link">
-            Import a recipe →
-          </a>
+          <div className="flex items-center gap-3">
+            <a href="/cookbook" className="nav-link">
+              My Cookbook →
+            </a>
+            <a href="/import" className="nav-link">
+              Import a recipe →
+            </a>
+          </div>
         }
       />
 
@@ -179,7 +196,7 @@ export default async function RecipesPage({
               // eslint-disable-next-line @next/next/no-img-element
               <img src={images.get(r.id)} alt="" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
             ) : null}
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="font-medium text-ink-900">
                 {r.title}
                 {r.batchFriendly && (
@@ -211,6 +228,10 @@ export default async function RecipesPage({
                 )}
               </div>
             </div>
+            <SaveButton
+              recipe={{ id: r.id, title: r.title, imageUrl: images.get(r.id) || undefined }}
+              initialSaved={savedIds.has(r.id)}
+            />
           </li>
         ))}
       </ul>

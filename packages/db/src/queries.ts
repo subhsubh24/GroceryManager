@@ -2,7 +2,7 @@
  * Read-model query helpers for the UI (PLAN §5/§7). Kept in @gm/db so the web app stays
  * thin (no direct Drizzle import). Per-user; userId optional until Auth is wired.
  */
-import { and, desc, eq, gte, isNull } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, like } from "drizzle-orm";
 import type { Querier } from "./client.js";
 import {
   canonicalItems,
@@ -66,6 +66,93 @@ export async function loadPreferenceSignals(db: Querier, userId: string) {
     polarity: r.polarity as SignalPolarity,
     confidence: r.confidence,
   }));
+}
+
+// ---- "My Cookbook": saved/favorited recipes (PLAN §10 growth) ----
+// Saved recipes ride the preference ledger (no new table). Each save appends a `saved_recipe`
+// signal whose `value` is the encodeSaved() JSON; unsave deletes the matching row. The read path
+// (loadSavedRecipes → dedupeSaved) tolerates the resulting duplicates, latest-wins.
+
+const SAVED_RECIPE_TOPIC = "saved_recipe";
+
+/**
+ * Save a recipe to the user's cookbook — append a `saved_recipe` signal. `value` mirrors
+ * core's encodeSaved (id/title/imageUrl/cuisine). polarity "positive"/source "rating" keep it a
+ * valid ledger row; the unprefixed topic means projectUserModel ignores it (so it never pollutes
+ * the taste model). Flywheel: when a cuisine is known we ALSO append a positive `cuisine:<x>`
+ * signal — the exact topic/polarity projectUserModel reads for cuisine affinity (matching
+ * signalFromCooked's 0.2 confidence), so favoriting nudges future recipe ranking.
+ */
+export async function saveRecipe(
+  db: Querier,
+  userId: string,
+  r: { id: string; title: string; imageUrl?: string; cuisine?: string },
+) {
+  await db.insert(preferenceSignals).values({
+    userId,
+    topic: SAVED_RECIPE_TOPIC,
+    value: JSON.stringify({ id: r.id, title: r.title, imageUrl: r.imageUrl, cuisine: r.cuisine }),
+    polarity: "positive",
+    source: "rating",
+    confidence: 1,
+  });
+  if (r.cuisine && r.cuisine.trim()) {
+    await db.insert(preferenceSignals).values({
+      userId,
+      topic: `cuisine:${r.cuisine.trim().toLowerCase()}`,
+      value: r.cuisine.trim(),
+      polarity: "positive",
+      source: "rating",
+      confidence: 0.2,
+    });
+  }
+}
+
+/**
+ * Remove a recipe from the cookbook — delete every `saved_recipe` row for this user whose JSON
+ * `value` contains this recipe's id. Parameterized LIKE (the pattern is a bound value, never
+ * concatenated into raw SQL). TheMealDB ids are simple alphanumerics, so the `"id":"<id>"`
+ * substring is an unambiguous match. The cuisine flywheel signal is intentionally left intact
+ * (taste evidence accumulates; un-favoriting one recipe shouldn't erase it).
+ */
+export async function unsaveRecipe(db: Querier, userId: string, recipeId: string) {
+  await db
+    .delete(preferenceSignals)
+    .where(
+      and(
+        eq(preferenceSignals.userId, userId),
+        eq(preferenceSignals.topic, SAVED_RECIPE_TOPIC),
+        like(preferenceSignals.value, `%"id":"${recipeId}"%`),
+      ),
+    );
+}
+
+/** Load a user's saved recipes (raw ledger rows, newest first) — feed to dedupeSaved. */
+export async function loadSavedRecipes(db: Querier, userId: string) {
+  const rows = await db
+    .select({ value: preferenceSignals.value, occurredAt: preferenceSignals.occurredAt })
+    .from(preferenceSignals)
+    .where(and(eq(preferenceSignals.userId, userId), eq(preferenceSignals.topic, SAVED_RECIPE_TOPIC)))
+    .orderBy(desc(preferenceSignals.occurredAt));
+  return rows
+    .filter((r): r is { value: string; occurredAt: Date } => typeof r.value === "string")
+    .map((r) => ({ value: r.value, occurredAt: r.occurredAt as Date }));
+}
+
+/** Whether a specific recipe is currently in the user's cookbook. */
+export async function isRecipeSaved(db: Querier, userId: string, recipeId: string): Promise<boolean> {
+  const rows = await db
+    .select({ id: preferenceSignals.id })
+    .from(preferenceSignals)
+    .where(
+      and(
+        eq(preferenceSignals.userId, userId),
+        eq(preferenceSignals.topic, SAVED_RECIPE_TOPIC),
+        like(preferenceSignals.value, `%"id":"${recipeId}"%`),
+      ),
+    )
+    .limit(1);
+  return rows.length > 0;
 }
 
 /** Upsert the projected UserModel (cleanly-mappable fields). */
