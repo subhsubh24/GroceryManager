@@ -3,10 +3,12 @@
  * thin (no direct Drizzle import). Per-user; userId optional until Auth is wired.
  */
 import { randomBytes } from "node:crypto";
-import { and, desc, eq, gte, isNull, like } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, like, or } from "drizzle-orm";
 import type { Querier } from "./client.js";
 import {
   canonicalItems,
+  householdInvites,
+  households,
   mealLogs,
   oauthCredentials,
   pantryStock,
@@ -792,8 +794,240 @@ export async function loadRecipeForCook(db: Querier, id: string) {
   };
 }
 
-/** The user's current active shopping list, creating an empty manual one if none exists (§7.1/§10). */
+// ---------------------------------------------------------------------------
+// Shared household — opt-in shared shopping list (FEATURE_HOUSEHOLDS, default OFF).
+// Everything here is gated by the flag at the call sites; the active-list helpers below are ALSO
+// internally flag-aware, so the read/write transparently resolves to the household's shared list when
+// (and only when) the flag is on AND the user actually has a household. With the flag off — or for any
+// user without a household — every code path is byte-for-byte the per-user behavior as before.
+// ---------------------------------------------------------------------------
+
+/** Whether the shared-household feature is enabled (optional env; defaults OFF). */
+export function householdsEnabled(): boolean {
+  return process.env.FEATURE_HOUSEHOLDS === "1";
+}
+
+/**
+ * Cheap shape gate for an invite token BEFORE any DB lookup (rejects junk / injection-flavored input).
+ * `randomBytes(18).toString("base64url")` yields exactly 24 url-safe chars; allow a small range so a
+ * future token-length tweak doesn't silently break. Mirrors the cookbook/referral token posture.
+ */
+export function isValidInviteToken(token: unknown): token is string {
+  return typeof token === "string" && /^[A-Za-z0-9_-]{16,64}$/.test(token);
+}
+
+/**
+ * The household a user shares a list with, or null. Returns null unless the flag is ON *and* the user
+ * has a `households` membership — so the per-user list path is the default everywhere. Scoped: reads
+ * only the caller's own `users` row (RLS allows `id = app_current_user_id()`).
+ *
+ * KNOWN LIMITATION (by design, scope = "members share ONE list"): once a user joins a household, the
+ * active-list helpers resolve to the household's shared list, so any items on a PRE-EXISTING solo list
+ * stop showing in their view. Those rows are NOT deleted (they reappear if the user later leaves the
+ * household) — accepting an invite does not migrate/merge the old list. Auto-merging is intentionally
+ * out of scope here (it would mean writing one member's items under another's tenant + dedup).
+ */
+async function activeHouseholdId(db: Querier, userId: string): Promise<string | null> {
+  if (!householdsEnabled()) return null;
+  const rows = await db
+    .select({ householdId: users.householdId })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return rows[0]?.householdId ?? null;
+}
+
+/**
+ * Create a household, setting the creator as owner AND first member (users.householdId). Returns its
+ * id. Tenant-scoped — call inside withTenant; the INSERT satisfies the households WITH CHECK
+ * (owner_user_id = app_current_user_id()) and the users UPDATE satisfies the users policy (id = me).
+ */
+export async function createHousehold(db: Querier, userId: string, name?: string): Promise<string> {
+  const created = await db
+    .insert(households)
+    .values({ ownerUserId: userId, name: name?.trim() || "Household" })
+    .returning({ id: households.id });
+  const householdId = created[0]!.id;
+  await db.update(users).set({ householdId, updatedAt: new Date() }).where(eq(users.id, userId));
+  return householdId;
+}
+
+/** The household the user belongs to (id + name + owner), or null. Tenant-scoped read. */
+export async function getHouseholdForUser(
+  db: Querier,
+  userId: string,
+): Promise<{ id: string; name: string; ownerUserId: string } | null> {
+  const me = await db
+    .select({ householdId: users.householdId })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  const householdId = me[0]?.householdId;
+  if (!householdId) return null;
+  const rows = await db
+    .select({ id: households.id, name: households.name, ownerUserId: households.ownerUserId })
+    .from(households)
+    .where(eq(households.id, householdId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/** A user's household membership pointer (users.householdId), or null. Tenant-scoped read. */
+export async function getUserHouseholdId(db: Querier, userId: string): Promise<string | null> {
+  const rows = await db
+    .select({ householdId: users.householdId })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return rows[0]?.householdId ?? null;
+}
+
+/**
+ * Members of a household (id + name + email). Under RLS a member can read only their OWN users row, so
+ * the roster is intended to run on the ADMIN connection — tightly scoped by the `householdId` the
+ * caller already resolved tenant-scoped (via getHouseholdForUser). Parameterized `eq`.
+ */
+export async function listHouseholdMembers(
+  db: Querier,
+  householdId: string,
+): Promise<{ id: string; name: string | null; email: string }[]> {
+  return db
+    .select({ id: users.id, name: users.name, email: users.email })
+    .from(users)
+    .where(eq(users.householdId, householdId))
+    .orderBy(desc(users.createdAt));
+}
+
+/**
+ * Mint a one-time, unguessable invite to the user's household. `randomBytes(18).toString("base64url")`
+ * (~24 url-safe chars, no padding — comfortably unguessable). Tenant-scoped — call inside withTenant;
+ * the INSERT's WITH CHECK requires the row's household to be the caller's own. Returns the token.
+ */
+export async function createHouseholdInvite(
+  db: Querier,
+  userId: string,
+  householdId: string,
+  expiresAt?: Date | null,
+): Promise<string> {
+  const token = randomBytes(18).toString("base64url");
+  await db.insert(householdInvites).values({
+    householdId,
+    token,
+    createdByUserId: userId,
+    expiresAt: expiresAt ?? null,
+  });
+  return token;
+}
+
+/**
+ * Resolve an invite token → the invite joined to its household name (for the join page), or null.
+ * Token is shape-validated BEFORE lookup, then matched with a parameterized `eq` (never concatenated).
+ * Read on the ADMIN connection from the join page (the visitor may not be a member yet). Keeps Drizzle
+ * inside @gm/db so the web app stays thin.
+ */
+export async function getHouseholdInviteByToken(
+  db: Querier,
+  token: string,
+): Promise<{
+  id: string;
+  householdId: string;
+  householdName: string;
+  expiresAt: Date | null;
+  acceptedByUserId: string | null;
+} | null> {
+  // Defense in depth: reject malformed tokens before the lookup even if a caller forgot to.
+  if (!isValidInviteToken(token)) return null;
+  const rows = await db
+    .select({
+      id: householdInvites.id,
+      householdId: householdInvites.householdId,
+      householdName: households.name,
+      expiresAt: householdInvites.expiresAt,
+      acceptedByUserId: householdInvites.acceptedByUserId,
+    })
+    .from(householdInvites)
+    .innerJoin(households, eq(householdInvites.householdId, households.id))
+    .where(eq(householdInvites.token, token))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/**
+ * Accept an invite for `userId`: set the invitee's `users.householdId` to the invite's household and
+ * stamp `accepted_by_user_id` on the invite. Runs on the ADMIN connection (the invitee isn't a member
+ * yet, so neither write would pass member RLS, and the invite row belongs to another tenant). Guards:
+ *   • unknown / malformed token → no-op, returns null.
+ *   • expired invite → no-op, returns null.
+ *   • SINGLE-USE: already accepted by a DIFFERENT user → no-op, returns null (the link burns on first
+ *     use; a leaked/forwarded link can't admit a second account). Re-accepting by the SAME user is
+ *     idempotent (covers a double-submit / refresh) and simply re-points them at the same household.
+ *   • already belongs to a DIFFERENT household → no-op, returns null (don't yank them out of theirs).
+ * Returns the joined householdId on success.
+ */
+export async function acceptHouseholdInvite(
+  db: Querier,
+  userId: string,
+  token: string,
+): Promise<string | null> {
+  const invite = await getHouseholdInviteByToken(db, token);
+  if (!invite) return null;
+  if (invite.expiresAt && invite.expiresAt.getTime() < Date.now()) return null;
+  // Single-use: a consumed invite only re-admits the same acceptor (idempotent double-submit).
+  if (invite.acceptedByUserId && invite.acceptedByUserId !== userId) return null;
+
+  // Don't pull a user out of a household they already belong to via someone else's link.
+  const me = await db
+    .select({ householdId: users.householdId })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  const current = me[0]?.householdId ?? null;
+  if (current && current !== invite.householdId) return null;
+
+  // Claim the invite first, and ONLY if it's still unclaimed (or already ours) — a conditional UPDATE
+  // that closes the accept race: two concurrent requests can't both stamp it for different users.
+  const claimed = await db
+    .update(householdInvites)
+    .set({ acceptedByUserId: userId })
+    .where(
+      and(
+        eq(householdInvites.id, invite.id),
+        or(isNull(householdInvites.acceptedByUserId), eq(householdInvites.acceptedByUserId, userId)),
+      ),
+    )
+    .returning({ id: householdInvites.id });
+  if (claimed.length === 0) return null; // lost the race / just got consumed by someone else
+
+  await db
+    .update(users)
+    .set({ householdId: invite.householdId, updatedAt: new Date() })
+    .where(eq(users.id, userId));
+  return invite.householdId;
+}
+
+/**
+ * The user's current active shopping list, creating an empty manual one if none exists (§7.1/§10).
+ * When FEATURE_HOUSEHOLDS is on AND the user has a household, this resolves to the household's shared
+ * list (matched/created by household_id); otherwise it's the per-user list, exactly as before.
+ */
 export async function getOrCreateActiveList(db: Querier, userId: string): Promise<string> {
+  const householdId = await activeHouseholdId(db, userId);
+  if (householdId) {
+    const existing = await db
+      .select({ id: shoppingLists.id })
+      .from(shoppingLists)
+      .where(and(eq(shoppingLists.householdId, householdId), eq(shoppingLists.status, "active")))
+      .orderBy(desc(shoppingLists.createdAt))
+      .limit(1);
+    if (existing[0]) return existing[0].id;
+    // The creator's user_id satisfies the NOT NULL column; RLS admits other members via household_id.
+    const created = await db
+      .insert(shoppingLists)
+      .values({ userId, householdId, name: "Shopping list", generatedBy: "manual" })
+      .returning({ id: shoppingLists.id });
+    return created[0]!.id;
+  }
+
   const existing = await db
     .select({ id: shoppingLists.id })
     .from(shoppingLists)
@@ -808,12 +1042,21 @@ export async function getOrCreateActiveList(db: Querier, userId: string): Promis
   return created[0]!.id;
 }
 
-/** Items on the active list (with canonical names) for display. */
+/**
+ * Items on the active list (with canonical names) for display. Household-aware to match
+ * getOrCreateActiveList: members read the shared list; solo users (or flag-off) read their own list,
+ * unchanged.
+ */
 export async function getActiveListView(db: Querier, userId: string) {
+  const householdId = await activeHouseholdId(db, userId);
   const list = await db
     .select({ id: shoppingLists.id })
     .from(shoppingLists)
-    .where(and(eq(shoppingLists.userId, userId), eq(shoppingLists.status, "active")))
+    .where(
+      householdId
+        ? and(eq(shoppingLists.householdId, householdId), eq(shoppingLists.status, "active"))
+        : and(eq(shoppingLists.userId, userId), eq(shoppingLists.status, "active")),
+    )
     .orderBy(desc(shoppingLists.createdAt))
     .limit(1);
   if (!list[0]) return [];

@@ -79,6 +79,15 @@ const SECTIONS: Section[] = [
     span: "lg:col-span-2",
   },
   {
+    key: "shared-household",
+    href: "/household",
+    title: "Shared household",
+    blurb: "Share one shopping list with the people you shop for — add it once, it's there for all.",
+    emoji: "🏠",
+    tone: "plain",
+    span: "lg:col-span-2",
+  },
+  {
     key: "scan",
     href: "/scan",
     title: "Scan my fridge",

@@ -126,7 +126,10 @@ export const users = pgTable("users", {
   image: text("image"),
   // Credentials login (email + password). Null for Google-only / unset accounts. scrypt: salt:hex.
   passwordHash: text("password_hash"),
-  householdId: uuid("household_id"), // future: shared pantry
+  // Membership pointer into `households` (opt-in shared shopping list, FEATURE_HOUSEHOLDS, default OFF).
+  // NULL for every solo user — the per-user RLS path is unaffected when this is unset. The FK is added
+  // in sql/0005_households.sql (the column predates `households`, so it stays a bare uuid here).
+  householdId: uuid("household_id"),
   role: text("role").default("user").notNull(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
@@ -164,6 +167,41 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   keysAuth: text("keys_auth").notNull(),
   createdAt: createdAt(),
 });
+
+// ---------------------------------------------------------------------------
+// Shared household — opt-in shared shopping list (FEATURE_HOUSEHOLDS, default OFF).
+// Members (users whose `users.householdId` points here) share ONE active shopping list. Entirely
+// behind the flag: with it off, no household is ever created and these tables stay empty, so existing
+// per-user behavior is unchanged. RLS for cross-member access is added in sql/0005_households.sql.
+// ---------------------------------------------------------------------------
+export const households = pgTable("households", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").default("Household").notNull(),
+  // The creator; kept for display/ownership. Membership itself is via users.householdId.
+  ownerUserId: uuid("owner_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  createdAt: createdAt(),
+});
+
+/** A one-time, unguessable invite link to join a household (token = randomBytes(18).base64url). */
+export const householdInvites = pgTable(
+  "household_invites",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    householdId: uuid("household_id")
+      .notNull()
+      .references(() => households.id, { onDelete: "cascade" }),
+    token: text("token").notNull().unique(),
+    createdByUserId: uuid("created_by_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+    expiresAt: ts("expires_at"), // nullable: no expiry
+    acceptedByUserId: uuid("accepted_by_user_id").references(() => users.id, { onDelete: "set null" }),
+  },
+  (t) => ({ byHousehold: index("household_invite_household_idx").on(t.householdId) }),
+);
 
 // ---------------------------------------------------------------------------
 // Units & the canonical catalog (the crux — PLAN §4.1)
@@ -489,6 +527,10 @@ export const shoppingLists = pgTable("shopping_lists", {
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
+  // Opt-in shared household (FEATURE_HOUSEHOLDS). When set, every member of the household shares this
+  // list — RLS admits members via this column (see sql/0005_households.sql). NULL ⇒ a solo per-user
+  // list, the existing/default behavior. The FK is added in that same migration.
+  householdId: uuid("household_id").references(() => households.id, { onDelete: "set null" }),
   name: text("name").default("Shopping list").notNull(),
   status: shoppingListStatusEnum("status").default("active").notNull(),
   generatedBy: shoppingListGenByEnum("generated_by").default("reorder_engine").notNull(),
