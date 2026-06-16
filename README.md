@@ -33,11 +33,12 @@ services/amazon-mcp # optional, opt-in Playwright order-history scraper
 ## Getting started (dev)
 ```bash
 pnpm install
-cp .env.example .env        # fill in keys
-docker compose -f infra/docker-compose.yml up -d   # Postgres + Redis (see infra/)
-pnpm db:generate && pnpm db:migrate && pnpm db:seed
-pnpm dev
+cp .env.example .env        # fill in keys (using Supabase? just DATABASE_URL + DIRECT_DATABASE_URL)
+docker compose -f infra/docker-compose.yml up -d   # local Postgres + Redis (skip if using Supabase)
+pnpm db:migrate && pnpm db:seed
+pnpm --filter @gm/web dev   # or `pnpm dev` to also run the worker (needs REDIS_URL)
 ```
+The `dev` / `start` / `db:*` / worker scripts **auto-load the root `.env`** (via `dotenv-cli`) — no `source .env` needed. (CI scripts — `build` / `test` / `typecheck` — stay env-free.)
 
 ## Status
 A working vertical slice runs end-to-end: pages are server-rendered against Postgres with
