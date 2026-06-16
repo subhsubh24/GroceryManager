@@ -1,9 +1,11 @@
 import { loadEnv } from "@gm/config/env";
 import { getDb, getGoogleCredential, getPantryView, withTenant } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
-import { syncGmailAction } from "./actions";
+import { backfillGmailAction, syncGmailAction } from "./actions";
 
 export const dynamic = "force-dynamic";
+// Backfill parses several receipts inline (each an LLM call) — give it room beyond the 10s default.
+export const maxDuration = 60;
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   in_stock: { label: "in stock", cls: "bg-brand-50 text-brand-700" },
@@ -95,14 +97,25 @@ export default async function PantryPage({
             </p>
           </div>
           {connected ? (
-            <form action={syncGmailAction}>
-              <button
-                type="submit"
-                className="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98]"
-              >
-                Sync receipts now
-              </button>
-            </form>
+            <div className="flex flex-wrap gap-2">
+              <form action={syncGmailAction}>
+                <button
+                  type="submit"
+                  className="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98]"
+                >
+                  Sync receipts now
+                </button>
+              </form>
+              <form action={backfillGmailAction}>
+                <button
+                  type="submit"
+                  className="rounded-xl border border-brand-200 bg-white px-4 py-2.5 text-sm font-semibold text-brand-700 shadow-sm"
+                  title="Import the last ~6 months of receipts to seed your pantry"
+                >
+                  Import past receipts
+                </button>
+              </form>
+            </div>
           ) : (
             <a
               href="/api/auth/signin"

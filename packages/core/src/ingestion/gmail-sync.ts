@@ -260,3 +260,57 @@ export async function syncGmailForUser(
   if (newHistoryId) await withTenant(db, userId, (tx) => setGmailHistoryId(tx, userId, newHistoryId));
   return summary;
 }
+
+/** Gmail search for receipts newer than `sinceDays` (e.g. "…from:(amazon…) after:2026/3/16"). */
+export function receiptQuerySince(sinceDays: number, now = new Date()): string {
+  const d = new Date(now.getTime() - sinceDays * 86_400_000);
+  return `${RECEIPT_QUERY} after:${d.getUTCFullYear()}/${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
+}
+
+/** Page through a search query collecting up to `cap` message ids. Client is duck-typed for tests. */
+export async function collectBackfillIds(
+  client: Pick<GmailClient, "listMessageIds">,
+  query: string,
+  cap: number,
+): Promise<string[]> {
+  const ids: string[] = [];
+  let pageToken: string | undefined;
+  do {
+    const remaining = cap - ids.length;
+    const r = await client.listMessageIds({ q: query, pageToken, maxResults: Math.min(100, remaining) });
+    ids.push(...r.ids);
+    pageToken = r.nextPageToken;
+  } while (pageToken && ids.length < cap);
+  return ids.slice(0, cap);
+}
+
+/**
+ * Seed the pantry from receipt history (PLAN §10 "fast onboarding backfill"). Paginated, date-bounded,
+ * capped. Search-based, so it does NOT touch the incremental sync cursor; idempotent ingest dedups any
+ * overlap. Bounded inline for the web; the worker script runs it with a high cap for full history.
+ */
+export async function backfillGmailForUser(
+  db: DbHandle,
+  env: Env,
+  userId: string,
+  opts: { sinceDays?: number; maxMessages?: number } = {},
+): Promise<GmailSyncSummary> {
+  const sinceDays = opts.sinceDays ?? 180;
+  const cap = opts.maxMessages ?? 50;
+  const { client } = await withTenant(db, userId, (tx) => resolveGmailContext(tx, env, userId));
+  const ids = await collectBackfillIds(client, receiptQuerySince(sinceDays), cap);
+
+  const summary = emptyGmailSyncSummary();
+  for (const id of ids) {
+    try {
+      accumulateParseResult(
+        summary,
+        await withTenant(db, userId, (tx) => parseReceiptForUser(tx, env, userId, id, client)),
+      );
+    } catch (e) {
+      summary.failed += 1;
+      console.error(`[gmail-backfill] message ${id} failed`, e);
+    }
+  }
+  return summary;
+}

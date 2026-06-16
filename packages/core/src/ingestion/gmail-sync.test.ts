@@ -1,9 +1,42 @@
 import { describe, expect, it } from "vitest";
 import {
   accumulateParseResult,
+  collectBackfillIds,
   emptyGmailSyncSummary,
+  receiptQuerySince,
   type ParseReceiptResult,
 } from "./gmail-sync.js";
+
+describe("receiptQuerySince", () => {
+  it("appends a Gmail after: date filter", () => {
+    const q = receiptQuerySince(30, new Date(Date.UTC(2026, 5, 16))); // Jun 16 → May 17
+    expect(q).toMatch(/after:2026\/5\/17$/);
+  });
+});
+
+describe("collectBackfillIds", () => {
+  const pagedClient = (pages: { ids: string[]; nextPageToken?: string }[]) => {
+    let i = 0;
+    return { listMessageIds: async () => pages[i++] ?? { ids: [] } };
+  };
+
+  it("pages until no token, capped", async () => {
+    const client = pagedClient([
+      { ids: ["a", "b"], nextPageToken: "p2" },
+      { ids: ["c", "d"], nextPageToken: "p3" },
+      { ids: ["e"] },
+    ]);
+    expect(await collectBackfillIds(client, "q", 10)).toEqual(["a", "b", "c", "d", "e"]);
+  });
+
+  it("stops at the cap mid-pages", async () => {
+    const client = pagedClient([
+      { ids: ["a", "b"], nextPageToken: "p2" },
+      { ids: ["c", "d"], nextPageToken: "p3" },
+    ]);
+    expect(await collectBackfillIds(client, "q", 3)).toEqual(["a", "b", "c"]);
+  });
+});
 
 const ingested = (lines: number, review = 0): ParseReceiptResult => ({
   skipped: false,
