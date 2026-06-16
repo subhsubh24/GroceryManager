@@ -308,6 +308,21 @@ export async function loadWrappedInputs(db: Querier, userId: string, sinceDays =
   };
 }
 
+/**
+ * Cooked-meal timestamps for the cooking-streak surface (PLAN §10 growth). Just `cookedAt` within
+ * the lookback, scoped to the user — the streak math lives in @gm/core/recipe (currentStreak,
+ * longestStreak, cooksThisWeek, weeklyActivity) so it stays pure + testable. 120 days comfortably
+ * covers the 8-week activity strip plus a long current/longest streak.
+ */
+export async function loadCookedAt(db: Querier, userId: string, sinceDays = 120): Promise<Date[]> {
+  const since = new Date(Date.now() - sinceDays * 86_400_000);
+  const rows = await db
+    .select({ cookedAt: mealLogs.cookedAt })
+    .from(mealLogs)
+    .where(and(eq(mealLogs.userId, userId), gte(mealLogs.cookedAt, since)));
+  return rows.filter((r) => r.cookedAt != null).map((r) => r.cookedAt as Date);
+}
+
 export async function getUserBudgetCents(db: Querier, userId: string): Promise<number | null> {
   const rows = await db
     .select({ weeklyBudgetCents: userModels.weeklyBudgetCents })

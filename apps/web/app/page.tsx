@@ -1,4 +1,19 @@
 import { auth, signOut } from "@/auth";
+import { getDb, loadCookedAt, withTenant } from "@gm/db";
+import { currentStreak } from "@gm/core/recipe";
+import { currentUserId } from "@/app/lib/tenant";
+
+/** Current cooking streak for the signed-in header chip — never throws (defaults to 0). */
+async function loadStreak(): Promise<number> {
+  try {
+    const userId = await currentUserId();
+    if (!userId) return 0;
+    const cookedAt = await withTenant(getDb(), userId, (tx) => loadCookedAt(tx, userId));
+    return currentStreak(cookedAt, new Date());
+  } catch {
+    return 0;
+  }
+}
 
 type Tone = "brand" | "berry" | "grape" | "ocean" | "festive" | "plain";
 
@@ -247,6 +262,8 @@ function FeatureCard({ s, index }: { s: Section; index: number }) {
 export default async function HomePage() {
   const session = await auth();
   const email = (session?.user as { email?: string } | undefined)?.email ?? null;
+  // Only hit the DB for signed-in visitors; the logged-out landing path stays query-free.
+  const streak = session ? await loadStreak() : 0;
 
   return (
     <main className="relative overflow-hidden">
@@ -261,6 +278,11 @@ export default async function HomePage() {
           </a>
           {session ? (
             <div className="flex items-center gap-2 sm:gap-3">
+              {streak > 0 && (
+                <a href="/digest" className="pill-brand hidden sm:inline-flex" title="Your cooking streak">
+                  🔥 {streak}-day streak
+                </a>
+              )}
               <span className="hidden text-sm text-ink-400 sm:inline">{email ? email : "Signed in"}</span>
               <a href="/profile" className="btn-ghost btn-sm">
                 Profile

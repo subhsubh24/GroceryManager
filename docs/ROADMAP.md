@@ -67,18 +67,27 @@ supplements.
   signup CTA. Token = `randomBytes(18)` base64url; validated by pure `isValidShareToken` before any DB
   hit. *Code review:* security requirements verified (parameterized, scoped, no-PII, public-only links)
   — clean, no fix needed. Gates: typecheck, 274 core tests (+4), `next build` (`/share/cookbook/[token]`).
+- **iter 4 — Cooking Streak + weekly stats (DONE):** `mealLogs`-derived current/longest streak,
+  cooks-this-week, and an 8-week mini-bar on `/digest`, plus a 🔥 streak chip in the signed-in home
+  header. Pure UTC-day core (`recipe/streak.ts`, +15 tests), keyless. Review: streak/week math
+  verified sound — clean. Gates: typecheck, 289 core tests, `next build`.
 
 ## Next up (prioritized backlog — re-rank each iteration)
-> Selection rule under blind QA (no screen in this runner): prefer **data/AI/copy** wow (verifiable
-> via tests/build) over **gesture-UI** wow until a visual pass is possible.
-1. **Cooking streak + weekly cook stats** on the home/digest dashboard (tasteful habit reinforcement
-   from `mealLogs` — current streak, meals cooked this week; pure date-bucketing core + small UI).
-   Blind-safe, sticky. *Next pick.*
-2. **Referrals** (invite a friend → both get a perk; builds on the share surfaces; tracking + reward).
-3. **Discover — swipeable "for you" recipe feed** (daily-habit surface; every swipe trains the user
-   model). *Highest stickiness + wow,* but UI-heavy (gestures) → schedule when visual QA is possible.
-4. **Shared household pantry/list** (multiplayer = top retention + viral inside a home). Larger.
-5. **Premium surface** (gate power features; affiliate + subscription monetization).
+> Selection rule under blind QA (no screen in this runner): prefer **data/AI/copy** wow over
+> **gesture-UI** wow. The "finish it all up" pass works down this list back-to-back.
+1. **Referrals** — invite link/token → both get a perk; attribute on signup. Growth + $$. *Next pick.*
+2. **Voice quick-capture** — add Web Speech to `/capture` (graceful fallback to text). Small, keyless.
+3. **Barcode / UPC add** — BarcodeDetector + Open Food Facts lookup → pantry add (manual fallback).
+4. **Discover — swipeable "for you" feed** — trains the taste model; buttons + keyboard primary,
+   pointer-drag enhancement (robust without visual QA).
+
+## Deferred (not buildable in this keyless/headless runner — need keys, scale, or a human eye)
+- **Instacart production API** (one-tap prefilled cart + Impact affiliate) — needs Instacart key.
+- **Amazon Household/Personal-Care ordering** (Creators API + Add-to-Cart + Subscribe & Save +
+  Associates affiliate) and the **order-history scraper** — need Amazon keys / are ToS-brittle.
+- **Realtime shared household pantry/list** — needs realtime infra + invites; larger, benefits from QA.
+- **Premium/billing surface** — needs Stripe keys. **Native (Expo) app** — separate platform effort.
+- **ML depletion model / price forecasting** — need data + offline tuning. **Calendar awareness** — opt-in/3P.
 
 ## Conventions
 - Keyless-first (features degrade gracefully without API keys). Presentation/additive; never break
