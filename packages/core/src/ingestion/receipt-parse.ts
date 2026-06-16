@@ -53,5 +53,8 @@ export async function extractReceipt(
     verify: verifyReceipt,
     tier: "cheap",
     maxAttempts: opts.maxAttempts ?? 3,
+    // Prices → cents, line totals, and the grand total are computed by running Python, not predicted
+    // (PLAN §8 — deterministic math belongs in code). flash-lite supports the code-exec tool.
+    codeExecution: true,
   });
 }

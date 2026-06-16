@@ -5,18 +5,29 @@
 import { describe, expect, it } from "vitest";
 import { GeminiClient } from "../client.js";
 import { importRecipe } from "../../recipe/import-llm.js";
-import { aggregate, formatReport, scoreRecipeImport, type EvalCaseResult } from "./harness.js";
+import {
+  aggregate,
+  formatReport,
+  isRateLimitError,
+  scoreRecipeImport,
+  type EvalCaseResult,
+} from "./harness.js";
 import { RECIPE_FIXTURES } from "./fixtures.js";
 
 const RUN = process.env.RUN_EVALS === "1";
 
 describe.skipIf(!RUN)("recipe import evals (live Gemini)", () => {
-  it("meets the quality bar across golden recipes", async () => {
+  it("meets the quality bar across golden recipes", async (ctx) => {
     const client = new GeminiClient();
     const results: EvalCaseResult[] = [];
-    for (const f of RECIPE_FIXTURES) {
-      const { recipe } = await importRecipe({ text: f.text }, { client });
-      results.push({ name: f.name, score: scoreRecipeImport(recipe, f.expected) });
+    try {
+      for (const f of RECIPE_FIXTURES) {
+        const { recipe } = await importRecipe({ text: f.text }, { client });
+        results.push({ name: f.name, score: scoreRecipeImport(recipe, f.expected) });
+      }
+    } catch (e) {
+      if (isRateLimitError(e)) return ctx.skip(); // quota blip — not a quality regression
+      throw e;
     }
     const report = aggregate(results);
     console.log(formatReport("recipe import", report));

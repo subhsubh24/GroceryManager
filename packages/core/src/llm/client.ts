@@ -27,6 +27,13 @@ export interface GenerateOptions {
   images?: ImagePart[];
   /** Override the per-tier default thinking budget. */
   thinkingBudget?: number;
+  /**
+   * Enable the Gemini code-execution tool so the model computes deterministic values (amounts in
+   * cents, totals, counts) by running Python instead of predicting them. Mutually exclusive with
+   * JSON response-schema mode (the API rejects `tools` + `responseMimeType: application/json`), so
+   * in this mode we ask for JSON in the final text part and parse it. Use it for math-bearing tasks.
+   */
+  codeExecution?: boolean;
 }
 
 /** A cheap, separate verification step — "the call that wrote it doesn't grade it." */
@@ -45,6 +52,31 @@ export interface VerifyResult<T> {
   tierUsed: GeminiTier;
   attempts: number;
   verified: boolean;
+}
+
+/** Wrap a prompt so the model computes numbers with Python, then emits only schema-shaped JSON. */
+function codeExecPrompt(prompt: string, jsonSchema: object): string {
+  return (
+    `${prompt}\n\n` +
+    "Compute every numeric value (amounts in cents, totals, counts) by writing and running Python — " +
+    "do not do arithmetic in your head. Then return ONLY one JSON object matching this schema, with " +
+    `no commentary and no markdown fences:\n${JSON.stringify(jsonSchema)}`
+  );
+}
+
+/**
+ * Pull a JSON value out of a code-execution text response, which may be clean JSON, fenced, or
+ * wrapped in prose (cheaper tiers are chatty). Grabs the outermost object/array span and parses it.
+ */
+export function extractJsonValue(text: string): unknown {
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const body = fence ? fence[1]! : text;
+  const start = body.search(/[{[]/);
+  const end = Math.max(body.lastIndexOf("}"), body.lastIndexOf("]"));
+  if (start < 0 || end <= start) {
+    throw new Error(`no JSON found in code-execution output: ${text.slice(0, 160)}`);
+  }
+  return JSON.parse(body.slice(start, end + 1));
 }
 
 export class GeminiClient {
@@ -70,8 +102,27 @@ export class GeminiClient {
   ): Promise<z.infer<S>> {
     const tier = opts.tier ?? "cheap";
     const model = resolveModel(tier, this.env.LLM_USE_FLASH_LITE);
-    const budget = opts.thinkingBudget ?? thinkingBudgetFor(tier);
+    const jsonSchema = zodToJsonSchema(schema, { target: "openApi3" }) as object;
 
+    // Code-execution mode: the model runs Python for deterministic values, then returns JSON in its
+    // final text part (tools can't be combined with JSON response-schema mode — verified, 400).
+    if (opts.codeExecution) {
+      const parts: Part[] = [{ text: codeExecPrompt(prompt, jsonSchema) }];
+      for (const img of opts.images ?? []) {
+        parts.push({ inlineData: { mimeType: img.mimeType, data: img.dataBase64 } });
+      }
+      const res = await this.ai.models.generateContent({
+        model,
+        contents: { role: "user", parts },
+        config: {
+          tools: [{ codeExecution: {} }],
+          ...(opts.system ? { systemInstruction: opts.system } : {}),
+        },
+      });
+      return schema.parse(extractJsonValue(res.text ?? "")) as z.infer<S>;
+    }
+
+    const budget = opts.thinkingBudget ?? thinkingBudgetFor(tier);
     const parts: Part[] = [{ text: prompt }];
     for (const img of opts.images ?? []) {
       parts.push({ inlineData: { mimeType: img.mimeType, data: img.dataBase64 } });
@@ -85,7 +136,7 @@ export class GeminiClient {
         responseMimeType: "application/json",
         // Gemini accepts an OpenAPI-subset schema; zod-to-json-schema is close enough for
         // most shapes. (Enums need an explicit "type":"string" — handled at schema authoring.)
-        responseSchema: zodToJsonSchema(schema, { target: "openApi3" }) as object,
+        responseSchema: jsonSchema,
         ...(opts.system ? { systemInstruction: opts.system } : {}),
         ...(budget !== -1 ? { thinkingConfig: { thinkingBudget: budget } } : {}),
       },

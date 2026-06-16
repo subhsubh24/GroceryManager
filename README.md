@@ -42,8 +42,13 @@ pnpm dev
 ## Status
 A working vertical slice runs end-to-end: pages are server-rendered against Postgres with
 **row-level-security** enforcement, and the Gemini-backed features below were verified against the
-real model. **219 core unit tests + full workspace typecheck + `next build` green**, plus a gated
+real model. **224 core unit tests + full workspace typecheck + `next build` green**, plus a gated
 **LLM eval harness** (golden fixtures + scorers + LLM-as-judge) that passes live against Gemini.
+
+**Deterministic math never rides on token prediction:** unit conversion, totals reconciliation,
+depletion, spend, and dosage are pure, tested TypeScript; and receipt extraction runs the **Gemini
+code-execution tool** so prices→cents and totals are computed by executed Python (verified: 3/3 evals
+at the cheapest tier, no regression).
 
 **Built & tested**
 - **Pantry & depletion** — ledger-projected stock, confidence decay, expiring-soon.

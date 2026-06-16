@@ -10,6 +10,13 @@
 
 export const DEFAULT_THRESHOLD = 0.8;
 
+/** Transient quota / rate-limit API errors (429 / RESOURCE_EXHAUSTED) — infrastructure, not a
+ * quality signal. The live suites skip (don't fail) on these so a quota blip ≠ a regression. */
+export function isRateLimitError(e: unknown): boolean {
+  const s = e instanceof Error ? e.message : String(e);
+  return /\b429\b|RESOURCE_EXHAUSTED|quota/i.test(s);
+}
+
 function norm(s: string): string {
   return s
     .toLowerCase()
