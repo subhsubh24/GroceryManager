@@ -52,6 +52,15 @@ const SECTIONS: Section[] = [
     tag: "Tonight",
   },
   {
+    key: "discover",
+    href: "/discover",
+    title: "Discover",
+    blurb: "Swipe through meal ideas picked for you — it learns your taste as you go.",
+    emoji: "🔥",
+    tone: "berry",
+    span: "lg:col-span-2",
+  },
+  {
     key: "cookbook",
     href: "/cookbook",
     title: "My Cookbook",

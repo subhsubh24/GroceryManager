@@ -69,6 +69,48 @@ export async function loadPreferenceSignals(db: Querier, userId: string) {
   }));
 }
 
+// ---- Discover: a swipeable "for you" feed whose swipes train the taste model (PLAN §10 growth) ----
+// Swipes ride the same preference ledger (no new table). Each swipe records a `recipe_seen` marker
+// (unprefixed topic → projectUserModel ignores it) so the card never resurfaces, and — when the
+// cuisine is known — a `cuisine:<x>` affinity signal (the exact topic projectUserModel reads). The
+// pure swipe→signal mapping lives in @gm/core/recipe (swipeToSignals); these just persist/read.
+
+const RECIPE_SEEN_TOPIC = "recipe_seen";
+
+/** Recipe ids the user has already swiped on (the `recipe_seen` markers' values) — feed nextDiscoveryBatch. */
+export async function loadSeenRecipeIds(db: Querier, userId: string): Promise<string[]> {
+  const rows = await db
+    .select({ value: preferenceSignals.value })
+    .from(preferenceSignals)
+    .where(and(eq(preferenceSignals.userId, userId), eq(preferenceSignals.topic, RECIPE_SEEN_TOPIC)));
+  return rows
+    .map((r) => r.value)
+    .filter((v): v is string => typeof v === "string" && v.length > 0);
+}
+
+/**
+ * Persist the signals from one swipe (from core's swipeToSignals) — a batch insert into the ledger,
+ * userId-scoped. Call inside `withTenant` so each INSERT satisfies the RLS WITH CHECK. No-op on an
+ * empty list. Mirrors appendPreferenceSignal's column mapping (value defaults to null).
+ */
+export async function recordSwipeSignals(
+  db: Querier,
+  userId: string,
+  signals: { topic: string; value: string | null; polarity: SignalPolarity; source: SignalSource; confidence: number }[],
+): Promise<void> {
+  if (signals.length === 0) return;
+  await db.insert(preferenceSignals).values(
+    signals.map((s) => ({
+      userId,
+      topic: s.topic,
+      value: s.value ?? null,
+      polarity: s.polarity,
+      source: s.source,
+      confidence: s.confidence,
+    })),
+  );
+}
+
 // ---- "My Cookbook": saved/favorited recipes (PLAN §10 growth) ----
 // Saved recipes ride the preference ledger (no new table). Each save appends a `saved_recipe`
 // signal whose `value` is the encodeSaved() JSON; unsave deletes the matching row. The read path

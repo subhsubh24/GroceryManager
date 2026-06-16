@@ -88,12 +88,20 @@ supplements.
   (no SSRF), 5s timeout, graceful null. Browser APIs typed w/o `any`/deps. Review: SSRF guard +
   session scoping verified — clean (agent also fixed a name-fallback bug). Gates: typecheck, 312 core
   tests, `next build` (`/barcode`).
+- **iter 8 — Discover swipe feed (DONE):** `/discover` — a swipeable "for you" feed; a like/skip
+  records a `recipe_seen` dedup marker + a `cuisine:<x>` affinity signal (positive/negative) that
+  `projectUserModel` folds into `cuisineAffinity` (the taste flywheel). Reuses the `/recipes`
+  candidate loader; **buttons + keyboard primary**, guarded pointer-drag enhancement;
+  `recordSwipeAction` session-scoped + best-effort. Pure core (`recipe/discover.ts`, +14 tests).
+  Review: signal→projection wiring verified — clean. Gates: typecheck, 325 core tests, `next build`
+  (`/discover`).
 
-## Next up (prioritized backlog — re-rank each iteration)
-> Selection rule under blind QA (no screen in this runner): prefer **data/AI/copy** wow over
-> **gesture-UI** wow. The "finish it all up" pass works down this list back-to-back.
-1. **Discover — swipeable "for you" feed** — trains the taste model; buttons + keyboard primary,
-   pointer-drag enhancement (robust without visual QA). *Final pick of the "finish it all up" pass.*
+## Next up
+**The keyless, blind-safe backlog is COMPLETE** (iters 1–8 shipped this session). Everything still
+open needs one of: *your API keys*, a *larger platform effort*, or a *human eye on the screen* — see
+Deferred below. To resume building, point me at a Deferred item (and drop in any required keys) and
+I'll pick it up from here. The hourly GitHub Actions loop (once on `main` + `ANTHROPIC_API_KEY` set)
+will otherwise keep this list curated and tackle anything that becomes buildable.
 
 ## Deferred (not buildable in this keyless/headless runner — need keys, scale, or a human eye)
 - **Instacart production API** (one-tap prefilled cart + Impact affiliate) — needs Instacart key.
