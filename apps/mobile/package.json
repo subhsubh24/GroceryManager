@@ -1,0 +1,9 @@
+{
+  "name": "@gm/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "description": "GroceryManager native app (Expo) — SKELETON. Not yet wired up; see README.md.",
+  "scripts": {
+    "start": "echo 'Native app is a skeleton — see apps/mobile/README.md to initialize Expo first.' && exit 1"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "GroceryManager",
+    "slug": "grocerymanager",
+    "scheme": "grocerymanager",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "plugins": ["expo-router"],
+    "experiments": { "typedRoutes": true }
+  }
+}

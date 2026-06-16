@@ -1,0 +1,5 @@
+# Expo / native build artifacts (created once the app is initialized — see README)
+.expo/
+dist/
+web-build/
+*.orig.*

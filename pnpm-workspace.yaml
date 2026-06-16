@@ -1,4 +1,5 @@
 packages:
   - "apps/*"
+  - "!apps/mobile" # native skeleton — excluded so it can't affect root install / CI (see apps/mobile/README)
   - "packages/*"
   - "services/*"
