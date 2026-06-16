@@ -4,6 +4,7 @@ import "./globals.css";
 import { RegisterSW } from "./register-sw";
 import { BottomNav } from "./components/bottom-nav";
 import { ThemeToggle } from "./components/theme-toggle";
+import { InstallPrompt } from "./components/install-prompt";
 
 // Runs before paint to set the theme class — prevents a flash of the wrong theme on load.
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();`;
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <BottomNav />
         <ThemeToggle />
+        <InstallPrompt />
       </body>
     </html>
   );

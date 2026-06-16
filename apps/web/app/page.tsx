@@ -1,17 +1,53 @@
 import { auth, signOut } from "@/auth";
-import { getDb, loadCookedAt, withTenant } from "@gm/db";
+import { getDb, getPantryView, loadCookedAt, loadPreferenceSignals, withTenant } from "@gm/db";
 import { currentStreak } from "@gm/core/recipe";
 import { currentUserId } from "@/app/lib/tenant";
+import { GettingStarted, type FirstRunState } from "@/app/components/getting-started";
 
-/** Current cooking streak for the signed-in header chip — never throws (defaults to 0). */
-async function loadStreak(): Promise<number> {
+// Topics onboarding writes that mean "the user told us their taste". profile:* (written at signup)
+// is excluded on purpose — counting it would mark step 1 done for every brand-new account.
+const TASTE_KINDS = ["diet:", "allergen:", "cuisine:", "ingredient:", "quality:"];
+const DISMISSED_TOPIC = "dismissed_getting_started";
+
+type FirstRun = FirstRunState & { dismissed: boolean };
+type HomeData = { streak: number; firstRun: FirstRun };
+
+const EMPTY_FIRST_RUN: FirstRun = {
+  tasteSet: false,
+  hasPantry: false,
+  hasCooked: false,
+  dismissed: false,
+};
+
+/**
+ * Signed-in home data: the cooking-streak chip + the first-run activation flags. Batches all three
+ * reads into a single `withTenant` transaction (one RLS round-trip) and derives both the streak and
+ * `hasCooked` from the same `cookedAt` load — no duplicate queries. Resilient: any DB/auth hiccup
+ * defaults to a zero streak and an all-false (so non-blocking) first-run state. Only call for a real
+ * session — the logged-out landing path stays query-free (see HomePage).
+ */
+async function loadHomeData(): Promise<HomeData> {
   try {
     const userId = await currentUserId();
-    if (!userId) return 0;
-    const cookedAt = await withTenant(getDb(), userId, (tx) => loadCookedAt(tx, userId));
-    return currentStreak(cookedAt, new Date());
+    if (!userId) return { streak: 0, firstRun: EMPTY_FIRST_RUN };
+
+    const { signals, pantry, cookedAt } = await withTenant(getDb(), userId, async (tx) => ({
+      signals: await loadPreferenceSignals(tx, userId),
+      pantry: await getPantryView(tx, userId),
+      cookedAt: await loadCookedAt(tx, userId),
+    }));
+
+    return {
+      streak: currentStreak(cookedAt, new Date()),
+      firstRun: {
+        tasteSet: signals.some((s) => TASTE_KINDS.some((k) => s.topic.startsWith(k))),
+        hasPantry: pantry.length > 0,
+        hasCooked: cookedAt.length > 0,
+        dismissed: signals.some((s) => s.topic === DISMISSED_TOPIC),
+      },
+    };
   } catch {
-    return 0;
+    return { streak: 0, firstRun: EMPTY_FIRST_RUN };
   }
 }
 
@@ -162,7 +198,7 @@ const SECTIONS: Section[] = [
   {
     key: "household",
     href: "/list",
-    title: "Household & care",
+    title: "Household & personal care",
     blurb: "Cleaning, skincare & toiletries on autopilot — reordered from Amazon when you're low.",
     emoji: "🧴",
     tone: "plain",
@@ -308,7 +344,14 @@ export default async function HomePage() {
   const session = await auth();
   const email = (session?.user as { email?: string } | undefined)?.email ?? null;
   // Only hit the DB for signed-in visitors; the logged-out landing path stays query-free.
-  const streak = session ? await loadStreak() : 0;
+  const { streak, firstRun } = session
+    ? await loadHomeData()
+    : { streak: 0, firstRun: null as FirstRun | null };
+  // Show the activation checklist only while there's setup left and the user hasn't dismissed it.
+  const showGettingStarted =
+    firstRun != null &&
+    !firstRun.dismissed &&
+    !(firstRun.tasteSet && firstRun.hasPantry && firstRun.hasCooked);
 
   return (
     <main className="relative overflow-hidden">
@@ -355,6 +398,9 @@ export default async function HomePage() {
           )}
         </div>
       </header>
+
+      {/* First-run activation checklist (signed-in, setup incomplete, not dismissed) */}
+      {showGettingStarted && firstRun && <GettingStarted state={firstRun} />}
 
       {/* Hero */}
       <section className="relative mx-auto max-w-6xl px-5 pb-12 pt-12 sm:px-8 sm:pt-20">
