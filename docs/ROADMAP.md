@@ -96,6 +96,13 @@ supplements.
   Review: signal→projection wiring verified — clean. Gates: typecheck, 325 core tests, `next build`
   (`/discover`).
 
+- **iter 9 — Larger platform efforts (scaffolds, flag-gated; /batch):** native Expo **skeleton** in
+  `apps/mobile` (DONE `a9c9e5c` — excluded from the pnpm workspace so it's zero-CI-impact; reuses
+  `@gm/core`); **premium/billing scaffold** (DONE `a0e84e9` — `@gm/core/billing` + `/upgrade`,
+  `FEATURE_BILLING` default-off + fail-open, no Stripe); **shared household** (IN PROGRESS — rebuilt on
+  the current base after the first worktree attempt was discarded for branching off 18-commits-stale
+  main; a stale auto-created billing PR #3 was closed and the work re-landed on the branch).
+
 ## Next up
 **The keyless, blind-safe backlog is COMPLETE** (iters 1–8 shipped this session). Everything still
 open needs one of: *your API keys*, a *larger platform effort*, or a *human eye on the screen* — see
@@ -107,8 +114,10 @@ will otherwise keep this list curated and tackle anything that becomes buildable
 - **Instacart production API** (one-tap prefilled cart + Impact affiliate) — needs Instacart key.
 - **Amazon Household/Personal-Care ordering** (Creators API + Add-to-Cart + Subscribe & Save +
   Associates affiliate) and the **order-history scraper** — need Amazon keys / are ToS-brittle.
-- **Realtime shared household pantry/list** — needs realtime infra + invites; larger, benefits from QA.
-- **Premium/billing surface** — needs Stripe keys. **Native (Expo) app** — separate platform effort.
+- **Shared household** — IN PROGRESS (shared shopping list, `FEATURE_HOUSEHOLDS` off by default).
+  True realtime (vs polling) and shared *pantry* still later.
+- **Premium/billing** — scaffold DONE behind `FEATURE_BILLING`; real payments need Stripe keys + webhook.
+- **Native (Expo) app** — skeleton DONE (`apps/mobile`); becomes real once Expo deps + a device/CI exist.
 - **ML depletion model / price forecasting** — need data + offline tuning. **Calendar awareness** — opt-in/3P.
 
 ## Conventions
