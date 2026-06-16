@@ -107,6 +107,13 @@ const SECTIONS: Section[] = [
     blurb: "Your recap: meals cooked, money saved vs takeout, top recipes — made to share.",
     emoji: "🎉",
   },
+  {
+    key: "upgrade",
+    href: "/upgrade",
+    title: "Go Premium",
+    blurb: "Unlock the smartest parts of your kitchen autopilot — meal planning, unlimited Discover, and recipe remix.",
+    emoji: "⭐",
+  },
 ];
 
 export default async function HomePage() {
