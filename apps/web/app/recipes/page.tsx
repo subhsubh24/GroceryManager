@@ -216,6 +216,9 @@ export default async function RecipesPage({
                 <a href={`/cook/${r.id}`} className="text-xs font-medium text-brand-700">
                   Cook mode →
                 </a>
+                <a href={`/remix/${r.id}`} className="text-xs font-medium text-grape-700">
+                  Remix ✨
+                </a>
                 {r.missing.length > 0 && (
                   <form action={addNamesToListAction}>
                     {r.missing.map((m) => (

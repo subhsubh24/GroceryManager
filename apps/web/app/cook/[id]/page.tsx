@@ -93,6 +93,9 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
               />
             </div>
             <p className="page-subtitle">Screen stays awake · tap through each step.</p>
+            <a href={`/remix/${id}`} className="mt-2 inline-block text-sm font-medium text-grape-700">
+              Remix this recipe ✨
+            </a>
           </div>
           <div className="mt-6">
             <CookMode

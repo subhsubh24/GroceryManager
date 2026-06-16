@@ -47,19 +47,27 @@ supplements.
   Tenant-scoped + parameterized unsave. *Commit:* see git log. *Known follow-on:* `RankedRecipe`
   doesn't carry `cuisine`, so the recipes-list Save omits the cuisine flywheel (cook page fires it).
 
+- **iter 2 — AI Recipe Remix (DONE):** one-tap transform any recipe — **healthier / cheaper / faster /
+  vegan** → ingredient swaps + note, at `/remix/[id]` (axis tabs, "add replacements to list" =
+  monetization). Keyless deterministic table floor + optional LLM enrichment (verify-then-escalate),
+  mirroring substitutions. RUN_EVALS-gated golden eval. *Code review caught + fixed* an over-strict
+  vegan verifier (it false-flagged legit plant swaps like "oat milk"/"coconut cream"/"flax egg",
+  silently discarding LLM vegan enrichment); now allows plant-source qualifiers while still blocking
+  "buttermilk"/"clarified butter"/bare dairy. Gates: typecheck, 270 core tests (+24 remix unit
+  tests), `next build` (`/remix/[id]`). Links added on recipe cards + cook page.
+
 ## Next up (prioritized backlog — re-rank each iteration)
 > Selection rule under blind QA (no screen in this runner): prefer **data/AI/copy** wow (verifiable
 > via tests/build) over **gesture-UI** wow until a visual pass is possible.
-1. **AI recipe remix** — "make it healthier / cheaper / faster / vegan" one-tap transform (LLM with a
-   deterministic keyless fallback table). *Blind-safe, wow, and naturally exercises the eval harness*
-   (new golden fixtures) — strong fit for the next iteration. Monetizes via "add the swap to cart".
-2. **Shareable cookbook + referrals** (viral growth; builds directly on iter 1 — a public share
-   token → "see my cookbook" → one-tap shop via Instacart). Needs a share-token + public route.
+1. **Shareable cookbook + referrals** (viral growth; builds directly on iter 1 — a public share
+   token → "see my cookbook" → one-tap shop via Instacart). Blind-safe (public read-only route +
+   share button). *Next pick.*
+2. **Cooking streak + weekly cook stats** on the home/digest dashboard (tasteful habit reinforcement
+   from `mealLogs`; blind-safe, sticky).
 3. **Discover — swipeable "for you" recipe feed** (daily-habit surface; every swipe trains the user
    model). *Highest stickiness + wow,* but UI-heavy (gestures) → schedule when visual QA is possible.
 4. **Shared household pantry/list** (multiplayer = top retention + viral inside a home). Larger.
-5. **Cooking streak + weekly cook stats** on the home dashboard (tasteful habit reinforcement).
-6. **Premium surface** (gate power features; affiliate + subscription monetization).
+5. **Premium surface** (gate power features; affiliate + subscription monetization).
 
 ## Conventions
 - Keyless-first (features degrade gracefully without API keys). Presentation/additive; never break
