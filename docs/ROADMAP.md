@@ -56,14 +56,23 @@ supplements.
   "buttermilk"/"clarified butter"/bare dairy. Gates: typecheck, 270 core tests (+24 remix unit
   tests), `next build` (`/remix/[id]`). Links added on recipe cards + cook page.
 
+- **iter 3 — Shareable Cookbook (DONE):** opt-in public share of a user's saved collection via an
+  unguessable token. Owner gets a "Share my cookbook" button (`/cookbook`) → `getOrCreateCookbookShareToken`
+  (tenant-scoped) → absolute URL; public route `/share/cookbook/[token]` (already public via the
+  `/share` middleware matcher) resolves token→userId with `getAdminDb()` (RLS-bypass, strictly
+  `eq(userId)`-scoped — same posture as the public recipe share), renders a read-only magazine grid
+  (title/image only, **no PII**), each card → public `/share/recipe/[id]` (shop via Instacart), + a
+  signup CTA. Token = `randomBytes(18)` base64url; validated by pure `isValidShareToken` before any DB
+  hit. *Code review:* security requirements verified (parameterized, scoped, no-PII, public-only links)
+  — clean, no fix needed. Gates: typecheck, 274 core tests (+4), `next build` (`/share/cookbook/[token]`).
+
 ## Next up (prioritized backlog — re-rank each iteration)
 > Selection rule under blind QA (no screen in this runner): prefer **data/AI/copy** wow (verifiable
 > via tests/build) over **gesture-UI** wow until a visual pass is possible.
-1. **Shareable cookbook + referrals** (viral growth; builds directly on iter 1 — a public share
-   token → "see my cookbook" → one-tap shop via Instacart). Blind-safe (public read-only route +
-   share button). *Next pick.*
-2. **Cooking streak + weekly cook stats** on the home/digest dashboard (tasteful habit reinforcement
-   from `mealLogs`; blind-safe, sticky).
+1. **Cooking streak + weekly cook stats** on the home/digest dashboard (tasteful habit reinforcement
+   from `mealLogs` — current streak, meals cooked this week; pure date-bucketing core + small UI).
+   Blind-safe, sticky. *Next pick.*
+2. **Referrals** (invite a friend → both get a perk; builds on the share surfaces; tracking + reward).
 3. **Discover — swipeable "for you" recipe feed** (daily-habit surface; every swipe trains the user
    model). *Highest stickiness + wow,* but UI-heavy (gestures) → schedule when visual QA is possible.
 4. **Shared household pantry/list** (multiplayer = top retention + viral inside a home). Larger.

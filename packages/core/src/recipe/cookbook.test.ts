@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decodeSaved, dedupeSaved, encodeSaved, type SavedRecipe } from "./cookbook.js";
+import { decodeSaved, dedupeSaved, encodeSaved, isValidShareToken, type SavedRecipe } from "./cookbook.js";
 
 describe("encodeSaved / decodeSaved", () => {
   it("round-trips all four fields", () => {
@@ -61,5 +61,34 @@ describe("dedupeSaved", () => {
 
   it("returns [] for no rows", () => {
     expect(dedupeSaved([])).toEqual([]);
+  });
+});
+
+describe("isValidShareToken", () => {
+  it("accepts url-safe base64url tokens of 16–64 chars", () => {
+    expect(isValidShareToken("abcdEFGH12345678")).toBe(true); // exactly 16
+    expect(isValidShareToken("a-_Zb9".padEnd(24, "x"))).toBe(true); // includes - and _
+    expect(isValidShareToken("k".repeat(64))).toBe(true); // exactly 64
+    // The real minting path: randomBytes(18).toString("base64url") → ~24 url-safe chars.
+    expect(isValidShareToken("Zm9vYmFyYmF6cXV4MTIzNDU2")).toBe(true);
+  });
+
+  it("rejects too-short or empty tokens", () => {
+    expect(isValidShareToken("")).toBe(false);
+    expect(isValidShareToken("short")).toBe(false);
+    expect(isValidShareToken("a".repeat(15))).toBe(false); // one under the floor
+  });
+
+  it("rejects tokens over 64 chars", () => {
+    expect(isValidShareToken("a".repeat(65))).toBe(false);
+  });
+
+  it("rejects path, whitespace, SQL, and percent chars", () => {
+    expect(isValidShareToken("abcdEFGH12345678/")).toBe(false); // slash (path)
+    expect(isValidShareToken("abcd EFGH 12345678")).toBe(false); // spaces
+    expect(isValidShareToken("abcdEFGH123456%20")).toBe(false); // percent-encoding
+    expect(isValidShareToken("' OR 1=1 --aaaaaaaa")).toBe(false); // SQL-ish
+    expect(isValidShareToken("abcdEFGH1234567+")).toBe(false); // non-url-safe base64 char
+    expect(isValidShareToken("abcdEFGH12345678\n")).toBe(false); // trailing newline
   });
 });

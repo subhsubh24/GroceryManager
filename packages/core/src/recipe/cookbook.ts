@@ -9,6 +9,17 @@
  */
 export type SavedRecipe = { id: string; title: string; imageUrl?: string; cuisine?: string };
 
+/**
+ * Shape check for a cookbook share token (the "/share/cookbook/[token]" segment): 16–64 chars of
+ * the url-safe base64url alphabet (`A–Z a–z 0–9 _ -`). Validated BEFORE any DB lookup so junk,
+ * empty, or injection-flavored input ("/", spaces, "%", quotes) is rejected up front — never a
+ * substitute for the parameterized `eq` lookup, just a cheap gate. Tokens are minted with ≥18
+ * random bytes (`randomBytes(18).toString("base64url")` ≈ 24 chars), so this range fits comfortably.
+ */
+export function isValidShareToken(token: string): boolean {
+  return /^[A-Za-z0-9_-]{16,64}$/.test(token);
+}
+
 /** Serialize the 4 fields to the canonical ledger `value` string. */
 export function encodeSaved(r: SavedRecipe): string {
   return JSON.stringify({ id: r.id, title: r.title, imageUrl: r.imageUrl, cuisine: r.cuisine });

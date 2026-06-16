@@ -2,6 +2,7 @@
  * Read-model query helpers for the UI (PLAN §5/§7). Kept in @gm/db so the web app stays
  * thin (no direct Drizzle import). Per-user; userId optional until Auth is wired.
  */
+import { randomBytes } from "node:crypto";
 import { and, desc, eq, gte, isNull, like } from "drizzle-orm";
 import type { Querier } from "./client.js";
 import {
@@ -153,6 +154,56 @@ export async function isRecipeSaved(db: Querier, userId: string, recipeId: strin
     )
     .limit(1);
   return rows.length > 0;
+}
+
+// ---- Shareable Cookbook: a public, unguessable link to a user's saved recipes (PLAN §10 growth) ----
+// The share token also rides the preference ledger (no new table): one `cookbook_share_token` signal
+// per user, whose `value` is the token. polarity "neutral"/source "rating" keep it a valid ledger row;
+// the unprefixed topic means projectUserModel ignores it. The token is minted with node:crypto and is
+// long enough to be unguessable; the public page resolves token → the single owning userId, then reads
+// ONLY that user's saved recipes via the admin connection (RLS-bypass, but tightly userId-scoped).
+
+const COOKBOOK_TOKEN_TOPIC = "cookbook_share_token";
+
+/**
+ * The user's stable cookbook share token, creating one on first use. Idempotent: returns the existing
+ * token if a `cookbook_share_token` signal already exists, else mints `randomBytes(18).toString("base64url")`
+ * (~24 url-safe chars — comfortably unguessable, no padding) and appends it. Tenant-scoped — call inside
+ * `withTenant`, so the INSERT satisfies the RLS WITH CHECK (`user_id = app_current_user_id()`).
+ */
+export async function getOrCreateCookbookShareToken(db: Querier, userId: string): Promise<string> {
+  const existing = await db
+    .select({ value: preferenceSignals.value })
+    .from(preferenceSignals)
+    .where(and(eq(preferenceSignals.userId, userId), eq(preferenceSignals.topic, COOKBOOK_TOKEN_TOPIC)))
+    .limit(1);
+  const current = existing[0]?.value;
+  if (typeof current === "string" && current.length > 0) return current;
+
+  const token = randomBytes(18).toString("base64url");
+  await db.insert(preferenceSignals).values({
+    userId,
+    topic: COOKBOOK_TOKEN_TOPIC,
+    value: token,
+    polarity: "neutral",
+    source: "rating",
+    confidence: 1,
+  });
+  return token;
+}
+
+/**
+ * Resolve a cookbook share token → the single owning userId (or null). Parameterized `eq` on the token
+ * value (never string-concatenated). Used by the PUBLIC share page with the admin connection; the
+ * returned userId is the ONLY user input that reaches the subsequent (also `eq`-scoped) saved-recipe read.
+ */
+export async function getUserIdByCookbookToken(db: Querier, token: string): Promise<string | null> {
+  const rows = await db
+    .select({ userId: preferenceSignals.userId })
+    .from(preferenceSignals)
+    .where(and(eq(preferenceSignals.topic, COOKBOOK_TOKEN_TOPIC), eq(preferenceSignals.value, token)))
+    .limit(1);
+  return rows[0]?.userId ?? null;
 }
 
 /** Upsert the projected UserModel (cleanly-mappable fields). */

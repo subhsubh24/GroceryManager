@@ -3,6 +3,7 @@ import { dedupeSaved, type SavedRecipe } from "@gm/core/recipe";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
 import { SaveButton } from "./save-button";
+import { ShareCookbookButton } from "./share-cookbook-button";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,10 @@ export default async function CookbookPage() {
             Find recipes →
           </a>
         }
-      />
+      >
+        {/* Public, read-only share link to this collection — the growth surface (PLAN §10). */}
+        <ShareCookbookButton />
+      </PageHeader>
 
       {error && (
         <p className="notice-warn mt-6">
