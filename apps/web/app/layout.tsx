@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Fraunces } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { RegisterSW } from "./register-sw";
 import { BottomNav } from "./components/bottom-nav";
@@ -9,21 +9,13 @@ import { InstallPrompt } from "./components/install-prompt";
 // Runs before paint to set the theme class — prevents a flash of the wrong theme on load.
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();`;
 
-// Body: Inter — clean, modern, highly legible at small sizes.
+// One typeface for the whole app: Inter — clean, modern, highly legible at every size. It backs both
+// the body (`--font-sans`) and display headings (`--font-display`); hierarchy comes from weight, size,
+// and tracking, not a second family. No serif anywhere.
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-sans",
-});
-
-// Display: Fraunces — a warm, characterful serif for big headings (food-forward, premium).
-// Variable font: omit `weight` (so the full weight axis is available) and opt into the soft + optical
-// size axes for a gentler, display-tuned letterform.
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  display: "swap",
-  axes: ["SOFT", "opsz"],
-  variable: "--font-display",
 });
 
 export const metadata: Metadata = {
@@ -46,7 +38,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${fraunces.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={inter.variable}
+      style={{ "--font-display": "var(--font-sans)" } as React.CSSProperties}
+      suppressHydrationWarning
+    >
       <body>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <RegisterSW />

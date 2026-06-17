@@ -83,7 +83,7 @@ export function ChatPanel() {
             <div
               className={
                 m.role === "user"
-                  ? "max-w-[85%] whitespace-pre-wrap rounded-2xl bg-grape-gradient px-3.5 py-2 text-sm text-white shadow-grape"
+                  ? "max-w-[85%] whitespace-pre-wrap rounded-2xl bg-brand-solid px-3.5 py-2 text-sm text-white shadow-sm"
                   : "max-w-[85%] whitespace-pre-wrap rounded-2xl border border-line bg-cream/60 px-3.5 py-2 text-sm text-ink-800"
               }
             >

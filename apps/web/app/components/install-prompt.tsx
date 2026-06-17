@@ -112,9 +112,7 @@ export function InstallPrompt() {
   return (
     <div className="fixed inset-x-0 bottom-36 z-50 px-4 md:inset-x-auto md:bottom-20 md:right-4 md:px-0">
       <div className="mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-line bg-surface/95 px-4 py-3 shadow-lift backdrop-blur-xl md:mx-0 md:ml-auto">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-gradient text-lg shadow-brand">
-          🧺
-        </span>
+        <span className="tile h-9 w-9 shrink-0 text-lg">🧺</span>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold text-ink-900">Install GroceryManager</div>
           <div className="truncate text-xs text-ink-500">

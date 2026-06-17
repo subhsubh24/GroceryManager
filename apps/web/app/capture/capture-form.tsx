@@ -159,7 +159,7 @@ export function CaptureForm({ action }: { action: (formData: FormData) => void }
 
       {listening && (
         <p className="field-hint flex items-center gap-1.5 text-brand-600">
-          <span className="h-2 w-2 rounded-full bg-brand-500 animate-pulse-ring" aria-hidden />
+          <span className="h-2 w-2 rounded-full bg-brand-500 animate-pulse" aria-hidden />
           Listening…
         </p>
       )}

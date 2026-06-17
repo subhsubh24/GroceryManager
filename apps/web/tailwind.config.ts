@@ -1,11 +1,12 @@
 import type { Config } from "tailwindcss";
 
 /**
- * GroceryManager design system — warm, food-forward, and unapologetically alive.
- * Polish bar: Linear / Stripe / Things / Cal.com, but warmer and bolder — built to feel
- * fresh and delightful to a Gen-Z / millennial audience. Brand is a confident garden green;
- * a curated set of fruit-bright accents (citrus, berry, grape, ocean) powers vivid duotone
- * gradients, aurora glows, and a "Wrapped"-style energy across the app.
+ * GroceryManager design system — calm, refined, and quietly confident.
+ * Polish bar: Airbnb / Linear / Stripe — one typeface (Inter), generous whitespace, a restrained
+ * neutral palette, and a SINGLE accent (a garden-fresh green) used sparingly and mostly solid.
+ * The citrus / berry / grape / ocean ramps remain defined for back-compat, but the app no longer
+ * renders them as themes or spotlights — the "gradient" tokens below resolve to the solid brand so
+ * legacy usages stay calm. Motion is quiet: a subtle fade and a gentle card-hover shadow only.
  */
 export default {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
@@ -26,8 +27,12 @@ export default {
           700: "rgb(var(--brand-700) / <alpha-value>)",
           800: "rgb(var(--brand-800) / <alpha-value>)",
           900: "rgb(var(--brand-900) / <alpha-value>)",
+          // Solid accent SURFACE (white text on it) — fixed deep green that holds contrast in both
+          // themes; use for primary buttons / brand panels / active tabs, not for text/links.
+          solid: "rgb(var(--brand-solid) / <alpha-value>)",
+          "solid-hover": "rgb(var(--brand-solid-hover) / <alpha-value>)",
         },
-        // Citrus — a zesty lime/chartreuse that pairs with brand for fresh, energetic duotones.
+        // Citrus — kept defined for back-compat only. No longer rendered as a theme/spotlight.
         citrus: {
           50: "#f7fee7",
           100: "#ecfccb",
@@ -40,7 +45,7 @@ export default {
           800: "#3f6212",
           900: "#365314",
         },
-        // Berry — a punchy raspberry/coral for "use it up", waste, and playful Wrapped moments.
+        // Berry — kept defined for back-compat only. No longer rendered as a theme/spotlight.
         berry: {
           50: "#fff1f4",
           100: "#ffe4ea",
@@ -53,7 +58,7 @@ export default {
           800: "#9f1239",
           900: "#881337",
         },
-        // Grape — a friendly violet for cool, "smart"/AI-flavored surfaces (plan, scan).
+        // Grape — kept defined for back-compat only. No longer rendered as a theme/spotlight.
         grape: {
           50: "#f5f3ff",
           100: "#ede9fe",
@@ -66,7 +71,7 @@ export default {
           800: "#5b21b6",
           900: "#4c1d95",
         },
-        // Ocean — a clean cyan/teal for spend, household, and calm informational cards.
+        // Ocean — kept defined for back-compat only. No longer rendered as a theme/spotlight.
         ocean: {
           50: "#ecfeff",
           100: "#cffafe",
@@ -124,8 +129,10 @@ export default {
         "5xl": "2.5rem",
       },
       fontFamily: {
+        // One typeface for the whole app: Inter. `display` resolves to the same Inter stack as `sans`
+        // (no serif) — headings differ from body by weight, tracking, and size, not by family.
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
-        display: ["var(--font-display)", "var(--font-sans)", "ui-serif", "Georgia", "serif"],
+        display: ["var(--font-sans)", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
       },
       fontSize: {
         // A tighter, more confident display rhythm for big, expressive headings.
@@ -135,89 +142,57 @@ export default {
         "display-xl": ["4.5rem", { lineHeight: "0.98", letterSpacing: "-0.035em" }],
       },
       boxShadow: {
-        // Soft, layered, low-contrast shadows — the premium "floating on cream" feel.
-        xs: "0 1px 2px rgba(29, 37, 48, 0.05)",
-        sm: "0 1px 2px rgba(29, 37, 48, 0.04), 0 1px 3px rgba(29, 37, 48, 0.06)",
-        card: "0 1px 2px rgba(29, 37, 48, 0.04), 0 4px 16px -6px rgba(29, 37, 48, 0.10)",
-        lift: "0 2px 4px rgba(29, 37, 48, 0.05), 0 14px 32px -12px rgba(29, 37, 48, 0.18)",
-        "lift-lg": "0 4px 8px rgba(29, 37, 48, 0.06), 0 28px 60px -18px rgba(29, 37, 48, 0.28)",
-        brand: "0 6px 18px -6px rgba(19, 161, 74, 0.45)",
-        "brand-lift": "0 10px 28px -8px rgba(19, 161, 74, 0.50)",
-        // Tinted glows for the colorful accent surfaces (bento spotlights).
-        citrus: "0 10px 28px -8px rgba(132, 204, 22, 0.45)",
-        berry: "0 10px 28px -8px rgba(244, 63, 110, 0.45)",
-        grape: "0 10px 28px -8px rgba(124, 58, 237, 0.45)",
-        ocean: "0 10px 28px -8px rgba(8, 145, 178, 0.45)",
+        // Soft, gentle, low-opacity shadows — quiet depth, never a glow. One restrained scale.
+        xs: "0 1px 2px rgba(29, 37, 48, 0.04)",
+        sm: "0 1px 2px rgba(29, 37, 48, 0.04), 0 1px 3px rgba(29, 37, 48, 0.05)",
+        card: "0 1px 2px rgba(29, 37, 48, 0.03), 0 2px 8px -4px rgba(29, 37, 48, 0.07)",
+        lift: "0 2px 4px rgba(29, 37, 48, 0.04), 0 8px 20px -10px rgba(29, 37, 48, 0.12)",
+        "lift-lg": "0 4px 8px rgba(29, 37, 48, 0.05), 0 16px 36px -16px rgba(29, 37, 48, 0.16)",
+        // Brand + legacy accent glows are intentionally neutral now: the accent is solid, not glowy,
+        // so these all map to the same quiet shadow (keeps any leftover usages calm).
+        brand: "0 1px 2px rgba(29, 37, 48, 0.04), 0 2px 8px -4px rgba(29, 37, 48, 0.07)",
+        "brand-lift": "0 2px 4px rgba(29, 37, 48, 0.04), 0 8px 20px -10px rgba(29, 37, 48, 0.12)",
+        citrus: "0 1px 2px rgba(29, 37, 48, 0.04), 0 2px 8px -4px rgba(29, 37, 48, 0.07)",
+        berry: "0 1px 2px rgba(29, 37, 48, 0.04), 0 2px 8px -4px rgba(29, 37, 48, 0.07)",
+        grape: "0 1px 2px rgba(29, 37, 48, 0.04), 0 2px 8px -4px rgba(29, 37, 48, 0.07)",
+        ocean: "0 1px 2px rgba(29, 37, 48, 0.04), 0 2px 8px -4px rgba(29, 37, 48, 0.07)",
       },
       backgroundImage: {
-        "brand-gradient": "linear-gradient(135deg, #16ad51 0%, #0c8a3e 55%, #0a6e33 100%)",
-        "brand-sheen": "linear-gradient(135deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0) 60%)",
-        "ink-gradient": "linear-gradient(135deg, #2b333d 0%, #141a22 100%)",
-        // Bright duotone accents — used for emoji tiles + soft glows (no text over them).
-        "citrus-gradient": "linear-gradient(135deg, #bef264 0%, #16ad51 100%)",
-        "sunset-gradient": "linear-gradient(135deg, #fb7185 0%, #f59e0b 60%, #84cc16 120%)",
-        // Deeper duotones — full-bleed "spotlight" cards where white text must stay legible.
-        "berry-gradient": "linear-gradient(135deg, #f43f6e 0%, #9f1239 100%)",
-        "grape-gradient": "linear-gradient(135deg, #8b5cf6 0%, #5b21b6 100%)",
-        "ocean-gradient": "linear-gradient(135deg, #0891b2 0%, #155e75 100%)",
-        // A wide, multi-stop brand gradient for the animated headline text.
-        "text-brand":
-          "linear-gradient(100deg, #0a6e33 0%, #13a14a 22%, #84cc16 45%, #13a14a 68%, #0a6e33 100%)",
-        // Aurora mesh — layered radial glows for the hero backdrop.
-        "aurora":
-          "radial-gradient(40% 60% at 12% 18%, rgba(19,161,74,0.30), transparent 60%), radial-gradient(45% 55% at 88% 12%, rgba(132,204,22,0.28), transparent 60%), radial-gradient(50% 60% at 70% 88%, rgba(34,211,238,0.20), transparent 60%), radial-gradient(40% 50% at 20% 90%, rgba(244,113,147,0.16), transparent 60%)",
+        // The single accent is SOLID brand green. To keep legacy `bg-*-gradient` usages calm and
+        // on-brand without touching every page, all the old "gradient" tokens resolve to the same
+        // flat `brand-solid` fill — a fixed deep green that holds white-text contrast in BOTH
+        // themes (a single-stop linear-gradient is just a solid color). No rainbow renders anywhere.
+        "brand-gradient": "linear-gradient(rgb(var(--brand-solid)), rgb(var(--brand-solid)))",
+        "brand-sheen": "none",
+        "ink-gradient": "linear-gradient(rgb(var(--ink-900)), rgb(var(--ink-900)))",
+        "citrus-gradient": "linear-gradient(rgb(var(--brand-solid)), rgb(var(--brand-solid)))",
+        "sunset-gradient": "linear-gradient(rgb(var(--brand-solid)), rgb(var(--brand-solid)))",
+        "berry-gradient": "linear-gradient(rgb(var(--brand-solid)), rgb(var(--brand-solid)))",
+        "grape-gradient": "linear-gradient(rgb(var(--brand-solid)), rgb(var(--brand-solid)))",
+        "ocean-gradient": "linear-gradient(rgb(var(--brand-solid)), rgb(var(--brand-solid)))",
+        // No animated gradient text and no aurora — neutralized to nothing.
+        "text-brand": "none",
+        "aurora": "none",
       },
       keyframes: {
+        // Quiet entrances only — a short, subtle fade (with a tiny rise) on first paint.
         "fade-in-up": {
-          "0%": { opacity: "0", transform: "translateY(12px)" },
+          "0%": { opacity: "0", transform: "translateY(6px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         "fade-in": {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
-        float: {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-6px)" },
-        },
-        // Slow drift + scale for the aurora blobs behind the hero.
-        aurora: {
-          "0%, 100%": { transform: "translate3d(0, 0, 0) scale(1)", opacity: "0.9" },
-          "33%": { transform: "translate3d(2%, -2.5%, 0) scale(1.08)", opacity: "1" },
-          "66%": { transform: "translate3d(-2%, 2%, 0) scale(0.96)", opacity: "0.85" },
-        },
-        // Pan a wide background gradient (animated headline / borders).
-        "gradient-pan": {
-          "0%": { backgroundPosition: "0% 50%" },
-          "100%": { backgroundPosition: "200% 50%" },
-        },
-        // Light sweep across buttons / cards.
-        shimmer: {
-          "0%": { transform: "translateX(-120%)" },
-          "60%, 100%": { transform: "translateX(220%)" },
-        },
-        pop: {
-          "0%": { opacity: "0", transform: "scale(0.94)" },
-          "100%": { opacity: "1", transform: "scale(1)" },
-        },
-        // Gentle pulse for "live"/status dots.
-        "pulse-ring": {
-          "0%": { boxShadow: "0 0 0 0 rgba(19,161,74,0.45)" },
-          "70%, 100%": { boxShadow: "0 0 0 8px rgba(19,161,74,0)" },
-        },
       },
       animation: {
-        "fade-in-up": "fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both",
-        "fade-in": "fade-in 0.5s ease-out both",
-        float: "float 6s ease-in-out infinite",
-        aurora: "aurora 20s ease-in-out infinite",
-        "gradient-pan": "gradient-pan 6s linear infinite",
-        shimmer: "shimmer 3s ease-in-out infinite",
-        pop: "pop 0.45s cubic-bezier(0.16, 1, 0.3, 1) both",
-        "pulse-ring": "pulse-ring 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite",
+        // Fast, gentle, ease-out. No infinite/decorative loops anywhere.
+        "fade-in-up": "fade-in-up 0.2s ease-out both",
+        "fade-in": "fade-in 0.18s ease-out both",
       },
       transitionTimingFunction: {
-        spring: "cubic-bezier(0.16, 1, 0.3, 1)",
+        // Calm, near-linear ease-out. (Name kept as `spring` for back-compat; no bounce.)
+        spring: "cubic-bezier(0.22, 1, 0.36, 1)",
       },
     },
   },

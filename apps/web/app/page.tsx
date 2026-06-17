@@ -267,83 +267,23 @@ const HERO_PREVIEW: { emoji: string; title: string; meta: string }[] = [
   { emoji: "♻️", title: "Use it up", meta: "2 items expiring soon" },
 ];
 
-const SPOT_CLASS: Record<Exclude<Tone, "plain" | "festive">, string> = {
-  brand: "spot-brand",
-  berry: "spot-berry",
-  grape: "spot-grape",
-  ocean: "spot-ocean",
-};
-
+// ONE uniform calm card for every section, regardless of `tone` (tones are retained in the data but
+// no longer drive any color). Neutral tile, clean Inter title, a quiet accent arrow on hover.
 function FeatureCard({ s, index }: { s: Section; index: number }) {
-  const style = { animationDelay: `${Math.min(index * 55, 600)}ms` };
-
-  // Vivid full-bleed spotlight card (white text).
-  if (s.tone !== "plain" && s.tone !== "festive") {
-    const big = s.span === "lg:col-span-3";
-    return (
-      <a
-        href={s.href}
-        style={style}
-        className={`group bento-spot ${SPOT_CLASS[s.tone]} ${s.span} animate-fade-in-up`}
-      >
-        <div className="flex items-start justify-between">
-          <div className="tile-on-color">{s.emoji}</div>
-          {s.tag ? (
-            <span className="rounded-full bg-white/20 px-2.5 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/25">
-              {s.tag}
-            </span>
-          ) : (
-            <span className="translate-x-1 text-white/0 transition duration-300 ease-spring group-hover:translate-x-0 group-hover:text-white">
-              →
-            </span>
-          )}
-        </div>
-        <h3 className={`mt-5 font-display font-semibold tracking-tight ${big ? "text-2xl" : "text-xl"}`}>
-          {s.title}
-        </h3>
-        <p className={`mt-2 leading-relaxed text-white/85 ${big ? "text-[0.95rem] max-w-md" : "text-sm"}`}>
-          {s.blurb}
-        </p>
-        <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-white/90 transition group-hover:gap-2">
-          Open <span aria-hidden>→</span>
-        </span>
-      </a>
-    );
-  }
-
-  // Festive (Wrapped): light card with a colorful tile + soft glow.
-  if (s.tone === "festive") {
-    return (
-      <a href={s.href} style={style} className={`group bento-card ${s.span} animate-fade-in-up`}>
-        <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-sunset-gradient opacity-25 blur-2xl transition duration-500 group-hover:opacity-40" />
-        <div className="flex items-start justify-between">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-sunset-gradient text-xl text-white shadow-sm transition duration-300 ease-spring group-hover:-rotate-3 group-hover:scale-105">
-            {s.emoji}
-          </div>
-          <span className="translate-x-1 text-ink-200 opacity-0 transition duration-300 ease-spring group-hover:translate-x-0 group-hover:text-berry-500 group-hover:opacity-100">
-            →
-          </span>
-        </div>
-        <h3 className="mt-4 text-base font-semibold text-ink-900 transition-colors group-hover:text-berry-600">
-          {s.title}
-        </h3>
-        <p className="mt-1.5 text-sm leading-relaxed text-ink-500">{s.blurb}</p>
-      </a>
-    );
-  }
-
-  // Plain bento card.
+  const style = { animationDelay: `${Math.min(index * 24, 280)}ms` };
   return (
     <a href={s.href} style={style} className={`group bento-card ${s.span} animate-fade-in-up`}>
       <div className="flex items-start justify-between">
         <div className="tile">{s.emoji}</div>
-        <span className="translate-x-1 text-ink-200 opacity-0 transition duration-300 ease-spring group-hover:translate-x-0 group-hover:text-brand-500 group-hover:opacity-100">
-          →
-        </span>
+        {s.tag ? (
+          <span className="pill-muted">{s.tag}</span>
+        ) : (
+          <span className="text-ink-300 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+            →
+          </span>
+        )}
       </div>
-      <h3 className="mt-4 text-base font-semibold text-ink-900 transition-colors group-hover:text-brand-700">
-        {s.title}
-      </h3>
+      <h3 className="mt-4 text-base font-semibold tracking-[-0.01em] text-ink-900">{s.title}</h3>
       <p className="mt-1.5 text-sm leading-relaxed text-ink-500">{s.blurb}</p>
     </a>
   );
@@ -367,11 +307,9 @@ export default async function HomePage() {
       {/* Sticky frosted nav */}
       <header className="glass-nav sticky top-0 z-40">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 sm:px-8">
-          <a href="/" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-gradient text-lg shadow-brand">
-              🧺
-            </span>
-            <span className="text-base font-semibold tracking-tight text-ink-900">GroceryManager</span>
+          <a href="/" className="flex items-center gap-2.5">
+            <span className="tile h-9 w-9 text-lg">🧺</span>
+            <span className="text-base font-semibold tracking-[-0.01em] text-ink-900">GroceryManager</span>
           </a>
           {session ? (
             <div className="flex items-center gap-2 sm:gap-3">
@@ -414,15 +352,13 @@ export default async function HomePage() {
       {/* Signed-in users land on the APP — a lean home header + quick actions. The marketing hero,
           pitch, and autopilot band below render for LOGGED-OUT visitors only (no more pitch-on-app). */}
       {session && (
-        <section className="mx-auto max-w-6xl px-5 pt-8 sm:px-8 sm:pt-10">
-          <p className="eyebrow">
-            <span className="dot-live" /> Your kitchen
-          </p>
+        <section className="mx-auto max-w-6xl px-5 pt-10 sm:px-8 sm:pt-12">
+          <p className="eyebrow">Your kitchen</p>
           <h1 className="page-title mt-3">Welcome back</h1>
           <p className="page-subtitle">
             Jump back in — plan your week, cook what you have, or ask your kitchen anything.
           </p>
-          <div className="mt-5 flex flex-wrap items-center gap-3">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             <a href="/plan" className="btn-primary px-5 py-3 text-base">
               Plan my week →
             </a>
@@ -438,87 +374,59 @@ export default async function HomePage() {
 
       {!session && (
         <>
-      {/* Hero */}
-      <section className="relative mx-auto max-w-6xl px-5 pb-12 pt-12 sm:px-8 sm:pt-20">
-        {/* Living aurora backdrop */}
-        <div className="aurora-stage">
-          <div className="aurora-blob -left-16 -top-12 h-72 w-72 bg-brand-400/45" />
-          <div className="aurora-blob -right-12 top-8 h-80 w-80 bg-citrus-300/45 [animation-delay:-6s]" />
-          <div className="aurora-blob left-1/3 top-64 h-72 w-72 bg-ocean-300/35 [animation-delay:-12s]" />
-          <div className="aurora-blob right-1/4 top-72 h-64 w-64 bg-berry-300/30 [animation-delay:-9s]" />
-        </div>
-
-        <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+      {/* Hero — clean, spacious, type-driven. One headline, concise subtext, two CTAs. */}
+      <section className="mx-auto max-w-6xl px-5 pb-14 pt-16 sm:px-8 sm:pt-24">
+        <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="animate-fade-in-up">
-            <p className="eyebrow">
-              <span className="dot-live" />
-              Your grocery + cooking autopilot
-            </p>
-            <h1 className="mt-5 font-display text-[2.7rem] font-semibold leading-[1.02] tracking-tight text-ink-900 sm:text-display lg:text-display-lg">
-              Never stress about{" "}
-              <span className="text-gradient-brand">groceries or cooking</span> again.
+            <p className="eyebrow">Your grocery + cooking autopilot</p>
+            <h1 className="mt-5 text-[2.6rem] font-semibold leading-[1.05] tracking-[-0.02em] text-ink-900 sm:text-5xl lg:text-6xl">
+              Never stress about groceries or cooking again.
             </h1>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-500">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-500">
               It learns what you have, predicts what you&apos;re about to run out of, drafts the
               order, and serves up meals you can cook right now — groceries and household
               essentials, all on autopilot.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <a
-                href={session ? "/plan" : "/signup"}
-                className="btn-primary shine relative overflow-hidden px-5 py-3 text-base"
-              >
-                {session ? "Plan my week" : "Get started — it's free"}
+              <a href="/signup" className="btn-primary px-5 py-3 text-base">
+                Get started — it&apos;s free
               </a>
-              <a href="/recipes" className="btn-ghost px-5 py-3 text-base">
+              <a href="/recipes" className="btn-secondary px-5 py-3 text-base">
                 Cook something tonight
               </a>
             </div>
-            <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-400">
+            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-400">
               <span className="inline-flex items-center gap-1.5">
-                <span className="text-brand-500">✓</span> Fills from your receipts
+                <span className="text-brand-600">✓</span> Fills from your receipts
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="text-brand-500">✓</span> No bank link needed
+                <span className="text-brand-600">✓</span> No bank link needed
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="text-brand-500">✓</span> Works offline
+                <span className="text-brand-600">✓</span> Works offline
               </span>
             </div>
           </div>
 
-          {/* Hero visual: a tasteful "today" card floating on a soft gradient, with sticker accents. */}
-          <div className="relative animate-fade-in [animation-delay:140ms]">
-            <div className="absolute -inset-6 -z-10 rounded-[2.75rem] bg-brand-gradient opacity-20 blur-2xl" />
-            {/* Floating sticker accents */}
-            <div className="absolute -left-5 top-10 hidden animate-float rounded-2xl bg-surface px-3 py-2 text-2xl shadow-lift sm:block [animation-delay:-2s]">
-              🥑
-            </div>
-            <div className="absolute -right-4 bottom-16 hidden animate-float rounded-2xl bg-surface px-3 py-2 text-2xl shadow-lift sm:block [animation-delay:-4s]">
-              🍅
-            </div>
-            <div className="card-pad rounded-3xl shadow-lift-lg">
+          {/* Hero visual: one calm "today" card — no glow, stickers, or shimmer. */}
+          <div className="animate-fade-in [animation-delay:120ms]">
+            <div className="card-pad">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-600">
-                    This week, handled
-                  </div>
-                  <div className="mt-1 font-display text-xl font-semibold text-ink-900">
+                  <div className="eyebrow">This week, handled</div>
+                  <div className="mt-1 text-lg font-semibold tracking-[-0.01em] text-ink-900">
                     Your kitchen, on autopilot
                   </div>
                 </div>
-                <span className="pill-brand inline-flex items-center gap-1.5">
-                  <span className="dot-live" /> Live
-                </span>
+                <span className="pill-brand">Live</span>
               </div>
               <div className="mt-5 space-y-2.5">
-                {HERO_PREVIEW.map((p, i) => (
+                {HERO_PREVIEW.map((p) => (
                   <div
                     key={p.title}
-                    style={{ animationDelay: `${260 + i * 90}ms` }}
-                    className="flex animate-fade-in-up items-center gap-3 rounded-2xl border border-line bg-cream/60 px-3.5 py-3"
+                    className="flex items-center gap-3 rounded-xl border border-line bg-cream px-3.5 py-3"
                   >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface text-lg shadow-xs">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink-50 text-lg ring-1 ring-inset ring-line">
                       {p.emoji}
                     </span>
                     <div className="min-w-0">
@@ -528,24 +436,24 @@ export default async function HomePage() {
                   </div>
                 ))}
               </div>
-              <div className="shine relative mt-5 flex items-center justify-between overflow-hidden rounded-2xl bg-brand-gradient px-4 py-3 text-white shadow-brand">
+              <div className="mt-5 flex items-center justify-between rounded-xl bg-brand-solid px-4 py-3 text-white">
                 <span className="text-sm font-semibold">Ready to order — 6 items</span>
-                <span className="text-lg">→</span>
+                <span aria-hidden className="text-lg">→</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Weekly autopilot CTA band */}
+      {/* Weekly autopilot — one calm solid-brand panel. */}
       <section className="mx-auto max-w-6xl px-5 sm:px-8">
-        <div className="panel-brand shine sm:p-8">
+        <div className="panel-brand sm:p-8">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-xl">
-              <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-white/80">
-                <span className="dot-live bg-white" /> Weekly autopilot
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
+                Weekly autopilot
               </p>
-              <h2 className="mt-2 font-display text-2xl font-semibold">This week, handled.</h2>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.01em]">This week, handled.</h2>
               <p className="mt-2 text-[0.95rem] leading-relaxed text-white/90">
                 Your plan and shopping list are drafted from what you have and what&apos;s running
                 low — across groceries and household essentials. Review, then order in a tap.
@@ -553,7 +461,7 @@ export default async function HomePage() {
             </div>
             <a
               href="/plan"
-              className="btn inline-flex shrink-0 bg-white px-5 py-3 text-base text-[#0a6e33] shadow-lift hover:bg-white/95"
+              className="btn inline-flex shrink-0 bg-white px-5 py-3 text-base text-brand-solid hover:bg-white/90"
             >
               Plan my week →
             </a>
@@ -563,13 +471,13 @@ export default async function HomePage() {
         </>
       )}
 
-      {/* Feature bento — a launcher for signed-in users, a feature showcase for logged-out. */}
-      <section className="mx-auto max-w-6xl px-5 pb-8 pt-14 sm:px-8 sm:pt-20">
-        <div className="mb-8 text-center">
+      {/* Feature grid — a launcher for signed-in users, a feature showcase for logged-out. */}
+      <section className="mx-auto max-w-6xl px-5 pb-8 pt-16 sm:px-8 sm:pt-24">
+        <div className="mb-10 text-center">
           <p className="eyebrow justify-center">
             {session ? "Everything in your kitchen" : "Everything in one place"}
           </p>
-          <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink-900 sm:text-4xl">
+          <h2 className="mt-3 text-3xl font-semibold tracking-[-0.02em] text-ink-900 sm:text-4xl">
             {session ? "Jump into any part of the app" : "One app for the whole kitchen"}
           </h2>
           <p className="page-subtitle mx-auto text-center">
@@ -588,9 +496,7 @@ export default async function HomePage() {
 
       <footer className="mx-auto max-w-6xl px-5 pb-14 pt-6 sm:px-8">
         <div className="flex flex-col items-center gap-2 border-t border-line pt-8 text-center">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-lg ring-1 ring-inset ring-brand-100">
-            🧺
-          </span>
+          <span className="tile h-9 w-9 text-lg">🧺</span>
           <p className="text-sm text-ink-400">
             Your grocery + cooking autopilot · see <code className="text-ink-500">docs/PLAN.md</code>{" "}
             for the roadmap

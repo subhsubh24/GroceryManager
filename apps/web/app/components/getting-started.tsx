@@ -53,14 +53,11 @@ export function GettingStarted({ state }: { state: FirstRunState }) {
 
   return (
     <section className="mx-auto max-w-6xl px-5 pt-6 sm:px-8 sm:pt-8">
-      <div className="card-pad animate-fade-in-up bg-brand-50/60">
+      <div className="card-pad animate-fade-in-up">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="eyebrow">
-              <span className="dot-live" />
-              Getting started
-            </p>
-            <h2 className="mt-2 font-display text-xl font-semibold tracking-tight text-ink-900">
+            <p className="eyebrow">Getting started</p>
+            <h2 className="mt-2 text-xl font-semibold tracking-[-0.01em] text-ink-900">
               A few steps to get the most out of GroceryManager
             </h2>
           </div>
@@ -80,14 +77,14 @@ export function GettingStarted({ state }: { state: FirstRunState }) {
                 {s.done ? (
                   <span
                     aria-hidden
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-sm font-bold text-white shadow-brand"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-solid text-sm font-bold text-white"
                   >
                     ✓
                   </span>
                 ) : (
                   <span
                     aria-hidden
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-brand-200 bg-brand-50 text-sm font-bold text-brand-700"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line bg-ink-50 text-sm font-bold text-ink-500"
                   >
                     {i + 1}
                   </span>

@@ -238,7 +238,7 @@ export function SwipeDeck({ deck }: { deck: DeckCard[] }) {
           onClick={() => decide(top, "skip")}
           aria-label="Skip this recipe"
           title="Skip (←)"
-          className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-surface text-2xl shadow-lift transition hover:scale-105 hover:border-berry-300 active:scale-95"
+          className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-surface text-2xl shadow-sm transition hover:border-ink-300 active:scale-95"
         >
           <span aria-hidden>✕</span>
         </button>
@@ -247,7 +247,7 @@ export function SwipeDeck({ deck }: { deck: DeckCard[] }) {
           onClick={() => decide(top, "like")}
           aria-label="Like this recipe"
           title="Like (→)"
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-berry-gradient text-2xl text-white shadow-berry transition hover:scale-105 active:scale-95"
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-solid text-2xl text-white shadow-sm transition active:scale-95"
         >
           <span aria-hidden>❤️</span>
         </button>

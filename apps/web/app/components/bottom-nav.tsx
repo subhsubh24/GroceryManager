@@ -37,13 +37,13 @@ export function BottomNav() {
               <a
                 href={it.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex flex-col items-center gap-0.5 rounded-2xl px-1 py-1 text-[0.65rem] font-semibold transition ${
+                className={`flex flex-col items-center gap-0.5 rounded-2xl px-1 py-1 text-[0.65rem] font-semibold transition-colors duration-150 ${
                   active ? "text-brand-700" : "text-ink-400 hover:text-ink-700"
                 }`}
               >
                 <span
-                  className={`flex h-9 w-12 items-center justify-center rounded-2xl text-lg leading-none transition duration-300 ease-spring ${
-                    active ? "scale-105 bg-brand-50" : ""
+                  className={`flex h-9 w-12 items-center justify-center rounded-2xl text-lg leading-none transition-colors duration-150 ${
+                    active ? "bg-brand-50" : ""
                   }`}
                 >
                   {it.emoji}
