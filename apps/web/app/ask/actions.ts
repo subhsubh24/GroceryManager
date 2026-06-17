@@ -19,12 +19,14 @@ import { currentUserId } from "@/app/lib/tenant";
 const MAX_MESSAGES = 12;
 
 /**
- * "Ask your kitchen" — answer a chat grounded ONLY in the signed-in user's own data. READ-ONLY: it
- * loads pantry/spend/cooking/taste in ONE tenant transaction, builds the bounded brief (pre-computing
- * every deterministic fact via the pure analyzers + projectUserModel), then hands it to
- * answerKitchenChat. A Gemini key enables full chat with code-execution math; without one it degrades
- * to a pre-computed summary. Session-scoped (no session → a friendly sign-in nudge) and wrapped in
- * try/catch so it always returns a reply, never throws to the client. Mutates nothing.
+ * "Ask your kitchen" — answer a chat for the signed-in user via the SEMANTIC-LAYER agent. With a
+ * Gemini key the agent runs a function-calling loop: it fetches the user's own pantry/spend/cooking/
+ * taste/recipes through scoped tools (and can take additive actions — add to list, save a recipe,
+ * draft a plan), computing every number with code-execution. Without a key it degrades to a
+ * deterministic, pre-computed summary built from the bounded brief (loaded in ONE tenant transaction).
+ * Session-scoped (no session → a friendly sign-in nudge) and wrapped in try/catch so it always returns
+ * a reply, never throws to the client. The only writes possible are the additive, reversible tool
+ * actions; the keyless path mutates nothing.
  */
 export async function askAction(messages: ChatMessage[]): Promise<{ reply: string }> {
   try {
@@ -42,41 +44,46 @@ export async function askAction(messages: ChatMessage[]): Promise<{ reply: strin
       return { reply: "Ask me anything about your spending, pantry, or cooking habits." };
     }
 
-    // One RLS round-trip for every read the brief needs.
-    const data = await withTenant(getDb(), userId, async (tx) => ({
-      pantry: await getPantryView(tx, userId),
-      purchases: await loadPurchasesForSpend(tx, userId),
-      lineItems: await loadLineItemsForSpend(tx, userId),
-      cookedAt: await loadCookedAt(tx, userId),
-      // Match loadCookedAt's default 120-day window so recent recipe titles cover the same horizon
-      // the streak/total stats describe (avoids the brief claiming cooks it lists no titles for).
-      wrapped: await loadWrappedInputs(tx, userId, 120),
-      signals: await loadPreferenceSignals(tx, userId),
-      budgetCents: await getUserBudgetCents(tx, userId),
-    }));
-
-    const recentCookedTitles = [...data.wrapped.mealLogs]
-      .sort((a, b) => b.cookedAt.getTime() - a.cookedAt.getTime())
-      .map((m) => m.recipeTitle)
-      .filter((t): t is string => typeof t === "string" && t.trim().length > 0);
-
-    const brief = buildKitchenBrief({
-      pantry: data.pantry.map((p) => ({
-        name: p.name,
-        status: p.status,
-        estimatedRunOutAt: p.estimatedRunOutAt,
-      })),
-      purchases: data.purchases,
-      lineItems: data.lineItems,
-      cookedAt: data.cookedAt,
-      recentCookedTitles,
-      signals: data.signals,
-      weeklyBudgetCents: data.budgetCents,
-    });
-
     const client = process.env.GEMINI_API_KEY ? getGeminiClient() : undefined;
-    return await answerKitchenChat({ client }, { messages: trimmed, brief });
+
+    // Build the bounded brief in one RLS round-trip. The agent fetches its own data through scoped
+    // tools, but the brief is still the deterministic fallback for BOTH the keyless path AND any
+    // agent failure / blank reply — so it must hold real data, not a placeholder, or a transient
+    // Gemini outage would tell a data-rich user "I don't have much data on your kitchen yet".
+    const brief = await buildBriefForFallback(userId);
+
+    return await answerKitchenChat({ client, userId }, { messages: trimmed, brief });
   } catch {
     return { reply: "Something went wrong loading your kitchen. Please try again in a moment." };
   }
+}
+
+/** Load + assemble the bounded brief used by the deterministic summary fallback (one tenant tx). */
+async function buildBriefForFallback(userId: string) {
+  const data = await withTenant(getDb(), userId, async (tx) => ({
+    pantry: await getPantryView(tx, userId),
+    purchases: await loadPurchasesForSpend(tx, userId),
+    lineItems: await loadLineItemsForSpend(tx, userId),
+    cookedAt: await loadCookedAt(tx, userId),
+    // Match loadCookedAt's default 120-day window so recent recipe titles cover the same horizon
+    // the streak/total stats describe (avoids the brief claiming cooks it lists no titles for).
+    wrapped: await loadWrappedInputs(tx, userId, 120),
+    signals: await loadPreferenceSignals(tx, userId),
+    budgetCents: await getUserBudgetCents(tx, userId),
+  }));
+
+  const recentCookedTitles = [...data.wrapped.mealLogs]
+    .sort((a, b) => b.cookedAt.getTime() - a.cookedAt.getTime())
+    .map((m) => m.recipeTitle)
+    .filter((t): t is string => typeof t === "string" && t.trim().length > 0);
+
+  return buildKitchenBrief({
+    pantry: data.pantry.map((p) => ({ name: p.name, status: p.status, estimatedRunOutAt: p.estimatedRunOutAt })),
+    purchases: data.purchases,
+    lineItems: data.lineItems,
+    cookedAt: data.cookedAt,
+    recentCookedTitles,
+    signals: data.signals,
+    weeklyBudgetCents: data.budgetCents,
+  });
 }

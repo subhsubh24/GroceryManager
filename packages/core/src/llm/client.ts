@@ -14,6 +14,7 @@ import { EMBEDDING_DIM, EMBEDDING_MODEL, type GeminiTier } from "@gm/config/cons
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { nextTier, resolveModel, thinkingBudgetFor } from "./models.js";
+import type { Tool, ToolContext } from "./semantic-layer.js";
 
 export interface ImagePart {
   mimeType: string;
@@ -93,6 +94,38 @@ export function extractJsonValue(text: string): unknown {
     throw new Error(`no JSON found in code-execution output: ${text.slice(0, 160)}`);
   }
   return JSON.parse(body.slice(start, end + 1));
+}
+
+/**
+ * Heuristic: does this error look like the API REJECTING the combination of `functionDeclarations` +
+ * `codeExecution` (an argument/schema 400), as opposed to a transient failure? We only want to drop
+ * code execution for the former — never for a 429/500/network blip. Matches the 400 / INVALID_ARGUMENT
+ * signatures and a mention of code execution / tool incompatibility in the message.
+ */
+function isToolCombineRejection(e: unknown): boolean {
+  const msg = (e instanceof Error ? e.message : String(e)).toLowerCase();
+  const looksLikeBadRequest =
+    msg.includes("400") || msg.includes("invalid_argument") || msg.includes("invalid argument");
+  const mentionsToolConflict =
+    msg.includes("code execution") ||
+    msg.includes("codeexecution") ||
+    msg.includes("function") ||
+    msg.includes("tool") ||
+    msg.includes("not supported") ||
+    msg.includes("cannot be") ||
+    msg.includes("combine");
+  return looksLikeBadRequest && mentionsToolConflict;
+}
+
+/**
+ * Gemini's `functionResponse.response` must be a JSON object. Tool handlers may return a primitive or
+ * an array (or even `undefined`), so wrap anything that isn't a plain object under a `result` key.
+ */
+function toResponseObject(value: unknown): Record<string, unknown> {
+  if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return { result: value ?? null };
 }
 
 export class GeminiClient {
@@ -229,6 +262,116 @@ export class GeminiClient {
       },
     });
     return { text: res.text ?? "" };
+  }
+
+  /**
+   * Agentic chat — drives Gemini's FUNCTION-CALLING loop over a semantic-layer tool set (§8.2). The
+   * model decides which tools to call; we execute the matching deterministic handler, feed the result
+   * back as a `functionResponse`, and resend, until the model stops calling tools or `maxSteps` is hit
+   * (the circuit breaker that guarantees termination). With `codeExecution` we also enable the
+   * code-execution tool so the model computes any numbers in Python.
+   *
+   * Some models reject combining `functionDeclarations` with `codeExecution` (400). We catch that on
+   * the FIRST call and transparently retry with functionDeclarations only — the chat never fails just
+   * because the two tools can't be combined.
+   */
+  async runChatWithTools(args: {
+    messages: ChatTurn[];
+    system?: string;
+    tools: Tool[];
+    ctx: ToolContext;
+    codeExecution?: boolean;
+    tier?: GeminiTier;
+    /** Hard cap on tool-call rounds (the loop's circuit breaker). Default 8. */
+    maxSteps?: number;
+  }): Promise<{ text: string; steps: number }> {
+    const tier = args.tier ?? "cheap";
+    const model = resolveModel(tier, this.env.LLM_USE_FLASH_LITE);
+    const maxSteps = Math.max(1, args.maxSteps ?? 8);
+    const byName = new Map(args.tools.map((t) => [t.name, t]));
+
+    const functionDeclarations = args.tools.map((t) => ({
+      name: t.name,
+      description: t.description,
+      parameters: t.parameters as Record<string, unknown>,
+    }));
+
+    // Config builder so we can rebuild with/without code execution on the combine-fallback path.
+    const buildConfig = (withCodeExec: boolean) => ({
+      tools: [
+        { functionDeclarations },
+        ...(withCodeExec ? [{ codeExecution: {} }] : []),
+      ],
+      ...(args.system ? { systemInstruction: args.system } : {}),
+    });
+
+    const contents: Content[] = args.messages.map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    }));
+
+    let allowCodeExec = Boolean(args.codeExecution);
+    let steps = 0;
+
+    while (steps < maxSteps) {
+      steps++;
+      let res: Awaited<ReturnType<typeof this.ai.models.generateContent>>;
+      try {
+        res = await this.ai.models.generateContent({ model, contents, config: buildConfig(allowCodeExec) });
+      } catch (e) {
+        // SOME models reject combining functionDeclarations + codeExecution (400 INVALID_ARGUMENT). That
+        // shows up on the FIRST call (the tool config is identical every round), so only retry-without-
+        // code-execution on step 1 and only when the error looks like an argument rejection. Any other
+        // error (transient 429/500/network, or a later-round failure) is rethrown so we don't silently
+        // and permanently drop code execution and start predicting numbers.
+        if (allowCodeExec && steps === 1 && isToolCombineRejection(e)) {
+          allowCodeExec = false;
+          res = await this.ai.models.generateContent({ model, contents, config: buildConfig(false) });
+        } else {
+          throw e;
+        }
+      }
+
+      const calls = res.functionCalls ?? [];
+      if (calls.length === 0) {
+        return { text: res.text ?? "", steps };
+      }
+
+      // Append the model's function-call turn so the next request pairs responses to it. Echo the
+      // candidate content verbatim ONLY when it actually carries the function-call parts (preserving
+      // any ids / thoughts the API may pair on); otherwise reconstruct a clean model turn from `calls`
+      // so we never desync the functionCall/functionResponse pairing.
+      const modelContent = res.candidates?.[0]?.content;
+      const echoable = modelContent?.parts?.some((p) => p.functionCall) ?? false;
+      contents.push(echoable ? modelContent! : { role: "model", parts: calls.map((fc) => ({ functionCall: fc })) });
+
+      // Execute each requested tool (deterministic, session-scoped, never-throwing handlers) and
+      // return one functionResponse part per call so the model can read the results next round.
+      const responseParts: Part[] = [];
+      for (const call of calls) {
+        const tool = call.name ? byName.get(call.name) : undefined;
+        const response = tool
+          ? await tool.handler(call.args ?? {}, args.ctx)
+          : { error: `unknown tool: ${call.name ?? "(unnamed)"}` };
+        responseParts.push({
+          functionResponse: {
+            ...(call.id ? { id: call.id } : {}),
+            name: call.name ?? "unknown",
+            // Wrap non-object results so the API always gets a JSON object for `response`.
+            response: toResponseObject(response),
+          },
+        });
+      }
+      contents.push({ role: "user", parts: responseParts });
+    }
+
+    // Hit the step cap — make ONE final call with no tools so the model summarizes what it has.
+    const finalRes = await this.ai.models.generateContent({
+      model,
+      contents,
+      ...(args.system ? { config: { systemInstruction: args.system } } : {}),
+    });
+    return { text: finalRes.text ?? "", steps };
   }
 
   /**

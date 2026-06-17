@@ -1,20 +1,23 @@
 /**
- * "Ask your kitchen" — a conversational assistant grounded ONLY in the signed-in user's own data
- * (pantry, spending, cooking history, and the learned taste model). It answers questions about
- * habits, gives recommendations, and surfaces insights. READ-ONLY/advisory: nothing here mutates.
+ * "Ask your kitchen" — a conversational AGENT grounded in the signed-in user's own data (pantry,
+ * spending, cooking history, the learned taste model) that can also take additive actions on the
+ * user's behalf. It answers questions, gives recommendations, and — when asked — adds to the list,
+ * saves a recipe, or drafts a weekly plan, all through the SEMANTIC-LAYER tool registry.
  *
  * Two pieces, split so the deterministic half is pure + unit-testable:
- *   • buildKitchenBrief — a PURE assembler that turns loaded rows + the pure analyzers into a
- *     compact, BOUNDED snapshot (the "brief"). Caps every list so token cost stays controlled.
- *   • answerKitchenChat — calls Gemini MULTI-TURN with the code-execution tool ON, so EVERY number
- *     (totals, averages, trends, projections) is computed by running Python, never predicted. With
- *     no client (no GEMINI_API_KEY) it degrades to a short reply built from the pre-computed stats,
- *     and any LLM failure falls back to that same summary — it never throws to the caller.
+ *   • buildKitchenBrief / summarizeBrief — a PURE assembler + deterministic summarizer used for the
+ *     KEYLESS fallback (no GEMINI_API_KEY or no userId): a short reply from pre-computed stats. Caps
+ *     every list so token cost stays controlled.
+ *   • answerKitchenChat — when a client AND a userId are present, runs Gemini's FUNCTION-CALLING loop
+ *     over `buildSemanticTools({ userId })` with code-execution ON (so EVERY number is computed in
+ *     Python, never predicted). The model fetches what it needs via tools and can take additive,
+ *     reversible actions. Any failure falls back to the keyless summary — it never throws to the caller.
  *
- * This imports the server-only llm client, so it must be reached via a server action — never from a
- * "use client" component. (The web `askAction` is the intended entry point.)
+ * This imports the server-only llm client + semantic layer (which touches @gm/db), so it must be
+ * reached via a server action — never from a "use client" component. (`askAction` is the entry point.)
  */
 import type { ChatTurn, GeminiClient } from "../llm/client.js";
+import { buildSemanticTools } from "../llm/semantic-layer.js";
 import {
   budgetVsActual,
   cheaperRetailer,
@@ -197,14 +200,19 @@ export function buildKitchenBrief(inputs: KitchenBriefInputs): KitchenBrief {
   };
 }
 
-const SYSTEM =
-  "You are a warm, sharp grocery + cooking coach for ONE user. Answer ONLY from the provided JSON " +
-  "data about THIS user (their pantry, spending, cooking history, and learned taste). For ANY math, " +
-  "totals, averages, trends, comparisons, or projections, you MUST use the code execution tool and " +
-  "base your numbers on the provided data — never estimate numbers yourself. Money values are integer " +
-  "cents; convert to dollars for the user. Be concise, specific, and actionable; ground every " +
-  "recommendation in their actual habits and taste. If the data can't answer the question, say so " +
-  "plainly rather than guessing. You cannot change any of their data — you only advise.";
+/** System prompt for the agentic (tool-using) path. */
+const SYSTEM_AGENT =
+  "You are a warm, sharp grocery + cooking coach for ONE user. Use the provided TOOLS to look things " +
+  "up about THIS user (pantry, spending, cooking stats, learned taste, recipes) and to take actions " +
+  "on their behalf. Ground every answer and recommendation in what the tools return — never make up " +
+  "numbers, items, or recipes. For ANY math, totals, averages, trends, comparisons, or projections, " +
+  "you MUST use the code-execution tool on top of the exact figures the tools return — never predict " +
+  "numbers yourself. Money values are integer cents; convert to dollars for the user. Only take an " +
+  "action (add_to_list, save_recipe, plan_my_week) when the user asks for it or clearly wants it, and " +
+  "after acting, briefly confirm in your reply exactly what you did. All actions are additive and " +
+  "reversible — you cannot delete anything, place orders, or change settings. Be concise, specific, " +
+  "and actionable. If a tool returns an error or there's simply no data, say so plainly rather than " +
+  "guessing.";
 
 const fmtUsd = (cents: number): string => `$${(cents / 100).toFixed(2)}`;
 
@@ -251,43 +259,38 @@ export function summarizeBrief(brief: KitchenBrief, keyless: boolean): string {
 
 export interface AnswerDeps {
   client?: GeminiClient;
+  /** The signed-in user the tools act on behalf of. Required for the agentic path. */
+  userId?: string;
 }
 
 export interface AnswerArgs {
   messages: ChatMessage[];
+  /** Pre-computed snapshot — used only for the keyless / no-userId fallback summary. */
   brief: KitchenBrief;
 }
 
 /**
- * Answer the user's chat, grounded in the brief. With no client → key-free summary. With a client →
- * a multi-turn Gemini call with code execution ENABLED (so every number is computed in Python). The
- * brief is injected as JSON in front of the conversation. Any failure falls back to the summary —
- * this never throws to the caller.
+ * Answer the user's chat. With a client AND a userId → run Gemini's FUNCTION-CALLING loop over the
+ * per-user semantic-layer tools (code-execution ON, so every number is computed in Python; the model
+ * fetches its own data and can take additive actions). Without a client or userId → the deterministic,
+ * key-free summary built from the brief. Any failure in the agentic path falls back to that same
+ * summary — this never throws to the caller.
  */
 export async function answerKitchenChat(deps: AnswerDeps, args: AnswerArgs): Promise<{ reply: string }> {
-  if (!deps.client) {
-    return { reply: summarizeBrief(args.brief, true) };
+  // Keyless / no-session: degrade to the pre-computed summary (and nudge to add a key when keyless).
+  if (!deps.client || !deps.userId) {
+    return { reply: summarizeBrief(args.brief, !deps.client) };
   }
   try {
-    // Lead with the data as a user turn, then the conversation. The system instruction forbids
-    // doing math in-head and requires the code-execution tool for any numbers.
-    const dataTurn: ChatTurn = {
-      role: "user",
-      content:
-        "Here is the JSON data about my kitchen. Use ONLY this to answer my questions, and run Python " +
-        `for any math:\n\n${JSON.stringify(args.brief)}`,
-    };
-    const turns: ChatTurn[] = [
-      dataTurn,
-      { role: "assistant", content: "Got it — I've loaded your kitchen data. What would you like to know?" },
-      ...args.messages.map((m): ChatTurn => ({ role: m.role, content: m.content })),
-    ];
-
-    const { text } = await deps.client.chat({
-      messages: turns,
-      system: SYSTEM,
+    const tools = buildSemanticTools({ userId: deps.userId, client: deps.client });
+    const { text } = await deps.client.runChatWithTools({
+      messages: args.messages.map((m): ChatTurn => ({ role: m.role, content: m.content })),
+      system: SYSTEM_AGENT,
+      tools,
+      ctx: { userId: deps.userId, client: deps.client },
       codeExecution: true,
       tier: "cheap",
+      maxSteps: 8,
     });
     const reply = text.trim();
     return { reply: reply.length > 0 ? reply : summarizeBrief(args.brief, false) };

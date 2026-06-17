@@ -183,55 +183,82 @@ describe("summarizeBrief / answerKitchenChat (keyless fallback)", () => {
 
   it("answerKitchenChat with no client returns the keyless summary (never throws)", async () => {
     const messages: ChatMessage[] = [{ role: "user", content: "How's my spending?" }];
-    const { reply } = await answerKitchenChat({}, { messages, brief: briefWithData });
+    const { reply } = await answerKitchenChat({ userId: "u1" }, { messages, brief: briefWithData });
     expect(reply).toContain("GEMINI_API_KEY");
     expect(reply.length).toBeGreaterThan(0);
   });
 
-  it("answerKitchenChat enables code execution and a multi-turn conversation when a client is present", async () => {
-    let captured: { messages: { role: string; content: string }[]; codeExecution?: boolean; system?: string } | null = null;
+  it("answerKitchenChat with a client but NO userId degrades to the keyless summary", async () => {
+    // No userId means tools can't be scoped, so we must not call the agent — degrade safely.
+    let called = false;
     const fakeClient = {
-      async chat(a: { messages: { role: string; content: string }[]; codeExecution?: boolean; system?: string }) {
-        captured = a;
-        return { text: "Your spending looks healthy." };
+      async runChatWithTools() {
+        called = true;
+        return { text: "should not be used", steps: 1 };
       },
     } as unknown as Parameters<typeof answerKitchenChat>[0]["client"];
-
     const { reply } = await answerKitchenChat(
       { client: fakeClient },
       { messages: [{ role: "user", content: "How's my spending?" }], brief: briefWithData },
     );
-    expect(reply).toBe("Your spending looks healthy.");
-    expect(captured!.codeExecution).toBe(true);
-    expect(captured!.system).toMatch(/code execution/i);
-    // The brief JSON is injected before the user's question (multi-turn: data, ack, user).
-    expect(captured!.messages[0]!.role).toBe("user");
-    expect(captured!.messages[0]!.content).toContain('"generatedAt"');
-    expect(captured!.messages.at(-1)).toEqual({ role: "user", content: "How's my spending?" });
+    expect(called).toBe(false); // the agent is NOT engaged without a userId to scope tools
+    expect(reply).toContain("$70.00"); // degrades to the deterministic summary
+    expect(reply).not.toContain("GEMINI_API_KEY"); // a key/client exists — don't nudge to add one
   });
 
-  it("answerKitchenChat falls back to the summary when the LLM throws", async () => {
+  it("answerKitchenChat drives the function-calling loop (tools + code execution) with a client and userId", async () => {
+    let captured:
+      | { system?: string; codeExecution?: boolean; maxSteps?: number; ctx?: { userId?: string }; tools?: { name: string }[] }
+      | null = null;
+    const fakeClient = {
+      async runChatWithTools(a: {
+        system?: string;
+        codeExecution?: boolean;
+        maxSteps?: number;
+        ctx?: { userId?: string };
+        tools?: { name: string }[];
+      }) {
+        captured = a;
+        return { text: "Your spending looks healthy.", steps: 2 };
+      },
+    } as unknown as Parameters<typeof answerKitchenChat>[0]["client"];
+
+    const { reply } = await answerKitchenChat(
+      { client: fakeClient, userId: "u1" },
+      { messages: [{ role: "user", content: "How's my spending?" }], brief: briefWithData },
+    );
+    expect(reply).toBe("Your spending looks healthy.");
+    expect(captured!.codeExecution).toBe(true);
+    expect(captured!.system).toMatch(/tool/i);
+    expect(captured!.maxSteps).toBe(8); // loop is capped
+    expect(captured!.ctx?.userId).toBe("u1"); // tools are scoped to the user
+    // The real semantic-layer tools are wired in, including the additive-only mutations.
+    const names = (captured!.tools ?? []).map((t) => t.name);
+    expect(names).toEqual(expect.arrayContaining(["get_pantry", "analyze_spend", "find_recipes", "add_to_list", "save_recipe", "plan_my_week"]));
+  });
+
+  it("answerKitchenChat falls back to the summary when the agent throws", async () => {
     const throwingClient = {
-      async chat() {
+      async runChatWithTools() {
         throw new Error("network down");
       },
     } as unknown as Parameters<typeof answerKitchenChat>[0]["client"];
     const { reply } = await answerKitchenChat(
-      { client: throwingClient },
+      { client: throwingClient, userId: "u1" },
       { messages: [{ role: "user", content: "hi" }], brief: briefWithData },
     );
     expect(reply).toContain("$70.00"); // degraded to deterministic stats
     expect(reply).not.toContain("GEMINI_API_KEY"); // not keyless — a key existed, the call just failed
   });
 
-  it("answerKitchenChat falls back to summary when the LLM returns blank text", async () => {
+  it("answerKitchenChat falls back to summary when the agent returns blank text", async () => {
     const blankClient = {
-      async chat() {
-        return { text: "   " };
+      async runChatWithTools() {
+        return { text: "   ", steps: 1 };
       },
     } as unknown as Parameters<typeof answerKitchenChat>[0]["client"];
     const { reply } = await answerKitchenChat(
-      { client: blankClient },
+      { client: blankClient, userId: "u1" },
       { messages: [{ role: "user", content: "hi" }], brief: briefWithData },
     );
     expect(reply.length).toBeGreaterThan(0);
