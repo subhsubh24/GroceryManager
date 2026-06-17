@@ -15,7 +15,9 @@ const ITEMS: { href: string; label: string; emoji: string }[] = [
   { href: "/plan", label: "Plan", emoji: "🗓️" },
 ];
 
-const HIDDEN_ON = [/^\/$/, /^\/signin/, /^\/signup/, /^\/share/, /^\/cook/];
+// `/cook/…` is focused cook-mode (full-screen, screen-awake) — hide the bar there, but NOT on
+// `/cookbook` (a normal in-app screen). The trailing slash anchors to the `/cook/[id]` route only.
+const HIDDEN_ON = [/^\/$/, /^\/signin/, /^\/signup/, /^\/share/, /^\/cook\//];
 
 export function BottomNav() {
   const pathname = usePathname() || "/";

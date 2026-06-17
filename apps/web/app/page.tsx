@@ -206,7 +206,7 @@ const SECTIONS: Section[] = [
   },
   {
     key: "household",
-    href: "/list",
+    href: "/staples",
     title: "Household & personal care",
     blurb: "Cleaning, skincare & toiletries on autopilot — reordered from Amazon when you're low.",
     emoji: "🧴",

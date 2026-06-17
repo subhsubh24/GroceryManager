@@ -110,7 +110,7 @@ export function InstallPrompt() {
   if (!deferred && !iosHint) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 md:bottom-4 md:left-auto md:right-4 md:px-0">
+    <div className="fixed inset-x-0 bottom-36 z-50 px-4 md:inset-x-auto md:bottom-20 md:right-4 md:px-0">
       <div className="mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-line bg-surface/95 px-4 py-3 shadow-lift backdrop-blur-xl md:mx-0 md:ml-auto">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-gradient text-lg shadow-brand">
           🧺
