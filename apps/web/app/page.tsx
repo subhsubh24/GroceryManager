@@ -97,6 +97,15 @@ const SECTIONS: Section[] = [
     span: "lg:col-span-2",
   },
   {
+    key: "ask",
+    href: "/ask",
+    title: "Ask your kitchen",
+    blurb: "Chat with an AI that knows your habits — spending, cooking, what to make next.",
+    emoji: "💬",
+    tone: "grape",
+    span: "lg:col-span-2",
+  },
+  {
     key: "cookbook",
     href: "/cookbook",
     title: "My Cookbook",

@@ -36,6 +36,22 @@ export interface GenerateOptions {
   codeExecution?: boolean;
 }
 
+/** One turn of a free-text conversation (mirrors the public ChatMessage shape). */
+export interface ChatTurn {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface ChatOptions {
+  tier?: GeminiTier;
+  system?: string;
+  /**
+   * Enable the Gemini code-execution tool so the model runs Python for any math/trend instead of
+   * predicting numbers. Same wiring as `generateStructured` — adds `tools: [{ codeExecution: {} }]`.
+   */
+  codeExecution?: boolean;
+}
+
 /** A cheap, separate verification step — "the call that wrote it doesn't grade it." */
 export type Verifier<T> = (value: T) => { ok: true } | { ok: false; reason: string };
 
@@ -188,6 +204,31 @@ export class GeminiClient {
     }
 
     throw new VerificationExhaustedError(lastErr, attempts);
+  }
+
+  /**
+   * Free-text, MULTI-TURN generation (for chat). Maps the conversation to genai `Content[]`
+   * (assistant→"model"), runs one call at `tier`, and returns the final text. With
+   * `codeExecution`, adds the `tools: [{ codeExecution: {} }]` tool — identical to the structured
+   * path — so the model computes any numbers in Python. Tools can't be combined with a JSON
+   * response-schema, but chat wants free text anyway, so there's no schema here (we read `res.text`).
+   */
+  async chat(args: { messages: ChatTurn[]; system?: string } & ChatOptions): Promise<{ text: string }> {
+    const tier = args.tier ?? "cheap";
+    const model = resolveModel(tier, this.env.LLM_USE_FLASH_LITE);
+    const contents: Content[] = args.messages.map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    }));
+    const res = await this.ai.models.generateContent({
+      model,
+      contents,
+      config: {
+        ...(args.codeExecution ? { tools: [{ codeExecution: {} }] } : {}),
+        ...(args.system ? { systemInstruction: args.system } : {}),
+      },
+    });
+    return { text: res.text ?? "" };
   }
 
   /**

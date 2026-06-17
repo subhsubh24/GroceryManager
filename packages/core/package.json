@@ -26,7 +26,8 @@
     "./digest": "./src/digest/index.ts",
     "./agent": "./src/agent/index.ts",
     "./vision": "./src/vision/index.ts",
-    "./billing": "./src/billing/index.ts"
+    "./billing": "./src/billing/index.ts",
+    "./chat": "./src/chat/index.ts"
   },
   "scripts": {
     "lint": "echo \"(lint) @gm/core\"",

@@ -13,3 +13,4 @@ export * as digest from "./digest/index.js";
 export * as agent from "./agent/index.js";
 export * as vision from "./vision/index.js";
 export * as billing from "./billing/index.js";
+export * as chat from "./chat/index.js";
