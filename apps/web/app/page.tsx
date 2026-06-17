@@ -411,6 +411,33 @@ export default async function HomePage() {
       {/* First-run activation checklist (signed-in, setup incomplete, not dismissed) */}
       {showGettingStarted && firstRun && <GettingStarted state={firstRun} />}
 
+      {/* Signed-in users land on the APP — a lean home header + quick actions. The marketing hero,
+          pitch, and autopilot band below render for LOGGED-OUT visitors only (no more pitch-on-app). */}
+      {session && (
+        <section className="mx-auto max-w-6xl px-5 pt-8 sm:px-8 sm:pt-10">
+          <p className="eyebrow">
+            <span className="dot-live" /> Your kitchen
+          </p>
+          <h1 className="page-title mt-3">Welcome back</h1>
+          <p className="page-subtitle">
+            Jump back in — plan your week, cook what you have, or ask your kitchen anything.
+          </p>
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <a href="/plan" className="btn-primary px-5 py-3 text-base">
+              Plan my week →
+            </a>
+            <a href="/ask" className="btn-secondary px-5 py-3 text-base">
+              Ask your kitchen
+            </a>
+            <a href="/recipes" className="btn-ghost px-5 py-3 text-base">
+              Cook tonight
+            </a>
+          </div>
+        </section>
+      )}
+
+      {!session && (
+        <>
       {/* Hero */}
       <section className="relative mx-auto max-w-6xl px-5 pb-12 pt-12 sm:px-8 sm:pt-20">
         {/* Living aurora backdrop */}
@@ -533,16 +560,22 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+        </>
+      )}
 
-      {/* Feature bento */}
+      {/* Feature bento — a launcher for signed-in users, a feature showcase for logged-out. */}
       <section className="mx-auto max-w-6xl px-5 pb-8 pt-14 sm:px-8 sm:pt-20">
         <div className="mb-8 text-center">
-          <p className="eyebrow justify-center">Everything in one place</p>
+          <p className="eyebrow justify-center">
+            {session ? "Everything in your kitchen" : "Everything in one place"}
+          </p>
           <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink-900 sm:text-4xl">
-            One app for the whole kitchen
+            {session ? "Jump into any part of the app" : "One app for the whole kitchen"}
           </h2>
           <p className="page-subtitle mx-auto text-center">
-            From the moment a receipt lands to the meal on your plate — explore what it does for you.
+            {session
+              ? "Your pantry, recipes, plan, list, spend, and more — all one tap away."
+              : "From the moment a receipt lands to the meal on your plate — explore what it does for you."}
           </p>
         </div>
 
