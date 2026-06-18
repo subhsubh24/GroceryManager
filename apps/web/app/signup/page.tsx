@@ -85,7 +85,8 @@ async function registerAction(formData: FormData) {
   }
 
   try {
-    await signIn("credentials", { email, password, redirectTo: "/" });
+    // New accounts land in the guided onboarding flow first (returning users via /signin go to /).
+    await signIn("credentials", { email, password, redirectTo: "/onboarding" });
   } catch (e) {
     if (e instanceof AuthError) redirect("/signin?error=credentials");
     throw e; // re-throw NEXT_REDIRECT (success)
