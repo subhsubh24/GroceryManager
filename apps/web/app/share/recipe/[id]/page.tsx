@@ -47,12 +47,7 @@ export default async function ShareRecipePage({ params }: { params: Promise<{ id
   );
 
   return (
-    <main className="page-narrow relative">
-      {/* Soft accent glow behind the hero. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-0 -z-10 h-56 w-[28rem] max-w-full -translate-x-1/2 -translate-y-16 rounded-[100%] bg-berry-300/25 blur-3xl"
-      />
+    <main className="page-narrow">
       <div className="animate-fade-in-up">
         <div className="flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">

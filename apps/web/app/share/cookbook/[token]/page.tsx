@@ -89,12 +89,7 @@ export default async function ShareCookbookPage({ params }: { params: Promise<{ 
   }
 
   return (
-    <main className="page-narrow relative">
-      {/* Soft accent glow behind the hero, matching the recipe share page. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-0 -z-10 h-56 w-[28rem] max-w-full -translate-x-1/2 -translate-y-16 rounded-[100%] bg-berry-300/25 blur-3xl"
-      />
+    <main className="page-narrow">
       <div className="animate-fade-in-up">
         <BrandMark />
         <h1 className="mt-5 font-display text-3xl font-semibold tracking-tight text-ink-900 sm:text-4xl">

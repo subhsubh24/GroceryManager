@@ -151,7 +151,7 @@ export default async function HomePage() {
 
   return (
     <main className="relative overflow-hidden">
-      {/* Sticky frosted nav */}
+      {/* Sticky top nav — solid, calm surface (no frost/blur). */}
       <header className="glass-nav sticky top-0 z-40">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 sm:px-8">
           <a href="/" className="flex items-center gap-2.5">
