@@ -30,8 +30,58 @@ jobs:
         run: pnpm -r run test
 
       - name: Build
-        run: pnpm --filter @gm/web build
+        run: |
+          set -o pipefail
+          pnpm --filter @gm/web build 2>&1 | tee build.log
+          # next build exits 0 even when a re-export is missing (force-dynamic pages aren't
+          # prerendered, so it's only a warning) — but those break at runtime (e.g. a bad icon
+          # re-export). Fail the gate on them so the build can't go green while secretly broken.
+          if grep -qiE "Attempted import error|export .* was not found|is not exported from" build.log; then
+            echo "::error::Build emitted missing-export warnings — these break at runtime. Failing CI."
+            exit 1
+          fi
         env:
           # Pages are force-dynamic (env read at request time), but set a dummy so any build-time
-          # loadEnv() validation passes. No real secrets needed — the build doesn't hit the network.
+          # loadEnv() validation passes. No real secrets needed.
           DATABASE_URL: postgresql://user:pass@localhost:5432/db
+
+  # Run the WHOLE migration chain against a throwaway Postgres so a bad migration (e.g. a SQL scoping
+  # bug) fails CI here instead of on someone's real database. pgvector image = the `vector` + `pg_trgm`
+  # extensions sql/0000 needs. Uses tsx directly (db:migrate expects a local .env that CI doesn't have).
+  migrate:
+    name: migrations (fresh db)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: gm
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Migrate (full chain, fresh DB)
+        run: pnpm --filter @gm/db exec tsx src/migrate.ts
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gm
+          DIRECT_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gm
