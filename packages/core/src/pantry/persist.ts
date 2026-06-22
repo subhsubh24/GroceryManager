@@ -6,6 +6,7 @@ import { and, eq } from "drizzle-orm";
 import type { Querier } from "@gm/db";
 import { canonicalItems, pantryStock, stockLedger } from "@gm/db";
 import type { LedgerEventType } from "@gm/shared";
+import { ewmaConsumptionRate } from "./depletion.js";
 import { projectPantryStock } from "./project.js";
 
 export interface LedgerAppend {
@@ -61,11 +62,20 @@ export async function reprojectStock(
   const lastPurchaseAt =
     mapped.length > 0 ? new Date(Math.max(...mapped.map((m) => m.occurredAt.getTime()))) : null;
 
+  // Learn this item's consumption rate from its own purchase cadence (positive deltas), weighting
+  // recent intervals (EWMA), so backfilled history actually depletes toward a realistic "what's left
+  // today" instead of sitting at the purchased quantity forever. An explicit caller rate wins; else
+  // we derive it (null until there are ≥2 purchases). Also feeds reorder timing.
+  const purchases = mapped.filter((m) => m.baseQtyDelta > 0).map((m) => ({ qty: m.baseQtyDelta, at: m.occurredAt }));
+  const learnedRate = ratePerDay ?? ewmaConsumptionRate(purchases);
+
   const proj = projectPantryStock({
     events: mapped,
     asOf: new Date(),
-    ratePerDay,
-    perishable: item?.perishability === "perishable",
+    ratePerDay: learnedRate,
+    // Spoilage ceiling applies to anything NOT explicitly shelf-stable — household / canned / dry
+    // goods deplete only by use, while perishables + semi-perishables age out after their shelf life.
+    perishable: item ? item.perishability !== "shelf_stable" : false,
     shelfLifeDays: item ? (item.fridge ?? item.pantryDays ?? null) : null,
     lastPurchaseAt,
   });

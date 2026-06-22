@@ -6,6 +6,7 @@
 import { and, eq, sql } from "drizzle-orm";
 import type { Querier } from "@gm/db";
 import { canonicalItems, ingredientMatchOverrides, products, unitsOfMeasure } from "@gm/db";
+import { estimateShelfLife } from "../pantry/shelf-life.js";
 import type { CanonicalCandidate, NormalizationPorts } from "./normalize.js";
 
 export interface DbPortsDeps {
@@ -94,9 +95,21 @@ export function createDbNormalizationPorts(
         .limit(1);
       const baseUnitId = unit[0]?.id;
       if (!baseUnitId) throw new Error("seed missing base unit 'each'");
+      // Seed perishability + shelf life (+ the right domain) so the depletion engine's spoilage
+      // ceiling works for never-seen items — otherwise a months-old backfilled perishable reads
+      // "in stock" forever. Heuristic from the name; cached on the row (refine with an LLM later).
+      const sl = estimateShelfLife(name);
       const rows = await db
         .insert(canonicalItems)
-        .values({ name, slug, baseUnitId, domain: "grocery" })
+        .values({
+          name,
+          slug,
+          baseUnitId,
+          domain: sl.domain,
+          perishability: sl.perishability,
+          shelfLifeFridgeDays: sl.shelfLifeFridgeDays,
+          shelfLifePantryDays: sl.shelfLifePantryDays,
+        })
         .returning({ id: canonicalItems.id });
       return rows[0]!.id;
     },
