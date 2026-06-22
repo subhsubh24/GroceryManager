@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
+import { auth } from "@/auth";
 import { RegisterSW } from "./register-sw";
 import { BottomNav } from "./components/bottom-nav";
 import { ThemeToggle } from "./components/theme-toggle";
 import { InstallPrompt } from "./components/install-prompt";
+import { LaunchGuard } from "./components/launch-guard";
 
 // Runs before paint to set the theme class — prevents a flash of the wrong theme on load.
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();`;
@@ -41,7 +43,10 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Is a session cookie present? Drives the LaunchGuard, which never silently resumes a session on a
+  // fresh app launch (login is required each time the app is opened).
+  const authed = !!(await auth())?.user;
   return (
     <html
       lang="en"
@@ -52,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <RegisterSW />
+        <LaunchGuard authed={authed} />
         {children}
         <BottomNav />
         <ThemeToggle />
