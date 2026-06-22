@@ -101,12 +101,30 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* iPhone: don't inflate text on rotate, and kill the grey tap-flash for an app-like feel. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
     @apply bg-cream text-ink antialiased;
     /* Calm, flat canvas — the warm cream does the work. No ambient glows or aurora. */
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    /* Keep overscroll from chaining to whatever's behind — app-like, no rubber-band reveal. */
+    overscroll-behavior-y: contain;
+  }
+
+  /* Snappy taps on touch — no 300ms delay, no double-tap-zoom on interactive controls. */
+  button,
+  a,
+  label,
+  summary,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
   }
 
   /* A single, consistent, accessible focus ring across the whole app. */
@@ -131,9 +149,12 @@
   ---------------------------------------------------------------------------- */
   .page {
     @apply mx-auto min-h-dvh w-full max-w-3xl px-5 pb-20 pt-7 sm:px-6;
+    /* Clear the fixed mobile bottom-nav AND the iPhone home-indicator inset. */
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
   }
   .page-narrow {
     @apply mx-auto min-h-dvh w-full max-w-2xl px-5 pb-20 pt-7 sm:px-6;
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
   }
 
   /* Back / breadcrumb link with a sliding chevron. */
@@ -355,6 +376,8 @@
   }
   .glass-nav {
     @apply border-b border-line bg-cream;
+    /* Clear the notch when installed (standalone). Resolves to 0 in a normal browser tab. */
+    padding-top: env(safe-area-inset-top);
   }
 
   /* ----------------------------------------------------------------------------
@@ -407,6 +430,18 @@
    (The former `.dark .glass*` border overrides are gone — `line`/`surface`/`cream`
    are already variable-backed for dark, so the solid surfaces adapt on their own.)
 ---------------------------------------------------------------------------- */
+
+/* iPhone: Safari zooms a focused field whose font-size is < 16px. Force 16px on small screens for
+   every text control (covers `.input`'s text-sm + any inline-styled inputs). A plain (unlayered)
+   rule so it reliably wins over Tailwind's text-* utilities; desktop keeps its denser sizing. */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 @layer utilities {
   /* Reduced-motion: respect the user's preference everywhere. */
   @media (prefers-reduced-motion: reduce) {
