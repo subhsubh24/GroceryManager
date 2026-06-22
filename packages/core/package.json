@@ -25,6 +25,7 @@
     "./spend": "./src/spend/index.ts",
     "./capture": "./src/capture/index.ts",
     "./capture/parse": "./src/capture/parse.ts",
+    "./capture/parse-llm": "./src/capture/parse-llm.ts",
     "./digest": "./src/digest/index.ts",
     "./agent": "./src/agent/index.ts",
     "./vision": "./src/vision/index.ts",

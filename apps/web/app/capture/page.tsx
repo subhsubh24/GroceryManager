@@ -1,6 +1,9 @@
 import { revalidatePath } from "next/cache";
+import { loadEnv } from "@gm/config/env";
 import { getActiveListView, getDb, withTenant } from "@gm/db";
 import { captureToList, parseQuickCapture } from "@gm/core/capture";
+import { parseCaptureWithLLM } from "@gm/core/capture/parse-llm";
+import { GeminiClient } from "@gm/core/llm";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
 import { PencilLine, ShoppingCart } from "@/app/components/icons";
@@ -10,7 +13,14 @@ export const dynamic = "force-dynamic";
 
 async function capture(formData: FormData) {
   "use server";
-  const items = parseQuickCapture(String(formData.get("text") ?? ""));
+  const text = String(formData.get("text") ?? "");
+  // LLM-validate the free text (fix typos, drop brands/filler, structure quantities) when a Gemini key
+  // is set; fall back to the deterministic parser on any failure or with no key, so it always works.
+  const env = loadEnv();
+  const llm = env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT ? new GeminiClient(env) : null;
+  const items = llm
+    ? await parseCaptureWithLLM(llm, text).catch(() => parseQuickCapture(text))
+    : parseQuickCapture(text);
   if (items.length === 0) return;
   const userId = await currentUserId();
   if (!userId) return;
