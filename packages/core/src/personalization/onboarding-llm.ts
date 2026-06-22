@@ -18,11 +18,14 @@ import type { GeminiClient } from "../llm/client.js";
 /**
  * One turn of the interview. `signals` are the preferences inferred FROM THE LATEST ANSWER, typed
  * with the EXACT topic conventions `projectUserModel` consumes (see below). `done` flips true on the
- * wrap-up turn (no new question). `confidence` is 0..1; we clamp on the way out.
+ * wrap-up turn (no new question). `confidence` is 0..1; we clamp on the way out. `options` are 3–6
+ * short suggested quick answers for the CURRENT question, rendered as tappable chips in the tile UI
+ * (the user can still type their own); empty on a wrap-up (`done`) turn.
  */
 export const OnboardingTurnSchema = z.object({
   reply: z.string(),
   done: z.boolean(),
+  options: z.array(z.string()).optional(),
   signals: z.array(
     z.object({
       topic: z.string(),
@@ -33,7 +36,14 @@ export const OnboardingTurnSchema = z.object({
   ),
 });
 
-export type OnboardingTurn = z.infer<typeof OnboardingTurnSchema>;
+/**
+ * The CLEANED turn `nextOnboardingTurn` returns. The raw schema makes `options` optional (the model
+ * may omit it), but the function always normalizes it to a concrete array, so the public contract
+ * guarantees `options: string[]` (callers never have to null-check it).
+ */
+export type OnboardingTurn = Omit<z.infer<typeof OnboardingTurnSchema>, "options"> & {
+  options: string[];
+};
 
 export interface OnboardingMessage {
   role: "user" | "assistant";
@@ -80,6 +90,11 @@ const ONBOARDING_SYSTEM = [
   "  and goals — but follow the conversation naturally.",
   "- Keep `reply` SHORT and mobile-friendly (1–2 sentences, warm, plain text — no markdown, no",
   "  bullet lists). End a question turn with your single question.",
+  "- For each QUESTION turn, also return `options`: 3–6 SHORT (1–3 words) suggested quick answers to",
+  "  YOUR question, shown as tappable chips (the user can also type their own). Make them concrete and",
+  "  relevant to what you just asked — e.g. for diet: 'I eat everything','Vegetarian','Vegan','Pescatarian';",
+  "  for cuisines: 'Italian','Thai','Mexican','Indian'. Do NOT include 'Other' or 'Skip'. On a wrap-up",
+  "  (`done`) turn, return an empty `options` array (no question, no chips).",
   "- From the user's LATEST answer, infer + extract food preferences into `signals` using these EXACT",
   "  topic conventions (lowercase, hyphenated slugs — generic terms, never brands or sentences).",
   "  IMPORTANT: `polarity` says whether the preference APPLIES to the user, NOT whether it's a like vs.",
@@ -110,9 +125,27 @@ function renderTranscript(messages: OnboardingMessage[]): string {
   const body = lines.length ? lines.join("\n") : "(no messages yet — open the conversation)";
   return (
     `Conversation so far:\n${body}\n\n` +
-    "Produce the next turn: your single adaptive question (or a wrap-up if you have enough), plus any " +
-    "preferences extracted from the user's most recent answer as typed signals."
+    "Produce the next turn: your single adaptive question (or a wrap-up if you have enough), 3–6 short " +
+    "tappable `options` for that question (empty if wrapping up), plus any preferences extracted from " +
+    "the user's most recent answer as typed signals."
   );
+}
+
+/** Clean the model's suggested chips: trim, drop blanks/over-long, de-dupe (case-insensitive), cap at 6. */
+function cleanOptions(options: string[] | undefined): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of options ?? []) {
+    if (typeof raw !== "string") continue;
+    const opt = raw.trim();
+    if (!opt || opt.length > 40) continue;
+    const k = opt.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(opt);
+    if (out.length >= 6) break;
+  }
+  return out;
 }
 
 /**
@@ -141,5 +174,8 @@ export async function nextOnboardingTurn(
       confidence: clamp01(s.confidence),
     }));
 
-  return { reply: res.reply, done: res.done, signals };
+  // No chips on a wrap-up turn (there's no question to suggest answers for).
+  const options = res.done ? [] : cleanOptions(res.options);
+
+  return { reply: res.reply, done: res.done, options, signals };
 }

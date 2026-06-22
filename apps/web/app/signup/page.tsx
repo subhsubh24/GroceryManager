@@ -1,42 +1,29 @@
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 import {
-  appendPreferenceSignal,
   createUserWithPassword,
   getAdminDb,
-  getDb,
   getUserByEmail,
   getUserIdByReferralCode,
   recordReferral,
-  withTenant,
 } from "@gm/db";
 import { hashPassword } from "@gm/core/crypto";
-import {
-  isValidReferralCode,
-  signalFromProfileAge,
-  signalFromProfileGender,
-  signalFromProfileName,
-} from "@gm/core/personalization";
+import { isValidReferralCode } from "@gm/core/personalization";
 import { signIn } from "@/auth";
 
 export const dynamic = "force-dynamic";
 
-const GENDERS = ["female", "male", "non-binary", "prefer not to say"];
-
 /**
- * Create an account: email + password (username = email) plus a profile (name, age, gender). The
- * profile is stored in the SEMANTIC LAYER as profile:* preferenceSignals (PLAN §8.7), so plan /
- * recipe / etc. read it like everything else. Then sign the user straight in.
+ * Create an account: email + password only (username = email). The user's PROFILE (name, age, gender)
+ * is now collected in the onboarding flow's first step — `/onboarding` — and written there as
+ * profile:* preferenceSignals (PLAN §8.7). Signup just provisions the account and signs the user in;
+ * the credentials redirect (`signIn`) sends new accounts straight into onboarding to gather it.
  */
 async function registerAction(formData: FormData) {
   "use server";
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  const name = String(formData.get("name") ?? "").trim();
-  const ageRaw = String(formData.get("age") ?? "").trim();
-  const gender = String(formData.get("gender") ?? "").trim();
   const ref = String(formData.get("ref") ?? "").trim();
-  const age = Number(ageRaw);
 
   if (!email || !password) redirect("/signup?error=missing");
   if (password.length < 8) redirect("/signup?error=weak");
@@ -44,30 +31,12 @@ async function registerAction(formData: FormData) {
   const existing = await getUserByEmail(getAdminDb(), email);
   if (existing) redirect("/signup?error=exists");
 
-  // Provision the user on the admin connection (a brand-new row can't satisfy its own RLS).
+  // Provision the user on the admin connection (a brand-new row can't satisfy its own RLS). Name is
+  // captured later in onboarding (profile step), so the account row starts without one.
   const userId = await createUserWithPassword(getAdminDb(), {
     email,
-    name: name || null,
+    name: null,
     passwordHash: hashPassword(password),
-  });
-
-  // Profile facts → the preference ledger (semantic layer). Tenant-scoped so RLS is satisfied.
-  await withTenant(getDb(), userId, async (tx) => {
-    const signals = [
-      ...(name ? [signalFromProfileName(name)] : []),
-      ...(Number.isFinite(age) && age > 0 ? [signalFromProfileAge(age)] : []),
-      ...(gender ? [signalFromProfileGender(gender)] : []),
-    ];
-    for (const s of signals) {
-      await appendPreferenceSignal(tx, {
-        userId,
-        topic: s.topic,
-        value: s.value ?? null,
-        polarity: s.polarity,
-        source: "onboarding_q",
-        confidence: s.confidence,
-      });
-    }
   });
 
   // Referral attribution — STRICTLY best-effort. The user already exists and is about to be signed in;
@@ -120,7 +89,7 @@ export default async function SignUpPage({
             Create your account
           </h1>
           <p className="mt-2 text-sm text-ink-500">
-            A little about you so every plan and recipe fits — you can edit it anytime.
+            Just an email and password to start — we&apos;ll set up the rest in a minute.
           </p>
         </div>
 
@@ -145,27 +114,6 @@ export default async function SignUpPage({
               />
               <span className="field-hint">At least 8 characters.</span>
             </label>
-            <label className="block">
-              <span className="field-label">Name</span>
-              <input name="name" type="text" autoComplete="name" className="input" />
-            </label>
-            <div className="grid grid-cols-2 gap-4">
-              <label className="block">
-                <span className="field-label">Age</span>
-                <input name="age" type="number" min="1" max="120" className="input" />
-              </label>
-              <label className="block">
-                <span className="field-label">Gender</span>
-                <select name="gender" defaultValue="" className="select">
-                  <option value="">—</option>
-                  {GENDERS.map((g) => (
-                    <option key={g} value={g}>
-                      {g}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
             <button type="submit" className="btn-primary btn-block">
               Create account
             </button>

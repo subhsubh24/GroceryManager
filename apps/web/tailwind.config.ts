@@ -2,8 +2,9 @@ import type { Config } from "tailwindcss";
 
 /**
  * GroceryManager design system — calm, refined, and quietly confident.
- * Polish bar: Airbnb / Linear / Stripe — one typeface (Inter), generous whitespace, a restrained
- * neutral palette, and a SINGLE accent (a garden-fresh green) used sparingly and mostly solid.
+ * Polish bar: Airbnb / Linear / Stripe — one distinctive typeface (Hanken Grotesk), generous
+ * whitespace, a restrained neutral palette, and a SINGLE accent (a garden-fresh green) used
+ * sparingly and mostly solid.
  * The citrus / berry / grape / ocean ramps remain defined for back-compat, but the app no longer
  * renders them as themes or spotlights — the "gradient" tokens below resolve to the solid brand so
  * legacy usages stay calm. Motion is quiet: a subtle fade and a gentle card-hover shadow only.
@@ -129,10 +130,11 @@ export default {
         "5xl": "2.5rem",
       },
       fontFamily: {
-        // One typeface for the whole app: Inter. `display` resolves to the same Inter stack as `sans`
-        // (no serif) — headings differ from body by weight, tracking, and size, not by family.
+        // One typeface for the whole app: Hanken Grotesk (wired to --font-sans AND --font-display in
+        // the root layout). `display` resolves to the same stack as `sans` (no serif) — headings
+        // differ from body by weight, tracking, and size, not by family.
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
-        display: ["var(--font-sans)", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+        display: ["var(--font-display)", "var(--font-sans)", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
       },
       fontSize: {
         // A tighter, more confident display rhythm for big, expressive headings.

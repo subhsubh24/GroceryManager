@@ -21,6 +21,7 @@ describe("nextOnboardingTurn", () => {
     const client = fakeClient({
       reply: "Love that. Any allergies I should plan around?",
       done: false,
+      options: ["Peanuts", "Shellfish", "  Dairy  ", "peanuts", "", "No allergies"], // trims, de-dupes, drops blanks
       signals: [
         // diet/allergen emitted as "neutral" by the model — MUST be coerced to "positive" or the
         // projection silently drops them (sign("neutral") === 0). This is the safety-critical case.
@@ -39,6 +40,8 @@ describe("nextOnboardingTurn", () => {
 
     expect(turn.reply).toContain("allergies");
     expect(turn.done).toBe(false);
+    // Suggested chips are cleaned: trimmed, blanks dropped, case-insensitively de-duped, order kept.
+    expect(turn.options).toEqual(["Peanuts", "Shellfish", "Dairy", "No allergies"]);
     // Only the four allowed signals survive: topic lowercased, confidence clamped, and diet/allergen
     // coerced to "positive"; cuisine/ingredient keep the model's polarity.
     expect(turn.signals).toEqual([
@@ -70,14 +73,17 @@ describe("nextOnboardingTurn", () => {
     expect(model.dislikes).toContain("olives");
   });
 
-  it("passes through a done wrap-up with no signals", async () => {
+  it("passes through a done wrap-up with no signals and no chips", async () => {
     const client = fakeClient({
       reply: "Perfect — I've got a great picture of your taste. Let's get cooking!",
       done: true,
+      // Even if the model emits options on a wrap-up turn, we drop them (there's no question to answer).
+      options: ["This", "should", "vanish"],
       signals: [],
     });
     const turn = await nextOnboardingTurn(client, [{ role: "assistant", content: "..." }]);
     expect(turn.done).toBe(true);
     expect(turn.signals).toEqual([]);
+    expect(turn.options).toEqual([]);
   });
 });

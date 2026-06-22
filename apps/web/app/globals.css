@@ -237,6 +237,16 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23737f8c' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   }
 
+  /* Mobile-first inputs (onboarding): text-base = 16px so iOS Safari never zooms on focus, and a
+     ≥44px tap height. Solid surface, calm focus ring — same language as `.input`, sized up for touch. */
+  .input-lg {
+    @apply mt-1.5 block min-h-[48px] w-full rounded-xl border border-line bg-surface px-4 text-base text-ink-900 shadow-xs transition placeholder:text-ink-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20;
+  }
+  .select-lg {
+    @apply input-lg appearance-none bg-[length:1.15em] bg-[right_0.8rem_center] bg-no-repeat pr-10;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23737f8c' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  }
+
   /* File input — styled "Choose file" affordance. */
   .input-file {
     @apply block w-full text-sm text-ink-500 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand-50 file:px-3.5 file:py-2 file:text-sm file:font-semibold file:text-brand-700 file:transition hover:file:bg-brand-100;
@@ -272,6 +282,15 @@
   /* Selectable filter chip (label-wrapped checkbox). */
   .chip {
     @apply inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-medium text-ink-600 shadow-xs transition hover:border-brand-200 hover:text-ink-800 has-[:checked]:border-brand-300 has-[:checked]:bg-brand-50 has-[:checked]:text-brand-800;
+  }
+
+  /* Tappable answer chip (onboarding tiles). A SOLID, comfortably-sized touch target (≥44px tall) for
+     the AI's suggested answers + the keyless multi-select. `.chip-tap-on` is the selected/accent state. */
+  .chip-tap {
+    @apply inline-flex min-h-[44px] cursor-pointer select-none items-center gap-1.5 rounded-xl border border-line bg-surface px-4 text-[0.95rem] font-medium text-ink-700 shadow-xs transition-colors duration-150 hover:border-brand-200 hover:bg-brand-50/60 active:bg-brand-50;
+  }
+  .chip-tap-on {
+    @apply border-brand-300 bg-brand-50 text-brand-800;
   }
 
   /* Segmented filter tab (anchor-based). Active = solid accent; idle = neutral. */
@@ -317,9 +336,14 @@
     @apply flex items-center justify-between gap-4 rounded-xl border border-line bg-surface px-4 py-3.5 shadow-xs transition duration-200 hover:border-brand-100 hover:shadow-sm;
   }
 
-  /* Emoji tile used for feature icons / section glyphs. A neutral light tile — no rotate/scale. */
+  /* Icon tile — a small SOLID surface that holds a real (Lucide) icon, NOT an emoji. Neutral by
+     default; pair with `.tile-brand` for the accent treatment. Intentional, calm — no rotate/scale. */
   .tile {
-    @apply flex h-11 w-11 items-center justify-center rounded-xl bg-ink-50 text-xl ring-1 ring-inset ring-line;
+    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line bg-ink-50 text-ink-600;
+  }
+  /* Accent variant — a soft brand-tinted icon tile (brand icon on a calm green wash). */
+  .tile-brand {
+    @apply flex shrink-0 items-center justify-center rounded-xl border border-brand-100 bg-brand-50 text-brand-700;
   }
 
   /* ----------------------------------------------------------------------------
@@ -356,6 +380,23 @@
   /* Shine sweep removed — `.shine` is now an inert hook (kept so markup doesn't break). */
   .shine {
     @apply relative;
+  }
+
+  /* The ONE purposeful motion in onboarding: a quick, gentle step transition (a small rise + fade as
+     each step mounts). This is NOT a blanket "everything fades in" — it's applied only to the active
+     onboarding step on navigation, and it's disabled under prefers-reduced-motion (utilities below). */
+  .onboarding-step {
+    animation: onboarding-step-in 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes onboarding-step-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
 

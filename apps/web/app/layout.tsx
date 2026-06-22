@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 import { RegisterSW } from "./register-sw";
 import { BottomNav } from "./components/bottom-nav";
@@ -9,12 +9,14 @@ import { InstallPrompt } from "./components/install-prompt";
 // Runs before paint to set the theme class — prevents a flash of the wrong theme on load.
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();`;
 
-// One typeface for the whole app: Inter — clean, modern, highly legible at every size. It backs both
-// the body (`--font-sans`) and display headings (`--font-display`); hierarchy comes from weight, size,
-// and tracking, not a second family. No serif anywhere.
-const inter = Inter({
+// One typeface for the whole app: Hanken Grotesk — a distinctive, professional grotesque with real
+// character (a warmer, less default-feeling alternative to Inter). It backs BOTH the body
+// (`--font-sans`) and display headings (`--font-display`); hierarchy comes from weight, size, and
+// tracking, not a second family. Intentional weight range only — no serif anywhere.
+const hankenGrotesk = Hanken_Grotesk({
   subsets: ["latin"],
   display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-sans",
 });
 
@@ -43,7 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={inter.variable}
+      className={hankenGrotesk.variable}
       style={{ "--font-display": "var(--font-sans)" } as React.CSSProperties}
       suppressHydrationWarning
     >

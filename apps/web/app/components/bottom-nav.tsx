@@ -17,7 +17,9 @@ const ITEMS: { href: string; label: string; emoji: string }[] = [
 
 // `/cook/…` is focused cook-mode (full-screen, screen-awake) — hide the bar there, but NOT on
 // `/cookbook` (a normal in-app screen). The trailing slash anchors to the `/cook/[id]` route only.
-const HIDDEN_ON = [/^\/$/, /^\/signin/, /^\/signup/, /^\/share/, /^\/cook\//];
+// `/onboarding` is its own full-screen step-flow with its own footer controls — hide the bar so it
+// doesn't overlap the flow's bottom buttons.
+const HIDDEN_ON = [/^\/$/, /^\/signin/, /^\/signup/, /^\/onboarding/, /^\/share/, /^\/cook\//];
 
 export function BottomNav() {
   const pathname = usePathname() || "/";

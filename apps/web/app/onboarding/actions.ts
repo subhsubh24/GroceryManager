@@ -8,12 +8,23 @@ import {
   persistUserModel,
   withTenant,
 } from "@gm/db";
-import { nextOnboardingTurn, projectUserModel } from "@gm/core/personalization";
+import {
+  answersToSignals,
+  nextOnboardingTurn,
+  projectUserModel,
+  signalFromProfileAge,
+  signalFromProfileGender,
+  signalFromProfileName,
+  type OnboardingAnswers,
+} from "@gm/core/personalization";
 import { getGeminiClient } from "@gm/core/llm";
 import { currentUserId } from "@/app/lib/tenant";
 
 /** The chat message shape exchanged with the client (matches `nextOnboardingTurn`'s input). */
 export type OnboardingMessage = { role: "user" | "assistant"; content: string };
+
+/** The profile step's payload (name/age/gender → profile:* preference signals). */
+export type ProfileInput = { name?: string; age?: string; gender?: string };
 
 // Bound what we forward to the model — onboarding is short, but a client could send a long thread.
 const MAX_MESSAGES = 16;
@@ -29,11 +40,15 @@ const MAX_MESSAGES = 16;
  */
 export async function onboardingTurnAction(
   messages: OnboardingMessage[],
-): Promise<{ reply: string; done: boolean }> {
+): Promise<{ reply: string; done: boolean; options: string[] }> {
   try {
     const userId = await currentUserId();
     if (!userId) {
-      return { reply: "Please sign in so I can save what I learn about your taste.", done: false };
+      return {
+        reply: "Please sign in so I can save what I learn about your taste.",
+        done: false,
+        options: [],
+      };
     }
 
     // Sanitize + cap the incoming conversation before doing any work.
@@ -60,13 +75,93 @@ export async function onboardingTurnAction(
       });
     }
 
-    return { reply: turn.reply, done: turn.done };
+    return { reply: turn.reply, done: turn.done, options: turn.options };
   } catch {
-    // Graceful fallback — keep the conversation alive instead of surfacing an error.
+    // Graceful fallback — keep the conversation alive instead of surfacing an error. Offer a few
+    // generic chips so the tile still has tappable answers even when the model call failed.
     return {
       reply: "Got it! Tell me a bit more — what kinds of food do you usually love to eat?",
       done: false,
+      options: ["Italian", "Mexican", "Thai", "Indian", "Comfort food"],
     };
+  }
+}
+
+/**
+ * Persist the profile step (name/age/gender) as profile:* preference signals — the SAME semantic-layer
+ * persistence signup used to do (source "onboarding_q"; that's the source signup wrote profile facts
+ * with, and the only ledger source the projection needs — `projectUserModel` keys on the topic, not
+ * the source). Latest-wins by confidence, so a later profile edit overrides this. Best-effort and never
+ * throws to the client: a missing session or DB hiccup just no-ops so the flow can advance. Re-projection
+ * into the materialized model happens once at the end (`finishOnboardingAction`).
+ */
+export async function saveProfileAction(profile: ProfileInput): Promise<void> {
+  try {
+    const userId = await currentUserId();
+    if (!userId) return;
+
+    const name = (profile.name ?? "").trim();
+    const age = Number((profile.age ?? "").trim());
+    const gender = (profile.gender ?? "").trim();
+
+    const signals = [
+      ...(name ? [signalFromProfileName(name)] : []),
+      ...(Number.isFinite(age) && age > 0 ? [signalFromProfileAge(age)] : []),
+      ...(gender ? [signalFromProfileGender(gender)] : []),
+    ];
+    if (signals.length === 0) return;
+
+    await withTenant(getDb(), userId, async (tx) => {
+      for (const s of signals) {
+        await appendPreferenceSignal(tx, {
+          userId,
+          topic: s.topic,
+          value: s.value ?? null,
+          polarity: s.polarity,
+          source: "onboarding_q",
+          confidence: s.confidence,
+        });
+      }
+    });
+  } catch {
+    // Best-effort — never block the onboarding flow on a profile save.
+  }
+}
+
+/**
+ * Persist the KEYLESS taste step (the static chip wizard, used when there's no GEMINI_API_KEY). Maps
+ * the structured answers → typed signals deterministically (`answersToSignals`) and writes them to the
+ * SAME ledger the AI path uses (source "onboarding_q"). No free-text parse here (that needs the model,
+ * which is absent on this path) and no budget step. Best-effort; re-projection happens at finish.
+ */
+export async function saveTasteAction(answers: OnboardingAnswers): Promise<void> {
+  try {
+    const userId = await currentUserId();
+    if (!userId) return;
+
+    const signals = answersToSignals({
+      diets: answers.diets ?? [],
+      allergens: answers.allergens ?? [],
+      lovedCuisines: answers.lovedCuisines ?? [],
+      lovedIngredients: answers.lovedIngredients ?? [],
+      dislikedIngredients: answers.dislikedIngredients ?? [],
+    });
+    if (signals.length === 0) return;
+
+    await withTenant(getDb(), userId, async (tx) => {
+      for (const s of signals) {
+        await appendPreferenceSignal(tx, {
+          userId,
+          topic: s.topic,
+          value: s.value ?? null,
+          polarity: s.polarity,
+          source: "onboarding_q",
+          confidence: s.confidence,
+        });
+      }
+    });
+  } catch {
+    // Best-effort — never block onboarding on a taste save.
   }
 }
 

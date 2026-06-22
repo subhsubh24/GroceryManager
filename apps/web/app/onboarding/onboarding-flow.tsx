@@ -3,42 +3,58 @@
 import { useState, useTransition } from "react";
 import { unstable_rethrow } from "next/navigation";
 import type { OnboardingAnswers } from "@gm/core/personalization";
+import {
+  finishOnboardingAction,
+  onboardingTurnAction,
+  saveProfileAction,
+  saveTasteAction,
+  type OnboardingMessage,
+  type ProfileInput,
+} from "./actions";
+import {
+  BackIcon,
+  CheckIcon,
+  ChevronRightIcon,
+  DoneIcon,
+  ItemsIcon,
+  NextIcon,
+  ProfileIcon,
+  QuickAddIcon,
+  ReceiptsIcon,
+  ScanIcon,
+  SpinnerIcon,
+  TasteIcon,
+} from "./icons";
 
 /**
- * Guided onboarding wizard (presentation only). Research-backed shape: ONE topic per screen, a
- * progress bar that starts partially filled (so it feels achievable), value-framed microcopy, and
- * Skip/Back on every step so the user is never forced to answer. All answers live in local state;
- * nothing is persisted until the user finishes (or "skips the rest"), at which point we hand the
- * complete answer set to the server `onFinish` action — which reuses the EXACT same persistence as
- * the old single form (answersToSignals → optional free-text parse → onboarding_q signals →
- * setWeeklyBudgetCents → persistUserModel) and then redirect("/").
+ * Onboarding as a TILE step-flow (mobile-first) — a clean ONE-STEP-PER-SCREEN flow in a centered
+ * card, NOT a chat. Four macro steps: Profile → Taste → Add first items → Done. A top segmented
+ * progress indicator, a Back affordance, and Skip where it makes sense.
  *
- * The save logic is untouched on purpose: this file changes only the flow/presentation. It must stay
- * free of server-only imports (it's a client component) — it depends on `@gm/core/personalization`
- * for the `OnboardingAnswers` TYPE only, which is erased at build time.
+ * The TASTE step renders the SAME adaptive engine either way, just never as a chat bubble:
+ *   • AI (a GEMINI_API_KEY is configured): each `nextOnboardingTurn` turn becomes a tile — the
+ *     model's question is the step heading, with its suggested `options` as tappable chips plus a
+ *     small "type your own" input. Each answer advances to the next adaptive question.
+ *   • Keyless fallback: the deterministic chip wizard, restyled to match (diets → allergies →
+ *     cuisines → loves/dislikes), persisted via `saveTasteAction`.
+ *
+ * Persistence reuses the SAME server actions/ledger as before — profile facts (`saveProfileAction`),
+ * taste signals (the AI turn action / `saveTasteAction`), then `finishOnboardingAction` re-projects
+ * the materialized model and redirects to "/". This is a client component: it holds all wizard state
+ * locally, never touches `window`/`document` during render, and reaches the server-only LLM strictly
+ * through the server actions — so it hydrates cleanly.
+ *
+ * iPhone specifics: full dynamic-viewport height, a single column, safe-area insets top + bottom,
+ * 16px input text (so iOS Safari doesn't zoom on focus), ≥44px tap targets, and no horizontal overflow.
  */
 
+const MACRO_STEPS = ["Profile", "Taste", "Items", "Done"] as const;
+
+// Keyless static taste wizard — restyled to match the AI tiles. One topic per sub-screen.
 const DIETS = ["vegetarian", "vegan", "pescatarian", "gluten-free", "dairy-free", "keto", "halal", "kosher"];
 const ALLERGENS = ["peanut", "tree nut", "shellfish", "dairy", "egg", "soy", "gluten", "sesame"];
 const CUISINES = ["italian", "mexican", "thai", "indian", "chinese", "japanese", "mediterranean", "american"];
-
-/**
- * The payload handed to the server action — the SAME shape the old form produced (OnboardingAnswers
- * with array fields), plus a UI-only `budget` string in dollars. The wizard keeps the two free-text
- * ingredient fields as raw strings in local UI state and only splits them into arrays here, so the
- * user can type commas freely (a controlled `value={join(split(text))}` round-trip would otherwise
- * strip the separator on every keystroke).
- */
-export type WizardState = OnboardingAnswers & { budget: string };
-
-export type OnboardingPrefill = {
-  diets: string[];
-  allergens: string[];
-  lovedCuisines: string[];
-  lovedIngredients: string[];
-  dislikedIngredients: string[];
-  budget: string;
-};
+const GENDERS = ["female", "male", "non-binary", "prefer not to say"];
 
 const splitCsv = (v: string) =>
   v
@@ -46,336 +62,583 @@ const splitCsv = (v: string) =>
     .map((x) => x.trim())
     .filter(Boolean);
 
-const joinCsv = (xs: string[] | undefined) => (xs ?? []).join(", ");
+type Profile = { name: string; age: string; gender: string };
 
-// Local wizard UI state. Multi-select groups + budget mirror the payload; the two ingredient fields
-// are raw text (split into arrays only when we build the WizardState payload at finish).
-type UiState = {
+export function OnboardingFlow({ hasAi }: { hasAi: boolean }) {
+  const [macro, setMacro] = useState(0); // 0 profile · 1 taste · 2 items · 3 done
+  const [profile, setProfile] = useState<Profile>({ name: "", age: "", gender: "" });
+  // Bumped each time we move forward so the active step gets a fresh `key` → one purposeful transition.
+  const [dir, setDir] = useState(0);
+
+  const [savingProfile, startProfile] = useTransition();
+  const [finishing, startFinish] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  const advance = () => {
+    setError(null);
+    setDir((d) => d + 1);
+    setMacro((m) => Math.min(MACRO_STEPS.length - 1, m + 1));
+  };
+  const back = () => {
+    setError(null);
+    setDir((d) => d + 1);
+    setMacro((m) => Math.max(0, m - 1));
+  };
+
+  // Profile → persist as profile:* signals, then advance. Save is best-effort (never blocks the flow).
+  function submitProfile() {
+    if (savingProfile) return;
+    const payload: ProfileInput = { name: profile.name, age: profile.age, gender: profile.gender };
+    startProfile(async () => {
+      try {
+        await saveProfileAction(payload);
+      } catch {
+        /* best-effort — advance regardless so the user is never stuck on profile */
+      }
+      advance();
+    });
+  }
+
+  // Finish (from Done): re-project + redirect("/"). The action throws NEXT_REDIRECT on success — it
+  // MUST propagate so Next navigates; `unstable_rethrow` lets it through. A genuine error surfaces.
+  function finish() {
+    if (finishing) return;
+    setError(null);
+    startFinish(async () => {
+      try {
+        await finishOnboardingAction();
+      } catch (e) {
+        unstable_rethrow(e);
+        setError("Couldn't wrap up just now — please try again.");
+      }
+    });
+  }
+
+  return (
+    <main className="flex min-h-dvh w-full flex-col bg-cream pt-[env(safe-area-inset-top)] pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+      {/* Centered, properly-sized column — not a full-width empty canvas. */}
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-5">
+        <ProgressBar current={macro} />
+
+        {/* The active step. `key` re-mounts on each navigation → the single, purposeful step transition. */}
+        <div key={`${macro}-${dir}`} className="onboarding-step flex flex-1 flex-col pt-8">
+          {macro === 0 && (
+            <ProfileStep
+              profile={profile}
+              setProfile={setProfile}
+              onNext={submitProfile}
+              saving={savingProfile}
+            />
+          )}
+
+          {macro === 1 &&
+            (hasAi ? (
+              <TasteStepAI onDone={advance} onBack={back} />
+            ) : (
+              <TasteStepStatic onDone={advance} onBack={back} />
+            ))}
+
+          {macro === 2 && <ItemsStep onContinue={advance} onBack={back} />}
+
+          {macro === 3 && (
+            <DoneStep onFinish={finish} finishing={finishing} error={error} />
+          )}
+        </div>
+      </div>
+    </main>
+  );
+}
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Shared chrome                                                                                     */
+/* ------------------------------------------------------------------------------------------------ */
+
+/** Top progress: a segmented indicator (one segment per macro step) + a quiet "Step N of M" label. */
+function ProgressBar({ current }: { current: number }) {
+  const total = MACRO_STEPS.length;
+  return (
+    <div className="pt-6">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-400">
+          {MACRO_STEPS[current]}
+        </p>
+        <p className="text-xs font-medium text-ink-400" aria-hidden>
+          Step {current + 1} of {total}
+        </p>
+      </div>
+      <div
+        className="mt-2.5 flex gap-1.5"
+        role="progressbar"
+        aria-valuemin={1}
+        aria-valuemax={total}
+        aria-valuenow={current + 1}
+        aria-label={`Onboarding — step ${current + 1} of ${total}`}
+      >
+        {MACRO_STEPS.map((label, i) => (
+          <span
+            key={label}
+            className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
+              i <= current ? "bg-brand-solid" : "bg-ink-100"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * A step header — icon tile (Lucide, never emoji), title, and a value-framed line. Left-aligned.
+ * `liveTitle` makes the heading an `aria-live` region: use it on the AI taste step, whose question
+ * updates IN PLACE each turn, so a screen reader announces each new adaptive question. (Other steps
+ * remount with a fresh heading, so they don't need it.)
+ */
+function StepHeader({
+  icon,
+  title,
+  blurb,
+  liveTitle = false,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  blurb: string;
+  liveTitle?: boolean;
+}) {
+  return (
+    <header>
+      <span className="tile-brand h-12 w-12">{icon}</span>
+      <h1
+        className="mt-4 text-[1.65rem] font-bold leading-[1.15] tracking-[-0.02em] text-ink-900"
+        aria-live={liveTitle ? "polite" : undefined}
+        aria-atomic={liveTitle ? true : undefined}
+      >
+        {title}
+      </h1>
+      <p className="mt-2 text-[0.95rem] leading-relaxed text-ink-500">{blurb}</p>
+    </header>
+  );
+}
+
+/**
+ * Footer nav row. `onBack` renders a Back affordance; the right slot holds Skip / Next / primary.
+ * `backDisabled` blocks Back while a step has work in flight (e.g. an AI turn resolving) so the user
+ * can't navigate away mid-action and trigger a state update on a step that's already been left.
+ */
+function StepFooter({
+  onBack,
+  backDisabled = false,
+  children,
+}: {
+  onBack?: () => void;
+  backDisabled?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mt-8 flex items-center justify-between gap-3 pt-2">
+      {onBack ? (
+        <button
+          type="button"
+          onClick={onBack}
+          disabled={backDisabled}
+          className="btn-secondary min-h-[44px]"
+        >
+          <BackIcon className="h-4 w-4" aria-hidden />
+          Back
+        </button>
+      ) : (
+        <span />
+      )}
+      <div className="flex items-center gap-2">{children}</div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Step 1 — Profile                                                                                  */
+/* ------------------------------------------------------------------------------------------------ */
+
+function ProfileStep({
+  profile,
+  setProfile,
+  onNext,
+  saving,
+}: {
+  profile: Profile;
+  setProfile: React.Dispatch<React.SetStateAction<Profile>>;
+  onNext: () => void;
+  saving: boolean;
+}) {
+  return (
+    <section className="flex flex-1 flex-col">
+      <StepHeader
+        icon={<ProfileIcon className="h-6 w-6" aria-hidden />}
+        title="A little about you"
+        blurb="So plans and recipes feel made for you. You can edit any of this later."
+      />
+
+      <form
+        className="mt-7 space-y-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onNext();
+        }}
+      >
+        <label className="block">
+          <span className="field-label">Name</span>
+          <input
+            value={profile.name}
+            onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))}
+            type="text"
+            autoComplete="name"
+            placeholder="What should we call you?"
+            className="input-lg"
+          />
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block">
+            <span className="field-label">Age</span>
+            <input
+              value={profile.age}
+              onChange={(e) => setProfile((p) => ({ ...p, age: e.target.value }))}
+              type="number"
+              min="1"
+              max="120"
+              inputMode="numeric"
+              placeholder="—"
+              className="input-lg"
+            />
+          </label>
+          <label className="block">
+            <span className="field-label">Gender</span>
+            <select
+              value={profile.gender}
+              onChange={(e) => setProfile((p) => ({ ...p, gender: e.target.value }))}
+              className="select-lg"
+            >
+              <option value="">—</option>
+              {GENDERS.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {/* Submit lives in the footer for layout, but this hidden submit lets Enter advance the form. */}
+        <button type="submit" className="sr-only" tabIndex={-1} aria-hidden>
+          Continue
+        </button>
+      </form>
+
+      <div className="flex-1" />
+
+      <StepFooter>
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={saving}
+          className="btn-primary min-h-[44px] px-5"
+        >
+          {saving ? (
+            <SpinnerIcon className="h-4 w-4 animate-spin" aria-hidden />
+          ) : (
+            <>
+              Continue
+              <NextIcon className="h-4 w-4" aria-hidden />
+            </>
+          )}
+        </button>
+      </StepFooter>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Step 2a — Taste (AI-adaptive). One question per screen, rendered as a tile (chips + free input).  */
+/* ------------------------------------------------------------------------------------------------ */
+
+const AI_GREETING =
+  "How would you describe the way you eat? Anything from \"I eat everything\" to a specific diet works.";
+const AI_GREETING_OPTIONS = ["I eat everything", "Vegetarian", "Vegan", "Pescatarian", "Gluten-free"];
+
+function TasteStepAI({ onDone, onBack }: { onDone: () => void; onBack: () => void }) {
+  // The transcript we send to the model (assistant questions + user answers). Seeded with the opening
+  // question client-side so the first tile shows instantly (no server round-trip to render it).
+  const [transcript, setTranscript] = useState<OnboardingMessage[]>([
+    { role: "assistant", content: AI_GREETING },
+  ]);
+  const [question, setQuestion] = useState(AI_GREETING);
+  const [options, setOptions] = useState<string[]>(AI_GREETING_OPTIONS);
+  const [custom, setCustom] = useState("");
+  const [turnCount, setTurnCount] = useState(0); // # of questions answered so far (for a gentle hint)
+  const [pending, startTurn] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function answer(text: string) {
+    const content = text.trim();
+    if (!content || pending) return;
+    setError(null);
+    setCustom("");
+    const next: OnboardingMessage[] = [...transcript, { role: "user", content }];
+    setTranscript(next);
+    startTurn(async () => {
+      try {
+        const { reply, done, options: nextOptions } = await onboardingTurnAction(next);
+        if (done) {
+          onDone();
+          return;
+        }
+        setTranscript((t) => [...t, { role: "assistant", content: reply }]);
+        setQuestion(reply);
+        setOptions(nextOptions);
+        setTurnCount((n) => n + 1);
+      } catch {
+        setError("Hmm, that didn't go through. Mind trying that again?");
+      }
+    });
+  }
+
+  return (
+    <section className="flex flex-1 flex-col">
+      <StepHeader
+        icon={<TasteIcon className="h-6 w-6" aria-hidden />}
+        title={question}
+        blurb="Tap an answer or type your own — every recipe, plan, and list gets tuned to you."
+        liveTitle
+      />
+
+      <div className="mt-6 flex-1">
+        {pending ? (
+          <p className="flex items-center gap-2 text-sm text-ink-400" role="status">
+            <SpinnerIcon className="h-4 w-4 animate-spin" aria-hidden />
+            Thinking about your next question…
+          </p>
+        ) : (
+          <>
+            {options.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {options.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => answer(opt)}
+                    className="chip-tap"
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <form
+              className="mt-4 flex items-center gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                answer(custom);
+              }}
+            >
+              <label htmlFor="taste-custom" className="sr-only">
+                Type your own answer
+              </label>
+              <input
+                id="taste-custom"
+                value={custom}
+                onChange={(e) => setCustom(e.target.value)}
+                type="text"
+                placeholder="Type your own…"
+                autoComplete="off"
+                enterKeyHint="send"
+                className="input-lg flex-1"
+              />
+              <button
+                type="submit"
+                disabled={!custom.trim()}
+                className="btn-primary min-h-[44px] min-w-[44px] shrink-0 px-4"
+                aria-label="Send answer"
+              >
+                <NextIcon className="h-4 w-4" aria-hidden />
+              </button>
+            </form>
+
+            {error && <p className="notice-warn mt-4">{error}</p>}
+            {turnCount > 0 && !error && (
+              <p className="mt-4 text-xs text-ink-400">
+                A few more like this and you&apos;re done — or skip ahead anytime.
+              </p>
+            )}
+          </>
+        )}
+      </div>
+
+      <StepFooter onBack={onBack} backDisabled={pending}>
+        <button
+          type="button"
+          onClick={onDone}
+          disabled={pending}
+          className="btn-ghost min-h-[44px]"
+        >
+          Skip taste
+        </button>
+      </StepFooter>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Step 2b — Taste (keyless static wizard, restyled to match). Diets → allergies → cuisines → loves. */
+/* ------------------------------------------------------------------------------------------------ */
+
+type StaticState = {
   diets: string[];
   allergens: string[];
   lovedCuisines: string[];
   lovedText: string;
   dislikedText: string;
-  freeText: string;
-  budget: string;
 };
 
-export function OnboardingFlow({
-  prefill,
-  onFinish,
-}: {
-  prefill: OnboardingPrefill;
-  // Server action: persists the full answer set and redirects to "/". Throws NEXT_REDIRECT on success.
-  onFinish: (state: WizardState) => Promise<void>;
-}) {
-  const [step, setStep] = useState(0);
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState(false);
-  const [state, setState] = useState<UiState>({
-    diets: prefill.diets,
-    allergens: prefill.allergens,
-    lovedCuisines: prefill.lovedCuisines,
-    lovedText: joinCsv(prefill.lovedIngredients),
-    dislikedText: joinCsv(prefill.dislikedIngredients),
-    freeText: "",
-    budget: prefill.budget,
-  });
+const STATIC_SUBSTEPS = 4;
 
-  // Toggle a value in a multi-select chip group, preserving the rest of the state.
+function TasteStepStatic({ onDone, onBack }: { onDone: () => void; onBack: () => void }) {
+  const [sub, setSub] = useState(0);
+  const [state, setState] = useState<StaticState>({
+    diets: [],
+    allergens: [],
+    lovedCuisines: [],
+    lovedText: "",
+    dislikedText: "",
+  });
+  const [saving, startSave] = useTransition();
+
   const toggle = (field: "diets" | "allergens" | "lovedCuisines", value: string) =>
     setState((s) => {
-      const cur = s[field] ?? [];
+      const cur = s[field];
       const next = cur.includes(value) ? cur.filter((v) => v !== value) : [...cur, value];
       return { ...s, [field]: next };
     });
 
-  // Steps after the Welcome screen (index 0). The final "Done" step is the last entry.
-  // Each question step is fully skippable — Skip just advances without changing state.
-  const QUESTION_STEPS = 5; // diets, allergies, cuisines, loves/dislikes, budget+freetext
-  const TOTAL_STEPS = QUESTION_STEPS + 2; // + Welcome (0) + Done (last)
-  const LAST_STEP = TOTAL_STEPS - 1; // the Done/celebrate screen
-  const isWelcome = step === 0;
-  const isDone = step === LAST_STEP;
-
-  const go = (n: number) => setStep(Math.max(0, Math.min(LAST_STEP, n)));
-  const next = () => go(step + 1);
-  const back = () => go(step - 1);
-  // "Skip the rest" jumps straight to the celebrate step (nothing is lost — state persists).
-  const skipToEnd = () => go(LAST_STEP);
-
-  const finish = () => {
-    setError(false);
-    // Build the SAME payload the old form sent: arrays for the multi-selects + the two ingredient
-    // fields split here (kept as raw text in UI state so the user can type commas freely).
-    const payload: WizardState = {
+  // Persist on the way out of the LAST sub-step (or on Skip), then hand control back to the macro flow.
+  function persistAndDone() {
+    const answers: OnboardingAnswers = {
       diets: state.diets,
       allergens: state.allergens,
       lovedCuisines: state.lovedCuisines,
       lovedIngredients: splitCsv(state.lovedText),
       dislikedIngredients: splitCsv(state.dislikedText),
-      freeText: state.freeText || null,
-      budget: state.budget,
     };
-    startTransition(async () => {
+    startSave(async () => {
       try {
-        // On success the server action calls redirect("/"), which surfaces here as a thrown
-        // NEXT_REDIRECT — it MUST propagate so Next's RedirectBoundary performs the navigation.
-        // Swallowing it would persist the data but strand the user on this screen.
-        await onFinish(payload);
-      } catch (e) {
-        unstable_rethrow(e); // re-throw framework control-flow (NEXT_REDIRECT) so navigation happens
-        setError(true); // a real save failure — surface it instead of dropping it silently
+        await saveTasteAction(answers);
+      } catch {
+        /* best-effort — advance regardless */
       }
+      onDone();
     });
+  }
+
+  const nextSub = () => {
+    if (sub >= STATIC_SUBSTEPS - 1) persistAndDone();
+    else setSub((s) => s + 1);
+  };
+  const backSub = () => {
+    if (sub === 0) onBack();
+    else setSub((s) => s - 1);
   };
 
-  // Progress bar: starts partially filled at Welcome (1 of N) so it feels achievable, fills to 100%.
-  const progressPct = Math.round(((step + 1) / TOTAL_STEPS) * 100);
-
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col px-5 py-8 sm:px-6">
-      {/* Progress: a calm bar plus a "Step N of M" label. Hidden on Welcome's label, shown as a count. */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between text-xs font-medium text-ink-400">
-          <span>{isDone ? "All done" : isWelcome ? "Getting started" : `Step ${step} of ${QUESTION_STEPS}`}</span>
-          <span aria-hidden>{progressPct}%</span>
-        </div>
-        <div
-          className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-ink-100"
-          role="progressbar"
-          aria-valuenow={progressPct}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label="Onboarding progress"
-        >
-          <div
-            className="h-full rounded-full bg-brand-solid transition-[width] duration-300 ease-out"
-            style={{ width: `${progressPct}%` }}
+    <section className="flex flex-1 flex-col">
+      {sub === 0 && (
+        <StepHeader
+          icon={<TasteIcon className="h-6 w-6" aria-hidden />}
+          title="Any diets you follow?"
+          blurb="So every plan and recipe respects how you eat. Pick all that apply — or skip."
+        />
+      )}
+      {sub === 1 && (
+        <StepHeader
+          icon={<TasteIcon className="h-6 w-6" aria-hidden />}
+          title="Anything you're allergic to?"
+          blurb="We'll keep these out of every suggestion. This one matters — but it's still optional."
+        />
+      )}
+      {sub === 2 && (
+        <StepHeader
+          icon={<TasteIcon className="h-6 w-6" aria-hidden />}
+          title="Cuisines you love?"
+          blurb="We'll lean into these when we suggest what to cook. Tap a few favorites."
+        />
+      )}
+      {sub === 3 && (
+        <StepHeader
+          icon={<TasteIcon className="h-6 w-6" aria-hidden />}
+          title="Loves & dislikes"
+          blurb="A few ingredients to lean toward — and a few to avoid. Recipes get tuned to both."
+        />
+      )}
+
+      <div className="mt-6 flex-1">
+        {sub === 0 && (
+          <ChipMultiSelect options={DIETS} selected={state.diets} onToggle={(v) => toggle("diets", v)} />
+        )}
+        {sub === 1 && (
+          <ChipMultiSelect
+            options={ALLERGENS}
+            selected={state.allergens}
+            onToggle={(v) => toggle("allergens", v)}
           />
-        </div>
-      </div>
-
-      {/* One step at a time. `key` on the wrapper re-triggers the gentle fade between steps. */}
-      <div key={step} className="flex-1 animate-fade-in">
-        {isWelcome && (
-          <Welcome onStart={next} />
         )}
-
-        {step === 1 && (
-          <Step
-            emoji="🥗"
-            title="Any diets you follow?"
-            blurb="So every plan and recipe respects how you eat. Pick all that apply — or skip."
-          >
-            <ChipGroup options={DIETS} selected={state.diets ?? []} onToggle={(v) => toggle("diets", v)} />
-          </Step>
+        {sub === 2 && (
+          <ChipMultiSelect
+            options={CUISINES}
+            selected={state.lovedCuisines}
+            onToggle={(v) => toggle("lovedCuisines", v)}
+          />
         )}
-
-        {step === 2 && (
-          <Step
-            emoji="🚫"
-            title="Anything you're allergic to?"
-            blurb="We'll keep these out of every suggestion. This one matters — but it's still optional."
-          >
-            <ChipGroup
-              options={ALLERGENS}
-              selected={state.allergens ?? []}
-              onToggle={(v) => toggle("allergens", v)}
-            />
-          </Step>
-        )}
-
-        {step === 3 && (
-          <Step
-            emoji="🌍"
-            title="Cuisines you love?"
-            blurb="We'll lean into these when we suggest what to cook. Tap a few favorites."
-          >
-            <ChipGroup
-              options={CUISINES}
-              selected={state.lovedCuisines ?? []}
-              onToggle={(v) => toggle("lovedCuisines", v)}
-            />
-          </Step>
-        )}
-
-        {step === 4 && (
-          <Step
-            emoji="❤️"
-            title="Loves & dislikes"
-            blurb="A few ingredients to lean toward — and a few to avoid. Recipes get tuned to both."
-          >
-            <div className="space-y-4">
-              <label className="block">
-                <span className="field-label">Ingredients you love</span>
-                <input
-                  value={state.lovedText}
-                  onChange={(e) => setState((s) => ({ ...s, lovedText: e.target.value }))}
-                  placeholder="salmon, basil, feta"
-                  className="input"
-                />
-              </label>
-              <label className="block">
-                <span className="field-label">Ingredients you avoid</span>
-                <input
-                  value={state.dislikedText}
-                  onChange={(e) => setState((s) => ({ ...s, dislikedText: e.target.value }))}
-                  placeholder="cilantro, olives"
-                  className="input"
-                />
-              </label>
-            </div>
-          </Step>
-        )}
-
-        {step === 5 && (
-          <Step
-            emoji="💸"
-            title="Budget & anything else"
-            blurb="An optional weekly target keeps plans in range — and tell us anything else in your own words."
-          >
-            <div className="space-y-4">
-              <label className="block max-w-xs">
-                <span className="field-label">Weekly grocery budget (optional)</span>
-                <div className="mt-1.5 flex items-center gap-1.5">
-                  <span className="text-ink-400">$</span>
-                  <input
-                    value={state.budget}
-                    onChange={(e) => setState((s) => ({ ...s, budget: e.target.value }))}
-                    type="number"
-                    min="0"
-                    step="5"
-                    placeholder="120"
-                    className="input"
-                  />
-                </div>
-              </label>
-              <label className="block">
-                <span className="field-label">Anything else? (in your own words)</span>
-                <textarea
-                  value={state.freeText ?? ""}
-                  onChange={(e) => setState((s) => ({ ...s, freeText: e.target.value }))}
-                  rows={3}
-                  placeholder="We're mostly vegetarian, love spicy Thai, hate mushrooms, and try to eat in on weeknights."
-                  className="input"
-                />
-                <span className="field-hint">We&apos;ll read this and pull out your preferences.</span>
-              </label>
-            </div>
-          </Step>
-        )}
-
-        {isDone && <Done state={state} pending={pending} error={error} onFinish={finish} />}
-      </div>
-
-      {/* Footer controls. Hidden on Welcome (it has its own CTA) and Done (its own finish button). */}
-      {!isWelcome && !isDone && (
-        <div className="mt-8 flex items-center justify-between gap-3">
-          <button type="button" onClick={back} className="btn-ghost">
-            ← Back
-          </button>
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={skipToEnd} className="btn-ghost btn-sm">
-              Skip the rest
-            </button>
-            <button type="button" onClick={next} className="btn-primary">
-              {step === QUESTION_STEPS ? "Review →" : "Next →"}
-            </button>
+        {sub === 3 && (
+          <div className="space-y-4">
+            <label className="block">
+              <span className="field-label">Ingredients you love</span>
+              <input
+                value={state.lovedText}
+                onChange={(e) => setState((s) => ({ ...s, lovedText: e.target.value }))}
+                placeholder="salmon, basil, feta"
+                className="input-lg"
+              />
+            </label>
+            <label className="block">
+              <span className="field-label">Ingredients you avoid</span>
+              <input
+                value={state.dislikedText}
+                onChange={(e) => setState((s) => ({ ...s, dislikedText: e.target.value }))}
+                placeholder="cilantro, olives"
+                className="input-lg"
+              />
+            </label>
           </div>
-        </div>
-      )}
-    </main>
-  );
-}
+        )}
+      </div>
 
-/** A single centered question screen — emoji, title, value-framed blurb, then its interaction. */
-function Step({
-  emoji,
-  title,
-  blurb,
-  children,
-}: {
-  emoji: string;
-  title: string;
-  blurb: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="text-center">
-      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-3xl">
-        {emoji}
-      </span>
-      <h1 className="mt-5 text-2xl font-semibold tracking-[-0.01em] text-ink-900">{title}</h1>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-ink-500">{blurb}</p>
-      <div className="mt-7 text-left">{children}</div>
+      <StepFooter onBack={backSub}>
+        <button type="button" onClick={persistAndDone} disabled={saving} className="btn-ghost min-h-[44px]">
+          Skip taste
+        </button>
+        <button type="button" onClick={nextSub} disabled={saving} className="btn-primary min-h-[44px] px-5">
+          {saving ? (
+            <SpinnerIcon className="h-4 w-4 animate-spin" aria-hidden />
+          ) : (
+            <>
+              {sub >= STATIC_SUBSTEPS - 1 ? "Done" : "Next"}
+              <NextIcon className="h-4 w-4" aria-hidden />
+            </>
+          )}
+        </button>
+      </StepFooter>
     </section>
   );
 }
 
-/** Welcome / value-framing screen. Counts as step 0; not a question. */
-function Welcome({ onStart }: { onStart: () => void }) {
-  return (
-    <section className="flex flex-col items-center text-center">
-      <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-gradient text-3xl shadow-brand">
-        🧺
-      </span>
-      <h1 className="mt-6 text-3xl font-semibold tracking-[-0.02em] text-ink-900">Welcome to GroceryManager</h1>
-      <p className="mt-3 max-w-md text-[0.95rem] leading-relaxed text-ink-500">
-        A minute of setup so every recipe, plan, and list fits you. A few quick questions — skip any of
-        them, and tweak anytime later.
-      </p>
-      <button type="button" onClick={onStart} className="btn-primary mt-8">
-        Let&apos;s go →
-      </button>
-    </section>
-  );
-}
-
-/** Final celebrate screen — a 1-line summary of what was captured + the finishing CTA. */
-function Done({
-  state,
-  pending,
-  error,
-  onFinish,
-}: {
-  state: UiState;
-  pending: boolean;
-  error: boolean;
-  onFinish: () => void;
-}) {
-  const loves = splitCsv(state.lovedText);
-  const dislikes = splitCsv(state.dislikedText);
-  const parts: string[] = [];
-  if (state.diets.length) parts.push(`diet: ${state.diets.join(", ")}`);
-  if (state.allergens.length) parts.push(`avoiding ${state.allergens.join(", ")}`);
-  if (state.lovedCuisines.length) parts.push(`loves ${state.lovedCuisines.join(", ")}`);
-  if (loves.length) parts.push(`+${loves.join(", ")}`);
-  if (dislikes.length) parts.push(`-${dislikes.join(", ")}`);
-  if (state.budget && Number(state.budget) > 0) parts.push(`~$${state.budget}/wk`);
-  const summary = parts.length
-    ? parts.join(" · ")
-    : "We'll start learning your taste from what you cook, save, and skip.";
-
-  return (
-    <section className="flex flex-col items-center text-center">
-      <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 text-4xl">✨</span>
-      <h1 className="mt-6 text-3xl font-semibold tracking-[-0.02em] text-ink-900">You&apos;re all set</h1>
-      <p className="mx-auto mt-3 max-w-md text-[0.95rem] leading-relaxed text-ink-500">{summary}</p>
-      <button type="button" onClick={onFinish} disabled={pending} className="btn-primary mt-8">
-        {pending ? "Saving…" : "Go to my kitchen →"}
-      </button>
-      {error && (
-        <p className="notice-warn mt-4 max-w-md">
-          We couldn&apos;t save just now — please try again.
-        </p>
-      )}
-      <p className="mt-3 text-xs text-ink-400">You can refine all of this anytime from Tools.</p>
-    </section>
-  );
-}
-
-/** Multi-select chip group (controlled). Mirrors the calm `.chip` look without form checkboxes. */
-function ChipGroup({
+/** Multi-select chip group (controlled). A solid, tappable chip; the selected state is the accent. */
+function ChipMultiSelect({
   options,
   selected,
   onToggle,
@@ -385,7 +648,7 @@ function ChipGroup({
   onToggle: (value: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap justify-center gap-2">
+    <div className="flex flex-wrap gap-2">
       {options.map((opt) => {
         const on = selected.includes(opt);
         return (
@@ -394,16 +657,120 @@ function ChipGroup({
             type="button"
             aria-pressed={on}
             onClick={() => onToggle(opt)}
-            // Reuse the calm `.chip` base (layout + idle/hover); layer the selected palette on top.
-            // `.chip`'s own selected state keys off `:checked`, which a button doesn't have, so the
-            // brand colors are applied here when `on` (they override `.chip`'s idle border/bg/text).
-            className={`chip capitalize ${on ? "border-brand-300 bg-brand-50 text-brand-800" : ""}`}
+            className={`chip-tap capitalize ${on ? "chip-tap-on" : ""}`}
           >
-            {on && <span aria-hidden>✓</span>}
+            {on && <CheckIcon className="h-3.5 w-3.5" aria-hidden />}
             {opt}
           </button>
         );
       })}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Step 3 — Add your first items (skippable)                                                         */
+/* ------------------------------------------------------------------------------------------------ */
+
+const ITEM_ACTIONS: { href: string; label: string; blurb: string; icon: React.ReactNode }[] = [
+  {
+    href: "/scan",
+    label: "Scan your fridge",
+    blurb: "Snap a photo and we'll read what's inside.",
+    icon: <ScanIcon className="h-5 w-5" aria-hidden />,
+  },
+  {
+    href: "/capture",
+    label: "Quick add",
+    blurb: "Type a few items to fill your pantry fast.",
+    icon: <QuickAddIcon className="h-5 w-5" aria-hidden />,
+  },
+  {
+    href: "/pantry",
+    label: "Connect receipts",
+    blurb: "Import purchases to keep stock in sync.",
+    icon: <ReceiptsIcon className="h-5 w-5" aria-hidden />,
+  },
+];
+
+function ItemsStep({ onContinue, onBack }: { onContinue: () => void; onBack: () => void }) {
+  return (
+    <section className="flex flex-1 flex-col">
+      <StepHeader
+        icon={<ItemsIcon className="h-6 w-6" aria-hidden />}
+        title="Add your first items"
+        blurb="Fill your pantry so we can suggest meals you can cook right now. Pick a way to start."
+      />
+
+      <div className="mt-6 flex-1 space-y-3">
+        {ITEM_ACTIONS.map((a) => (
+          <a
+            key={a.href}
+            href={a.href}
+            className="flex items-center gap-3.5 rounded-2xl border border-line bg-surface p-4 shadow-card transition-colors duration-150 hover:border-brand-200 hover:bg-brand-50/40"
+          >
+            <span className="tile-brand h-11 w-11">{a.icon}</span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-ink-900">{a.label}</span>
+              <span className="block text-xs leading-relaxed text-ink-500">{a.blurb}</span>
+            </span>
+            <ChevronRightIcon className="h-5 w-5 shrink-0 text-ink-300" aria-hidden />
+          </a>
+        ))}
+      </div>
+
+      <StepFooter onBack={onBack}>
+        <button type="button" onClick={onContinue} className="btn-primary min-h-[44px] px-5">
+          I&apos;ll do this later
+          <NextIcon className="h-4 w-4" aria-hidden />
+        </button>
+      </StepFooter>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Step 4 — Done                                                                                     */
+/* ------------------------------------------------------------------------------------------------ */
+
+function DoneStep({
+  onFinish,
+  finishing,
+  error,
+}: {
+  onFinish: () => void;
+  finishing: boolean;
+  error: string | null;
+}) {
+  return (
+    <section className="flex flex-1 flex-col">
+      <StepHeader
+        icon={<DoneIcon className="h-6 w-6" aria-hidden />}
+        title="You're all set"
+        blurb="Your kitchen is tuned to your taste. We'll keep learning from what you cook, save, and skip."
+      />
+
+      <div className="flex-1" />
+
+      <div className="space-y-3">
+        <button
+          type="button"
+          onClick={onFinish}
+          disabled={finishing}
+          className="btn-primary btn-block min-h-[48px] text-base"
+        >
+          {finishing ? (
+            <SpinnerIcon className="h-5 w-5 animate-spin" aria-hidden />
+          ) : (
+            <>
+              Go to my kitchen
+              <NextIcon className="h-5 w-5" aria-hidden />
+            </>
+          )}
+        </button>
+        {error && <p className="notice-warn">{error}</p>}
+        <p className="text-center text-xs text-ink-400">You can refine all of this anytime from Tools.</p>
+      </div>
+    </section>
   );
 }
