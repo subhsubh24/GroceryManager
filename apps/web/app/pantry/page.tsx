@@ -32,6 +32,67 @@ async function loadPantry() {
   }
 }
 
+/** Banner shown after a sync/backfill attempt — a friendly result, or a friendly + actionable error. */
+type Banner =
+  | { kind: "ok" | "info"; text: string }
+  | {
+      kind: "err";
+      title: string;
+      hint: string | null;
+      link: { href: string; label: string } | null;
+      raw: string;
+    };
+
+/**
+ * Turn a raw Gmail/Google API error into a friendly, actionable message (the raw text is kept and
+ * shown behind a "Details" toggle). Most "sync failures" are upstream Google Cloud config the user can
+ * fix in a click — so we name the fix and link straight to it rather than dumping a wall of JSON.
+ */
+function friendlyGmailError(raw: string): {
+  title: string;
+  hint: string | null;
+  link: { href: string; label: string } | null;
+} {
+  const r = raw.toLowerCase();
+  // The exact "enable this API" console URL, when Google includes it in the error.
+  const enableUrl = raw.match(
+    /https:\/\/console\.developers\.google\.com\/apis\/api\/gmail\.googleapis\.com\/overview\?project=\d+/,
+  )?.[0];
+  if (
+    r.includes("service_disabled") ||
+    r.includes("accessnotconfigured") ||
+    r.includes("has not been used in project")
+  ) {
+    return {
+      title: "Gmail API isn't enabled yet",
+      hint: "Turn on the Gmail API in your Google Cloud project, wait a couple of minutes, then sync again.",
+      link: enableUrl ? { href: enableUrl, label: "Enable the Gmail API" } : null,
+    };
+  }
+  if (r.includes("access_denied") || r.includes("approved testers") || r.includes("verification process")) {
+    return {
+      title: "Your Google account isn't an approved tester",
+      hint: "Add your email as a Test user on the app's OAuth consent screen, then reconnect Gmail.",
+      link: null,
+    };
+  }
+  if (r.includes("invalid_grant") || r.includes("expired or revoked") || r.includes("invalid credentials")) {
+    return {
+      title: "Your Gmail connection expired",
+      hint: "Reconnect Gmail to refresh access, then try again.",
+      link: null,
+    };
+  }
+  if (r.includes("not signed in")) {
+    return { title: "You're signed out", hint: "Sign in again, then retry.", link: null };
+  }
+  return {
+    title: "Couldn't sync from Gmail",
+    hint: "Something went wrong reaching Gmail. Give it a moment and try again.",
+    link: null,
+  };
+}
+
 export default async function PantryPage({
   searchParams,
 }: {
@@ -49,9 +110,9 @@ export default async function PantryPage({
   const oauthConfigured = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
 
   // Result banner from the sync action's redirect query string.
-  let syncBanner: { kind: "ok" | "info" | "err"; text: string } | null = null;
+  let syncBanner: Banner | null = null;
   if (sp.error) {
-    syncBanner = { kind: "err", text: `Sync failed: ${sp.error}` };
+    syncBanner = { kind: "err", ...friendlyGmailError(sp.error), raw: sp.error };
   } else if (sp.scanned !== undefined) {
     const scanned = Number(sp.scanned);
     const ingested = Number(sp.ingested ?? 0);
@@ -143,7 +204,31 @@ export default async function PantryPage({
             see <code>docs/GMAIL_SETUP.md</code>.
           </p>
         )}
-        {syncBanner && <p className={`mt-4 ${bannerCls[syncBanner.kind]}`}>{syncBanner.text}</p>}
+        {syncBanner &&
+          (syncBanner.kind === "err" ? (
+            <div className="notice-warn mt-4">
+              <p className="font-semibold">{syncBanner.title}</p>
+              {syncBanner.hint && <p className="mt-1 text-sm">{syncBanner.hint}</p>}
+              {syncBanner.link && (
+                <a
+                  href={syncBanner.link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block text-sm font-semibold underline underline-offset-2"
+                >
+                  {syncBanner.link.label} →
+                </a>
+              )}
+              <details className="mt-2">
+                <summary className="cursor-pointer text-xs text-ink-400">Details</summary>
+                <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-ink-50 p-2 text-[11px] leading-relaxed text-ink-500">
+                  {syncBanner.raw}
+                </pre>
+              </details>
+            </div>
+          ) : (
+            <p className={`mt-4 ${bannerCls[syncBanner.kind]}`}>{syncBanner.text}</p>
+          ))}
       </section>
 
       {error && (
