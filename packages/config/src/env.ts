@@ -50,6 +50,9 @@ const EnvSchema = z.object({
   // Integrations
   INSTACART_API_KEY: z.string().optional(),
   SPOONACULAR_API_KEY: z.string().optional(),
+  // USDA FoodData Central — primary nutrition source for cook-log macros. Free key (no card):
+  // https://fdc.nal.usda.gov/api-key-signup.html. Optional: without it, macros fall back to the LLM.
+  FDC_API_KEY: z.string().optional(),
   AMAZON_ASSOCIATE_TAG: z.string().optional(),
 
   // Object storage (S3-compatible)

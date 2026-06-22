@@ -467,6 +467,59 @@ export async function loadWrappedInputs(db: Querier, userId: string, sinceDays =
   };
 }
 
+export interface CookLogEntry {
+  id: string;
+  title: string | null;
+  imageUrl: string | null;
+  cookedAt: Date;
+  servingsMade: number | null;
+  kcal: number | null;
+  proteinG: number | null;
+  carbsG: number | null;
+  fatG: number | null;
+  macrosSource: string | null;
+}
+
+/**
+ * Recent cook log for the "Meals & macros" page (cook-logging with stored macros): the user's most
+ * recent meals with their stored macros + the recipe title/image. Macros are nullable (estimation is
+ * best-effort, and rows logged before the feature have none). The explicit userId filter is RLS
+ * belt-and-suspenders.
+ */
+export async function loadCookLog(db: Querier, userId: string, limit = 30): Promise<CookLogEntry[]> {
+  const num = (v: unknown): number | null => (v == null ? null : Number(v));
+  const rows = await db
+    .select({
+      id: mealLogs.id,
+      title: recipes.title,
+      imageUrl: recipes.imageUrl,
+      cookedAt: mealLogs.cookedAt,
+      servingsMade: mealLogs.servingsMade,
+      kcal: mealLogs.kcal,
+      proteinG: mealLogs.proteinG,
+      carbsG: mealLogs.carbsG,
+      fatG: mealLogs.fatG,
+      macrosSource: mealLogs.macrosSource,
+    })
+    .from(mealLogs)
+    .leftJoin(recipes, eq(mealLogs.recipeId, recipes.id))
+    .where(eq(mealLogs.userId, userId))
+    .orderBy(desc(mealLogs.cookedAt))
+    .limit(limit);
+  return rows.map((r) => ({
+    id: r.id,
+    title: r.title ?? null,
+    imageUrl: r.imageUrl ?? null,
+    cookedAt: r.cookedAt as Date,
+    servingsMade: num(r.servingsMade),
+    kcal: num(r.kcal),
+    proteinG: num(r.proteinG),
+    carbsG: num(r.carbsG),
+    fatG: num(r.fatG),
+    macrosSource: r.macrosSource ?? null,
+  }));
+}
+
 /**
  * Cooked-meal timestamps for the cooking-streak surface (PLAN §10 growth). Just `cookedAt` within
  * the lookback, scoped to the user — the streak math lives in @gm/core/recipe (currentStreak,

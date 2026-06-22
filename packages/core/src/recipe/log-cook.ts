@@ -46,7 +46,15 @@ export async function logCook(
   db: Querier,
   userId: string,
   recipe: CookRecipeInput,
-  opts: { servingsMade?: number } = {},
+  opts: {
+    servingsMade?: number;
+    /**
+     * Pre-computed macros for the meal (best-effort; see @gm/core/nutrition). Computed by the caller
+     * OUTSIDE this DB transaction because it makes network calls (FDC + LLM). When absent the macro
+     * columns stay null — macro estimation never blocks logging a cook.
+     */
+    macros?: import("../nutrition/types.js").MealMacros;
+  } = {},
 ): Promise<LogCookResult> {
   const servings = opts.servingsMade && opts.servingsMade > 0 ? opts.servingsMade : 1;
 
@@ -112,7 +120,8 @@ export async function logCook(
   // 3. Plan consumption.
   const plan = planConsumption(recipe.ingredients, pantry, { servingsScale: servings, resolveBaseQty });
 
-  // 4. MealLog.
+  // 4. MealLog. Store macros when the caller computed them (best-effort); else leave the columns null.
+  const macros = opts.macros;
   const [meal] = await db
     .insert(mealLogs)
     .values({
@@ -121,6 +130,15 @@ export async function logCook(
       servingsMade: servings,
       mealType: "dinner",
       decrementedPantry: plan.deltas.length > 0,
+      ...(macros
+        ? {
+            kcal: macros.kcal,
+            proteinG: macros.proteinG,
+            carbsG: macros.carbsG,
+            fatG: macros.fatG,
+            macrosSource: macros.source,
+          }
+        : {}),
     })
     .returning({ id: mealLogs.id });
 

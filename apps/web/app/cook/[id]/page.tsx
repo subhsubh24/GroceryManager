@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
+import { loadEnv } from "@gm/config/env";
 import { getDb, isRecipeSaved, withTenant } from "@gm/db";
 import { findSubstitutions, splitSteps } from "@gm/core/recipe";
 import { logCook } from "@gm/core/recipe/log-cook";
+import { estimateMealMacros } from "@gm/core/nutrition";
+import { GeminiClient } from "@gm/core/llm";
 import { getSubstitutions } from "@gm/core/recipe/substitute-llm";
 import { currentUserId } from "@/app/lib/tenant";
 import { isPersistedRecipeId, loadRecipeAnySource } from "@/app/lib/recipe";
@@ -43,6 +46,18 @@ async function logThisCook(formData: FormData) {
   if (!userId) return;
   const recipe = await loadRecipeAnySource(id);
   if (!recipe) return;
+  const servingsMade = Number.isFinite(servings) && servings > 0 ? servings : 1;
+
+  // Best-effort macros, computed BEFORE/OUTSIDE the DB tx (FDC + LLM are network calls — they must
+  // not run inside withTenant). FDC is primary; the LLM (only when GEMINI_API_KEY is set) is the
+  // fallback. A failure resolves to undefined so the cook is still logged with null macros.
+  const env = loadEnv();
+  const llm = env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT ? new GeminiClient(env) : null;
+  const macros = await estimateMealMacros(recipe.ingredients, servingsMade, {
+    fdcApiKey: env.FDC_API_KEY,
+    llm,
+  }).catch(() => undefined);
+
   await withTenant(getDb(), userId, (tx) =>
     logCook(
       tx,
@@ -55,7 +70,7 @@ async function logThisCook(formData: FormData) {
         cuisine: recipe.cuisine,
         ingredients: recipe.ingredients,
       },
-      { servingsMade: Number.isFinite(servings) && servings > 0 ? servings : 1 },
+      { servingsMade, macros },
     ),
   );
   redirect("/pantry");

@@ -522,6 +522,14 @@ export const mealLogs = pgTable("meal_logs", {
   mealType: text("meal_type"), // breakfast | lunch | dinner | snack
   cookedAt: ts("cooked_at").defaultNow().notNull(),
   decrementedPantry: boolean("decremented_pantry").default(false).notNull(),
+  // Stored macros for the cooked meal (best-effort; nullable when estimation couldn't answer).
+  // Computed at log time from USDA FoodData Central (primary) with an LLM fallback — see
+  // @gm/core/nutrition. macrosSource records provenance: fdc | llm | mixed | none.
+  kcal: real("kcal"),
+  proteinG: real("protein_g"),
+  carbsG: real("carbs_g"),
+  fatG: real("fat_g"),
+  macrosSource: text("macros_source"),
 });
 
 // ---------------------------------------------------------------------------

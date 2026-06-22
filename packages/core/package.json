@@ -15,6 +15,7 @@
     "./recipe/substitute-llm": "./src/recipe/substitute-llm.ts",
     "./recipe/remix-llm": "./src/recipe/remix-llm.ts",
     "./recipe/import-llm": "./src/recipe/import-llm.ts",
+    "./nutrition": "./src/nutrition/index.ts",
     "./crypto": "./src/crypto/index.ts",
     "./ingestion": "./src/ingestion/index.ts",
     "./pantry": "./src/pantry/index.ts",

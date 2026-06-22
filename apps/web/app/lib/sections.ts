@@ -21,6 +21,7 @@ import {
   SprayCan,
   Star,
   Users,
+  UtensilsCrossed,
   Wallet,
   type LucideIcon,
 } from "../components/icons";
@@ -184,6 +185,14 @@ export const SECTIONS: Section[] = [
   },
 
   // ── Track ─────────────────────────────────────────────────────────────────
+  {
+    key: "cooked",
+    href: "/cooked",
+    title: "Meals & macros",
+    blurb: "Everything you've cooked — with the calories and macros, tracked over time.",
+    icon: UtensilsCrossed,
+    group: "Track",
+  },
   {
     key: "spend",
     href: "/spend",

@@ -42,6 +42,9 @@ async function main() {
     console.log("→ username login (users.username + email optional)…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0006_username.sql"), "utf8"));
 
+    console.log("→ cook-log macros (meal_logs kcal/protein/carbs/fat + source)…");
+    await sql.unsafe(readFileSync(join(pkgRoot, "sql/0007_macros.sql"), "utf8"));
+
     console.log("✓ migrations complete");
   } finally {
     await sql.end();
