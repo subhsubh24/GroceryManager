@@ -35,9 +35,9 @@ describe("verifyReceipt", () => {
     expect(verifyReceipt(receipt())).toEqual({ ok: true });
   });
 
-  it("fails when there are no line items", () => {
+  it("accepts an item-less email (e.g. Amazon strips items) — empty is valid, not a failure", () => {
     const v = verifyReceipt(receipt({ lineItems: [], totalCents: null }));
-    expect(v.ok).toBe(false);
+    expect(v).toEqual({ ok: true });
   });
 
   it("fails on a negative quantity", () => {

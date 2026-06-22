@@ -15,10 +15,10 @@ function totalsTolerance(totalCents: number): number {
 }
 
 export function verifyReceipt(r: ReceiptExtraction): VerifyVerdict {
-  if (r.lineItems.length === 0) {
-    return { ok: false, reason: "no line items extracted" };
-  }
-
+  // An empty extraction is a VALID outcome, not a failure: many order emails (notably Amazon, which
+  // strips item details) carry no parseable line items. Retrying/escalating can't conjure items that
+  // aren't in the text — it only burns the model ladder and logs a scary error — and the order total
+  // still feeds spend. So accept zero items; ingestReceipt records the purchase with no lines.
   for (const [i, li] of r.lineItems.entries()) {
     if (!li.name.trim()) {
       return { ok: false, reason: `line ${i}: empty product name` };
