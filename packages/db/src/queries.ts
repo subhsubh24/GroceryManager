@@ -639,6 +639,58 @@ export async function updateUserName(db: Querier, userId: string, name: string |
   await db.update(users).set({ name, updatedAt: new Date() }).where(eq(users.id, userId));
 }
 
+// ---- One-time shelf-life backfill (PLAN §6): classify items ingestion created before shelf-life ----
+// estimation existed, then re-project. Seeded catalog items have a category + shelf life already, so
+// "no category AND no shelf life" cleanly targets only the unclassified ingestion-created items.
+
+/** Canonical items with no category and no shelf life — the unclassified set the backfill re-estimates. */
+export async function listCanonicalItemsToClassify(
+  db: Querier,
+): Promise<{ id: string; name: string }[]> {
+  return db
+    .select({ id: canonicalItems.id, name: canonicalItems.name })
+    .from(canonicalItems)
+    .where(
+      and(
+        isNull(canonicalItems.category),
+        isNull(canonicalItems.shelfLifePantryDays),
+        isNull(canonicalItems.shelfLifeFridgeDays),
+      ),
+    );
+}
+
+/** Set an item's domain + perishability + shelf life (and a coarse category marker). Admin scope. */
+export async function setCanonicalClassification(
+  db: Querier,
+  id: string,
+  c: {
+    domain: "grocery" | "household" | "personal_care" | "supplement";
+    perishability: "perishable" | "semi_perishable" | "shelf_stable";
+    shelfLifeFridgeDays: number | null;
+    shelfLifePantryDays: number | null;
+  },
+): Promise<void> {
+  await db
+    .update(canonicalItems)
+    .set({
+      domain: c.domain,
+      perishability: c.perishability,
+      shelfLifeFridgeDays: c.shelfLifeFridgeDays,
+      shelfLifePantryDays: c.shelfLifePantryDays,
+      category: c.domain, // coarse marker so a re-run of the backfill skips it
+    })
+    .where(eq(canonicalItems.id, id));
+}
+
+/** Every (user, item) pantry_stock key — for the one-time reprojection. Admin/cross-tenant scope. */
+export async function listAllPantryStockUserItems(
+  db: Querier,
+): Promise<{ userId: string; canonicalItemId: string }[]> {
+  return db
+    .select({ userId: pantryStock.userId, canonicalItemId: pantryStock.canonicalItemId })
+    .from(pantryStock);
+}
+
 export interface GoogleAuthUpsert {
   email: string;
   name: string | null;
