@@ -3,7 +3,7 @@ import { getDb, getPantryView, withTenant } from "@gm/db";
 import type { MealEnergy } from "@gm/core/recipe/generate-llm";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
-import { Sparkles, Package } from "@/app/components/icons";
+import { CookingPot, Package } from "@/app/components/icons";
 import { MealGenerator } from "./meal-generator";
 
 export const dynamic = "force-dynamic";
@@ -52,7 +52,7 @@ export default async function MakePage({
     <main className="page">
       <PageHeader
         accent="grape"
-        icon={Sparkles}
+        icon={CookingPot}
         eyebrow="Make something"
         title="What can I make?"
         subtitle="AI meal ideas from what's in your kitchen — tuned to how much you feel like cooking."

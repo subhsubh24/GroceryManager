@@ -31,13 +31,17 @@ export {
   Wallet, // spend
   PartyPopper, // wrapped
   Newspaper, // digest
-  Sparkles, // taste / onboarding link / AI flourishes
+  Sparkles, // (legacy) — avoid: the sparkle reads as "AI flourish"; prefer a concrete icon below
   Gift, // invite
   Users, // shared household
   Star, // upgrade / premium
   User, // profile
   LayoutGrid, // all tools
-  Wand2, // remix
+  Salad, // taste / food preferences (replaces the AI-sparkle on onboarding)
+  CookingPot, // "what can I make" / meal ideas
+  Shuffle, // remix a recipe
+  Lightbulb, // generate ideas
+  Wand2, // remix (alt)
 
   // ── Chrome / controls ────────────────────────────────────────────────────
   Sun, // theme toggle (dark → show sun)

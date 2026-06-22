@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { GeneratedMeal, MealEnergy } from "@gm/core/recipe/generate-llm";
-import { Sparkles, ChefHat, Plus } from "@/app/components/icons";
+import { Lightbulb, ChefHat, Plus } from "@/app/components/icons";
 import { addNamesToListAction } from "@/app/lib/list-actions";
 import { generateMealsAction } from "./actions";
 
@@ -44,7 +44,7 @@ export function MealGenerator({ energy, canGenerate }: { energy: MealEnergy; can
         disabled={!canGenerate || pending}
         className="btn-primary inline-flex items-center gap-1.5 disabled:opacity-50"
       >
-        <Sparkles className="h-4 w-4" strokeWidth={2} />
+        <Lightbulb className="h-4 w-4" strokeWidth={2} />
         {pending ? "Thinking up meals…" : meals ? "Regenerate ideas" : "Generate ideas"}
       </button>
 

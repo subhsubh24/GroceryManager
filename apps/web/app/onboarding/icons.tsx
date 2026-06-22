@@ -8,7 +8,7 @@
  */
 export {
   User as ProfileIcon,
-  Sparkles as TasteIcon,
+  Salad as TasteIcon,
   PackagePlus as ItemsIcon,
   PartyPopper as DoneIcon,
   Camera as ScanIcon,

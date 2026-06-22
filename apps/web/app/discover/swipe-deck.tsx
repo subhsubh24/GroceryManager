@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SaveButton } from "@/app/cookbook/save-button";
-import { Check, Heart, Sparkles, UtensilsCrossed, X } from "@/app/components/icons";
+import { Check, Heart, Shuffle, UtensilsCrossed, X } from "@/app/components/icons";
 import { recordSwipeAction } from "./actions";
 
 export type DeckCard = {
@@ -274,7 +274,7 @@ export function SwipeDeck({ deck }: { deck: DeckCard[] }) {
               href={`/remix/${last.card.id}`}
               className="inline-flex items-center gap-1 text-xs font-medium text-grape-700"
             >
-              <Sparkles className="h-3.5 w-3.5" strokeWidth={2} /> Remix
+              <Shuffle className="h-3.5 w-3.5" strokeWidth={2} /> Remix
             </a>
             <SaveButton
               recipe={{

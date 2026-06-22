@@ -14,7 +14,7 @@ import { dietExclusions, KNOWN_DIETS, projectUserModel } from "@gm/core/personal
 import { currentUserId } from "@/app/lib/tenant";
 import { addNamesToListAction } from "@/app/lib/list-actions";
 import { PageHeader } from "@/app/components/page-header";
-import { ChefHat, Sparkles } from "@/app/components/icons";
+import { ChefHat, Shuffle } from "@/app/components/icons";
 import { SaveButton } from "@/app/cookbook/save-button";
 
 export const dynamic = "force-dynamic";
@@ -226,7 +226,7 @@ export default async function RecipesPage({
                   href={`/remix/${r.id}`}
                   className="inline-flex items-center gap-1 text-xs font-medium text-grape-700"
                 >
-                  <Sparkles className="h-3.5 w-3.5" strokeWidth={2} /> Remix
+                  <Shuffle className="h-3.5 w-3.5" strokeWidth={2} /> Remix
                 </a>
                 {r.missing.length > 0 && (
                   <form action={addNamesToListAction}>

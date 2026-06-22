@@ -9,7 +9,7 @@ import { getSubstitutions } from "@gm/core/recipe/substitute-llm";
 import { currentUserId } from "@/app/lib/tenant";
 import { isPersistedRecipeId, loadRecipeAnySource } from "@/app/lib/recipe";
 import { SaveButton } from "@/app/cookbook/save-button";
-import { ArrowLeft, Check, Sparkles, UtensilsCrossed } from "@/app/components/icons";
+import { ArrowLeft, Check, Shuffle, UtensilsCrossed } from "@/app/components/icons";
 import { CookMode } from "./cook-mode.js";
 import { SwapFinder, type SwapState } from "./swap-finder.js";
 
@@ -113,7 +113,7 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
               href={`/remix/${id}`}
               className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-grape-700"
             >
-              <Sparkles className="h-4 w-4" strokeWidth={2} /> Remix this recipe
+              <Shuffle className="h-4 w-4" strokeWidth={2} /> Remix this recipe
             </a>
           </div>
           <div className="mt-6">
