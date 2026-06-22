@@ -34,6 +34,17 @@ export interface IngestResult {
   deduped: boolean;
 }
 
+/**
+ * Coerce an LLM-provided purchase date to a valid Date, falling back to `now` on missing/invalid
+ * input — the model occasionally emits an unparseable string (→ Invalid Date), which otherwise throws
+ * `RangeError: Invalid time value` when serialized to the timestamp column and fails the whole receipt.
+ */
+export function coercePurchasedAt(value: string | null | undefined, now: Date = new Date()): Date {
+  if (!value) return now;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? now : d;
+}
+
 export async function ingestReceipt(deps: IngestDeps, input: IngestInput): Promise<IngestResult> {
   const { db } = deps;
 
@@ -62,7 +73,9 @@ export async function ingestReceipt(deps: IngestDeps, input: IngestInput): Promi
   const unitByCode = new Map(unitRows.map((u) => [u.code, u]));
   const unitById = new Map(unitRows.map((u) => [u.id, u]));
 
-  const purchasedAt = extraction.purchasedAt ? new Date(extraction.purchasedAt) : new Date();
+  // The LLM can return a malformed date string (→ Invalid Date), which throws when serialized to the
+  // timestamp column and fails the whole receipt. coercePurchasedAt validates + falls back to now.
+  const purchasedAt = coercePurchasedAt(extraction.purchasedAt);
   const purchaseRows = await db
     .insert(purchases)
     .values({
