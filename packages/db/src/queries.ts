@@ -9,6 +9,7 @@ import {
   canonicalItems,
   householdInvites,
   households,
+  ingredientMatchOverrides,
   mealLogs,
   oauthCredentials,
   pantryStock,
@@ -1268,6 +1269,72 @@ export async function getReviewQueue(db: Querier, userId: string) {
     .leftJoin(canonicalItems, eq(purchaseLineItems.canonicalItemId, canonicalItems.id))
     .where(and(eq(purchases.userId, userId), eq(purchaseLineItems.needsReview, true)))
     .orderBy(desc(purchases.purchasedAt));
+}
+
+/** One review line item joined to its purchase (ownership-scoped), or null — feeds the confirm action. */
+export async function getReviewLineItem(
+  db: Querier,
+  userId: string,
+  lineItemId: string,
+): Promise<{
+  id: string;
+  canonicalItemId: string | null;
+  rawText: string;
+  quantity: number | null;
+  baseQty: number | null;
+  purchasedAt: Date;
+} | null> {
+  const rows = await db
+    .select({
+      id: purchaseLineItems.id,
+      canonicalItemId: purchaseLineItems.canonicalItemId,
+      rawText: purchaseLineItems.rawText,
+      parsedQty: purchaseLineItems.parsedQty,
+      baseQty: purchaseLineItems.baseQty,
+      purchasedAt: purchases.purchasedAt,
+    })
+    .from(purchaseLineItems)
+    .innerJoin(purchases, eq(purchaseLineItems.purchaseId, purchases.id))
+    .where(and(eq(purchases.userId, userId), eq(purchaseLineItems.id, lineItemId)))
+    .limit(1);
+  const r = rows[0];
+  if (!r) return null;
+  return {
+    id: r.id,
+    canonicalItemId: r.canonicalItemId ?? null,
+    rawText: r.rawText,
+    quantity: r.parsedQty != null ? Number(r.parsedQty) : null,
+    baseQty: r.baseQty != null ? Number(r.baseQty) : null,
+    purchasedAt: r.purchasedAt as Date,
+  };
+}
+
+/** Clear a line item's needs-review flag (ownership pre-verified by caller + RLS). */
+export async function clearLineItemReview(db: Querier, userId: string, lineItemId: string) {
+  await db
+    .update(purchaseLineItems)
+    .set({ needsReview: false })
+    .where(eq(purchaseLineItems.id, lineItemId));
+}
+
+/** Teach future matches: record a raw-text → canonical override for this user. */
+export async function addMatchOverride(
+  db: Querier,
+  userId: string,
+  rawText: string | null,
+  canonicalItemId: string,
+) {
+  await db.insert(ingredientMatchOverrides).values({ userId, rawText, canonicalItemId });
+}
+
+/** Hard-remove an item from the pantry: drop its ledger then its projection (gone until re-purchased). */
+export async function removePantryItem(db: Querier, userId: string, canonicalItemId: string) {
+  await db
+    .delete(stockLedger)
+    .where(and(eq(stockLedger.userId, userId), eq(stockLedger.canonicalItemId, canonicalItemId)));
+  await db
+    .delete(pantryStock)
+    .where(and(eq(pantryStock.userId, userId), eq(pantryStock.canonicalItemId, canonicalItemId)));
 }
 
 /**

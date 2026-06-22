@@ -1,10 +1,16 @@
 import { loadEnv } from "@gm/config/env";
 import { getDb, getGoogleCredential, getPantryView, withTenant } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
-import { backfillGmailAction, connectGmailAction, syncGmailAction } from "./actions";
+import {
+  addPantryItemAction,
+  backfillGmailAction,
+  connectGmailAction,
+  removePantryItemAction,
+  syncGmailAction,
+} from "./actions";
 import { SubmitButton } from "./sync-buttons";
 import { PageHeader } from "@/app/components/page-header";
-import { Check, Mail, Package } from "@/app/components/icons";
+import { Check, Mail, Package, Trash2 } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 // Backfill parses several receipts inline (each an LLM call) — give it room beyond the 10s default.
@@ -239,6 +245,30 @@ export default async function PantryPage({
           ))}
       </section>
 
+      {/* Manual add — type an item + quantity and it joins the pantry like a receipt line would. */}
+      <section className="card-pad mt-4">
+        <form action={addPantryItemAction} className="flex flex-wrap items-center gap-2">
+          <input
+            type="text"
+            name="name"
+            placeholder="Add an item — e.g. olive oil"
+            aria-label="Item name"
+            className="input input-lg min-w-0 flex-1"
+          />
+          <input
+            type="number"
+            name="qty"
+            defaultValue={1}
+            min={1}
+            aria-label="Quantity"
+            className="input input-lg w-20"
+          />
+          <SubmitButton className="btn-primary" pendingLabel="Adding…">
+            Add
+          </SubmitButton>
+        </form>
+      </section>
+
       {error && (
         <p className="notice-warn mt-6">
           Couldn&apos;t reach the database. Set <code>DATABASE_URL</code> and run the migrations/seed.
@@ -269,7 +299,19 @@ export default async function PantryPage({
                   {r.estimatedRunOutAt ? ` · runs out ~${new Date(r.estimatedRunOutAt).toISOString().slice(0, 10)}` : ""}
                 </div>
               </div>
-              <span className={s.cls}>{s.label}</span>
+              <div className="flex items-center gap-3">
+                <span className={s.cls}>{s.label}</span>
+                <form action={removePantryItemAction}>
+                  <input type="hidden" name="canonicalItemId" value={r.canonicalItemId} />
+                  <button
+                    type="submit"
+                    aria-label="Remove"
+                    className="text-ink-300 transition-colors hover:text-danger"
+                  >
+                    <Trash2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+                  </button>
+                </form>
+              </div>
             </li>
           );
         })}

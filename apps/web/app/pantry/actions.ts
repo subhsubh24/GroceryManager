@@ -1,9 +1,17 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { loadEnv } from "@gm/config/env";
-import { getDb } from "@gm/db";
-import { backfillGmailForUser, syncGmailForUser, type GmailSyncSummary } from "@gm/core/ingestion";
+import { NORMALIZE } from "@gm/config/constants";
+import { getDb, removePantryItem, withTenant } from "@gm/db";
+import {
+  backfillGmailForUser,
+  createDbNormalizationPorts,
+  syncGmailForUser,
+  type GmailSyncSummary,
+} from "@gm/core/ingestion";
+import { appendLedgerAndReproject } from "@gm/core/pantry";
 import { signIn } from "@/auth";
 import { currentUserId } from "@/app/lib/tenant";
 
@@ -72,4 +80,56 @@ export async function backfillGmailAction() {
     query = "error=" + encodeURIComponent(shortError(e));
   }
   redirect(`/pantry?${query}`);
+}
+
+/**
+ * Remove an item from the pantry (per-row "Remove"). Hard removal — drops the ledger + projection for
+ * this (user, item) via removePantryItem, so it's gone until re-purchased. RLS-scoped inside
+ * withTenant; silent no-op on an empty id or signed-out user.
+ */
+export async function removePantryItemAction(formData: FormData) {
+  const canonicalItemId = String(formData.get("canonicalItemId") ?? "");
+  if (!canonicalItemId) return;
+  const userId = await currentUserId();
+  if (!userId) return;
+
+  await withTenant(getDb(), userId, (tx) => removePantryItem(tx, userId, canonicalItemId));
+
+  revalidatePath("/pantry");
+}
+
+/**
+ * Manually add an item to the pantry. Resolves a canonical the same way ingestion does (trigram match
+ * above threshold, else create one), then appends a `manual_adjust` ledger event so the quantity flows
+ * through the normal projection. RLS-scoped inside withTenant; silent no-op on an empty name or
+ * signed-out user. Quantity defaults to 1 and is clamped to a positive number.
+ */
+export async function addPantryItemAction(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return;
+  const userId = await currentUserId();
+  if (!userId) return;
+
+  const rawQty = Number(formData.get("qty"));
+  const qty = Number.isFinite(rawQty) && rawQty > 0 ? rawQty : 1;
+
+  await withTenant(getDb(), userId, async (tx) => {
+    const ports = createDbNormalizationPorts(tx, userId);
+    const [top] = await ports.trigramCandidates(name, 1);
+    const canonicalItemId =
+      top && top.score >= NORMALIZE.trigramThreshold ? top.id : await ports.createCanonical(name);
+
+    await appendLedgerAndReproject(tx, {
+      userId,
+      canonicalItemId,
+      baseQtyDelta: qty,
+      eventType: "manual_adjust",
+      confidence: 0.9,
+      refType: "manual",
+      refId: null,
+      occurredAt: new Date(),
+    });
+  });
+
+  revalidatePath("/pantry");
 }

@@ -1,5 +1,7 @@
 import { getDb, getReviewQueue, withTenant } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
+import { confirmReviewItemAction, dismissReviewItemAction } from "./actions";
+import { SubmitButton } from "../pantry/sync-buttons";
 import { PageHeader } from "@/app/components/page-header";
 import { Check, ReceiptText } from "@/app/components/icons";
 
@@ -58,6 +60,20 @@ export default async function ReviewPage() {
               {r.retailer}
               {r.canonicalName ? ` · best guess: ${r.canonicalName}` : " · no confident match"}
               {r.matchConfidence != null ? ` · ${Math.round(r.matchConfidence * 100)}% sure` : ""}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <form action={confirmReviewItemAction}>
+                <input type="hidden" name="id" value={r.id} />
+                <SubmitButton className="btn-primary btn-sm" pendingLabel="Adding…">
+                  Add to pantry
+                </SubmitButton>
+              </form>
+              <form action={dismissReviewItemAction}>
+                <input type="hidden" name="id" value={r.id} />
+                <SubmitButton className="btn-ghost btn-sm" pendingLabel="…">
+                  Not mine
+                </SubmitButton>
+              </form>
             </div>
           </li>
         ))}
