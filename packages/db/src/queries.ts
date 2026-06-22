@@ -1338,6 +1338,17 @@ export async function removePantryItem(db: Querier, userId: string, canonicalIte
 }
 
 /**
+ * Fresh start: wipe a user's pantry projection + full ledger + receipt history (purchase_line_items
+ * cascade from purchases). Re-importing receipts or re-scanning rebuilds it cleanly with no dedup in
+ * the way. Preferences, canonical catalog, and saved recipes are intentionally kept.
+ */
+export async function clearPantry(db: Querier, userId: string) {
+  await db.delete(purchases).where(eq(purchases.userId, userId)); // cascades purchase_line_items
+  await db.delete(stockLedger).where(eq(stockLedger.userId, userId));
+  await db.delete(pantryStock).where(eq(pantryStock.userId, userId));
+}
+
+/**
  * Inputs for the reorder/draft-order engine: pantry stock + (optional) reorder policy per item,
  * normalized to plain numbers so `buildDraftOrders` can consume it directly.
  * (asin/packageQty/unit are null until the products/Amazon vertical is wired.)

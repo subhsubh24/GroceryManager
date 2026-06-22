@@ -1,6 +1,7 @@
 import { loadEnv } from "@gm/config/env";
-import { getDb, getGoogleCredential, getPantryView, withTenant } from "@gm/db";
+import { getDb, getGoogleCredential, getPantryView, getReviewQueue, withTenant } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
+import { humanize, titleCase } from "@/app/lib/format";
 import {
   addPantryItemAction,
   backfillGmailAction,
@@ -8,7 +9,9 @@ import {
   removePantryItemAction,
   syncGmailAction,
 } from "./actions";
+import { confirmReviewItemAction, dismissReviewItemAction } from "../review/actions";
 import { SubmitButton } from "./sync-buttons";
+import { ClearPantryButton } from "./clear-button";
 import { PageHeader } from "@/app/components/page-header";
 import { Check, Mail, Package, Trash2 } from "@/app/components/icons";
 
@@ -28,14 +31,15 @@ const plural = (n: number) => (n === 1 ? "" : "s");
 async function loadPantry() {
   try {
     const userId = await currentUserId();
-    if (!userId) return { rows: [], connected: false, error: null as string | null };
-    const { rows, cred } = await withTenant(getDb(), userId, async (tx) => ({
+    if (!userId) return { rows: [], review: [], connected: false, error: null as string | null };
+    const { rows, cred, review } = await withTenant(getDb(), userId, async (tx) => ({
       rows: await getPantryView(tx, userId),
       cred: await getGoogleCredential(tx, userId),
+      review: await getReviewQueue(tx, userId),
     }));
-    return { rows, connected: Boolean(cred), error: null as string | null };
+    return { rows, review, connected: Boolean(cred), error: null as string | null };
   } catch (e) {
-    return { rows: [], connected: false, error: e instanceof Error ? e.message : String(e) };
+    return { rows: [], review: [], connected: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
@@ -118,7 +122,7 @@ export default async function PantryPage({
     review?: string;
   }>;
 }) {
-  const { rows, connected, error } = await loadPantry();
+  const { rows, review, connected, error } = await loadPantry();
   const sp = await searchParams;
   const env = loadEnv();
   const oauthConfigured = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
@@ -269,6 +273,46 @@ export default async function PantryPage({
         </form>
       </section>
 
+      {/* Inline review — low-confidence receipt lines surfaced right here (no separate trip to an
+          inbox): add the real ones to the pantry, dismiss the rest. */}
+      {review.length > 0 && (
+        <section className="mt-6">
+          <div className="mb-1 flex items-center justify-between">
+            <h2 className="section-title">Confirm these</h2>
+            <a href="/review" className="nav-link">Open inbox →</a>
+          </div>
+          <p className="mb-3 text-xs text-ink-400">
+            We couldn&apos;t place these with certainty — add the real ones, skip the rest.
+          </p>
+          <ul className="space-y-2.5">
+            {review.map((r) => (
+              <li key={r.id} className="card p-4">
+                <div className="font-semibold text-ink-900">{titleCase(r.rawText)}</div>
+                <div className="mt-0.5 text-xs text-ink-400">
+                  {humanize(r.retailer)}
+                  {r.canonicalName ? ` · best guess: ${titleCase(r.canonicalName)}` : " · no confident match"}
+                  {r.matchConfidence != null ? ` · ${Math.round(r.matchConfidence * 100)}% sure` : ""}
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <form action={confirmReviewItemAction}>
+                    <input type="hidden" name="id" value={r.id} />
+                    <SubmitButton className="btn-primary btn-sm" pendingLabel="Adding…">
+                      Add to pantry
+                    </SubmitButton>
+                  </form>
+                  <form action={dismissReviewItemAction}>
+                    <input type="hidden" name="id" value={r.id} />
+                    <SubmitButton className="btn-ghost btn-sm" pendingLabel="Removing…">
+                      Not mine
+                    </SubmitButton>
+                  </form>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {error && (
         <p className="notice-warn mt-6">
           Couldn&apos;t reach the database. Set <code>DATABASE_URL</code> and run the migrations/seed.
@@ -293,9 +337,9 @@ export default async function PantryPage({
           return (
             <li key={r.canonicalItemId} className="row">
               <div className="min-w-0">
-                <div className="font-semibold text-ink-900">{r.name}</div>
+                <div className="font-semibold text-ink-900">{titleCase(r.name)}</div>
                 <div className="mt-0.5 text-xs text-ink-400">
-                  {r.domain} · {Math.round(Number(r.baseQtyOnHand))} on hand · {Math.round(r.confidence * 100)}% sure
+                  {humanize(r.domain)} · {Math.round(Number(r.baseQtyOnHand))} on hand · {Math.round(r.confidence * 100)}% sure
                   {r.estimatedRunOutAt ? ` · runs out ~${new Date(r.estimatedRunOutAt).toISOString().slice(0, 10)}` : ""}
                 </div>
               </div>
@@ -316,6 +360,12 @@ export default async function PantryPage({
           );
         })}
       </ul>
+
+      {!error && (
+        <div className="mt-10 border-t border-line pt-4 text-center">
+          <ClearPantryButton />
+        </div>
+      )}
     </main>
   );
 }

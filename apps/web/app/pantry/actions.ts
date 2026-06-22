@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { loadEnv } from "@gm/config/env";
 import { NORMALIZE } from "@gm/config/constants";
-import { getDb, removePantryItem, withTenant } from "@gm/db";
+import { getDb, clearPantry, removePantryItem, withTenant } from "@gm/db";
 import {
   backfillGmailForUser,
   createDbNormalizationPorts,
@@ -130,6 +130,20 @@ export async function addPantryItemAction(formData: FormData) {
       occurredAt: new Date(),
     });
   });
+
+  revalidatePath("/pantry");
+}
+
+/**
+ * Fresh start: wipe the whole pantry (projection + ledger + receipt history) so the user can rebuild
+ * from a clean slate — re-import receipts, snap the fridge, etc. RLS-scoped; silent no-op if signed
+ * out. Confirmed client-side (see clear-button.tsx) since it's destructive.
+ */
+export async function clearPantryAction() {
+  const userId = await currentUserId();
+  if (!userId) return;
+
+  await withTenant(getDb(), userId, (tx) => clearPantry(tx, userId));
 
   revalidatePath("/pantry");
 }
