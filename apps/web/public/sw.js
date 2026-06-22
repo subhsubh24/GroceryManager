@@ -1,6 +1,6 @@
 /* GroceryManager service worker (PLAN §10): web push delivery + offline caching. */
 
-const CACHE = "gm-cache-v1";
+const CACHE = "gm-cache-v2";
 const SHELL = ["/", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
@@ -31,15 +31,20 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin || url.pathname.startsWith("/api")) return;
 
   if (url.pathname.startsWith("/_next/static") || url.pathname.startsWith("/icons")) {
+    // Stale-while-revalidate: serve the cached asset fast, but ALWAYS refetch in the background and
+    // update the cache, so a stale bundle self-heals on the next load (never serve outdated JS that
+    // would break hydration). Falls back to whatever's cached if the network is down.
     event.respondWith(
-      caches.match(req).then(
-        (hit) =>
-          hit ||
-          fetch(req).then((res) => {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(req, copy));
-            return res;
-          }),
+      caches.open(CACHE).then((c) =>
+        c.match(req).then((hit) => {
+          const fresh = fetch(req)
+            .then((res) => {
+              c.put(req, res.clone());
+              return res;
+            })
+            .catch(() => hit);
+          return hit || fresh;
+        }),
       ),
     );
     return;

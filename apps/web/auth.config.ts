@@ -11,7 +11,9 @@ const GMAIL_SCOPE = "openid email profile https://www.googleapis.com/auth/gmail.
  */
 export const authConfig = {
   secret: process.env.AUTH_SECRET,
-  session: { strategy: "jwt" },
+  // Short-lived session so the app re-prompts for login each session (security-first) rather than
+  // silently keeping you signed in for weeks. 8h covers a day's use; come back later → log in again.
+  session: { strategy: "jwt", maxAge: 60 * 60 * 8 },
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
