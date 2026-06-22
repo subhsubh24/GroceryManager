@@ -11,9 +11,12 @@
  *     question instead of mutating anything.
  */
 import { and, eq, inArray } from "drizzle-orm";
-import { NORMALIZE } from "@gm/config/constants";
+import { loadEnv } from "@gm/config/env";
 import { pantryScanDetections, pantryScans, pantryStock, type Querier } from "@gm/db";
+import { createGeminiEmbedder, getGeminiClient } from "../llm/index.js";
 import { createDbNormalizationPorts } from "../ingestion/db-ports.js";
+import { createLlmNormalizer } from "../ingestion/llm-normalizer.js";
+import { normalizeLineItem, type NormalizationResult } from "../ingestion/normalize.js";
 import { appendLedgerAndReproject } from "../pantry/persist.js";
 import type { ReconciledDetection } from "./reconcile.js";
 import type { ScanLocation } from "./detect.js";
@@ -109,14 +112,25 @@ export async function applyVisionScan(
     confirmed++;
   }
 
-  const ports = createDbNormalizationPorts(db, userId);
+  // Full §5.4 normalization cascade (override → upc → trigram → embedding → LLM → create) so a scanned
+  // label resolves to an EXISTING canonical instead of spawning a near-duplicate ("baby spinach" →
+  // existing "spinach"). Embedding + LLM run only when a Gemini key is configured; otherwise it falls
+  // back to trigram-then-create (the prior behavior). Newly created canonicals get shelf-life via the port.
+  const env = loadEnv();
+  const aiClient = env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT ? getGeminiClient() : null;
+  const ports = createDbNormalizationPorts(
+    db,
+    userId,
+    aiClient ? { embed: createGeminiEmbedder(aiClient), llm: createLlmNormalizer(aiClient) } : undefined,
+  );
   let added = 0;
   for (const n of input.newItems) {
     let canonicalItemId = n.canonicalItemId;
+    let method: NormalizationResult["method"] = "manual";
     if (!canonicalItemId) {
-      const [top] = await ports.trigramCandidates(n.rawLabel, 1);
-      canonicalItemId =
-        top && top.score >= NORMALIZE.trigramThreshold ? top.id : await ports.createCanonical(n.rawLabel);
+      const norm = await normalizeLineItem({ rawText: n.rawLabel, name: n.rawLabel, upc: null }, ports);
+      canonicalItemId = norm.canonicalItemId ?? (await ports.createCanonical(n.rawLabel));
+      method = norm.method;
     }
     const [det] = await db
       .insert(pantryScanDetections)
@@ -125,7 +139,7 @@ export async function applyVisionScan(
         canonicalItemId,
         rawLabel: n.rawLabel,
         presenceConfidence: n.presenceConfidence,
-        matchMethod: n.canonicalItemId ? "manual" : "trigram",
+        matchMethod: method,
         action: "new_item",
         userConfirmed: true,
       })
