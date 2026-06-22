@@ -18,6 +18,13 @@ export async function connectGmailAction() {
   await signIn("google", { redirectTo: "/pantry" });
 }
 
+/**
+ * Truncate an error for the redirect query string. The raw Gemini 429 JSON is ~1.5KB and would blow
+ * past URL length limits — so the redirect silently dropped the param and the banner never rendered.
+ * The friendly mapper + "Details" toggle on /pantry work fine off the first few hundred chars.
+ */
+const shortError = (e: unknown) => (e instanceof Error ? e.message : String(e)).slice(0, 500);
+
 function summaryQuery(summary: GmailSyncSummary): string {
   return new URLSearchParams({
     scanned: String(summary.scanned),
@@ -41,7 +48,7 @@ export async function syncGmailAction() {
   try {
     query = summaryQuery(await syncGmailForUser(getDb(), loadEnv(), userId, { maxMessages: 10 }));
   } catch (e) {
-    query = "error=" + encodeURIComponent(e instanceof Error ? e.message : String(e));
+    query = "error=" + encodeURIComponent(shortError(e));
   }
   redirect(`/pantry?${query}`);
 }
@@ -62,7 +69,7 @@ export async function backfillGmailAction() {
     });
     query = summaryQuery(summary);
   } catch (e) {
-    query = "error=" + encodeURIComponent(e instanceof Error ? e.message : String(e));
+    query = "error=" + encodeURIComponent(shortError(e));
   }
   redirect(`/pantry?${query}`);
 }

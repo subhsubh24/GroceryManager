@@ -54,6 +54,7 @@ export {
   Plus,
   Search,
   Trash2,
+  Loader2, // inline spinner for pending actions
   Leaf,
 
   // ── Page-specific accents picked up during the sweep ──────────────────────

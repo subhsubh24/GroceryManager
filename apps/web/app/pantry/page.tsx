@@ -2,6 +2,7 @@ import { loadEnv } from "@gm/config/env";
 import { getDb, getGoogleCredential, getPantryView, withTenant } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
 import { backfillGmailAction, connectGmailAction, syncGmailAction } from "./actions";
+import { SubmitButton } from "./sync-buttons";
 import { PageHeader } from "@/app/components/page-header";
 import { Check, Mail, Package } from "@/app/components/icons";
 
@@ -81,6 +82,13 @@ function friendlyGmailError(raw: string): {
       title: "Your Gmail connection expired",
       hint: "Reconnect Gmail to refresh access, then try again.",
       link: null,
+    };
+  }
+  if (r.includes("exceeded your current quota") || r.includes("resource_exhausted") || r.includes("429")) {
+    return {
+      title: "The AI is rate-limited right now",
+      hint: "Your Gemini key is out of quota — the free tier is very limited and can't parse receipts reliably. Add billing to your Google AI key (pennies per sync), or try again later.",
+      link: { href: "https://aistudio.google.com/apikey", label: "Manage your Gemini key & billing" },
     };
   }
   if (r.includes("not signed in")) {
@@ -176,18 +184,18 @@ export default async function PantryPage({
           {connected ? (
             <div className="flex flex-wrap gap-2">
               <form action={syncGmailAction}>
-                <button type="submit" className="btn-primary">
+                <SubmitButton className="btn-primary" pendingLabel="Syncing…">
                   Sync receipts now
-                </button>
+                </SubmitButton>
               </form>
               <form action={backfillGmailAction}>
-                <button
-                  type="submit"
+                <SubmitButton
                   className="btn-secondary"
+                  pendingLabel="Importing…"
                   title="Import the last ~6 months of receipts to seed your pantry"
                 >
                   Import past receipts
-                </button>
+                </SubmitButton>
               </form>
             </div>
           ) : (
