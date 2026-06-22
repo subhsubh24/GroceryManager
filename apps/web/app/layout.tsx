@@ -34,6 +34,9 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
+  // Extend under the notch / home-indicator so `env(safe-area-inset-*)` resolves to real insets
+  // (otherwise it's 0). The onboarding chat pads its bottom input bar against the inset.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

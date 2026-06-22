@@ -17,6 +17,7 @@ import {
 import { getGeminiClient } from "@gm/core/llm";
 import { currentUserId } from "@/app/lib/tenant";
 import { OnboardingFlow, type OnboardingPrefill, type WizardState } from "./onboarding-flow";
+import { OnboardingChat } from "./onboarding-chat";
 
 export const dynamic = "force-dynamic";
 
@@ -117,7 +118,17 @@ async function loadPrefill(): Promise<OnboardingPrefill> {
   }
 }
 
+/**
+ * Onboarding entry. With a Gemini key, render the AI-ADAPTIVE conversational onboarding
+ * (`OnboardingChat`) — a warm chat that asks intelligent, adaptive questions and writes what it
+ * learns to the same preference ledger via server actions. Without a key, fall back to the fixed
+ * chip-form wizard (`OnboardingFlow` + `saveOnboarding`), which is fully deterministic and needs no
+ * model. Both finish at "/". `loadPrefill` (a DB round-trip) only runs on the keyless path that uses it.
+ */
 export default async function OnboardingPage() {
+  if (process.env.GEMINI_API_KEY) {
+    return <OnboardingChat />;
+  }
   const prefill = await loadPrefill();
   return <OnboardingFlow prefill={prefill} onFinish={saveOnboarding} />;
 }
