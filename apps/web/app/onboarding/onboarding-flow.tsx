@@ -358,9 +358,20 @@ function ProfileStep({
 /* Step 2a — Taste (AI-adaptive). One question per screen, rendered as a tile (chips + free input).  */
 /* ------------------------------------------------------------------------------------------------ */
 
-const AI_GREETING =
-  "How would you describe the way you eat? Anything from \"I eat everything\" to a specific diet works.";
-const AI_GREETING_OPTIONS = ["I eat everything", "Vegetarian", "Vegan", "Pescatarian", "Gluten-free"];
+// Q1 is broad on purpose (diet AND allergies in one), so a single screen captures a lot.
+const AI_GREETING = "How do you eat — any diets or allergies we should plan around?";
+const AI_GREETING_OPTIONS = [
+  "I eat everything",
+  "Vegetarian",
+  "Vegan",
+  "Pescatarian",
+  "Gluten-free",
+  "Dairy-free",
+  "Nut allergy",
+  "Halal",
+];
+// Hard cap so onboarding stays short no matter what the model returns (it's also told to stop by 3).
+const MAX_AI_QUESTIONS = 3;
 
 function TasteStepAI({ onDone, onBack }: { onDone: () => void; onBack: () => void }) {
   // The transcript we send to the model (assistant questions + user answers). Seeded with the opening
@@ -370,41 +381,55 @@ function TasteStepAI({ onDone, onBack }: { onDone: () => void; onBack: () => voi
   ]);
   const [question, setQuestion] = useState(AI_GREETING);
   const [options, setOptions] = useState<string[]>(AI_GREETING_OPTIONS);
+  // MULTI-select for the current question — tap several chips, optionally add free text, then Continue.
+  // Capturing many answers per question is the whole point: max signal, fewest questions.
+  const [picked, setPicked] = useState<string[]>([]);
   const [custom, setCustom] = useState("");
-  const [turnCount, setTurnCount] = useState(0); // # of questions answered so far (for a gentle hint)
+  const [answered, setAnswered] = useState(0); // questions answered so far (drives the hard cap)
   const [pending, startTurn] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  function answer(text: string) {
-    const content = text.trim();
-    if (!content || pending) return;
+  const togglePick = (opt: string) =>
+    setPicked((p) => (p.includes(opt) ? p.filter((x) => x !== opt) : [...p, opt]));
+
+  function submitAnswer() {
+    if (pending) return;
+    const parts = [...picked];
+    if (custom.trim()) parts.push(custom.trim());
+    const content = parts.join(", ").trim();
+    if (!content) return;
     setError(null);
-    setCustom("");
     const next: OnboardingMessage[] = [...transcript, { role: "user", content }];
     setTranscript(next);
+    const answeredNow = answered + 1;
     startTurn(async () => {
       try {
         const { reply, done, options: nextOptions } = await onboardingTurnAction(next);
-        if (done) {
+        // Stop when the model says so OR we hit the cap — onboarding never drags past a few questions.
+        if (done || answeredNow >= MAX_AI_QUESTIONS) {
           onDone();
           return;
         }
         setTranscript((t) => [...t, { role: "assistant", content: reply }]);
         setQuestion(reply);
         setOptions(nextOptions);
-        setTurnCount((n) => n + 1);
+        setPicked([]);
+        setCustom("");
+        setAnswered(answeredNow);
       } catch {
         setError("Hmm, that didn't go through. Mind trying that again?");
       }
     });
   }
 
+  const canContinue = picked.length > 0 || custom.trim().length > 0;
+
   return (
     <section className="flex flex-1 flex-col">
       <StepHeader
         icon={<TasteIcon className="h-6 w-6" aria-hidden />}
         title={question}
-        blurb="Tap an answer or type your own — every recipe, plan, and list gets tuned to you."
+        blurb="Pick any that apply — or add your own. Just a couple of quick questions, then you're in."
         liveTitle
       />
 
@@ -412,73 +437,69 @@ function TasteStepAI({ onDone, onBack }: { onDone: () => void; onBack: () => voi
         {pending ? (
           <p className="flex items-center gap-2 text-sm text-ink-400" role="status">
             <SpinnerIcon className="h-4 w-4 animate-spin" aria-hidden />
-            Thinking about your next question…
+            One sec…
           </p>
         ) : (
           <>
             {options.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {options.map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => answer(opt)}
-                    className="chip-tap"
-                  >
-                    {opt}
-                  </button>
-                ))}
+                {options.map((opt) => {
+                  const on = picked.includes(opt);
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => togglePick(opt)}
+                      className={`chip-tap ${on ? "chip-tap-on" : ""}`}
+                    >
+                      {on && <CheckIcon className="h-3.5 w-3.5" aria-hidden />}
+                      {opt}
+                    </button>
+                  );
+                })}
               </div>
             )}
 
             <form
-              className="mt-4 flex items-center gap-2"
+              className="mt-4"
               onSubmit={(e) => {
                 e.preventDefault();
-                answer(custom);
+                submitAnswer();
               }}
             >
               <label htmlFor="taste-custom" className="sr-only">
-                Type your own answer
+                Add your own
               </label>
               <input
                 id="taste-custom"
                 value={custom}
                 onChange={(e) => setCustom(e.target.value)}
                 type="text"
-                placeholder="Type your own…"
+                placeholder="Add your own…"
                 autoComplete="off"
-                enterKeyHint="send"
-                className="input-lg flex-1"
+                enterKeyHint="next"
+                className="input-lg w-full"
               />
-              <button
-                type="submit"
-                disabled={!custom.trim()}
-                className="btn-primary min-h-[44px] min-w-[44px] shrink-0 px-4"
-                aria-label="Send answer"
-              >
-                <NextIcon className="h-4 w-4" aria-hidden />
-              </button>
             </form>
 
             {error && <p className="notice-warn mt-4">{error}</p>}
-            {turnCount > 0 && !error && (
-              <p className="mt-4 text-xs text-ink-400">
-                A few more like this and you&apos;re done — or skip ahead anytime.
-              </p>
-            )}
           </>
         )}
       </div>
 
       <StepFooter onBack={onBack} backDisabled={pending}>
+        <button type="button" onClick={onDone} disabled={pending} className="btn-ghost min-h-[44px]">
+          Skip
+        </button>
         <button
           type="button"
-          onClick={onDone}
-          disabled={pending}
-          className="btn-ghost min-h-[44px]"
+          onClick={submitAnswer}
+          disabled={pending || !canContinue}
+          className="btn-primary min-h-[44px] px-5"
         >
-          Skip taste
+          Continue
+          <NextIcon className="h-4 w-4" aria-hidden />
         </button>
       </StepFooter>
     </section>
@@ -497,7 +518,7 @@ type StaticState = {
   dislikedText: string;
 };
 
-const STATIC_SUBSTEPS = 4;
+const STATIC_SUBSTEPS = 2;
 
 function TasteStepStatic({ onDone, onBack }: { onDone: () => void; onBack: () => void }) {
   const [sub, setSub] = useState(0);
@@ -550,52 +571,45 @@ function TasteStepStatic({ onDone, onBack }: { onDone: () => void; onBack: () =>
       {sub === 0 && (
         <StepHeader
           icon={<TasteIcon className="h-6 w-6" aria-hidden />}
-          title="Any diets you follow?"
-          blurb="So every plan and recipe respects how you eat. Pick all that apply — or skip."
+          title="How you eat"
+          blurb="Diets to follow and anything to keep out — pick all that apply, or skip."
         />
       )}
       {sub === 1 && (
         <StepHeader
           icon={<TasteIcon className="h-6 w-6" aria-hidden />}
-          title="Anything you're allergic to?"
-          blurb="We'll keep these out of every suggestion. This one matters — but it's still optional."
-        />
-      )}
-      {sub === 2 && (
-        <StepHeader
-          icon={<TasteIcon className="h-6 w-6" aria-hidden />}
-          title="Cuisines you love?"
-          blurb="We'll lean into these when we suggest what to cook. Tap a few favorites."
-        />
-      )}
-      {sub === 3 && (
-        <StepHeader
-          icon={<TasteIcon className="h-6 w-6" aria-hidden />}
-          title="Loves & dislikes"
-          blurb="A few ingredients to lean toward — and a few to avoid. Recipes get tuned to both."
+          title="What you love"
+          blurb="Cuisines and ingredients to lean toward — and a few to avoid. All optional."
         />
       )}
 
-      <div className="mt-6 flex-1">
+      <div className="mt-6 flex-1 space-y-6">
         {sub === 0 && (
-          <ChipMultiSelect options={DIETS} selected={state.diets} onToggle={(v) => toggle("diets", v)} />
+          <>
+            <div>
+              <p className="field-label mb-2">Diets</p>
+              <ChipMultiSelect options={DIETS} selected={state.diets} onToggle={(v) => toggle("diets", v)} />
+            </div>
+            <div>
+              <p className="field-label mb-2">Allergies</p>
+              <ChipMultiSelect
+                options={ALLERGENS}
+                selected={state.allergens}
+                onToggle={(v) => toggle("allergens", v)}
+              />
+            </div>
+          </>
         )}
         {sub === 1 && (
-          <ChipMultiSelect
-            options={ALLERGENS}
-            selected={state.allergens}
-            onToggle={(v) => toggle("allergens", v)}
-          />
-        )}
-        {sub === 2 && (
-          <ChipMultiSelect
-            options={CUISINES}
-            selected={state.lovedCuisines}
-            onToggle={(v) => toggle("lovedCuisines", v)}
-          />
-        )}
-        {sub === 3 && (
-          <div className="space-y-4">
+          <>
+            <div>
+              <p className="field-label mb-2">Cuisines you love</p>
+              <ChipMultiSelect
+                options={CUISINES}
+                selected={state.lovedCuisines}
+                onToggle={(v) => toggle("lovedCuisines", v)}
+              />
+            </div>
             <label className="block">
               <span className="field-label">Ingredients you love</span>
               <input
@@ -614,7 +628,7 @@ function TasteStepStatic({ onDone, onBack }: { onDone: () => void; onBack: () =>
                 className="input-lg"
               />
             </label>
-          </div>
+          </>
         )}
       </div>
 

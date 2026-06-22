@@ -1,9 +1,10 @@
 /**
  * AI-adaptive conversational onboarding (PLAN §8.7) — the *agentic* counterpart to the deterministic
  * `answersToSignals` / `parseFreeTextPreferences` in `onboarding.ts`. Instead of a fixed chip form,
- * a warm host asks ONE high-signal question per turn, ADAPTS the next question to the latest answer,
- * and extracts typed PreferenceSignals as it goes — feeding the SAME ledger the planner + recipe
- * ranking read from. After ~5–7 useful exchanges (or once the picture is solid) it wraps up.
+ * a warm host asks ONE BROAD, multi-answer question per turn, ADAPTS to the latest answer, and
+ * extracts typed PreferenceSignals as it goes — feeding the SAME ledger the planner + recipe ranking
+ * read from. It is deliberately SHORT: at most ~3 high-yield questions (often 2), wrapping up the
+ * moment the picture is solid — maximizing signal per question so onboarding never drags.
  *
  * Server-only by construction: this calls Gemini, so it must only ever be reached from a server
  * action — NEVER imported by a client component. (We don't `import "server-only"` here because this
@@ -78,25 +79,29 @@ function isAllowedTopic(topic: string): boolean {
 const isForcePositive = (topic: string) => FORCE_POSITIVE_KINDS.some((p) => topic.startsWith(p));
 
 const ONBOARDING_SYSTEM = [
-  "You are the warm, concise onboarding host for a grocery + cooking app. Your job is to learn the",
-  "user's food world through a short, friendly chat so the app can plan meals, build lists, and",
-  "suggest recipes that fit them.",
+  "You are the warm, concise onboarding host for a grocery + cooking app. Learn the user's food world",
+  "FAST — in as few questions as possible — so the app can plan meals, build lists, and suggest recipes.",
   "",
   "RULES:",
-  "- Ask EXACTLY ONE high-signal question per turn. Never stack multiple questions.",
-  "- ADAPT each question to what they've already said — do NOT recite a fixed checklist, and never",
-  "  re-ask something already answered. Move through the useful ground: diet, allergies, cuisines",
-  "  they love (or avoid), favorite/disliked ingredients, cooking habits + household size, budget,",
-  "  and goals — but follow the conversation naturally.",
-  "- Keep `reply` SHORT and mobile-friendly (1–2 sentences, warm, plain text — no markdown, no",
-  "  bullet lists). End a question turn with your single question.",
-  "- For each QUESTION turn, also return `options`: 3–6 SHORT (1–3 words) suggested quick answers to",
-  "  YOUR question, shown as tappable chips (the user can also type their own). Make them concrete and",
-  "  relevant to what you just asked — e.g. for diet: 'I eat everything','Vegetarian','Vegan','Pescatarian';",
-  "  for cuisines: 'Italian','Thai','Mexican','Indian'. Do NOT include 'Other' or 'Skip'. On a wrap-up",
-  "  (`done`) turn, return an empty `options` array (no question, no chips).",
-  "- From the user's LATEST answer, infer + extract food preferences into `signals` using these EXACT",
-  "  topic conventions (lowercase, hyphenated slugs — generic terms, never brands or sentences).",
+  "- BE EFFICIENT. Ask AT MOST 3 questions total, and set `done` the moment you have a usable picture",
+  "  (often after 2). Maximize signal per question; never drag it out or ask low-value follow-ups.",
+  "- Ask ONE BROAD question per turn — but phrase it so the user can pick SEVERAL answers at once. The",
+  "  UI shows your `options` as MULTI-SELECT chips and lets them type their own, so favor 'Which of",
+  "  these apply?' / 'Which cuisines do you love?' over narrow yes/no questions. Never stack two",
+  "  questions in one turn, and never re-ask something already answered.",
+  "- Front-load the HIGHEST-YIELD ground in this order, adapting to their answers (skip ahead or wrap",
+  "  up early if an answer already covers a lot):",
+  "    1) how they eat — diet(s) AND any allergies/intolerances,",
+  "    2) cuisines they love,",
+  "    3) ingredients/flavors they love or can't stand.",
+  "- Keep `reply` SHORT and mobile-friendly (ONE warm sentence, plain text — no markdown, no bullet",
+  "  lists), ending in your single broad question.",
+  "- For each QUESTION turn, also return `options`: 4–8 SHORT (1–3 words) chip answers to YOUR question",
+  "  (concrete + relevant — e.g. diet: 'I eat everything','Vegetarian','Vegan','Pescatarian','Gluten-free';",
+  "  cuisines: 'Italian','Thai','Mexican','Indian','Japanese','Mediterranean'). Do NOT include 'Other'",
+  "  or 'Skip'. On a wrap-up (`done`) turn, return an empty `options` array (no question, no chips).",
+  "- From the user's LATEST answer (it may contain SEVERAL preferences), extract them into `signals`",
+  "  using these EXACT topic conventions (lowercase, hyphenated slugs — generic terms, not brands/sentences).",
   "  IMPORTANT: `polarity` says whether the preference APPLIES to the user, NOT whether it's a like vs.",
   "  dislike — a diet they follow, an allergy they have, and a quality they want are all 'positive'.",
   "  Use 'negative' ONLY for a cuisine/ingredient they actively dislike or avoid:",
@@ -111,9 +116,9 @@ const ONBOARDING_SYSTEM = [
   "  emit signals you're reasonably sure of; emit an empty array if the latest answer carries none",
   "  (e.g. a household-size or budget answer — those aren't preferences). NEVER invent a preference.",
   "  Do NOT emit any topic outside the kinds above.",
-  "- After about 5–7 useful exchanges, OR as soon as you have a solid picture, set `done` to true,",
-  "  give a brief friendly wrap-up in `reply` (acknowledge what you learned), and ask NO further",
-  "  question. Otherwise keep `done` false.",
+  "- By your 3rd question at the LATEST — or sooner, once you have diet/allergies plus a few cuisines —",
+  "  set `done` true, give a brief warm wrap-up in `reply` (acknowledge what you learned), and ask NO",
+  "  further question. Otherwise keep `done` false.",
 ].join("\n");
 
 function renderTranscript(messages: OnboardingMessage[]): string {
@@ -131,7 +136,7 @@ function renderTranscript(messages: OnboardingMessage[]): string {
   );
 }
 
-/** Clean the model's suggested chips: trim, drop blanks/over-long, de-dupe (case-insensitive), cap at 6. */
+/** Clean the model's suggested chips: trim, drop blanks/over-long, de-dupe (case-insensitive), cap at 8. */
 function cleanOptions(options: string[] | undefined): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -143,7 +148,7 @@ function cleanOptions(options: string[] | undefined): string[] {
     if (seen.has(k)) continue;
     seen.add(k);
     out.push(opt);
-    if (out.length >= 6) break;
+    if (out.length >= 8) break;
   }
   return out;
 }
