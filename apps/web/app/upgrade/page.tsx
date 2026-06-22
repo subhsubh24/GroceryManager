@@ -2,6 +2,7 @@ import { getDb, loadPreferenceSignals, withTenant } from "@gm/db";
 import { isPremium, PREMIUM_PERKS } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
+import { Check, Star } from "@/app/components/icons";
 import { PreviewButton } from "./preview-button";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +26,7 @@ export default async function UpgradePage() {
     <main className="page">
       <PageHeader
         accent="grape"
-        emoji="⭐"
+        icon={Star}
         eyebrow="Premium"
         title="Go Premium"
         subtitle="Unlock the AI planner, unlimited Discover, and recipe remix — and support the app."
@@ -38,7 +39,10 @@ export default async function UpgradePage() {
         </p>
       )}
       {premium && (
-        <p className="notice-ok mt-6">You&apos;re Premium ✓ — thanks for the support. You have full access.</p>
+        <p className="notice-ok mt-6 flex items-center gap-1.5">
+          <Check className="h-4 w-4 shrink-0" strokeWidth={2} /> You&apos;re Premium — thanks for the
+          support. You have full access.
+        </p>
       )}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">

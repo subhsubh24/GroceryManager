@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Heart } from "@/app/components/icons";
 import { toggleSaveAction } from "./actions";
 
 /**
- * Heart toggle to save/unsave a recipe to "My Cookbook". Optimistic (🤍 → ❤️ immediately),
- * disabled while the server action is in flight, and reverts if the action reports failure.
- * Accessible: `aria-pressed` reflects state, `aria-label` describes the action.
+ * Heart toggle to save/unsave a recipe to "My Cookbook". Optimistic (outline → filled heart
+ * immediately), disabled while the server action is in flight, and reverts if the action reports
+ * failure. Accessible: `aria-pressed` reflects state, `aria-label` describes the action.
  */
 export function SaveButton({
   recipe,
@@ -43,7 +44,12 @@ export function SaveButton({
       title={saved ? "Saved — tap to remove" : "Save to My Cookbook"}
       className="btn-ghost btn-sm shrink-0 disabled:opacity-50"
     >
-      <span aria-hidden>{saved ? "❤️" : "🤍"}</span>
+      <Heart
+        aria-hidden
+        className={`h-4 w-4 ${saved ? "text-danger" : "text-ink-400"}`}
+        strokeWidth={2}
+        fill={saved ? "currentColor" : "none"}
+      />
     </button>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SaveButton } from "@/app/cookbook/save-button";
+import { Check, Heart, Sparkles, UtensilsCrossed, X } from "@/app/components/icons";
 import { recordSwipeAction } from "./actions";
 
 export type DeckCard = {
@@ -138,7 +139,9 @@ export function SwipeDeck({ deck }: { deck: DeckCard[] }) {
   if (done) {
     return (
       <div className="empty-state mt-2">
-        <div className="empty-emoji">🎉</div>
+        <div className="empty-emoji">
+          <Check className="h-6 w-6" strokeWidth={2} />
+        </div>
         <p className="text-sm font-medium text-ink-700">You&apos;re all caught up</p>
         <p className="mt-1 max-w-xs text-sm text-ink-400">
           Come back later for fresh ideas — or refine your taste so the next batch fits even better.
@@ -198,7 +201,9 @@ export function SwipeDeck({ deck }: { deck: DeckCard[] }) {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-5xl">🍽️</div>
+                <div className="flex h-full w-full items-center justify-center text-ink-300">
+                  <UtensilsCrossed className="h-12 w-12" strokeWidth={1.5} />
+                </div>
               )}
               {/* Drag intent badges (LIKE / SKIP) — purely visual feedback during a drag. */}
               <span
@@ -238,18 +243,18 @@ export function SwipeDeck({ deck }: { deck: DeckCard[] }) {
           onClick={() => decide(top, "skip")}
           aria-label="Skip this recipe"
           title="Skip (←)"
-          className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-surface text-2xl shadow-sm transition hover:border-ink-300 active:scale-95"
+          className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-surface text-ink-500 shadow-sm transition hover:border-ink-300 active:scale-95"
         >
-          <span aria-hidden>✕</span>
+          <X className="h-7 w-7" strokeWidth={2} aria-hidden />
         </button>
         <button
           type="button"
           onClick={() => decide(top, "like")}
           aria-label="Like this recipe"
           title="Like (→)"
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-solid text-2xl text-white shadow-sm transition active:scale-95"
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-solid text-white shadow-sm transition active:scale-95"
         >
-          <span aria-hidden>❤️</span>
+          <Heart className="h-7 w-7" strokeWidth={2} fill="currentColor" aria-hidden />
         </button>
       </div>
       <p className="mt-3 text-center text-xs text-ink-400">
@@ -265,8 +270,11 @@ export function SwipeDeck({ deck }: { deck: DeckCard[] }) {
             <a href={`/cook/${last.card.id}`} className="text-xs font-medium text-brand-700">
               Cook mode →
             </a>
-            <a href={`/remix/${last.card.id}`} className="text-xs font-medium text-grape-700">
-              Remix ✨
+            <a
+              href={`/remix/${last.card.id}`}
+              className="inline-flex items-center gap-1 text-xs font-medium text-grape-700"
+            >
+              <Sparkles className="h-3.5 w-3.5" strokeWidth={2} /> Remix
             </a>
             <SaveButton
               recipe={{

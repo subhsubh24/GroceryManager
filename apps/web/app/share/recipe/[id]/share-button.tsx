@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "@/app/components/icons";
 
 /** Share this recipe page — native share sheet on mobile, clipboard copy elsewhere. */
 export function ShareLinkButton({ title }: { title: string }) {
@@ -22,8 +23,14 @@ export function ShareLinkButton({ title }: { title: string }) {
   }
 
   return (
-    <button type="button" onClick={onShare} className="btn-primary">
-      {copied ? "Link copied ✓" : "Share this recipe"}
+    <button type="button" onClick={onShare} className="btn-primary inline-flex items-center gap-1.5">
+      {copied ? (
+        <>
+          <Check className="h-4 w-4" strokeWidth={2} /> Link copied
+        </>
+      ) : (
+        "Share this recipe"
+      )}
     </button>
   );
 }

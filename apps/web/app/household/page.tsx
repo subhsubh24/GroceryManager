@@ -7,6 +7,7 @@ import {
   withTenant,
 } from "@gm/db";
 import { PageHeader } from "@/app/components/page-header";
+import { Users } from "@/app/components/icons";
 import { currentUserId } from "@/app/lib/tenant";
 import { createHouseholdAction } from "./actions";
 import { InviteLinkButton } from "./invite-link-button";
@@ -16,7 +17,7 @@ export const dynamic = "force-dynamic";
 const header = (
   <PageHeader
     accent="brand"
-    emoji="🏠"
+    icon={Users}
     eyebrow="Shared household"
     title="Shared household"
     subtitle="Everyone in your household shares one shopping list — add an item once, it's there for all."
@@ -30,13 +31,15 @@ function ComingSoon() {
     <main className="page">
       <PageHeader
         accent="brand"
-        emoji="🏠"
+        icon={Users}
         eyebrow="Shared household"
         title="Shared household"
         subtitle="Share one shopping list with the people you shop for."
       />
       <div className="empty-state mt-6">
-        <div className="empty-emoji">🏠</div>
+        <div className="empty-emoji">
+          <Users className="h-6 w-6" strokeWidth={2} />
+        </div>
         <p className="text-sm font-medium text-ink-700">Shared household — coming soon</p>
         <p className="mx-auto mt-1 max-w-xs text-sm text-ink-400">
           Soon you&apos;ll be able to invite your household so everyone adds to the same list.

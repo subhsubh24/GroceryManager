@@ -3,6 +3,7 @@ import { getDb, getPantryView, loadWasteEvents, withTenant } from "@gm/db";
 import { recordWaste, selectExpiringSoon, summarizeWaste } from "@gm/core/pantry";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
+import { ChefHat, Recycle, Sprout } from "@/app/components/icons";
 import {
   annotateRecipe,
   buildPantryIndex,
@@ -107,7 +108,7 @@ export default async function UseItUpPage() {
     <main className="page">
       <PageHeader
         accent="berry"
-        emoji="♻️"
+        icon={Recycle}
         eyebrow="Reduce waste"
         title="Use it up"
         subtitle="What's about to go bad — and meals to rescue it before it does."
@@ -135,7 +136,9 @@ export default async function UseItUpPage() {
 
       {data.ready && data.expiring.length === 0 && (
         <div className="empty-state mt-6">
-          <div className="empty-emoji">🌱</div>
+          <div className="empty-emoji">
+            <Sprout className="h-6 w-6" strokeWidth={2} />
+          </div>
           <p className="text-sm font-medium text-ink-700">Nothing about to spoil</p>
           <p className="mt-1 max-w-xs text-sm text-ink-400">You&apos;re all caught up right now.</p>
         </div>
@@ -175,7 +178,9 @@ export default async function UseItUpPage() {
             <h2 className="section-title mb-3">Cook these to use them up</h2>
             {data.recipes.length === 0 ? (
               <div className="empty-state mt-6">
-                <div className="empty-emoji">🍳</div>
+                <div className="empty-emoji">
+                  <ChefHat className="h-6 w-6" strokeWidth={2} />
+                </div>
                 <p className="text-sm font-medium text-ink-700">No matching rescue recipes right now</p>
                 <p className="mt-1 max-w-xs text-sm text-ink-400">
                   Try the{" "}

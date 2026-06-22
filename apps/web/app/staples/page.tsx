@@ -9,6 +9,7 @@ import {
 import { defaultReorderPolicy, predictReorder } from "@gm/core/reorder";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
+import { Check, Repeat } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -91,7 +92,7 @@ export default async function StaplesPage() {
     <main className="page">
       <PageHeader
         accent="brand"
-        emoji="🔁"
+        icon={Repeat}
         eyebrow="Autopilot"
         title="Staples autopilot"
         subtitle={
@@ -111,7 +112,9 @@ export default async function StaplesPage() {
 
       {data.ready && data.items.length === 0 && (
         <div className="empty-state mt-6">
-          <div className="empty-emoji">🔁</div>
+          <div className="empty-emoji">
+            <Repeat className="h-6 w-6" strokeWidth={2} />
+          </div>
           <p className="text-sm font-medium text-ink-700">No staples yet</p>
           <p className="mt-1 max-w-xs text-sm text-ink-400">
             Once the app has learned a buying rhythm for a few items, they&apos;ll show up here to put on
@@ -176,11 +179,17 @@ export default async function StaplesPage() {
                   type="submit"
                   className={
                     i.enabled
-                      ? "btn-secondary btn-sm rounded-full"
+                      ? "btn-secondary btn-sm inline-flex items-center gap-1 rounded-full"
                       : "btn-dark btn-sm rounded-full"
                   }
                 >
-                  {i.enabled ? "On autopilot ✓" : "Turn on"}
+                  {i.enabled ? (
+                    <>
+                      <Check className="h-3.5 w-3.5" strokeWidth={2} /> On autopilot
+                    </>
+                  ) : (
+                    "Turn on"
+                  )}
                 </button>
               </form>
             </li>

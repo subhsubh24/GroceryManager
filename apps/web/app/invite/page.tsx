@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { countReferralsJoined, getDb, getOrCreateReferralCode, withTenant } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
+import { Gift } from "@/app/components/icons";
 import { InviteLinkButton } from "./invite-link-button";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +40,7 @@ export default async function InvitePage() {
     <main className="page">
       <PageHeader
         accent="berry"
-        emoji="🎁"
+        icon={Gift}
         eyebrow="Invite friends"
         title="Give a little, get a little"
         subtitle="Share your link — when a friend joins, you both get a Founding Friend perk."

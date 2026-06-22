@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "@/app/components/icons";
 
 /**
  * The personal invite link with a Copy button + native share sheet. The URL is computed server-side
@@ -45,8 +46,18 @@ export function InviteLinkButton({ url }: { url: string }) {
         className="input flex-1 text-xs"
       />
       <div className="flex shrink-0 gap-2">
-        <button type="button" onClick={onCopy} className="btn-secondary btn-sm">
-          {copied ? "Copied ✓" : "Copy link"}
+        <button
+          type="button"
+          onClick={onCopy}
+          className="btn-secondary btn-sm inline-flex items-center gap-1.5"
+        >
+          {copied ? (
+            <>
+              <Check className="h-4 w-4" strokeWidth={2} /> Copied
+            </>
+          ) : (
+            "Copy link"
+          )}
         </button>
         <button type="button" onClick={onShare} className="btn-primary btn-sm">
           Share

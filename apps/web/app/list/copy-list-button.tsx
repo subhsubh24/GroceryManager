@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "@/app/components/icons";
 
 /**
  * Keyless ordering path: copy the list to the clipboard so it can be pasted into Instacart (or any
@@ -33,8 +34,14 @@ export function CopyListButton({ text }: { text: string }) {
   }
 
   return (
-    <button type="button" onClick={onCopy} className="btn-primary">
-      {copied ? "Copied ✓" : "Copy list"}
+    <button type="button" onClick={onCopy} className="btn-primary inline-flex items-center gap-1.5">
+      {copied ? (
+        <>
+          <Check className="h-4 w-4" strokeWidth={2} /> Copied
+        </>
+      ) : (
+        "Copy list"
+      )}
     </button>
   );
 }

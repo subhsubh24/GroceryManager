@@ -1,6 +1,7 @@
 import { importRecipeAction } from "./actions";
 import { ImportRecipe } from "./import-recipe";
 import { PageHeader } from "@/app/components/page-header";
+import { ClipboardPaste } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ export default function ImportPage() {
     <main className="page">
       <PageHeader
         accent="citrus"
-        emoji="📥"
+        icon={ClipboardPaste}
         eyebrow="Import a recipe"
         title="Import a recipe"
         subtitle={

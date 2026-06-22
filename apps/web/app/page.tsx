@@ -13,6 +13,16 @@ import { currentUserId } from "@/app/lib/tenant";
 import { GettingStarted, type FirstRunState } from "@/app/components/getting-started";
 import { FeatureCard } from "@/app/components/feature-card";
 import { SECTIONS, type Section } from "@/app/lib/sections";
+import {
+  ArrowRight,
+  Check,
+  ChefHat,
+  Flame,
+  Leaf,
+  Recycle,
+  ShoppingCart,
+  type LucideIcon,
+} from "@/app/components/icons";
 
 // Topics onboarding writes that mean "the user told us their taste". profile:* (written at signup)
 // is excluded on purpose — counting it would mark step 1 done for every brand-new account.
@@ -79,17 +89,17 @@ async function loadHomeData(): Promise<HomeData> {
 }
 
 // Logged-out highlights: a short flagship set (not the full ~20). Picked from the shared catalog by
-// key so titles/blurbs/emoji can't drift from /tools. Conversion-focused, calm.
+// key so titles/blurbs/icons can't drift from /tools. Conversion-focused, calm.
 const HIGHLIGHT_KEYS = ["pantry", "recipes", "plan", "discover", "spend", "wrapped"];
 const HIGHLIGHTS: Section[] = HIGHLIGHT_KEYS.map((k) => SECTIONS.find((s) => s.key === k)).filter(
   (s): s is Section => s != null,
 );
 
 // A few signature flows surfaced as a "menu" inside the hero visual (logged-out marketing only).
-const HERO_PREVIEW: { emoji: string; title: string; meta: string }[] = [
-  { emoji: "🍳", title: "Tonight: Lemon herb chicken", meta: "have 7/8 · uses spinach" },
-  { emoji: "🛒", title: "Reorder ready", meta: "6 staples due · 1 tap to cart" },
-  { emoji: "♻️", title: "Use it up", meta: "2 items expiring soon" },
+const HERO_PREVIEW: { icon: LucideIcon; title: string; meta: string }[] = [
+  { icon: ChefHat, title: "Tonight: Lemon herb chicken", meta: "have 7/8 · uses spinach" },
+  { icon: ShoppingCart, title: "Reorder ready", meta: "6 staples due · 1 tap to cart" },
+  { icon: Recycle, title: "Use it up", meta: "2 items expiring soon" },
 ];
 
 /**
@@ -99,21 +109,23 @@ const HERO_PREVIEW: { emoji: string; title: string; meta: string }[] = [
  */
 function StatCard({
   href,
-  emoji,
+  icon: Icon,
   value,
   label,
 }: {
   href: string;
-  emoji: string;
+  icon: LucideIcon;
   value: string | number;
   label: string;
 }) {
   return (
     <a href={href} className="group card-link">
       <div className="flex items-start justify-between">
-        <span className="tile">{emoji}</span>
+        <span className="tile">
+          <Icon className="h-5 w-5" strokeWidth={2} />
+        </span>
         <span className="text-ink-300 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-          →
+          <ArrowRight className="h-4 w-4" />
         </span>
       </div>
       <div className="mt-4 text-2xl font-semibold tracking-[-0.02em] text-ink-900">{value}</div>
@@ -143,14 +155,16 @@ export default async function HomePage() {
       <header className="glass-nav sticky top-0 z-40">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 sm:px-8">
           <a href="/" className="flex items-center gap-2.5">
-            <span className="tile h-9 w-9 text-lg">🧺</span>
+            <span className="tile-brand h-9 w-9">
+              <Leaf className="h-5 w-5" strokeWidth={2} />
+            </span>
             <span className="text-base font-semibold tracking-[-0.01em] text-ink-900">GroceryManager</span>
           </a>
           {session ? (
             <div className="flex items-center gap-2 sm:gap-3">
               {streak > 0 && (
                 <a href="/digest" className="pill-brand hidden sm:inline-flex" title="Your cooking streak">
-                  🔥 {streak}-day streak
+                  <Flame className="h-4 w-4" strokeWidth={2} /> {streak}-day streak
                 </a>
               )}
               <a href="/tools" className="btn-ghost btn-sm hidden sm:inline-flex">
@@ -217,7 +231,7 @@ export default async function HomePage() {
               {streak > 0 && (
                 <StatCard
                   href="/digest"
-                  emoji="🔥"
+                  icon={Flame}
                   value={`${streak}-day`}
                   label="Cooking streak"
                 />
@@ -225,7 +239,7 @@ export default async function HomePage() {
               {expiringCount > 0 && (
                 <StatCard
                   href="/use-it-up"
-                  emoji="♻️"
+                  icon={Recycle}
                   value={expiringCount}
                   label={expiringCount === 1 ? "item to use up" : "items to use up"}
                 />
@@ -233,7 +247,7 @@ export default async function HomePage() {
               {listCount > 0 && (
                 <StatCard
                   href="/list"
-                  emoji="🛒"
+                  icon={ShoppingCart}
                   value={listCount}
                   label={listCount === 1 ? "item on your list" : "items on your list"}
                 />
@@ -275,13 +289,13 @@ export default async function HomePage() {
                 </div>
                 <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-400">
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="text-brand-600">✓</span> Fills from your receipts
+                    <Check className="h-4 w-4 text-brand-600" strokeWidth={2} /> Fills from your receipts
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="text-brand-600">✓</span> No bank link needed
+                    <Check className="h-4 w-4 text-brand-600" strokeWidth={2} /> No bank link needed
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="text-brand-600">✓</span> Works offline
+                    <Check className="h-4 w-4 text-brand-600" strokeWidth={2} /> Works offline
                   </span>
                 </div>
               </div>
@@ -304,8 +318,8 @@ export default async function HomePage() {
                         key={p.title}
                         className="flex items-center gap-3 rounded-xl border border-line bg-cream px-3.5 py-3"
                       >
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink-50 text-lg ring-1 ring-inset ring-line">
-                          {p.emoji}
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink-50 text-ink-600 ring-1 ring-inset ring-line">
+                          <p.icon className="h-5 w-5" strokeWidth={2} />
                         </span>
                         <div className="min-w-0">
                           <div className="truncate text-sm font-semibold text-ink-800">{p.title}</div>
@@ -316,7 +330,7 @@ export default async function HomePage() {
                   </div>
                   <div className="mt-5 flex items-center justify-between rounded-xl bg-brand-solid px-4 py-3 text-white">
                     <span className="text-sm font-semibold">Ready to order — 6 items</span>
-                    <span aria-hidden className="text-lg">→</span>
+                    <ArrowRight aria-hidden className="h-5 w-5" strokeWidth={2} />
                   </div>
                 </div>
               </div>
@@ -377,7 +391,9 @@ export default async function HomePage() {
 
       <footer className="mx-auto max-w-6xl px-5 pb-14 pt-6 sm:px-8">
         <div className="flex flex-col items-center gap-2 border-t border-line pt-8 text-center">
-          <span className="tile h-9 w-9 text-lg">🧺</span>
+          <span className="tile-brand h-9 w-9">
+            <Leaf className="h-5 w-5" strokeWidth={2} />
+          </span>
           <p className="text-sm text-ink-400">
             Your grocery + cooking autopilot · see <code className="text-ink-500">docs/PLAN.md</code>{" "}
             for the roadmap

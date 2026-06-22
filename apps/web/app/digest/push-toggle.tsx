@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Bell } from "@/app/components/icons";
 import {
   removePushSubscriptionAction,
   savePushSubscriptionAction,
@@ -99,7 +100,9 @@ export function PushToggle({ vapidPublicKey }: { vapidPublicKey: string | null }
   return (
     <section className="card-pad">
       <div className="flex items-start gap-3">
-        <div className="tile shrink-0">🔔</div>
+        <div className="tile shrink-0">
+          <Bell className="h-5 w-5" strokeWidth={2} />
+        </div>
         <div>
           <h2 className="section-title">Get this as a notification</h2>
           <p className="mt-0.5 mb-3 text-xs text-ink-400">

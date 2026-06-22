@@ -1,5 +1,6 @@
 import { PageHeader } from "@/app/components/page-header";
 import { FeatureCard } from "@/app/components/feature-card";
+import { LayoutGrid } from "@/app/components/icons";
 import { sectionsByGroup } from "@/app/lib/sections";
 
 /**
@@ -13,7 +14,7 @@ export default function ToolsPage() {
   return (
     <main className="page">
       <PageHeader
-        emoji="🧰"
+        icon={LayoutGrid}
         eyebrow="All tools"
         title="All tools"
         subtitle="Everything GroceryManager can do, organized."

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "@/app/components/icons";
 
 /**
  * The one client component on /wrapped (the page stays a server component). Uses the Web Share
@@ -25,8 +26,14 @@ export function ShareButton({ text }: { text: string }) {
   }
 
   return (
-    <button type="button" onClick={onShare} className="btn-primary">
-      {copied ? "Copied to clipboard ✓" : "Share my Wrapped"}
+    <button type="button" onClick={onShare} className="btn-primary inline-flex items-center gap-1.5">
+      {copied ? (
+        <>
+          <Check className="h-4 w-4" strokeWidth={2} /> Copied to clipboard
+        </>
+      ) : (
+        "Share my Wrapped"
+      )}
     </button>
   );
 }

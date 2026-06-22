@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getAdminDb, getUserIdByCookbookToken, loadSavedRecipes } from "@gm/db";
 import { dedupeSaved, isValidShareToken, type SavedRecipe } from "@gm/core/recipe";
+import { BookOpen, Leaf } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,9 @@ function NotFound() {
     <main className="page-narrow">
       <BrandMark />
       <div className="empty-state mt-8">
-        <div className="empty-emoji">🧺</div>
+        <div className="empty-emoji">
+          <BookOpen className="h-6 w-6" strokeWidth={2} />
+        </div>
         <p className="text-sm font-medium text-ink-700">Cookbook not found</p>
         <p className="mt-1 max-w-xs text-sm text-ink-400">
           This share link is invalid or no longer available.
@@ -33,8 +36,8 @@ function BrandMark() {
   return (
     <div className="flex items-center justify-between">
       <a href="/" className="flex items-center gap-2">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-gradient text-base shadow-brand">
-          🧺
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-gradient text-white shadow-brand">
+          <Leaf className="h-4 w-4" strokeWidth={2} />
         </span>
         <span className="text-sm font-semibold text-ink-800">GroceryManager</span>
       </a>
@@ -106,7 +109,9 @@ export default async function ShareCookbookPage({ params }: { params: Promise<{ 
 
       {saved.length === 0 ? (
         <div className="empty-state mt-8">
-          <div className="empty-emoji">📖</div>
+          <div className="empty-emoji">
+            <BookOpen className="h-6 w-6" strokeWidth={2} />
+          </div>
           <p className="text-sm font-medium text-ink-700">No recipes yet</p>
           <p className="mt-1 max-w-xs text-sm text-ink-400">
             There&apos;s nothing saved here yet — check back soon.

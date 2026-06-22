@@ -1,3 +1,4 @@
+import { Check } from "@/app/components/icons";
 import { DismissGettingStarted } from "./getting-started-dismiss";
 
 /**
@@ -77,9 +78,9 @@ export function GettingStarted({ state }: { state: FirstRunState }) {
                 {s.done ? (
                   <span
                     aria-hidden
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-solid text-sm font-bold text-white"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-solid text-white"
                   >
-                    ✓
+                    <Check className="h-4 w-4" strokeWidth={2.5} />
                   </span>
                 ) : (
                   <span

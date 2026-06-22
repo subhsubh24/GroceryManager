@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Moon, Sun } from "@/app/components/icons";
 
 /**
  * Floating light/dark toggle, available on every screen. The initial class is set by the no-flash
@@ -32,10 +33,16 @@ export function ThemeToggle() {
       onClick={toggle}
       aria-label={mounted ? (dark ? "Switch to light mode" : "Switch to dark mode") : "Toggle theme"}
       aria-pressed={mounted ? dark : undefined}
-      className="glass fixed bottom-20 right-4 z-50 flex h-11 w-11 items-center justify-center rounded-full text-lg shadow-lift transition-colors duration-150 hover:bg-surface/80 md:bottom-6"
+      className="fixed bottom-20 right-4 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface shadow-lift transition-colors duration-150 hover:bg-ink-50 md:bottom-6"
     >
       {/* Render the opposite-of-current glyph; suppress hydration since the class is set pre-paint. */}
-      <span suppressHydrationWarning>{mounted && dark ? "☀️" : "🌙"}</span>
+      <span suppressHydrationWarning>
+        {mounted && dark ? (
+          <Sun className="h-5 w-5" strokeWidth={2} />
+        ) : (
+          <Moon className="h-5 w-5" strokeWidth={2} />
+        )}
+      </span>
     </button>
   );
 }

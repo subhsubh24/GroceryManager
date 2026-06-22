@@ -121,7 +121,7 @@ export function ImportRecipe({
             </form>
           )}
 
-          {/* Reuse Cook Mode: pantry ✓ on ingredients, ×scaling, steps with timers + wake-lock. */}
+          {/* Reuse Cook Mode: pantry check on ingredients, scaling, steps with timers + wake-lock. */}
           <CookMode imageUrl={state.imageUrl} steps={state.steps} ingredients={state.ingredients} />
         </div>
       )}

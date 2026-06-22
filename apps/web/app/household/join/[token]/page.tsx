@@ -6,6 +6,7 @@ import {
   isValidInviteToken,
 } from "@gm/db";
 import { PageHeader } from "@/app/components/page-header";
+import { Check, Link2, Repeat, Users } from "@/app/components/icons";
 import { currentUserId } from "@/app/lib/tenant";
 import { acceptInviteAction } from "./actions";
 
@@ -16,7 +17,7 @@ function Invalid() {
     <main className="page">
       <PageHeader
         accent="brand"
-        emoji="🔗"
+        icon={Link2}
         eyebrow="Household invite"
         title="Invite not found"
         subtitle="This invite link is invalid, expired, or already used. Ask for a fresh link."
@@ -60,7 +61,7 @@ export default async function JoinHouseholdPage({
         <main className="page">
           <PageHeader
             accent="brand"
-            emoji="✅"
+            icon={Check}
             eyebrow="Household invite"
             title={`You're already in ${householdName}`}
             back={null}
@@ -77,7 +78,7 @@ export default async function JoinHouseholdPage({
         <main className="page">
           <PageHeader
             accent="brand"
-            emoji="🔁"
+            icon={Repeat}
             eyebrow="Household invite"
             title="You're already in another household"
             subtitle={`Leave your current household first to join ${householdName}.`}
@@ -98,7 +99,7 @@ export default async function JoinHouseholdPage({
     <main className="page">
       <PageHeader
         accent="brand"
-        emoji="🏠"
+        icon={Users}
         eyebrow="Household invite"
         title={`Join ${householdName}`}
         subtitle="Accept to share one shopping list with everyone in this household."

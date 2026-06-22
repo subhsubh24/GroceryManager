@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Check } from "@/app/components/icons";
 
 /**
  * Scan a barcode with the camera (where supported) or type the UPC by hand (always). The manual
@@ -217,7 +218,11 @@ export function BarcodeScanner({ addAction }: { addAction: AddAction }) {
 
 function StatusBanner({ status }: { status: Status }) {
   if (status.kind === "added")
-    return <p className="notice-ok">Added {status.name} to your list ✓</p>;
+    return (
+      <p className="notice-ok flex items-center gap-1.5">
+        <Check className="h-4 w-4 shrink-0" strokeWidth={2} /> Added {status.name} to your list
+      </p>
+    );
   if (status.kind === "looking")
     return <p className="field-hint text-brand-600">Looking it up…</p>;
   if (status.kind === "notfound")

@@ -2,6 +2,7 @@ import { getDb, loadSavedRecipes, withTenant } from "@gm/db";
 import { dedupeSaved, type SavedRecipe } from "@gm/core/recipe";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
+import { BookOpen } from "@/app/components/icons";
 import { SaveButton } from "./save-button";
 import { ShareCookbookButton } from "./share-cookbook-button";
 
@@ -25,7 +26,7 @@ export default async function CookbookPage() {
     <main className="page">
       <PageHeader
         accent="berry"
-        emoji="📖"
+        icon={BookOpen}
         eyebrow="Your collection"
         title="My Cookbook"
         subtitle="Recipes you've saved — ready to cook again."
@@ -47,7 +48,9 @@ export default async function CookbookPage() {
 
       {!error && recipes.length === 0 && (
         <div className="empty-state mt-6">
-          <div className="empty-emoji">📖</div>
+          <div className="empty-emoji">
+            <BookOpen className="h-6 w-6" strokeWidth={2} />
+          </div>
           <p className="text-sm font-medium text-ink-700">No saved recipes yet</p>
           <p className="mt-1 max-w-xs text-sm text-ink-400">
             Tap the heart on any recipe to add it here.

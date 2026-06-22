@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { MessageCircle } from "@/app/components/icons";
 import { askAction } from "./actions";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -66,7 +67,9 @@ export function ChatPanel() {
       >
         {empty && (
           <div className="empty-state my-auto">
-            <div className="empty-emoji">💬</div>
+            <div className="empty-emoji">
+              <MessageCircle className="h-6 w-6" strokeWidth={2} />
+            </div>
             <p className="text-sm font-medium text-ink-700">Ask me about your kitchen</p>
             <p className="mt-1 max-w-xs text-sm text-ink-400">
               I know your spending, pantry, cooking history, and taste. Try a starter below, or just

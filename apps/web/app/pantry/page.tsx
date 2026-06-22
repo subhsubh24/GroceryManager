@@ -3,6 +3,7 @@ import { getDb, getGoogleCredential, getPantryView, withTenant } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
 import { backfillGmailAction, connectGmailAction, syncGmailAction } from "./actions";
 import { PageHeader } from "@/app/components/page-header";
+import { Check, Mail, Package } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 // Backfill parses several receipts inline (each an LLM call) — give it room beyond the 10s default.
@@ -79,7 +80,7 @@ export default async function PantryPage({
     <main className="page">
       <PageHeader
         accent="brand"
-        emoji="🧺"
+        icon={Package}
         eyebrow="Your kitchen"
         title="Pantry"
         topRight={
@@ -94,11 +95,17 @@ export default async function PantryPage({
       <section className="card-pad mt-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="tile shrink-0">📧</div>
+            <div className="tile shrink-0">
+              <Mail className="h-5 w-5" strokeWidth={2} />
+            </div>
             <div>
               <h2 className="section-title">
                 Fill from receipts{" "}
-                {connected && <span className="pill-success ml-1 align-middle">connected ✓</span>}
+                {connected && (
+                  <span className="pill-success ml-1 inline-flex items-center gap-1 align-middle">
+                    <Check className="h-3.5 w-3.5" strokeWidth={2} /> connected
+                  </span>
+                )}
               </h2>
               <p className="mt-1 text-sm text-ink-500">
                 Pulls your Amazon, Whole Foods &amp; Instacart receipt emails and updates the pantry.
@@ -147,7 +154,9 @@ export default async function PantryPage({
 
       {rows.length === 0 && !error && (
         <div className="empty-state mt-6">
-          <div className="empty-emoji">🧺</div>
+          <div className="empty-emoji">
+            <Package className="h-6 w-6" strokeWidth={2} />
+          </div>
           <p className="text-sm font-medium text-ink-700">Your pantry is empty</p>
           <p className="mt-1 max-w-xs text-sm text-ink-400">
             Connect Gmail or scan a receipt and it&apos;ll fill itself.

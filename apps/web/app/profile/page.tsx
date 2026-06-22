@@ -15,6 +15,7 @@ import {
 } from "@gm/core/personalization";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
+import { User } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -82,7 +83,7 @@ export default async function ProfilePage({
     <main className="page-narrow">
       <PageHeader
         accent="brand"
-        emoji="👤"
+        icon={User}
         eyebrow="Your account"
         title="Your profile"
         subtitle={

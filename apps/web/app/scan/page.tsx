@@ -1,5 +1,6 @@
 import { ScanClient } from "./scan-client";
 import { PageHeader } from "@/app/components/page-header";
+import { Camera } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +9,7 @@ export default function ScanPage() {
     <main className="page">
       <PageHeader
         accent="grape"
-        emoji="📸"
+        icon={Camera}
         eyebrow="Scan my fridge"
         title="Scan my fridge"
         subtitle={

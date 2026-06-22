@@ -3,6 +3,7 @@ import { splitSteps } from "@gm/core/recipe";
 import { instacart } from "@gm/core/integrations";
 import { CopyListButton } from "@/app/list/copy-list-button";
 import { loadRecipeAnySource } from "@/app/lib/recipe";
+import { Leaf } from "@/app/components/icons";
 import { ShareLinkButton } from "./share-button";
 
 export const dynamic = "force-dynamic";
@@ -55,8 +56,8 @@ export default async function ShareRecipePage({ params }: { params: Promise<{ id
       <div className="animate-fade-in-up">
         <div className="flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-gradient text-base shadow-brand">
-              🧺
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-gradient text-white shadow-brand">
+              <Leaf className="h-4 w-4" strokeWidth={2} />
             </span>
             <span className="text-sm font-semibold text-ink-800">GroceryManager</span>
           </a>

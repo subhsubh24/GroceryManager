@@ -1,7 +1,35 @@
+import {
+  BookOpen,
+  CalendarDays,
+  Camera,
+  ChefHat,
+  ClipboardPaste,
+  Flame,
+  Gift,
+  MessageCircle,
+  Newspaper,
+  Package,
+  PartyPopper,
+  PencilLine,
+  Pill,
+  ReceiptText,
+  Recycle,
+  Repeat,
+  ScanBarcode,
+  ShoppingCart,
+  Sparkles,
+  SprayCan,
+  Star,
+  Users,
+  Wallet,
+  type LucideIcon,
+} from "../components/icons";
+
 /**
  * The full feature catalog ("all tools"). Lives here — not in `page.tsx` — so the focused home and
  * the `/tools` index can share one source of truth. Each entry keeps its original `key`, `href`,
- * `title`, `blurb`, and `emoji`; the only addition is `group`, used to organize the `/tools` page.
+ * `title`, `blurb`, and `icon` (a real Lucide component, not emoji); the only addition is `group`,
+ * used to organize the `/tools` page.
  *
  * Presentation/IA data only — no server logic. Order within a group is the display order on `/tools`.
  */
@@ -12,7 +40,7 @@ export type Section = {
   href: string;
   title: string;
   blurb: string;
-  emoji: string;
+  icon: LucideIcon;
   group: SectionGroup;
 };
 
@@ -29,7 +57,7 @@ export const SECTIONS: Section[] = [
     href: "/recipes",
     title: "Cook what you have tonight",
     blurb: "Real meals you can make right now — tuned to your taste, your diet, and how much energy you've actually got.",
-    emoji: "🍳",
+    icon: ChefHat,
     group: "Cook",
   },
   {
@@ -37,7 +65,7 @@ export const SECTIONS: Section[] = [
     href: "/discover",
     title: "Discover",
     blurb: "Swipe through meal ideas picked for you — it learns your taste as you go.",
-    emoji: "🔥",
+    icon: Flame,
     group: "Cook",
   },
   {
@@ -45,7 +73,7 @@ export const SECTIONS: Section[] = [
     href: "/cookbook",
     title: "My Cookbook",
     blurb: "Save the recipes you love and cook them again in a tap.",
-    emoji: "📖",
+    icon: BookOpen,
     group: "Cook",
   },
   {
@@ -53,7 +81,7 @@ export const SECTIONS: Section[] = [
     href: "/import",
     title: "Import a recipe",
     blurb: "Paste any link or text — it's structured, matched to your pantry, and ready to cook.",
-    emoji: "📥",
+    icon: ClipboardPaste,
     group: "Cook",
   },
   {
@@ -61,7 +89,7 @@ export const SECTIONS: Section[] = [
     href: "/ask",
     title: "Ask your kitchen",
     blurb: "Chat with an AI that knows your habits — spending, cooking, what to make next.",
-    emoji: "💬",
+    icon: MessageCircle,
     group: "Cook",
   },
   {
@@ -69,7 +97,7 @@ export const SECTIONS: Section[] = [
     href: "/use-it-up",
     title: "Use it up",
     blurb: "What's about to spoil, with one-tap recipes to rescue it before it's wasted.",
-    emoji: "♻️",
+    icon: Recycle,
     group: "Cook",
   },
   {
@@ -77,7 +105,7 @@ export const SECTIONS: Section[] = [
     href: "/plan",
     title: "Plan my week",
     blurb: "A week of meals drafted from what you have and what's running low — review, then order in a tap.",
-    emoji: "🗓️",
+    icon: CalendarDays,
     group: "Cook",
   },
 
@@ -87,7 +115,7 @@ export const SECTIONS: Section[] = [
     href: "/list",
     title: "Shopping list",
     blurb: "Smart reorders before you run out. One tap to checkout on Instacart.",
-    emoji: "🛒",
+    icon: ShoppingCart,
     group: "Shop",
   },
   {
@@ -95,7 +123,7 @@ export const SECTIONS: Section[] = [
     href: "/capture",
     title: "Quick add",
     blurb: "Type it like you'd say it — “out of milk, need taco stuff” — and it lands on your list.",
-    emoji: "✍️",
+    icon: PencilLine,
     group: "Shop",
   },
   {
@@ -103,7 +131,7 @@ export const SECTIONS: Section[] = [
     href: "/barcode",
     title: "Scan a barcode",
     blurb: "Scan or type a UPC — we look it up and add it to your list.",
-    emoji: "📷",
+    icon: ScanBarcode,
     group: "Shop",
   },
   {
@@ -111,7 +139,7 @@ export const SECTIONS: Section[] = [
     href: "/scan",
     title: "Scan my fridge",
     blurb: "Snap a shelf — it reconciles what's actually there against what it thinks you have.",
-    emoji: "📸",
+    icon: Camera,
     group: "Shop",
   },
   {
@@ -119,7 +147,7 @@ export const SECTIONS: Section[] = [
     href: "/pantry",
     title: "A pantry that fills itself",
     blurb: "Your receipts become your inventory — automatically. It knows what you have and what's about to expire.",
-    emoji: "🧺",
+    icon: Package,
     group: "Shop",
   },
   {
@@ -127,7 +155,7 @@ export const SECTIONS: Section[] = [
     href: "/staples",
     title: "Staples autopilot",
     blurb: "Set and forget your always-on items — they appear on the list the moment they're due.",
-    emoji: "🔁",
+    icon: Repeat,
     group: "Shop",
   },
   {
@@ -135,7 +163,7 @@ export const SECTIONS: Section[] = [
     href: "/staples",
     title: "Household & personal care",
     blurb: "Cleaning, skincare & toiletries on autopilot — reordered from Amazon when you're low.",
-    emoji: "🧴",
+    icon: SprayCan,
     group: "Shop",
   },
   {
@@ -143,7 +171,7 @@ export const SECTIONS: Section[] = [
     href: "/staples",
     title: "Supplements",
     blurb: "Set your daily dose — it predicts run-out (even the first bottle) and reorders in time.",
-    emoji: "💊",
+    icon: Pill,
     group: "Shop",
   },
   {
@@ -151,7 +179,7 @@ export const SECTIONS: Section[] = [
     href: "/review",
     title: "Review purchases",
     blurb: "Confirm the items we couldn't match with confidence — a quick tidy keeps your pantry accurate.",
-    emoji: "🧾",
+    icon: ReceiptText,
     group: "Shop",
   },
 
@@ -161,7 +189,7 @@ export const SECTIONS: Section[] = [
     href: "/spend",
     title: "Spending",
     blurb: "What you spend, where it goes, and where the same item is cheaper.",
-    emoji: "💸",
+    icon: Wallet,
     group: "Track",
   },
   {
@@ -169,7 +197,7 @@ export const SECTIONS: Section[] = [
     href: "/wrapped",
     title: "Grocery Wrapped",
     blurb: "Your recap: meals cooked, money saved vs takeout, top recipes — made to share.",
-    emoji: "🎉",
+    icon: PartyPopper,
     group: "Track",
   },
   {
@@ -177,7 +205,7 @@ export const SECTIONS: Section[] = [
     href: "/digest",
     title: "This week",
     blurb: "Your Sunday briefing — what's expiring, what's due to reorder, at a glance.",
-    emoji: "🗒️",
+    icon: Newspaper,
     group: "Track",
   },
 
@@ -187,7 +215,7 @@ export const SECTIONS: Section[] = [
     href: "/onboarding",
     title: "Tell me your taste",
     blurb: "Diets, loves, hates — in a minute. Every plan and recipe gets tuned to you.",
-    emoji: "👋",
+    icon: Sparkles,
     group: "You",
   },
   {
@@ -195,7 +223,7 @@ export const SECTIONS: Section[] = [
     href: "/invite",
     title: "Invite friends",
     blurb: "Share GroceryManager — you both get a perk when they join.",
-    emoji: "🎁",
+    icon: Gift,
     group: "You",
   },
   {
@@ -203,7 +231,7 @@ export const SECTIONS: Section[] = [
     href: "/household",
     title: "Shared household",
     blurb: "Share one shopping list with the people you shop for — add it once, it's there for all.",
-    emoji: "🏠",
+    icon: Users,
     group: "You",
   },
   {
@@ -211,7 +239,7 @@ export const SECTIONS: Section[] = [
     href: "/upgrade",
     title: "Go Premium",
     blurb: "Unlock the AI planner, unlimited Discover, and recipe remix — and support the app.",
-    emoji: "⭐",
+    icon: Star,
     group: "You",
   },
 ];

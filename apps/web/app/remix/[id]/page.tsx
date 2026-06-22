@@ -3,6 +3,7 @@ import { geminiRemix, suggestRemix } from "@gm/core/recipe/remix-llm";
 import { loadRecipeAnySource } from "@/app/lib/recipe";
 import { addNamesToListAction } from "@/app/lib/list-actions";
 import { PageHeader } from "@/app/components/page-header";
+import { ArrowLeft, ArrowRight, Wand2 } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +49,7 @@ export default async function RemixPage({
         <>
           <div className="flex items-center justify-between">
             <a href={`/cook/${id}`} className="back-link">
-              <span aria-hidden>←</span> Back to recipe
+              <ArrowLeft className="h-4 w-4" /> Back to recipe
             </a>
           </div>
           <div className="notice-warn mt-6">
@@ -59,7 +60,7 @@ export default async function RemixPage({
         <>
           <PageHeader
             accent="grape"
-            emoji="✨"
+            icon={Wand2}
             eyebrow="Recipe remix"
             title={recipe.title}
             subtitle="Make it your way."
@@ -80,7 +81,9 @@ export default async function RemixPage({
 
           {remix && remix.swaps.length === 0 ? (
             <div className="empty-state mt-6">
-              <div className="empty-emoji">✨</div>
+              <div className="empty-emoji">
+                <Wand2 className="h-6 w-6" strokeWidth={2} />
+              </div>
               <p className="text-sm font-medium text-ink-700">Nothing to swap</p>
               <p className="mt-1 max-w-xs text-sm text-ink-400">{remix.note}</p>
             </div>
@@ -93,7 +96,7 @@ export default async function RemixPage({
                   <li key={`${s.original}-${i}`} className="card p-4">
                     <div className="flex flex-wrap items-center gap-2 text-sm">
                       <span className="font-medium text-ink-500 line-through">{s.original}</span>
-                      <span aria-hidden className="text-ink-300">→</span>
+                      <ArrowRight aria-hidden className="h-4 w-4 text-ink-300" strokeWidth={2} />
                       <span className="font-semibold text-ink-900">{s.replacement}</span>
                     </div>
                     <p className="mt-1 text-xs text-ink-400">{s.reason}</p>

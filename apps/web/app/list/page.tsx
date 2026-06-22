@@ -5,6 +5,7 @@ import { instacart } from "@gm/core/integrations";
 import { currentUserId } from "@/app/lib/tenant";
 import { CopyListButton } from "./copy-list-button";
 import { PageHeader } from "@/app/components/page-header";
+import { Check, ShoppingCart } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -78,7 +79,7 @@ export default async function ListPage() {
     <main className="page">
       <PageHeader
         accent="brand"
-        emoji="🛒"
+        icon={ShoppingCart}
         eyebrow="Reorder"
         title="Reorder"
         subtitle={
@@ -103,7 +104,9 @@ export default async function ListPage() {
 
       {nothingDue && !error && (
         <div className="empty-state mt-6">
-          <div className="empty-emoji">✅</div>
+          <div className="empty-emoji">
+            <Check className="h-6 w-6" strokeWidth={2} />
+          </div>
           <p className="text-sm font-medium text-ink-700">Nothing due right now</p>
         </div>
       )}

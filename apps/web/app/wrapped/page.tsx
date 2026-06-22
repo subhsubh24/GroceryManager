@@ -3,6 +3,7 @@ import { buildWrapped, type WrappedStats } from "@gm/core/spend";
 import { ShareButton } from "./share-button.js";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
+import { PartyPopper } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +50,7 @@ export default async function WrappedPage() {
     <main className="page">
       <PageHeader
         accent="sunset"
-        emoji="🎉"
+        icon={PartyPopper}
         eyebrow="Your year in food"
         title="Grocery Wrapped"
         subtitle={
@@ -69,7 +70,9 @@ export default async function WrappedPage() {
 
       {empty && (
         <div className="empty-state mt-6">
-          <div className="empty-emoji">🎉</div>
+          <div className="empty-emoji">
+            <PartyPopper className="h-6 w-6" strokeWidth={2} />
+          </div>
           <p className="text-sm font-medium text-ink-700">Your Wrapped is on its way</p>
           <p className="mt-1 max-w-xs text-sm text-ink-400">
             Cook a few meals and let some receipts land — your Wrapped fills in here.

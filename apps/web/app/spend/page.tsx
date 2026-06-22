@@ -8,6 +8,7 @@ import {
 import { budgetVsActual, cheaperRetailer, spendByPeriod, topItemsBySpend } from "@gm/core/spend";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
+import { Wallet } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +50,7 @@ export default async function SpendPage() {
     <main className="page">
       <PageHeader
         accent="ocean"
-        emoji="💸"
+        icon={Wallet}
         eyebrow="Spending"
         title="Spending"
         subtitle="From your receipts — no bank link needed."
@@ -67,7 +68,9 @@ export default async function SpendPage() {
 
       {data.ready && data.empty && (
         <div className="empty-state mt-6">
-          <div className="empty-emoji">💸</div>
+          <div className="empty-emoji">
+            <Wallet className="h-6 w-6" strokeWidth={2} />
+          </div>
           <p className="text-sm font-medium text-ink-700">No spend yet</p>
           <p className="mt-1 max-w-xs text-sm text-ink-400">Once receipts land, this fills in.</p>
         </div>

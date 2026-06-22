@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { extractTimerMinutes, scaleMeasure } from "@gm/core/recipe";
+import { Check } from "@/app/components/icons";
 
 type Ingredient = { name: string; measure?: string; inPantry?: boolean };
 
@@ -107,8 +108,10 @@ export function CookMode({
               key={`${ing.name}-${i}`}
               className="flex justify-between gap-4 border-b border-line/70 pb-1.5 last:border-0 last:pb-0"
             >
-              <span className="text-ink-800">
-                {ing.inPantry ? <span className="text-brand-600" title="in your pantry">✓ </span> : null}
+              <span className="inline-flex items-center gap-1 text-ink-800">
+                {ing.inPantry ? (
+                  <Check className="h-3.5 w-3.5 shrink-0 text-brand-600" strokeWidth={2} aria-label="in your pantry" />
+                ) : null}
                 {ing.name}
               </span>
               {ing.measure ? (

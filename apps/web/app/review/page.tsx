@@ -1,6 +1,7 @@
 import { getDb, getReviewQueue, withTenant } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
+import { Check, ReceiptText } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default async function ReviewPage() {
     <main className="page">
       <PageHeader
         accent="ocean"
-        emoji="📥"
+        icon={ReceiptText}
         eyebrow="Review inbox"
         title="Review inbox"
         subtitle={
@@ -41,7 +42,9 @@ export default async function ReviewPage() {
 
       {rows.length === 0 && !error && (
         <div className="empty-state mt-6">
-          <div className="empty-emoji">🎉</div>
+          <div className="empty-emoji">
+            <Check className="h-6 w-6" strokeWidth={2} />
+          </div>
           <p className="text-sm font-medium text-ink-700">Nothing to review</p>
           <p className="mt-1 max-w-xs text-sm text-ink-400">You&apos;re all caught up.</p>
         </div>

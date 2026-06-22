@@ -3,6 +3,7 @@ import { getActiveListView, getDb, withTenant } from "@gm/db";
 import { captureToList, parseQuickCapture } from "@gm/core/capture";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
+import { PencilLine, ShoppingCart } from "@/app/components/icons";
 import { CaptureForm } from "./capture-form";
 
 export const dynamic = "force-dynamic";
@@ -42,7 +43,7 @@ export default async function CapturePage() {
     <main className="page">
       <PageHeader
         accent="citrus"
-        emoji="✍️"
+        icon={PencilLine}
         eyebrow="Quick add"
         title="Quick add"
         subtitle={
@@ -67,7 +68,9 @@ export default async function CapturePage() {
           <h2 className="section-title mb-3">On your list</h2>
           {data.items.length === 0 ? (
             <div className="empty-state mt-6">
-              <div className="empty-emoji">🛒</div>
+              <div className="empty-emoji">
+                <ShoppingCart className="h-6 w-6" strokeWidth={2} />
+              </div>
               <p className="text-sm font-medium text-ink-700">Nothing yet</p>
               <p className="mt-1 max-w-xs text-sm text-ink-400">Add a few things above.</p>
             </div>

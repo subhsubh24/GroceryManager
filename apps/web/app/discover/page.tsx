@@ -11,6 +11,7 @@ import {
 import { dietExclusions, projectUserModel } from "@gm/core/personalization";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
+import { Flame } from "@/app/components/icons";
 import { SwipeDeck, type DeckCard } from "./swipe-deck";
 
 export const dynamic = "force-dynamic";
@@ -105,7 +106,7 @@ export default async function DiscoverPage() {
     <main className="page">
       <PageHeader
         accent="berry"
-        emoji="🔥"
+        icon={Flame}
         eyebrow="Discover"
         title="For you"
         subtitle="Like what looks good — skip what doesn't. It learns your taste as you go."
@@ -124,7 +125,9 @@ export default async function DiscoverPage() {
 
       {!error && deck.length === 0 && (
         <div className="empty-state mt-10">
-          <div className="empty-emoji">🔥</div>
+          <div className="empty-emoji">
+            <Flame className="h-6 w-6" strokeWidth={2} />
+          </div>
           <p className="text-sm font-medium text-ink-700">Nothing to discover yet</p>
           <p className="mt-1 max-w-xs text-sm text-ink-400">
             Add a few items to your pantry and fresh ideas will show up here to swipe through.

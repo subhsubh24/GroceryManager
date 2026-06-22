@@ -1,4 +1,5 @@
 import { PageHeader } from "@/app/components/page-header";
+import { MessageCircle } from "@/app/components/icons";
 import { ChatPanel } from "./chat-panel";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export default function AskPage() {
     <main className="page">
       <PageHeader
         accent="grape"
-        emoji="💬"
+        icon={MessageCircle}
         eyebrow="Ask"
         title="Ask your kitchen"
         subtitle="Chat about your habits, spending, and what to cook — grounded in your data."

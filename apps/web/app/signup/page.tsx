@@ -10,6 +10,7 @@ import {
 import { hashPassword } from "@gm/core/crypto";
 import { isValidReferralCode } from "@gm/core/personalization";
 import { signIn } from "@/auth";
+import { Leaf } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -80,8 +81,8 @@ export default async function SignUpPage({
     <main className="flex min-h-dvh flex-col items-center justify-center px-5 py-12">
       <div className="w-full max-w-md animate-fade-in-up">
         <a href="/" className="mx-auto flex w-fit items-center gap-2">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gradient text-lg shadow-brand">
-            🧺
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-brand">
+            <Leaf className="h-5 w-5" strokeWidth={2} />
           </span>
         </a>
         <div className="mt-6 text-center">

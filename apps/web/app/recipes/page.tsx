@@ -14,6 +14,7 @@ import { dietExclusions, KNOWN_DIETS, projectUserModel } from "@gm/core/personal
 import { currentUserId } from "@/app/lib/tenant";
 import { addNamesToListAction } from "@/app/lib/list-actions";
 import { PageHeader } from "@/app/components/page-header";
+import { ChefHat, Sparkles } from "@/app/components/icons";
 import { SaveButton } from "@/app/cookbook/save-button";
 
 export const dynamic = "force-dynamic";
@@ -130,7 +131,7 @@ export default async function RecipesPage({
     <main className="page">
       <PageHeader
         accent="berry"
-        emoji="🍳"
+        icon={ChefHat}
         eyebrow="Cook tonight"
         title="Cook tonight"
         subtitle="Ranked by what you already have. How much do you feel like cooking?"
@@ -181,7 +182,9 @@ export default async function RecipesPage({
       )}
       {ranked.length === 0 && !error && (
         <div className="empty-state mt-6">
-          <div className="empty-emoji">🍳</div>
+          <div className="empty-emoji">
+            <ChefHat className="h-6 w-6" strokeWidth={2} />
+          </div>
           <p className="text-sm font-medium text-ink-700">No suggestions yet</p>
           <p className="mt-1 max-w-xs text-sm text-ink-400">
             Add a few items to your pantry and suggestions will appear here.
@@ -216,8 +219,11 @@ export default async function RecipesPage({
                 <a href={`/cook/${r.id}`} className="text-xs font-medium text-brand-700">
                   Cook mode →
                 </a>
-                <a href={`/remix/${r.id}`} className="text-xs font-medium text-grape-700">
-                  Remix ✨
+                <a
+                  href={`/remix/${r.id}`}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-grape-700"
+                >
+                  <Sparkles className="h-3.5 w-3.5" strokeWidth={2} /> Remix
                 </a>
                 {r.missing.length > 0 && (
                   <form action={addNamesToListAction}>

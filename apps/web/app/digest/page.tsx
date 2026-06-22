@@ -5,6 +5,7 @@ import { currentUserId } from "@/app/lib/tenant";
 import { buildDigestForUser } from "@/app/lib/digest";
 import { PushToggle } from "./push-toggle";
 import { PageHeader } from "@/app/components/page-header";
+import { ChefHat, Flame, Newspaper, Sprout } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,9 @@ function CookingCard({ cooking }: { cooking: Cooking }) {
         <>
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-xl border border-line bg-cream/60 px-3 py-3 text-center">
-              <div className="font-display text-2xl font-semibold text-brand-700">🔥 {streak}</div>
+              <div className="flex items-center justify-center gap-1.5 font-display text-2xl font-semibold text-brand-700">
+                <Flame className="h-5 w-5" strokeWidth={2} /> {streak}
+              </div>
               <div className="mt-0.5 text-xs text-ink-400">day streak</div>
             </div>
             <div className="rounded-xl border border-line bg-cream/60 px-3 py-3 text-center">
@@ -82,7 +85,9 @@ function CookingCard({ cooking }: { cooking: Cooking }) {
         </>
       ) : (
         <div className="empty-state">
-          <div className="empty-emoji">🍳</div>
+          <div className="empty-emoji">
+            <ChefHat className="h-6 w-6" strokeWidth={2} />
+          </div>
           <p className="text-sm font-medium text-ink-700">Cook a recipe to start your streak</p>
           <p className="mt-1 max-w-xs text-sm text-ink-400">
             Log a cook and your streak, weekly count, and activity show up here.
@@ -100,7 +105,7 @@ export default async function DigestPage() {
     <main className="page">
       <PageHeader
         accent="grape"
-        emoji="🗒️"
+        icon={Newspaper}
         eyebrow="This week"
         title="This week"
         subtitle="Your Sunday briefing — what needs you, at a glance."
@@ -163,7 +168,9 @@ export default async function DigestPage() {
 
           {data.digest.isQuiet && (
             <div className="empty-state mt-6">
-              <div className="empty-emoji">🌿</div>
+              <div className="empty-emoji">
+                <Sprout className="h-6 w-6" strokeWidth={2} />
+              </div>
               <p className="text-sm font-medium text-ink-700">Nothing needs you right now</p>
               <p className="mt-1 max-w-xs text-sm text-ink-400">Enjoy the week.</p>
             </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Check } from "@/app/components/icons";
 import { getCookbookShareLinkAction } from "./actions";
 
 /**
@@ -69,8 +70,18 @@ export function ShareCookbookButton() {
         aria-label="Public link to your cookbook"
         className="input flex-1 text-xs"
       />
-      <button type="button" onClick={onCopy} className="btn-secondary btn-sm shrink-0">
-        {copied ? "Copied ✓" : "Copy link"}
+      <button
+        type="button"
+        onClick={onCopy}
+        className="btn-secondary btn-sm inline-flex shrink-0 items-center gap-1.5"
+      >
+        {copied ? (
+          <>
+            <Check className="h-4 w-4" strokeWidth={2} /> Copied
+          </>
+        ) : (
+          "Copy link"
+        )}
       </button>
     </div>
   );

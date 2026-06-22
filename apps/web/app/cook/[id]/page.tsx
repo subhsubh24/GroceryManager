@@ -6,6 +6,7 @@ import { getSubstitutions } from "@gm/core/recipe/substitute-llm";
 import { currentUserId } from "@/app/lib/tenant";
 import { isPersistedRecipeId, loadRecipeAnySource } from "@/app/lib/recipe";
 import { SaveButton } from "@/app/cookbook/save-button";
+import { ArrowLeft, Check, Sparkles, UtensilsCrossed } from "@/app/components/icons";
 import { CookMode } from "./cook-mode.js";
 import { SwapFinder, type SwapState } from "./swap-finder.js";
 
@@ -68,7 +69,7 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
     <main className="page">
       <div className="flex items-center justify-between">
         <a href="/recipes" className="back-link">
-          <span aria-hidden>←</span> Recipes
+          <ArrowLeft className="h-4 w-4" /> Recipes
         </a>
         {recipe && (
           <a href={`/share/recipe/${id}`} className="nav-link">
@@ -93,8 +94,11 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
               />
             </div>
             <p className="page-subtitle">Screen stays awake · tap through each step.</p>
-            <a href={`/remix/${id}`} className="mt-2 inline-block text-sm font-medium text-grape-700">
-              Remix this recipe ✨
+            <a
+              href={`/remix/${id}`}
+              className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-grape-700"
+            >
+              <Sparkles className="h-4 w-4" strokeWidth={2} /> Remix this recipe
             </a>
           </div>
           <div className="mt-6">
@@ -141,7 +145,9 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
             <input type="hidden" name="id" value={id} />
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex min-w-0 items-start gap-3">
-                <div className="tile shrink-0">🍽️</div>
+                <div className="tile shrink-0">
+                  <UtensilsCrossed className="h-5 w-5" strokeWidth={2} />
+                </div>
                 <div>
                   <div className="section-title">Made it?</div>
                   <div className="text-xs text-ink-400">
@@ -160,8 +166,8 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
                     className="ml-1.5 w-16 rounded-lg border border-line bg-surface px-2 py-1 text-sm shadow-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20"
                   />
                 </label>
-                <button type="submit" className="btn-primary">
-                  I cooked this ✓
+                <button type="submit" className="btn-primary inline-flex items-center gap-1.5">
+                  <Check className="h-4 w-4" strokeWidth={2} /> I cooked this
                 </button>
               </div>
             </div>

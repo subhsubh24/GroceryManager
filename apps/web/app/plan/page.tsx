@@ -19,6 +19,7 @@ import { geminiPlanGenerator, planWeek, type PlanCandidate } from "@gm/core/agen
 import { captureToList } from "@gm/core/capture";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
+import { CalendarDays, Sparkles, Sprout } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -158,7 +159,7 @@ export default async function PlanPage({
     <main className="page">
       <PageHeader
         accent="grape"
-        emoji="🗓️"
+        icon={CalendarDays}
         eyebrow="Your week"
         title="Plan my week"
         subtitle="Five dinners built from what you have, using up what's about to expire first."
@@ -180,8 +181,14 @@ export default async function PlanPage({
           <section className="panel-brand">
             <div className="mb-2 flex items-center gap-2">
               <h2 className="font-display text-xl font-semibold">Your week</h2>
-              <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium">
-                {result.source === "llm" ? "Planned by AI ✨" : "Auto-planned"}
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium">
+                {result.source === "llm" ? (
+                  <>
+                    <Sparkles className="h-3.5 w-3.5" strokeWidth={2} /> Planned by AI
+                  </>
+                ) : (
+                  "Auto-planned"
+                )}
               </span>
             </div>
             <p className="text-sm text-white/90">{result.plan.narrative}</p>
@@ -222,7 +229,9 @@ export default async function PlanPage({
 
           {dinners.length === 0 && (
             <div className="empty-state mt-6">
-              <div className="empty-emoji">🌱</div>
+              <div className="empty-emoji">
+                <Sprout className="h-6 w-6" strokeWidth={2} />
+              </div>
               <p className="text-sm font-medium text-ink-700">No weekly plan yet</p>
               <p className="mt-1 max-w-xs text-sm text-ink-400">
                 Add a few items to your pantry and a weekly plan will appear here.
