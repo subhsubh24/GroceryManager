@@ -21,7 +21,7 @@ const hankenGrotesk = Hanken_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "GroceryManager — never stress about groceries or cooking",
+  title: "GroceryManager — know what to cook and what to buy",
   description:
     "A personal grocery + recipe autopilot. It learns what you have, predicts run-outs, builds the order, and suggests meals you can cook right now.",
   applicationName: "GroceryManager",

@@ -322,12 +322,12 @@ export default async function HomePage() {
               <div className="animate-fade-in-up">
                 <p className="eyebrow">Your grocery + cooking autopilot</p>
                 <h1 className="mt-5 text-[2.6rem] font-semibold leading-[1.05] tracking-[-0.02em] text-ink-900 sm:text-5xl lg:text-6xl">
-                  Never stress about groceries or cooking again.
+                  Always know what to cook, and what to buy.
                 </h1>
                 <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-500">
-                  It learns what you have, predicts what you&apos;re about to run out of, drafts the
-                  order, and serves up meals you can cook right now — groceries and household
-                  essentials, all on autopilot.
+                  It tracks what&apos;s in your kitchen, flags what you&apos;re about to run out of,
+                  builds the order, and suggests meals you can cook tonight — food and household
+                  essentials alike.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center gap-3">
                   <a href="/signup" className="btn-primary px-5 py-3 text-base">
@@ -355,12 +355,11 @@ export default async function HomePage() {
                 <div className="card-pad">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="eyebrow">This week, handled</div>
+                      <div className="eyebrow">This week</div>
                       <div className="mt-1 text-lg font-semibold tracking-[-0.01em] text-ink-900">
                         Your kitchen, on autopilot
                       </div>
                     </div>
-                    <span className="pill-brand">Live</span>
                   </div>
                   <div className="mt-5 space-y-2.5">
                     {HERO_PREVIEW.map((p) => (
