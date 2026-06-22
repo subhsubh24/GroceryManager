@@ -62,6 +62,14 @@ export const SECTIONS: Section[] = [
     group: "Cook",
   },
   {
+    key: "make",
+    href: "/make",
+    title: "What can I make?",
+    blurb: "AI meal ideas from what's in your kitchen — tuned to how much energy you've got.",
+    icon: Sparkles,
+    group: "Cook",
+  },
+  {
     key: "discover",
     href: "/discover",
     title: "Discover",

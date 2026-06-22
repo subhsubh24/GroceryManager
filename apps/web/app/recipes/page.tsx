@@ -137,6 +137,9 @@ export default async function RecipesPage({
         subtitle="Ranked by what you already have. How much do you feel like cooking?"
         topRight={
           <div className="flex items-center gap-3">
+            <a href="/make" className="nav-link">
+              Make something →
+            </a>
             <a href="/cookbook" className="nav-link">
               My Cookbook →
             </a>
