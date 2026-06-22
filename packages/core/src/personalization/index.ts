@@ -6,3 +6,4 @@ export * from "./onboarding.js";
 export * from "./onboarding-llm.js";
 export * from "./diet.js";
 export * from "./referral.js";
+export * from "./username.js";

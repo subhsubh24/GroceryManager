@@ -121,7 +121,12 @@ export const prefSourceEnum = pgEnum("preference_source", [
 // ---------------------------------------------------------------------------
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
-  email: text("email").notNull().unique(),
+  // Login handle for credentials accounts — the user types THIS, not an email (sql/0006). Unique,
+  // stored lowercased (normalizeUsername). Nullable so a Google-keyed row could exist without one.
+  username: text("username").unique(),
+  // NULLABLE now: credentials signup collects only a username; email is set when the user connects
+  // Gmail (from the Google profile). Still unique — Postgres allows many NULLs (sql/0006).
+  email: text("email").unique(),
   name: text("name"),
   image: text("image"),
   // Credentials login (email + password). Null for Google-only / unset accounts. scrypt: salt:hex.

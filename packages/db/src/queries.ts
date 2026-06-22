@@ -3,7 +3,7 @@
  * thin (no direct Drizzle import). Per-user; userId optional until Auth is wired.
  */
 import { randomBytes } from "node:crypto";
-import { and, desc, eq, gte, isNull, like, or } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, like, or, sql } from "drizzle-orm";
 import type { Querier } from "./client.js";
 import {
   canonicalItems,
@@ -531,38 +531,52 @@ export async function loadWasteEvents(db: Querier, userId: string, sinceDays = 3
 }
 
 /**
- * Load a user (by email) for credentials login — includes the password hash so the NextAuth
- * `authorize` callback can verify it. Admin/provisioning scope (cross-tenant, like upsertGoogleAuth).
+ * Load a user (by USERNAME) for credentials login — includes the password hash so the NextAuth
+ * `authorize` callback can verify it. Pass the NORMALIZED (lowercased) handle. Admin/provisioning
+ * scope (cross-tenant, like upsertGoogleAuth).
  */
-export async function getUserByEmail(
+export async function getUserByUsername(
   db: Querier,
-  email: string,
-): Promise<{ id: string; email: string; name: string | null; passwordHash: string | null } | null> {
+  username: string,
+): Promise<{
+  id: string;
+  username: string | null;
+  email: string | null;
+  name: string | null;
+  passwordHash: string | null;
+} | null> {
   const rows = await db
     .select({
       id: users.id,
+      username: users.username,
       email: users.email,
       name: users.name,
       passwordHash: users.passwordHash,
     })
     .from(users)
-    .where(eq(users.email, email))
+    .where(eq(users.username, username))
     .limit(1);
   return rows[0] ?? null;
 }
 
 /**
- * Create a new credentials user (email + password). Admin/provisioning scope — a brand-new user row
- * can't satisfy its own RLS WITH CHECK. The unique email constraint guards against races (callers
- * should still check getUserByEmail first for a friendly error). Returns the new userId.
+ * Create a new credentials user (USERNAME + password; email optional — set later on Gmail connect).
+ * Admin/provisioning scope — a brand-new user row can't satisfy its own RLS WITH CHECK. The unique
+ * username constraint guards against races (callers should still check getUserByUsername first for a
+ * friendly error). Returns the new userId.
  */
 export async function createUserWithPassword(
   db: Querier,
-  a: { email: string; name: string | null; passwordHash: string },
+  a: { username: string; passwordHash: string; name?: string | null; email?: string | null },
 ): Promise<string> {
   const rows = await db
     .insert(users)
-    .values({ email: a.email, name: a.name, passwordHash: a.passwordHash })
+    .values({
+      username: a.username,
+      email: a.email ?? null,
+      name: a.name ?? null,
+      passwordHash: a.passwordHash,
+    })
     .returning({ id: users.id });
   return rows[0]!.id;
 }
@@ -613,6 +627,44 @@ export async function upsertGoogleAuth(db: Querier, a: GoogleAuthUpsert): Promis
       },
     });
   return userId;
+}
+
+/**
+ * Attach a Google credential to an EXISTING (already signed-in) user — the "Connect Gmail" path for a
+ * username-first account. Fills in email/image only when currently NULL (never clobbers a chosen
+ * value), then upserts the encrypted credential on (userId, provider). Admin scope. Use this (not
+ * upsertGoogleAuth) whenever there's an active session, so connecting Gmail never spawns a 2nd account.
+ */
+export async function attachGoogleToUser(db: Querier, userId: string, a: GoogleAuthUpsert): Promise<void> {
+  await db
+    .update(users)
+    .set({
+      email: sql`coalesce(${users.email}, ${a.email})`,
+      image: sql`coalesce(${users.image}, ${a.image})`,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId));
+
+  await db
+    .insert(oauthCredentials)
+    .values({
+      userId,
+      provider: "google",
+      scopes: a.scopes,
+      accessTokenEnc: a.accessTokenEnc,
+      refreshTokenEnc: a.refreshTokenEnc,
+      expiresAt: a.expiresAt,
+    })
+    .onConflictDoUpdate({
+      target: [oauthCredentials.userId, oauthCredentials.provider],
+      set: {
+        scopes: a.scopes,
+        accessTokenEnc: a.accessTokenEnc,
+        expiresAt: a.expiresAt,
+        updatedAt: new Date(),
+        ...(a.refreshTokenEnc ? { refreshTokenEnc: a.refreshTokenEnc } : {}),
+      },
+    });
 }
 
 /** A user's stored Google credential (encrypted) for the worker to use. */
@@ -890,9 +942,9 @@ export async function getUserHouseholdId(db: Querier, userId: string): Promise<s
 export async function listHouseholdMembers(
   db: Querier,
   householdId: string,
-): Promise<{ id: string; name: string | null; email: string }[]> {
+): Promise<{ id: string; name: string | null; username: string | null; email: string | null }[]> {
   return db
-    .select({ id: users.id, name: users.name, email: users.email })
+    .select({ id: users.id, name: users.name, username: users.username, email: users.email })
     .from(users)
     .where(eq(users.householdId, householdId))
     .orderBy(desc(users.createdAt));

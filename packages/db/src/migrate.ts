@@ -39,6 +39,9 @@ async function main() {
     console.log("→ shared household (opt-in shared shopping list)…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0005_households.sql"), "utf8"));
 
+    console.log("→ username login (users.username + email optional)…");
+    await sql.unsafe(readFileSync(join(pkgRoot, "sql/0006_username.sql"), "utf8"));
+
     console.log("✓ migrations complete");
   } finally {
     await sql.end();

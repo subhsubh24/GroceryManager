@@ -1,7 +1,8 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { encryptSecret, verifyPassword } from "@gm/core/crypto";
-import { getAdminDb, getUserByEmail, upsertGoogleAuth } from "@gm/db";
+import { normalizeUsername } from "@gm/core/personalization";
+import { attachGoogleToUser, getAdminDb, getUserByUsername, upsertGoogleAuth } from "@gm/db";
 import { authConfig } from "./auth.config";
 
 /**
@@ -9,9 +10,11 @@ import { authConfig } from "./auth.config";
  * provider and `jwt` callback. Used by the API route handler and server components; `middleware.ts`
  * uses the base config ONLY (no DB) so the edge bundle never pulls in postgres.
  *
- * Login is email + password (Credentials). Google stays a provider purely for the optional
- * "Connect Gmail" receipt feature — a credentials user and a connected Google account auto-link by
- * email (upsertGoogleAuth upserts users by email).
+ * Login is USERNAME + password (Credentials). Google stays a provider purely for the optional
+ * "Connect Gmail" receipt feature — it's initiated while already signed in, so it ATTACHES to the
+ * current account (attachGoogleToUser) instead of creating a second one; the email is set from the
+ * Google profile at that point (it isn't collected at signup). A cold Google sign-in with no session
+ * still falls back to upsertGoogleAuth-by-email.
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -22,17 +25,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // which must never reach the edge middleware bundle.
     Credentials({
       credentials: {
-        email: { label: "Email", type: "email" },
+        username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const email = typeof credentials?.email === "string" ? credentials.email.trim().toLowerCase() : "";
+        const username =
+          typeof credentials?.username === "string" ? normalizeUsername(credentials.username) : "";
         const password = typeof credentials?.password === "string" ? credentials.password : "";
-        if (!email || !password) return null;
-        const user = await getUserByEmail(getAdminDb(), email);
-        if (!user?.passwordHash) return null; // unknown email or a Google-only account
+        if (!username || !password) return null;
+        const user = await getUserByUsername(getAdminDb(), username);
+        if (!user?.passwordHash) return null; // unknown username or a Google-only account
         if (!verifyPassword(password, user.passwordHash)) return null;
-        return { id: user.id, email: user.email, name: user.name ?? undefined };
+        return { id: user.id, email: user.email ?? undefined, name: user.name ?? undefined };
       },
     }),
   ],
@@ -49,7 +53,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account?.provider === "google" && user?.email) {
         try {
           const key = process.env.TOKEN_ENC_KEY;
-          token.uid = await upsertGoogleAuth(getAdminDb(), {
+          const payload = {
             email: user.email,
             name: user.name ?? null,
             image: user.image ?? null,
@@ -58,7 +62,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               account.refresh_token && key ? encryptSecret(account.refresh_token, key) : null,
             scopes: typeof account.scope === "string" ? account.scope.split(" ") : [],
             expiresAt: account.expires_at ? new Date(account.expires_at * 1000) : null,
-          });
+          };
+          const signedInUid = typeof token.uid === "string" ? token.uid : null;
+          if (signedInUid) {
+            // "Connect Gmail" while already signed in (the only Google entry point in-app): attach to
+            // THIS account so a username-first user keeps one identity — never spawn a 2nd user.
+            await attachGoogleToUser(getAdminDb(), signedInUid, payload);
+          } else {
+            // Cold Google sign-in with no active session → fall back to upsert-by-email.
+            token.uid = await upsertGoogleAuth(getAdminDb(), payload);
+          }
         } catch (e) {
           console.error("persist google auth failed", e);
         }

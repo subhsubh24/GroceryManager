@@ -56,7 +56,7 @@ type Loaded =
       state: "in_household";
       name: string;
       isOwner: boolean;
-      members: { id: string; name: string | null; email: string }[];
+      members: { id: string; name: string | null; username: string | null; email: string | null }[];
     }
   | { state: "error" };
 
@@ -134,12 +134,16 @@ export default async function HouseholdPage() {
               {data.members.length} member{data.members.length === 1 ? "" : "s"} · sharing one list
             </p>
             <ul className="mt-3 space-y-1 text-sm text-ink-600">
-              {data.members.map((m) => (
-                <li key={m.id}>
-                  {m.name ?? m.email}
-                  {m.name ? <span className="text-ink-400"> · {m.email}</span> : null}
-                </li>
-              ))}
+              {data.members.map((m) => {
+                // Identity is username-first now (email may be null until they connect Gmail).
+                const handle = m.username ?? m.email;
+                return (
+                  <li key={m.id}>
+                    {m.name ?? handle ?? "Member"}
+                    {m.name && handle ? <span className="text-ink-400"> · {handle}</span> : null}
+                  </li>
+                );
+              })}
             </ul>
           </section>
 

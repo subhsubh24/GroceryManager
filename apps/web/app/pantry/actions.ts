@@ -8,10 +8,11 @@ import { signIn } from "@/auth";
 import { currentUserId } from "@/app/lib/tenant";
 
 /**
- * Start the Google OAuth flow for the optional "Connect Gmail" receipt feature. Login is now email +
+ * Start the Google OAuth flow for the optional "Connect Gmail" receipt feature. Login is username +
  * password, so the default sign-in page is /signin; this kicks off Google specifically (gmail.readonly
- * scope) and links to the current user by email (upsertGoogleAuth upserts users by email). signIn
- * throws a redirect to Google, so it runs outside any try/catch.
+ * scope). It runs while the user is already signed in, so the jwt callback ATTACHES Google to the
+ * current account (attachGoogleToUser) and sets its email from the Google profile — never a 2nd user.
+ * signIn throws a redirect to Google, so it runs outside any try/catch.
  */
 export async function connectGmailAction() {
   await signIn("google", { redirectTo: "/pantry" });

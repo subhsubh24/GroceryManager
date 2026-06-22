@@ -1,22 +1,23 @@
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
+import { normalizeUsername } from "@gm/core/personalization";
 import { signIn } from "@/auth";
 import { Leaf } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Email + password sign-in (PLAN §8.7). The server action calls signIn("credentials", …); on bad
+ * Username + password sign-in (PLAN §8.7). The server action calls signIn("credentials", …); on bad
  * credentials NextAuth throws an AuthError, which we map to a friendly ?error= banner. On success
  * signIn throws a NEXT_REDIRECT (to redirectTo) that must propagate — so we only swallow AuthError.
  */
 async function signInAction(formData: FormData) {
   "use server";
-  const email = String(formData.get("email") ?? "").trim();
+  const username = normalizeUsername(String(formData.get("username") ?? ""));
   const password = String(formData.get("password") ?? "");
-  if (!email || !password) redirect("/signin?error=missing");
+  if (!username || !password) redirect("/signin?error=missing");
   try {
-    await signIn("credentials", { email, password, redirectTo: "/" });
+    await signIn("credentials", { username, password, redirectTo: "/" });
   } catch (e) {
     if (e instanceof AuthError) redirect("/signin?error=credentials");
     throw e; // re-throw NEXT_REDIRECT (success) and anything unexpected
@@ -41,25 +42,27 @@ export default async function SignInPage({
           <h1 className="font-display text-3xl font-semibold tracking-tight text-ink-900">
             Welcome back
           </h1>
-          <p className="mt-2 text-sm text-ink-500">Sign in with your email and password.</p>
+          <p className="mt-2 text-sm text-ink-500">Sign in with your username and password.</p>
         </div>
 
         <div className="card-pad mt-7">
           {error && (
             <p className="notice-warn mb-4">
               {error === "missing"
-                ? "Please enter your email and password."
-                : "That email and password don't match. Try again."}
+                ? "Please enter your username and password."
+                : "That username and password don't match. Try again."}
             </p>
           )}
 
           <form action={signInAction} className="space-y-4">
             <label className="block">
-              <span className="field-label">Email</span>
+              <span className="field-label">Username</span>
               <input
-                name="email"
-                type="email"
-                autoComplete="email"
+                name="username"
+                type="text"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
                 required
                 className="input"
               />

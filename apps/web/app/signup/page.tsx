@@ -3,40 +3,40 @@ import { redirect } from "next/navigation";
 import {
   createUserWithPassword,
   getAdminDb,
-  getUserByEmail,
+  getUserByUsername,
   getUserIdByReferralCode,
   recordReferral,
 } from "@gm/db";
 import { hashPassword } from "@gm/core/crypto";
-import { isValidReferralCode } from "@gm/core/personalization";
+import { isValidReferralCode, isValidUsername, normalizeUsername } from "@gm/core/personalization";
 import { signIn } from "@/auth";
 import { Leaf } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Create an account: email + password only (username = email). The user's PROFILE (name, age, gender)
- * is now collected in the onboarding flow's first step — `/onboarding` — and written there as
- * profile:* preferenceSignals (PLAN §8.7). Signup just provisions the account and signs the user in;
- * the credentials redirect (`signIn`) sends new accounts straight into onboarding to gather it.
+ * Create an account: USERNAME + password only (no email — it's set later only if the user connects
+ * Gmail). The user's PROFILE (name, age, gender) is collected in the onboarding flow's first step
+ * (`/onboarding`) and written there as profile:* preferenceSignals (PLAN §8.7). Signup just provisions
+ * the account and signs the user in; the credentials redirect sends new accounts straight to onboarding.
  */
 async function registerAction(formData: FormData) {
   "use server";
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const username = normalizeUsername(String(formData.get("username") ?? ""));
   const password = String(formData.get("password") ?? "");
   const ref = String(formData.get("ref") ?? "").trim();
 
-  if (!email || !password) redirect("/signup?error=missing");
+  if (!username || !password) redirect("/signup?error=missing");
+  if (!isValidUsername(username)) redirect("/signup?error=invalid");
   if (password.length < 8) redirect("/signup?error=weak");
 
-  const existing = await getUserByEmail(getAdminDb(), email);
+  const existing = await getUserByUsername(getAdminDb(), username);
   if (existing) redirect("/signup?error=exists");
 
-  // Provision the user on the admin connection (a brand-new row can't satisfy its own RLS). Name is
-  // captured later in onboarding (profile step), so the account row starts without one.
+  // Provision the user on the admin connection (a brand-new row can't satisfy its own RLS). Email +
+  // name start empty — name is captured in onboarding, email only if the user later connects Gmail.
   const userId = await createUserWithPassword(getAdminDb(), {
-    email,
-    name: null,
+    username,
     passwordHash: hashPassword(password),
   });
 
@@ -56,7 +56,7 @@ async function registerAction(formData: FormData) {
 
   try {
     // New accounts land in the guided onboarding flow first (returning users via /signin go to /).
-    await signIn("credentials", { email, password, redirectTo: "/onboarding" });
+    await signIn("credentials", { username, password, redirectTo: "/onboarding" });
   } catch (e) {
     if (e instanceof AuthError) redirect("/signin?error=credentials");
     throw e; // re-throw NEXT_REDIRECT (success)
@@ -73,9 +73,10 @@ export default async function SignUpPage({
   // Validated here so junk never reaches the action; the action re-validates + resolves it best-effort.
   const refCode = typeof ref === "string" && isValidReferralCode(ref) ? ref : null;
   const errorText: Record<string, string> = {
-    missing: "Please enter an email and password.",
+    missing: "Please enter a username and password.",
+    invalid: "Username must be 3–20 characters: letters, numbers, dots or underscores.",
     weak: "Password must be at least 8 characters.",
-    exists: "An account with that email already exists. Try signing in.",
+    exists: "That username is taken. Try another, or sign in.",
   };
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-5 py-12">
@@ -90,7 +91,7 @@ export default async function SignUpPage({
             Create your account
           </h1>
           <p className="mt-2 text-sm text-ink-500">
-            Just an email and password to start — we&apos;ll set up the rest in a minute.
+            Just a username and password to start — we&apos;ll set up the rest in a minute.
           </p>
         </div>
 
@@ -100,8 +101,19 @@ export default async function SignUpPage({
           <form action={registerAction} className="space-y-4">
             {refCode && <input type="hidden" name="ref" value={refCode} />}
             <label className="block">
-              <span className="field-label">Email</span>
-              <input name="email" type="email" autoComplete="email" required className="input" />
+              <span className="field-label">Username</span>
+              <input
+                name="username"
+                type="text"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                minLength={3}
+                maxLength={20}
+                required
+                className="input"
+              />
+              <span className="field-hint">3–20 characters: letters, numbers, dots or underscores.</span>
             </label>
             <label className="block">
               <span className="field-label">Password</span>
