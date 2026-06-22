@@ -110,8 +110,18 @@ export function createDbNormalizationPorts(
           shelfLifeFridgeDays: sl.shelfLifeFridgeDays,
           shelfLifePantryDays: sl.shelfLifePantryDays,
         })
+        .onConflictDoNothing({ target: canonicalItems.slug })
         .returning({ id: canonicalItems.id });
-      return rows[0]!.id;
+      if (rows[0]) return rows[0].id;
+      // Slug already exists (same item created earlier in this batch / concurrently). Reuse it so the
+      // product maps to ONE canonical and its quantity accumulates — instead of crashing the receipt.
+      const existing = await db
+        .select({ id: canonicalItems.id })
+        .from(canonicalItems)
+        .where(eq(canonicalItems.slug, slug))
+        .limit(1);
+      if (existing[0]) return existing[0].id;
+      throw new Error(`createCanonical: failed to create or find slug "${slug}"`);
     },
   };
 }
