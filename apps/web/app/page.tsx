@@ -8,8 +8,9 @@ import {
   withTenant,
 } from "@gm/db";
 import { currentStreak } from "@gm/core/recipe";
-import { selectExpiringSoon } from "@gm/core/pantry";
+import { buildDigest, type DigestSummary } from "@gm/core/digest";
 import { currentUserId } from "@/app/lib/tenant";
+import { buildDigestForUser } from "@/app/lib/digest";
 import { GettingStarted, type FirstRunState } from "@/app/components/getting-started";
 import { FeatureCard } from "@/app/components/feature-card";
 import { SECTIONS, type Section } from "@/app/lib/sections";
@@ -30,9 +31,11 @@ const TASTE_KINDS = ["diet:", "allergen:", "cuisine:", "ingredient:", "quality:"
 const DISMISSED_TOPIC = "dismissed_getting_started";
 
 type FirstRun = FirstRunState & { dismissed: boolean };
-/** Live, real-data status counts for the focused dashboard cards. */
-type HomeStats = { streak: number; expiringCount: number; listCount: number };
-type HomeData = HomeStats & { firstRun: FirstRun };
+/**
+ * Live, real-data home model: the cooking streak, the active-list count, the autopilot digest
+ * (what's due to reorder — with when-to-buy dates — and what's expiring), and first-run flags.
+ */
+type HomeData = { streak: number; listCount: number; digest: DigestSummary; firstRun: FirstRun };
 
 const EMPTY_FIRST_RUN: FirstRun = {
   tasteSet: false,
@@ -41,41 +44,48 @@ const EMPTY_FIRST_RUN: FirstRun = {
   dismissed: false,
 };
 
+// A quiet, all-zero digest for the logged-out / error paths — no fake data on the home.
+const EMPTY_DIGEST: DigestSummary = buildDigest({
+  expiring: [],
+  reorderDue: [],
+  spentThisWeekCents: 0,
+  homeCookedThisWeek: 0,
+});
+
 const EMPTY_HOME_DATA: HomeData = {
   streak: 0,
-  expiringCount: 0,
   listCount: 0,
+  digest: EMPTY_DIGEST,
   firstRun: EMPTY_FIRST_RUN,
 };
 
 /**
- * Signed-in home data for the focused dashboard: the cooking-streak chip, the first-run activation
- * flags, and the live status counts (items to use up + items on the active list). Batches every read
- * into a single `withTenant` transaction (one RLS round-trip) and derives the streak and `hasCooked`
- * from the same `cookedAt` load — no duplicate queries. Counts are REAL (computed from pantry/list
- * rows), never placeholders. Resilient: any DB/auth hiccup defaults to zero counts and an all-false
- * (so non-blocking) first-run state. Only call for a real session — the logged-out landing path
- * stays query-free (see HomePage).
+ * Signed-in home data for the grocery-autopilot dashboard: the cooking streak, the active-list count,
+ * and the autopilot digest (what's due to reorder — with when-to-buy dates — and what's expiring),
+ * plus the first-run activation flags. Reuses `buildDigestForUser` so the home and /digest can't
+ * drift. Batches the reads into one `withTenant` transaction (RLS). Everything is REAL — derived from
+ * pantry / reorder / list rows, never placeholders — and any DB/auth hiccup degrades to a quiet,
+ * all-zero model. Only call for a real session; the logged-out landing path stays query-free.
  */
 async function loadHomeData(): Promise<HomeData> {
   try {
     const userId = await currentUserId();
     if (!userId) return EMPTY_HOME_DATA;
+    const now = new Date();
 
-    const { signals, pantry, cookedAt, list } = await withTenant(getDb(), userId, async (tx) => ({
+    const { signals, pantry, cookedAt, list, digest } = await withTenant(getDb(), userId, async (tx) => ({
       signals: await loadPreferenceSignals(tx, userId),
       pantry: await getPantryView(tx, userId),
       cookedAt: await loadCookedAt(tx, userId),
       list: await getActiveListView(tx, userId),
+      digest: await buildDigestForUser(tx, userId, now),
     }));
 
-    const now = new Date();
     return {
       streak: currentStreak(cookedAt, now),
-      // Grocery items past their shelf-life ceiling or about to run out — the "use it up" set.
-      expiringCount: selectExpiringSoon(pantry, { domain: "grocery", withinDays: 5, now }).length,
       // Unchecked items on the active shopping list.
       listCount: list.filter((i) => !i.checked).length,
+      digest,
       firstRun: {
         tasteSet: signals.some((s) => TASTE_KINDS.some((k) => s.topic.startsWith(k))),
         hasPantry: pantry.length > 0,
@@ -102,43 +112,31 @@ const HERO_PREVIEW: { icon: LucideIcon; title: string; meta: string }[] = [
   { icon: Recycle, title: "Use it up", meta: "2 items expiring soon" },
 ];
 
-/**
- * One compact, calm stat card for the focused dashboard. Shows a real count + label and links to the
- * screen that acts on it. Callers only render this when the count is meaningful (>0), so there are no
- * fake/zero numbers on the home.
- */
-function StatCard({
-  href,
-  icon: Icon,
-  value,
-  label,
-}: {
-  href: string;
-  icon: LucideIcon;
-  value: string | number;
-  label: string;
-}) {
-  return (
-    <a href={href} className="group card-link">
-      <div className="flex items-start justify-between">
-        <span className="tile">
-          <Icon className="h-5 w-5" strokeWidth={2} />
-        </span>
-        <span className="text-ink-300 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-          <ArrowRight className="h-4 w-4" />
-        </span>
-      </div>
-      <div className="mt-4 text-2xl font-semibold tracking-[-0.02em] text-ink-900">{value}</div>
-      <div className="mt-1 text-sm text-ink-500">{label}</div>
-    </a>
-  );
+const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** Friendly "when to buy" label from a recommend-by date (UTC, matching the stored value). */
+function buyBy(d: Date | null): string {
+  if (!d) return "soon";
+  const date = new Date(d);
+  const days = Math.round((date.getTime() - Date.now()) / 86_400_000);
+  if (days <= 0) return "buy now";
+  if (days === 1) return "tomorrow";
+  if (days <= 6) return `by ${DOW[date.getUTCDay()]}`;
+  return `in ${days}d`;
+}
+
+/** Friendly expiring label (mirrors the /digest + /use-it-up wording). */
+function expiringLabel(e: { reason: string; daysLeft: number | null }): string {
+  if (e.reason === "expired_likely") return "likely expired";
+  if (e.daysLeft != null && e.daysLeft <= 0) return "use today";
+  return e.daysLeft != null ? `${e.daysLeft}d left` : "soon";
 }
 
 export default async function HomePage() {
   const session = await auth();
   const email = (session?.user as { email?: string } | undefined)?.email ?? null;
   // Only hit the DB for signed-in visitors; the logged-out landing path stays query-free.
-  const { streak, expiringCount, listCount, firstRun } = session
+  const { streak, listCount, firstRun, digest } = session
     ? await loadHomeData()
     : { ...EMPTY_HOME_DATA, firstRun: null as FirstRun | null };
   // Show the activation checklist only while there's setup left and the user hasn't dismissed it.
@@ -146,8 +144,10 @@ export default async function HomePage() {
     firstRun != null &&
     !firstRun.dismissed &&
     !(firstRun.tasteSet && firstRun.hasPantry && firstRun.hasCooked);
-  // Live status cards only appear when their real count is meaningful — no zero-filled placeholders.
-  const hasStats = streak > 0 || expiringCount > 0 || listCount > 0;
+  // Autopilot status: is there a grocery run to surface (something due to reorder or already on the
+  // active list)? Drives the home's hero panel — all derived from real reorder/list data.
+  const reorderCount = digest.reorderCount;
+  const hasRun = reorderCount > 0 || listCount > 0;
 
   return (
     <main className="relative overflow-hidden">
@@ -205,15 +205,96 @@ export default async function HomePage() {
           LIVE status cards (real counts only), and one quiet link to the full "All tools" index.
           The marketing hero/pitch below renders for LOGGED-OUT visitors only. */}
       {session && (
-        <section className="mx-auto max-w-6xl px-5 pb-16 pt-10 sm:px-8 sm:pt-12">
-          <p className="eyebrow">Your kitchen</p>
+        <section className="mx-auto max-w-2xl px-5 pb-16 pt-10 sm:px-8 sm:pt-12">
+          <p className="eyebrow">Your kitchen, on autopilot</p>
           <h1 className="page-title mt-3">Welcome back</h1>
-          <p className="page-subtitle">
-            Jump back in — plan your week, cook what you have, or ask your kitchen anything.
-          </p>
 
-          {/* Primary actions — the three things worth doing now. */}
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          {/* Autopilot status — your next grocery run, drafted from what's running low + already listed.
+              Instacart is deep-link only, so the honest promise is: drafted for you, ordered in one tap. */}
+          <section className="panel-brand mt-6">
+            {hasRun ? (
+              <>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
+                  Your next grocery run
+                </p>
+                <h2 className="mt-2 font-display text-2xl font-semibold">
+                  {reorderCount > 0 && listCount > 0
+                    ? `${reorderCount} to reorder · ${listCount} on your list`
+                    : reorderCount > 0
+                      ? `${reorderCount} item${reorderCount === 1 ? "" : "s"} ready to reorder`
+                      : `${listCount} item${listCount === 1 ? "" : "s"} on your list`}
+                </h2>
+                <p className="mt-1 text-sm text-white/90">
+                  Drafted from what you have and what&apos;s running low — review, then check out in one tap.
+                </p>
+                <a
+                  href="/list"
+                  className="btn mt-4 inline-flex bg-white px-5 py-3 text-base text-brand-solid hover:bg-white/90"
+                >
+                  Review &amp; order →
+                </a>
+              </>
+            ) : (
+              <>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
+                  On autopilot
+                </p>
+                <h2 className="mt-2 font-display text-2xl font-semibold">You&apos;re all stocked up.</h2>
+                <p className="mt-1 text-sm text-white/90">
+                  Nothing&apos;s running low. I&apos;ll draft your next order the moment something is.
+                </p>
+              </>
+            )}
+          </section>
+
+          {/* When to buy — upcoming reorders with their recommend-by dates. */}
+          {digest.topReorder.length > 0 && (
+            <section className="card-pad mt-6">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="section-title">When to buy</h2>
+                <a href="/list" className="nav-link">Review →</a>
+              </div>
+              <ul className="space-y-2 text-sm">
+                {digest.topReorder.map((r) => (
+                  <li key={r.name} className="flex items-center justify-between gap-4">
+                    <span className="flex min-w-0 items-center gap-2.5 text-ink-800">
+                      <span className="tile h-8 w-8">
+                        <ShoppingCart className="h-4 w-4" strokeWidth={2} />
+                      </span>
+                      <span className="truncate">{r.name}</span>
+                    </span>
+                    <span className="shrink-0 text-ink-400">{buyBy(r.recommendByDate)}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Use it up — what's about to spoil, with one-tap rescue recipes. */}
+          {digest.topExpiring.length > 0 && (
+            <section className="card-pad mt-6">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="section-title">Use it up</h2>
+                <a href="/use-it-up" className="nav-link">Recipes →</a>
+              </div>
+              <ul className="space-y-2 text-sm">
+                {digest.topExpiring.map((e) => (
+                  <li key={e.name} className="flex items-center justify-between gap-4">
+                    <span className="flex min-w-0 items-center gap-2.5 text-ink-800">
+                      <span className="tile h-8 w-8">
+                        <Recycle className="h-4 w-4" strokeWidth={2} />
+                      </span>
+                      <span className="truncate">{e.name}</span>
+                    </span>
+                    <span className="shrink-0 text-ink-400">{expiringLabel(e)}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Quick actions — secondary to the autopilot status above. */}
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <a href="/plan" className="btn-primary px-5 py-3 text-base">
               Plan my week →
             </a>
@@ -225,37 +306,6 @@ export default async function HomePage() {
             </a>
           </div>
 
-          {/* Live status — only the cards whose real count is meaningful (>0). */}
-          {hasStats && (
-            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {streak > 0 && (
-                <StatCard
-                  href="/digest"
-                  icon={Flame}
-                  value={`${streak}-day`}
-                  label="Cooking streak"
-                />
-              )}
-              {expiringCount > 0 && (
-                <StatCard
-                  href="/use-it-up"
-                  icon={Recycle}
-                  value={expiringCount}
-                  label={expiringCount === 1 ? "item to use up" : "items to use up"}
-                />
-              )}
-              {listCount > 0 && (
-                <StatCard
-                  href="/list"
-                  icon={ShoppingCart}
-                  value={listCount}
-                  label={listCount === 1 ? "item on your list" : "items on your list"}
-                />
-              )}
-            </div>
-          )}
-
-          {/* Everything else lives one tap away — progressive disclosure, not a wall of tiles. */}
           <div className="mt-8">
             <a href="/tools" className="nav-link">
               All tools →
