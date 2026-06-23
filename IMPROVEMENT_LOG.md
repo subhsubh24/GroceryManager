@@ -4,6 +4,28 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-23 — fix(cook): scaleMeasure silently skips ⅛ ⅜ ⅝ ⅞ unicode fractions
+
+**What:** `parseMeasure` in `consume.ts` already handled all 9 common unicode fractions,
+but `cook.ts` (`scaleMeasure` / `parseQtyToken` / `NUM` regex / `formatQty`) only knew 5
+(½ ¼ ¾ ⅓ ⅔). Measures like "⅛ tsp" fell through silently — Cook Mode recipe scaling
+produced `"⅛ tsp × 2"` → `"⅛ tsp"` (unchanged) instead of `"¼ tsp"`.
+
+**Fix:** Added ⅛ ⅜ ⅝ ⅞ to four sites in `cook.ts`: `UNICODE_FRAC` dict, `NUM` character
+class (×2), `parseQtyToken` mixed-number regex, and `formatQty` common-fractions table.
+Added 6 golden assertions (all 4 new fractions + a mixed-number case).
+
+**Why:** `⅛ tsp` is very common in recipes (salt, baking powder, spices). Silent pass-through
+on scaling is confusing to the user and a correctness defect in Cook Mode.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/9
+
+**Gate:** typecheck ✓ · 433 core tests ✓ · next build ✓ · no missing-export warnings ✓
+
+**Reviews:** Reviewer A (correctness) APPROVE · Reviewer B (quality) APPROVE
+
+---
+
 ## 2026-06-23 — fix(consume): parseMeasure drops unit on fractional high-end ranges
 
 **What:** One-line regex fix in `parseMeasure` (`packages/core/src/recipe/consume.ts`).
