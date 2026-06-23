@@ -9,7 +9,7 @@ import {
   removePantryItemAction,
   syncGmailAction,
 } from "./actions";
-import { confirmReviewItemAction, dismissReviewItemAction } from "../review/actions";
+import { ReviewList } from "../review/review-list";
 import { SubmitButton } from "./sync-buttons";
 import { ClearPantryButton } from "./clear-button";
 import { PageHeader } from "@/app/components/page-header";
@@ -278,7 +278,7 @@ export default async function PantryPage({
       </section>
 
       {/* Inline review — low-confidence receipt lines surfaced right here (no separate trip to an
-          inbox): add the real ones to the pantry, dismiss the rest. */}
+          inbox): tick the real ones and add them in one go, skip the rest. */}
       {review.length > 0 && (
         <section className="mt-6">
           <div className="mb-1 flex items-center justify-between">
@@ -286,42 +286,9 @@ export default async function PantryPage({
             <a href="/review" className="nav-link">Open inbox →</a>
           </div>
           <p className="mb-3 text-xs text-ink-400">
-            We couldn&apos;t place these with certainty — add the real ones, skip the rest.
+            We couldn&apos;t place these with certainty — tick the real ones and add them together.
           </p>
-          <ul className="space-y-2.5">
-            {[...review]
-              .sort(
-                (a, b) =>
-                  new Date(b.purchasedAt ?? 0).getTime() - new Date(a.purchasedAt ?? 0).getTime(),
-              )
-              .map((r) => (
-                <li key={r.id} className="card p-4">
-                  {/* Lead with the clean best-guess name; the raw receipt line is secondary. */}
-                  <div className="font-semibold text-ink-900">{titleCase(r.canonicalName ?? r.rawText)}</div>
-                  <div className="mt-0.5 text-xs text-ink-400">
-                    {humanize(r.retailer)} · {timeAgo(r.purchasedAt)}
-                    {r.matchConfidence != null ? ` · ${Math.round(r.matchConfidence * 100)}% sure` : ""}
-                  </div>
-                  <div className="mt-1 truncate text-xs text-ink-300" title={r.rawText}>
-                    {r.rawText}
-                  </div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <form action={confirmReviewItemAction}>
-                      <input type="hidden" name="id" value={r.id} />
-                      <SubmitButton className="btn-primary btn-sm" pendingLabel="Adding…">
-                        Add to pantry
-                      </SubmitButton>
-                    </form>
-                    <form action={dismissReviewItemAction}>
-                      <input type="hidden" name="id" value={r.id} />
-                      <SubmitButton className="btn-ghost btn-sm" pendingLabel="Removing…">
-                        Not mine / expired
-                      </SubmitButton>
-                    </form>
-                  </div>
-                </li>
-              ))}
-          </ul>
+          <ReviewList items={review} />
         </section>
       )}
 

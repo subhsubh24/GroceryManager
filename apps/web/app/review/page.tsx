@@ -1,8 +1,6 @@
 import { getDb, getReviewQueue, withTenant } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
-import { humanize, timeAgo, titleCase } from "@/app/lib/format";
-import { confirmReviewItemAction, dismissReviewItemAction } from "./actions";
-import { SubmitButton } from "../pantry/sync-buttons";
+import { ReviewList } from "./review-list";
 import { PageHeader } from "@/app/components/page-header";
 import { Check, ReceiptText } from "@/app/components/icons";
 
@@ -53,34 +51,7 @@ export default async function ReviewPage() {
         </div>
       )}
 
-      <ul className="mt-6 space-y-2">
-        {rows.map((r) => (
-          <li key={r.id} className="card p-4">
-            <div className="font-medium text-ink-900">{titleCase(r.canonicalName ?? r.rawText)}</div>
-            <div className="text-xs text-ink-400">
-              {humanize(r.retailer)} · {timeAgo(r.purchasedAt)}
-              {r.matchConfidence != null ? ` · ${Math.round(r.matchConfidence * 100)}% sure` : ""}
-            </div>
-            <div className="mt-1 truncate text-xs text-ink-300" title={r.rawText}>
-              {r.rawText}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <form action={confirmReviewItemAction}>
-                <input type="hidden" name="id" value={r.id} />
-                <SubmitButton className="btn-primary btn-sm" pendingLabel="Adding…">
-                  Add to pantry
-                </SubmitButton>
-              </form>
-              <form action={dismissReviewItemAction}>
-                <input type="hidden" name="id" value={r.id} />
-                <SubmitButton className="btn-ghost btn-sm" pendingLabel="Removing…">
-                  Not mine / expired
-                </SubmitButton>
-              </form>
-            </div>
-          </li>
-        ))}
-      </ul>
+      {rows.length > 0 && <div className="mt-6"><ReviewList items={rows} /></div>}
     </main>
   );
 }
