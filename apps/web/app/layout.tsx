@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
-import { auth } from "@/auth";
 import { RegisterSW } from "./register-sw";
 import { BottomNav } from "./components/bottom-nav";
 import { ThemeToggle } from "./components/theme-toggle";
@@ -43,10 +42,10 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Is a session cookie present? Drives the LaunchGuard, which never silently resumes a session on a
-  // fresh app launch (login is required each time the app is opened).
-  const authed = !!(await auth())?.user;
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // NOTE: deliberately NOT calling auth()/cookies() here — doing so in the root layout makes the
+  // static /404 un-generatable and breaks the production build. The LaunchGuard checks the session
+  // server-side (in its action) instead, only when it fires on a fresh launch.
   return (
     <html
       lang="en"
@@ -57,7 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <RegisterSW />
-        <LaunchGuard authed={authed} />
+        <LaunchGuard />
         {children}
         <BottomNav />
         <ThemeToggle />

@@ -16,7 +16,7 @@ const KEY = "gm:launched";
  *
  * Rendered once from the root layout; renders nothing.
  */
-export function LaunchGuard({ authed }: { authed: boolean }) {
+export function LaunchGuard() {
   const [, startTransition] = useTransition();
   useEffect(() => {
     let fresh = false;
@@ -26,7 +26,9 @@ export function LaunchGuard({ authed }: { authed: boolean }) {
     } catch {
       return; // storage unavailable — don't risk repeatedly signing the user out
     }
-    if (fresh && authed) startTransition(() => void forceSignOutAction());
-  }, [authed, startTransition]);
+    // On the first load of a new browser session, end any lingering server session. The action checks
+    // the session itself, so this is a no-op when already signed out (e.g. a visitor on the landing).
+    if (fresh) startTransition(() => void forceSignOutAction());
+  }, [startTransition]);
   return null;
 }
