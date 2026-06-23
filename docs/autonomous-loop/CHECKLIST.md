@@ -22,7 +22,7 @@ proves the loop closes end-to-end.
       vibe-coded — use the design system, no ad-hoc styles"), and out-of-scope items.
 - [ ] Project rules file exists + honored (AGENTS.md / CLAUDE.md / CONTRIBUTING).
 - [ ] Reserved, created lazily by the loop: `IMPROVEMENT_LOG.md` (per-run handoff),
-      `.claude/loop-memory.md` (lessons), `PENDING_OPS.md` (migrations/env to apply at deploy).
+      `docs/autonomous-loop/LOOP_MEMORY.md` (lessons), `PENDING_OPS.md` (migrations/env to apply at deploy).
 
 ## 3. CI workflow (`.github/workflows/ci.yml`)
 - [ ] Triggers on push to the default branch AND all `pull_request` events.
@@ -59,7 +59,7 @@ proves the loop closes end-to-end.
 - [ ] Trigger one run (or wait for the first scheduled run).
 - [ ] Within ~30 min it produces ONE of: an auto-merged PR (CI `verify` green + two reviewer
       approvals) OR an FYI/tracking issue. No PR is left waiting for human review.
-- [ ] `IMPROVEMENT_LOG.md` gains an entry; `.claude/loop-memory.md` exists.
+- [ ] `IMPROVEMENT_LOG.md` gains an entry; `docs/autonomous-loop/LOOP_MEMORY.md` exists.
 - [ ] If a migration/env was involved, `PENDING_OPS.md` lists it.
 - [ ] If nothing appears: the cloud `gh` likely lacks repo write or `workflow` scope — confirm
       auth and re-run.

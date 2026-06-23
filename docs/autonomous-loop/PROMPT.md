@@ -12,6 +12,12 @@ coherent, verified, peer-reviewed improvement and get it merged (or, if you can'
 tracking issue) — **then STOP.** A single small, correct, merged change is success. Never batch
 multiple changes.
 
+## DO NOT TOUCH (these stall an unattended run)
+NEVER edit any file under `.claude/` or `.github/` — they trip a "sensitive file" permission prompt
+a headless cron run cannot answer, which hangs the whole run. The CI workflow already exists —
+never recreate or edit it. Loop memory lives at `docs/autonomous-loop/LOOP_MEMORY.md` (NOT in
+`.claude/`). Modify only application source, tests, and docs.
+
 ## ORIENT (read before doing anything)
 - Read `VISION.md` (north star + the DESIGN BAR — the app must NOT look vibe-coded; use the
   existing design system in `apps/web/app/globals.css` + `apps/web/tailwind.config.ts`, never
@@ -23,7 +29,7 @@ multiple changes.
 
 ## HILL-CLIMB (build on prior work, don't repeat it)
 - Read `git log --oneline -20`, recent merged PRs (`gh pr list --state merged --limit 10`), open
-  issues (`gh issue list`), `IMPROVEMENT_LOG.md` (per-run handoffs), and `.claude/loop-memory.md`
+  issues (`gh issue list`), `IMPROVEMENT_LOG.md` (per-run handoffs), and `docs/autonomous-loop/LOOP_MEMORY.md`
   (lessons). Continue the trajectory; avoid redoing what's done or what a prior run flagged dead.
 
 ## BOOTSTRAP (idempotent — only act if something is missing)
@@ -38,7 +44,7 @@ multiple changes.
   `workflow` scope, do NOT force it — open an issue "Action needed: refresh gh workflow scope"
   telling the maintainer to run `gh auth refresh -h github.com -s workflow` once, then fall back
   to self-gated merge for this run.
-- If `IMPROVEMENT_LOG.md`, `.claude/loop-memory.md`, or `PENDING_OPS.md` are missing, create them.
+- If `IMPROVEMENT_LOG.md`, `docs/autonomous-loop/LOOP_MEMORY.md`, or `PENDING_OPS.md` are missing, create them.
 
 ## PICK ONE (rotate across areas run-to-run)
 Choose a single change, rotating vs the last run so coverage is even: a real **bug** fix · a
@@ -77,7 +83,7 @@ Proceed only when BOTH approve AND the gate is green. If it can't get there, aba
 
 ## RECORD
 - Append a dated entry to `IMPROVEMENT_LOG.md` (what changed, why, PR link).
-- Add any durable lesson to `.claude/loop-memory.md`.
+- Add any durable lesson to `docs/autonomous-loop/LOOP_MEMORY.md`.
 - If the change needs a migration or new env var at deploy, append it to `PENDING_OPS.md` — do NOT
   run prod migrations or touch prod env yourself.
 
