@@ -1,5 +1,6 @@
 import { getDb, getReviewQueue, withTenant } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
+import { humanize, titleCase } from "@/app/lib/format";
 import { confirmReviewItemAction, dismissReviewItemAction } from "./actions";
 import { SubmitButton } from "../pantry/sync-buttons";
 import { PageHeader } from "@/app/components/page-header";
@@ -55,10 +56,10 @@ export default async function ReviewPage() {
       <ul className="mt-6 space-y-2">
         {rows.map((r) => (
           <li key={r.id} className="card p-4">
-            <div className="font-medium text-ink-900">{r.rawText}</div>
+            <div className="font-medium text-ink-900">{titleCase(r.rawText)}</div>
             <div className="text-xs text-ink-400">
-              {r.retailer}
-              {r.canonicalName ? ` · best guess: ${r.canonicalName}` : " · no confident match"}
+              {humanize(r.retailer)}
+              {r.canonicalName ? ` · best guess: ${titleCase(r.canonicalName)}` : " · no confident match"}
               {r.matchConfidence != null ? ` · ${Math.round(r.matchConfidence * 100)}% sure` : ""}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">

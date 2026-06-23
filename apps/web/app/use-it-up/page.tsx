@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { getDb, getPantryView, loadWasteEvents, withTenant } from "@gm/db";
 import { recordWaste, selectExpiringSoon, summarizeWaste } from "@gm/core/pantry";
 import { currentUserId } from "@/app/lib/tenant";
+import { titleCase } from "@/app/lib/format";
 import { PageHeader } from "@/app/components/page-header";
 import { ChefHat, Recycle, Sprout } from "@/app/components/icons";
 import {
@@ -153,7 +154,7 @@ export default async function UseItUpPage() {
                 const u = urgencyLabel(e.reason, e.daysLeft);
                 return (
                   <li key={e.canonicalItemId} className="row">
-                    <span className="min-w-0 font-medium text-ink-900">{e.name}</span>
+                    <span className="min-w-0 font-medium text-ink-900">{titleCase(e.name)}</span>
                     <div className="flex shrink-0 items-center gap-2">
                       <span className={u.cls}>{u.text}</span>
                       <form action={markWasted}>

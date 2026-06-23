@@ -7,13 +7,13 @@ import {
 } from "@gm/db";
 import { budgetVsActual, cheaperRetailer, spendByPeriod, topItemsBySpend } from "@gm/core/spend";
 import { currentUserId } from "@/app/lib/tenant";
+import { humanize, titleCase } from "@/app/lib/format";
 import { PageHeader } from "@/app/components/page-header";
 import { Wallet } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
 const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`;
-const retailerLabel = (r: string) => r.replace(/_/g, " ");
 
 async function load() {
   try {
@@ -100,7 +100,7 @@ export default async function SpendPage() {
               <ul className="mt-3 space-y-1 text-sm text-ink-600">
                 {data.top.map((t) => (
                   <li key={t.canonicalItemId} className="flex justify-between">
-                    <span>{t.name}</span>
+                    <span>{titleCase(t.name)}</span>
                     <span className="tabular-nums text-ink-900">{fmt(t.totalCents)}</span>
                   </li>
                 ))}
@@ -114,8 +114,8 @@ export default async function SpendPage() {
               <ul className="mt-3 space-y-1 text-sm text-ink-600">
                 {data.cheaper.map((c) => (
                   <li key={c.canonicalItemId}>
-                    <span className="text-ink-900">{c.name}</span> — cheapest at{" "}
-                    <span className="font-medium">{retailerLabel(c.bestRetailer)}</span> ({fmt(c.bestCents)}), save{" "}
+                    <span className="text-ink-900">{titleCase(c.name)}</span> — cheapest at{" "}
+                    <span className="font-medium">{humanize(c.bestRetailer)}</span> ({fmt(c.bestCents)}), save{" "}
                     {fmt(c.savingsVsWorstCents)}
                   </li>
                 ))}

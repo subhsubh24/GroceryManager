@@ -161,6 +161,14 @@ export const SECTIONS: Section[] = [
     group: "Shop",
   },
   {
+    key: "add-receipt",
+    href: "/add-receipt",
+    title: "Snap a receipt",
+    blurb: "Shopped somewhere else? Photograph a paper or email receipt and it's added to your pantry.",
+    icon: ReceiptText,
+    group: "Shop",
+  },
+  {
     key: "staples",
     href: "/staples",
     title: "Staples autopilot",

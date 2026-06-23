@@ -216,6 +216,10 @@ export default async function PantryPage({
             </form>
           )}
         </div>
+        {/* Shopped somewhere that isn't an email receipt? Snap the paper one — same pantry. */}
+        <a href="/add-receipt" className="nav-link mt-3 inline-block">
+          Snap a paper receipt →
+        </a>
         {!connected && !oauthConfigured && (
           <p className="mt-3 text-xs text-ink-400">
             Gmail sign-in needs <code>GOOGLE_CLIENT_ID</code>/<code>GOOGLE_CLIENT_SECRET</code> set —

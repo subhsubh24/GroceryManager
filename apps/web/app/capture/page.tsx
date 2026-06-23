@@ -5,6 +5,7 @@ import { captureToList, parseQuickCapture } from "@gm/core/capture";
 import { parseCaptureWithLLM } from "@gm/core/capture/parse-llm";
 import { GeminiClient } from "@gm/core/llm";
 import { currentUserId } from "@/app/lib/tenant";
+import { titleCase } from "@/app/lib/format";
 import { PageHeader } from "@/app/components/page-header";
 import { PencilLine, ShoppingCart } from "@/app/components/icons";
 import { CaptureForm } from "./capture-form";
@@ -88,7 +89,7 @@ export default async function CapturePage() {
             <ul className="space-y-2">
               {data.items.map((i) => (
                 <li key={i.id} className="row">
-                  <span className={`text-ink-900 ${i.checked ? "line-through opacity-50" : ""}`}>{i.name}</span>
+                  <span className={`text-ink-900 ${i.checked ? "line-through opacity-50" : ""}`}>{titleCase(i.name)}</span>
                   <span className="pill-brand">
                     {REASON_LABEL[i.reason] ?? i.reason}
                   </span>

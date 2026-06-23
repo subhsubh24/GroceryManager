@@ -3,6 +3,7 @@ import { getActiveListView, getDb, loadReorderInputs, withTenant } from "@gm/db"
 import { buildDraftOrders, mergeInstacartItems, type ReorderInputRow } from "@gm/core/reorder";
 import { instacart } from "@gm/core/integrations";
 import { currentUserId } from "@/app/lib/tenant";
+import { titleCase } from "@/app/lib/format";
 import { CopyListButton } from "./copy-list-button";
 import { PageHeader } from "@/app/components/page-header";
 import { Check, ShoppingCart } from "@/app/components/icons";
@@ -54,11 +55,12 @@ export default async function ListPage() {
   const listText = buildListText(merged, "Your GroceryManager list");
 
   // Keyless: each item name links to an Instacart search (how you'd shop it by hand). With a key,
-  // the one-tap prefill button does the work, so names stay plain text.
+  // the one-tap prefill button does the work, so names stay plain text. The canonical name is stored
+  // lowercase — title-case it for display, but keep the raw name in the search URL.
   const itemLabel = (name: string, extra: string) =>
     hasInstacartKey ? (
       <>
-        {name}
+        {titleCase(name)}
         {extra}
       </>
     ) : (
@@ -69,7 +71,7 @@ export default async function ListPage() {
           rel="noreferrer"
           className="text-brand-700 hover:underline"
         >
-          {name}
+          {titleCase(name)}
         </a>
         {extra}
       </>
@@ -172,7 +174,7 @@ export default async function ListPage() {
           <ul className="mt-3 space-y-1 text-sm text-ink-500">
             {draft.amazon.items.map((i) => (
               <li key={i.canonicalItemId}>
-                {i.name}
+                {titleCase(i.name)}
                 {i.asin ? "" : " · (no ASIN yet)"}
               </li>
             ))}

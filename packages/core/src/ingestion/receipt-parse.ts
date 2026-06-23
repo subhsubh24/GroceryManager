@@ -58,3 +58,26 @@ export async function extractReceipt(
     codeExecution: true,
   });
 }
+
+/**
+ * Same verify-then-escalate extraction, but from a PHOTO of a paper/email receipt instead of cleaned
+ * HTML — for shopping somewhere that isn't an Amazon/WFM/Instacart email. The image(s) are passed as
+ * vision parts (mirroring detectPantryItems); the prompt + RECEIPT_SYSTEM + verify hook are otherwise
+ * identical, and `codeExecution` keeps the cents/totals math deterministic.
+ */
+export async function extractReceiptImage(
+  client: GeminiClient,
+  images: import("../llm/client.js").ImagePart[],
+  opts: { maxAttempts?: number } = {},
+): Promise<VerifyResult<ReceiptExtraction>> {
+  return client.generateWithVerify({
+    schema: ReceiptExtraction,
+    prompt: "Extract every purchased line item from this receipt photo into the schema. Prices are integer cents.",
+    system: RECEIPT_SYSTEM,
+    verify: verifyReceipt,
+    tier: "cheap",
+    maxAttempts: opts.maxAttempts ?? 3,
+    codeExecution: true,
+    images,
+  });
+}

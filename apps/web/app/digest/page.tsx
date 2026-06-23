@@ -2,6 +2,7 @@ import { loadEnv } from "@gm/config/env";
 import { getDb, loadCookedAt, withTenant } from "@gm/db";
 import { cooksThisWeek, currentStreak, longestStreak, weeklyActivity } from "@gm/core/recipe";
 import { currentUserId } from "@/app/lib/tenant";
+import { titleCase } from "@/app/lib/format";
 import { buildDigestForUser } from "@/app/lib/digest";
 import { PushToggle } from "./push-toggle";
 import { PageHeader } from "@/app/components/page-header";
@@ -135,7 +136,7 @@ export default async function DigestPage() {
               <ul className="space-y-1 text-sm text-ink-600">
                 {data.digest.topReorder.map((r) => (
                   <li key={`re-${r.name}`} className="flex justify-between">
-                    <span>{r.name}</span>
+                    <span>{titleCase(r.name)}</span>
                     <span className="text-ink-400">{fmtDate(r.recommendByDate) ?? ""}</span>
                   </li>
                 ))}
@@ -152,7 +153,7 @@ export default async function DigestPage() {
               <ul className="space-y-1 text-sm text-ink-600">
                 {data.digest.topExpiring.map((e) => (
                   <li key={`ex-${e.name}`} className="flex justify-between">
-                    <span>{e.name}</span>
+                    <span>{titleCase(e.name)}</span>
                     <span className="text-ink-400">
                       {e.reason === "expired_likely"
                         ? "likely expired"

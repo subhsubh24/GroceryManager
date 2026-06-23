@@ -10,6 +10,7 @@ import {
 import { currentStreak } from "@gm/core/recipe";
 import { buildDigest, type DigestSummary } from "@gm/core/digest";
 import { currentUserId } from "@/app/lib/tenant";
+import { titleCase } from "@/app/lib/format";
 import { buildDigestForUser } from "@/app/lib/digest";
 import { GettingStarted, type FirstRunState } from "@/app/components/getting-started";
 import { FeatureCard } from "@/app/components/feature-card";
@@ -261,7 +262,7 @@ export default async function HomePage() {
                       <span className="tile h-8 w-8">
                         <ShoppingCart className="h-4 w-4" strokeWidth={2} />
                       </span>
-                      <span className="truncate">{r.name}</span>
+                      <span className="truncate">{titleCase(r.name)}</span>
                     </span>
                     <span className="shrink-0 text-ink-400">{buyBy(r.recommendByDate)}</span>
                   </li>
@@ -284,7 +285,7 @@ export default async function HomePage() {
                       <span className="tile h-8 w-8">
                         <Recycle className="h-4 w-4" strokeWidth={2} />
                       </span>
-                      <span className="truncate">{e.name}</span>
+                      <span className="truncate">{titleCase(e.name)}</span>
                     </span>
                     <span className="shrink-0 text-ink-400">{expiringLabel(e)}</span>
                   </li>
