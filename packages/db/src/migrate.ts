@@ -51,6 +51,9 @@ async function main() {
     console.log("→ SMS digest channel (users.phone)…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0009_notifications.sql"), "utf8"));
 
+    console.log("→ RLS on shared catalog tables…");
+    await sql.unsafe(readFileSync(join(pkgRoot, "sql/0010_rls_catalog.sql"), "utf8"));
+
     console.log("✓ migrations complete");
   } finally {
     await sql.end();

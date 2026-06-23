@@ -85,6 +85,8 @@ CREATE POLICY tenant_isolation ON shopping_list_items TO grocery_app
   WITH CHECK (EXISTS (SELECT 1 FROM shopping_lists l
                       WHERE l.id = shopping_list_items.shopping_list_id AND l.user_id = app_current_user_id()));
 
--- 4. Shared catalog tables stay readable/writable by all tenants (no RLS):
---    units_of_measure, canonical_items, products, recipes, recipe_ingredients.
---    Their grants come from step 1; deliberately no row policies.
+-- 4. Shared catalog tables (units_of_measure, canonical_items, products, recipes,
+--    recipe_ingredients, item_unit_conversions) are readable/writable by all tenants.
+--    Their grants come from step 1. RLS for them is enabled with a permissive
+--    grocery_app policy in 0010_rls_catalog.sql — required so they aren't exposed
+--    through Supabase's PostgREST API to the anon/authenticated roles.
