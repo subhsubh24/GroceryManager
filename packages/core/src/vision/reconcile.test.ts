@@ -104,6 +104,40 @@ describe("reconcileScan", () => {
     expect(r.confirmations[0]!.presenceConfidence).toBe(0.95);
   });
 
+  it("asks 'same or new?' for a PARTIAL match instead of duplicating or silently merging", () => {
+    const r = reconcileScan([det("chicken thighs")], [item("c-chx", "Chicken Breast")]);
+    expect(r.confirmations).toHaveLength(0);
+    expect(r.newItems).toHaveLength(0);
+    expect(r.possibleMatches).toHaveLength(1);
+    expect(r.possibleMatches[0]!.candidateId).toBe("c-chx");
+    expect(r.possibleMatches[0]!.candidateName).toBe("Chicken Breast");
+    expect(r.possibleMatches[0]!.rawLabel).toBe("chicken thighs");
+    // It's pending a decision — so it must NOT also be nagged as "didn't see it".
+    expect(r.unconfirmed).toHaveLength(0);
+  });
+
+  it("a containment match still confirms outright (no needless 'same or new?' prompt)", () => {
+    const r = reconcileScan([det("milk")], [item("c-milk", "Whole Milk")]);
+    expect(r.confirmations).toHaveLength(1);
+    expect(r.possibleMatches).toHaveLength(0);
+  });
+
+  it("drops a possible match when another detection confirms that same pantry item", () => {
+    const r = reconcileScan(
+      [det("chicken breast"), det("chicken thighs")],
+      [item("c-chx", "Chicken Breast")],
+    );
+    expect(r.confirmations.map((c) => c.canonicalItemId)).toEqual(["c-chx"]);
+    expect(r.possibleMatches).toHaveLength(0);
+    expect(r.newItems).toHaveLength(0);
+  });
+
+  it("an unrelated detection is a clean new item, not a possible match", () => {
+    const r = reconcileScan([det("sriracha")], [item("c-milk", "Milk")]);
+    expect(r.possibleMatches).toHaveLength(0);
+    expect(r.newItems).toHaveLength(1);
+  });
+
   it("respects the unseen floor so confidence can't collapse", () => {
     const r = reconcileScan([], [item("c-x", "X", { confidence: 0.31 })], {
       unseenDecay: 0.85,

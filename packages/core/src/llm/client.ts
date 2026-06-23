@@ -8,7 +8,7 @@
  * Reliability comes from this loop + the semantic layer, not from the model — so the
  * default tier is the cheapest (gemini-2.5-flash-lite).
  */
-import { GoogleGenAI, type Content, type Part } from "@google/genai";
+import { GoogleGenAI, MediaResolution, type Content, type Part } from "@google/genai";
 import { loadEnv, useVertex, type Env } from "@gm/config/env";
 import { EMBEDDING_DIM, EMBEDDING_MODEL, type GeminiTier } from "@gm/config/constants";
 import { z } from "zod";
@@ -26,6 +26,12 @@ export interface GenerateOptions {
   system?: string;
   /** Optional images for vision tasks (pantry scans, receipt photos). */
   images?: ImagePart[];
+  /**
+   * Per-request image detail (Gemini `mediaResolution`). `high` does a zoomed reframing that
+   * resolves small/partially-occluded items far better — the right call for dense shelf/fridge
+   * detection; `low` (64 tok) is enough for large-text OCR. Omitted → the model's default.
+   */
+  mediaResolution?: "low" | "medium" | "high";
   /** Override the per-tier default thinking budget. */
   thinkingBudget?: number;
   /**
@@ -128,6 +134,14 @@ function toResponseObject(value: unknown): Record<string, unknown> {
   return { result: value ?? null };
 }
 
+/** Map our compact resolution hint to the SDK enum (undefined → leave the model's default). */
+function mediaResolutionEnum(r?: "low" | "medium" | "high"): MediaResolution | undefined {
+  if (r === "low") return MediaResolution.MEDIA_RESOLUTION_LOW;
+  if (r === "medium") return MediaResolution.MEDIA_RESOLUTION_MEDIUM;
+  if (r === "high") return MediaResolution.MEDIA_RESOLUTION_HIGH;
+  return undefined;
+}
+
 export class GeminiClient {
   private readonly ai: GoogleGenAI;
   private readonly env: Env;
@@ -152,6 +166,7 @@ export class GeminiClient {
     const tier = opts.tier ?? "cheap";
     const model = resolveModel(tier, this.env.LLM_USE_FLASH_LITE);
     const jsonSchema = zodToJsonSchema(schema, { target: "openApi3" }) as object;
+    const mediaRes = mediaResolutionEnum(opts.mediaResolution);
 
     // Code-execution mode: the model runs Python for deterministic values, then returns JSON in its
     // final text part (tools can't be combined with JSON response-schema mode — verified, 400).
@@ -166,6 +181,7 @@ export class GeminiClient {
         config: {
           tools: [{ codeExecution: {} }],
           ...(opts.system ? { systemInstruction: opts.system } : {}),
+          ...(mediaRes ? { mediaResolution: mediaRes } : {}),
         },
       });
       return schema.parse(extractJsonValue(res.text ?? "")) as z.infer<S>;
@@ -187,6 +203,7 @@ export class GeminiClient {
         // most shapes. (Enums need an explicit "type":"string" — handled at schema authoring.)
         responseSchema: jsonSchema,
         ...(opts.system ? { systemInstruction: opts.system } : {}),
+        ...(mediaRes ? { mediaResolution: mediaRes } : {}),
         ...(budget !== -1 ? { thinkingConfig: { thinkingBudget: budget } } : {}),
       },
     });

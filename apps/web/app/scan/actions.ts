@@ -1,11 +1,13 @@
 "use server";
 import { redirect } from "next/navigation";
-import { GEMINI_MODELS } from "@gm/config/constants";
 import { getDb, getPantryView, withTenant } from "@gm/db";
 import {
   applyVisionScan,
+  DEFAULT_SCAN_TIER,
   detectPantryItems,
   reconcileScan,
+  scanModelFor,
+  type PossibleMatch,
   type ReconciledDetection,
   type ScanLocation,
   type UnconfirmedItem,
@@ -21,6 +23,7 @@ export type AnalyzeState =
       summary: string;
       model: string;
       confirmations: ReconciledDetection[];
+      possibleMatches: PossibleMatch[];
       newItems: ReconciledDetection[];
       unconfirmed: UnconfirmedItem[];
     };
@@ -70,8 +73,9 @@ export async function analyzeScan(_prev: AnalyzeState, formData: FormData): Prom
       status: "ready",
       location,
       summary: result.summary,
-      model: GEMINI_MODELS.cheap,
+      model: scanModelFor(DEFAULT_SCAN_TIER),
       confirmations: result.confirmations,
+      possibleMatches: result.possibleMatches,
       newItems: result.newItems,
       unconfirmed: result.unconfirmed,
     };
@@ -99,6 +103,20 @@ export async function applyScan(formData: FormData): Promise<void> {
 
   const confirmations = parse("confirm");
   const newItems = parse("add");
+
+  // Possible-match decisions: each "pmchoice-<i>" radio submits a ReconciledDetection — either a
+  // confirm_present (user said "same as the one I have", so no duplicate) or a new_item ("add as
+  // new"). Route each by its action into the right bucket.
+  for (const [k, v] of formData.entries()) {
+    if (!k.startsWith("pmchoice-")) continue;
+    try {
+      const d = JSON.parse(String(v)) as ReconciledDetection;
+      (d.action === "confirm_present" ? confirmations : newItems).push(d);
+    } catch {
+      /* skip a malformed choice */
+    }
+  }
+
   if (confirmations.length === 0 && newItems.length === 0) return;
 
   const userId = await currentUserId();

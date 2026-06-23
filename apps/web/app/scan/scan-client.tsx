@@ -66,6 +66,65 @@ export function ScanClient() {
             </section>
           )}
 
+          {ready.possibleMatches.length > 0 && (
+            <section className="card-pad">
+              <h2 className="section-title mb-1">Already in your pantry?</h2>
+              <p className="mb-3 text-xs text-ink-400">
+                These look close to something you already track. Tell me if it&apos;s the same one (I&apos;ll
+                just confirm it) or a new item — so your pantry doesn&apos;t double up.
+              </p>
+              <ul className="space-y-3">
+                {ready.possibleMatches.map((p, i) => {
+                  const same = JSON.stringify({
+                    rawLabel: p.rawLabel,
+                    action: "confirm_present",
+                    canonicalItemId: p.candidateId,
+                    matchedName: p.candidateName,
+                    presenceConfidence: p.presenceConfidence,
+                    qtyEstimate: p.qtyEstimate,
+                    newConfidence: null,
+                  });
+                  const asNew = JSON.stringify({
+                    rawLabel: p.rawLabel,
+                    action: "new_item",
+                    canonicalItemId: null,
+                    matchedName: null,
+                    presenceConfidence: p.presenceConfidence,
+                    qtyEstimate: p.qtyEstimate,
+                    newConfidence: null,
+                  });
+                  return (
+                    <li
+                      key={`p-${i}-${p.rawLabel}`}
+                      className="rounded-xl border border-line bg-surface p-3.5 shadow-xs"
+                    >
+                      <p className="text-sm text-ink-800">
+                        Saw <span className="font-semibold capitalize">{p.rawLabel}</span> — is this your{" "}
+                        <span className="font-semibold capitalize">{p.candidateName}</span>?
+                      </p>
+                      <div className="mt-2.5 flex flex-wrap gap-2">
+                        <label className="chip">
+                          <input
+                            type="radio"
+                            name={`pmchoice-${i}`}
+                            value={same}
+                            defaultChecked
+                            className="control-accent"
+                          />
+                          Same one
+                        </label>
+                        <label className="chip">
+                          <input type="radio" name={`pmchoice-${i}`} value={asNew} className="control-accent" />
+                          Add as new
+                        </label>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
+
           {ready.newItems.length > 0 && (
             <section className="card-pad">
               <h2 className="section-title mb-1">New — add to pantry?</h2>
