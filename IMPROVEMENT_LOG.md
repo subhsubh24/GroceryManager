@@ -26,6 +26,31 @@ on scaling is confusing to the user and a correctness defect in Cook Mode.
 
 ---
 
+## 2026-06-23 — fix(import): isPublicHttpUrl misses IPv4-mapped IPv6 SSRF bypass
+
+**What:** `isPublicHttpUrl` in `packages/core/src/recipe/import.ts` blocked standard private
+IPv4 ranges (`127.x`, `10.x`, `192.168.x`, `169.254.x`, `172.16-31.x`) but not their
+IPv4-mapped IPv6 equivalents. Node's URL parser normalizes `http://[::ffff:127.0.0.1]/`
+to hostname `[::ffff:7f00:1]` — a form that never matched the existing regex checks —
+so the function incorrectly returned `true`, allowing a server-side `fetch()` to reach
+loopback, private, and cloud-metadata endpoints via the recipe URL import feature.
+
+**Fix:** Added `host.startsWith("[::ffff:")` after the existing IPv6 loopback guard.
+Blocks the entire `::ffff::/96` prefix (all IPv4-mapped addresses). Three golden assertions
+added: loopback, private class-A, and cloud-metadata IMDS (169.254.169.254).
+
+**Why:** SSRF on the recipe-import fetch path is a real risk. The bypass was straightforward:
+any URL like `http://[::ffff:127.0.0.1]/` would pass the guard and cause the server to
+fetch from its own loopback interface.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/10
+
+**Gate:** typecheck ✓ · 434 core tests ✓ · next build ✓ · no missing-export warnings ✓
+
+**Reviews:** Reviewer A (correctness & safety) APPROVE · Reviewer B (quality & fit) APPROVE
+
+---
+
 ## 2026-06-23 — fix(consume): parseMeasure drops unit on fractional high-end ranges
 
 **What:** One-line regex fix in `parseMeasure` (`packages/core/src/recipe/consume.ts`).

@@ -18,6 +18,7 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   fraction bug in `cook.ts` only showed up because `consume.ts` already had the correct wider set.
   When a module handles something correctly, grep for analogous code in related modules that might
   have drifted — `parseMeasure` vs `scaleMeasure`/`parseQtyToken` was the canonical example.
+- **2026-06-23 — IPv4-mapped IPv6 is a silent SSRF bypass in URL guards.** Node's WHATWG URL parser normalizes `::ffff:127.0.0.1` → `[::ffff:7f00:1]` (all-hex), so text guards checking for `127.` / `10.` / `169.254.` never fire. Always add `host.startsWith("[::ffff:")` alongside the IPv4 range blocks in any SSRF guard.
 - **2026-06-23 — Branch lineages reconciled.** There used to be two diverged lineages
   (`main` and an old `claude/busy-turing-XkEQX`); they were reconciled by promoting the canonical
   content to `main` and deleting the stray branch. There is now ONE lineage: `main`. Always read

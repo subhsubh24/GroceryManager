@@ -128,6 +128,14 @@ describe("isPublicHttpUrl (SSRF guard)", () => {
     expect(isPublicHttpUrl("http://[::1]/x")).toBe(false);
     expect(isPublicHttpUrl("not a url")).toBe(false);
   });
+
+  it("blocks IPv4-mapped IPv6 addresses that bypass the IPv4 range checks", () => {
+    // Node's URL parser normalizes ::ffff:x.x.x.x to all-hex [::ffff:xxxx:xxxx],
+    // so the plain 127./10./169.254. regexes above never match — explicit guard needed.
+    expect(isPublicHttpUrl("http://[::ffff:127.0.0.1]/")).toBe(false);  // loopback
+    expect(isPublicHttpUrl("http://[::ffff:10.0.0.1]/")).toBe(false);   // private class A
+    expect(isPublicHttpUrl("http://[::ffff:169.254.169.254]/")).toBe(false); // cloud metadata
+  });
 });
 
 describe("fieldsToImportedRecipe", () => {

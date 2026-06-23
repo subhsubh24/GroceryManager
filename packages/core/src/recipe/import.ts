@@ -223,6 +223,9 @@ export function isPublicHttpUrl(raw: string): boolean {
   if (/^172\.(?:1[6-9]|2\d|3[01])\./.test(host)) return false;
   if (host === "[::1]" || host === "::1") return false; // IPv6 loopback
   if (host.startsWith("[fe80") || host.startsWith("[fc") || host.startsWith("[fd")) return false;
+  // IPv4-mapped IPv6 (::ffff:x.x.x.x): Node's URL parser normalizes these to all-hex form
+  // (e.g. ::ffff:127.0.0.1 → [::ffff:7f00:1]), so the IPv4 range checks above never fire.
+  if (host.startsWith("[::ffff:")) return false;
   return true;
 }
 
