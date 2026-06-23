@@ -1,17 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check } from "@/app/components/icons";
 
 /**
- * Keyless ordering path: copy the list to the clipboard so it can be pasted into Instacart (or any
- * grocery app / notes). The page stays a server component; this is the only client bit. One-tap IDP
- * prefill replaces this once an Instacart API key is configured (see /api/instacart).
+ * Get the list off the screen and onto your phone: on devices with the Web Share API (iPhone/Android)
+ * this opens the share sheet — tap Messages to text it to yourself, or send it anywhere. Falls back to
+ * copy-to-clipboard on desktop. (One-tap Instacart prefill replaces this once a key is configured.)
  */
 export function CopyListButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
+  const [canShare, setCanShare] = useState(false);
 
-  async function onCopy() {
+  // Detect share support after mount (navigator isn't available during SSR → avoids a hydration gap).
+  useEffect(() => {
+    setCanShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
+  }, []);
+
+  async function copyToClipboard() {
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -33,12 +39,26 @@ export function CopyListButton({ text }: { text: string }) {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  async function onClick() {
+    if (canShare) {
+      try {
+        await navigator.share({ title: "My grocery list", text });
+      } catch {
+        // User cancelled the share sheet — do nothing (don't surprise them with a copy).
+      }
+      return;
+    }
+    await copyToClipboard();
+  }
+
   return (
-    <button type="button" onClick={onCopy} className="btn-primary inline-flex items-center gap-1.5">
+    <button type="button" onClick={onClick} className="btn-primary inline-flex items-center gap-1.5">
       {copied ? (
         <>
           <Check className="h-4 w-4" strokeWidth={2} /> Copied
         </>
+      ) : canShare ? (
+        "Send list to phone"
       ) : (
         "Copy list"
       )}

@@ -20,6 +20,8 @@ export interface DigestInput {
   reorderDue: DigestReorder[];
   spentThisWeekCents: number;
   homeCookedThisWeek: number;
+  /** Soonest predicted run-out across ALL tracked items (even ones not due yet) — the "next shop" ETA. */
+  nextRunOutAt?: Date | null;
 }
 
 export interface DigestSummary {
@@ -31,6 +33,8 @@ export interface DigestSummary {
   homeCookedThisWeek: number;
   topExpiring: DigestExpiring[];
   topReorder: DigestReorder[];
+  /** Predictive "next grocery run" ETA — when nothing's due yet, the soonest upcoming run-out. */
+  nextRunOutAt: Date | null;
   isQuiet: boolean;
 }
 
@@ -65,6 +69,7 @@ export function buildDigest(input: DigestInput): DigestSummary {
     homeCookedThisWeek: input.homeCookedThisWeek,
     topExpiring: input.expiring.slice(0, TOP),
     topReorder: input.reorderDue.slice(0, TOP),
+    nextRunOutAt: input.nextRunOutAt ?? null,
     isQuiet,
   };
 }

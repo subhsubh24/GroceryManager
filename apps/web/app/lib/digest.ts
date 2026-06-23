@@ -26,26 +26,27 @@ export async function buildDigestForUser(
     daysLeft: e.daysLeft,
   }));
 
-  const reorderDue = reorder
-    .map((r) => ({
-      r,
-      pred: predictReorder(
-        {
-          baseQtyOnHand: r.baseQtyOnHand,
-          estimatedConsumptionRatePerDay: r.ratePerDay,
-          confidence: r.confidence,
-          dosesPerDay: r.dosesPerDay,
-        },
-        {
-          enabled: r.enabled ?? false,
-          targetParQty: r.targetParQty,
-          reorderPointQty: r.reorderPointQty,
-          leadTimeDays: r.leadTimeDays ?? 2,
-          minIntervalDays: r.minIntervalDays ?? 7,
-        },
-        { asOf: now },
-      ),
-    }))
+  const preds = reorder.map((r) => ({
+    r,
+    pred: predictReorder(
+      {
+        baseQtyOnHand: r.baseQtyOnHand,
+        estimatedConsumptionRatePerDay: r.ratePerDay,
+        confidence: r.confidence,
+        dosesPerDay: r.dosesPerDay,
+      },
+      {
+        enabled: r.enabled ?? false,
+        targetParQty: r.targetParQty,
+        reorderPointQty: r.reorderPointQty,
+        leadTimeDays: r.leadTimeDays ?? 2,
+        minIntervalDays: r.minIntervalDays ?? 7,
+      },
+      { asOf: now },
+    ),
+  }));
+
+  const reorderDue = preds
     .filter((x) => x.pred.shouldReorder)
     .map((x) => ({
       name: x.r.name,
@@ -53,9 +54,18 @@ export async function buildDigestForUser(
       recommendByDate: x.pred.recommendByDate,
     }));
 
+  // Predictive "next grocery run": the soonest FUTURE run-out across everything we track (even items
+  // not due yet) — so even when "all stocked up" we can say roughly when the next shop is coming.
+  const futureRunOuts = preds
+    .map((x) => x.pred.predictedRunOutAt)
+    .filter((d): d is Date => d != null && d.getTime() > now.getTime())
+    .map((d) => d.getTime());
+  const nextRunOutAt = futureRunOuts.length ? new Date(Math.min(...futureRunOuts)) : null;
+
   return buildDigest({
     expiring,
     reorderDue,
+    nextRunOutAt,
     spentThisWeekCents: wrapped.purchases.reduce((s, p) => s + (p.totalCents ?? 0), 0),
     homeCookedThisWeek: wrapped.mealLogs.length,
   });

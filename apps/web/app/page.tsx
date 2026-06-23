@@ -22,6 +22,7 @@ import {
   ChefHat,
   Flame,
   Leaf,
+  Package,
   Recycle,
   ShoppingCart,
   type LucideIcon,
@@ -37,7 +38,16 @@ type FirstRun = FirstRunState & { dismissed: boolean };
  * Live, real-data home model: the cooking streak, the active-list count, the autopilot digest
  * (what's due to reorder — with when-to-buy dates — and what's expiring), and first-run flags.
  */
-type HomeData = { streak: number; listCount: number; digest: DigestSummary; firstRun: FirstRun };
+/** A pantry snapshot for the home: how much is tracked, how much is running low/out, and how many
+ *  items are flagged likely-expired (needing a quick review). */
+type PantryStats = { tracked: number; low: number; expiredReview: number };
+type HomeData = {
+  streak: number;
+  listCount: number;
+  digest: DigestSummary;
+  pantry: PantryStats;
+  firstRun: FirstRun;
+};
 
 const EMPTY_FIRST_RUN: FirstRun = {
   tasteSet: false,
@@ -58,6 +68,7 @@ const EMPTY_HOME_DATA: HomeData = {
   streak: 0,
   listCount: 0,
   digest: EMPTY_DIGEST,
+  pantry: { tracked: 0, low: 0, expiredReview: 0 },
   firstRun: EMPTY_FIRST_RUN,
 };
 
@@ -93,6 +104,11 @@ async function loadHomeData(): Promise<HomeData> {
       // Unchecked items on the active shopping list.
       listCount: list.filter((i) => !i.checked).length,
       digest,
+      pantry: {
+        tracked: pantry.length,
+        low: pantry.filter((p) => p.status === "low" || p.status === "out").length,
+        expiredReview: pantry.filter((p) => p.status === "expired_likely").length,
+      },
       firstRun: {
         tasteSet: signals.some((s) => TASTE_KINDS.some((k) => s.topic.startsWith(k))),
         hasPantry: pantry.length > 0,
@@ -146,7 +162,7 @@ export default async function HomePage() {
   const session = await auth();
   const email = (session?.user as { email?: string } | undefined)?.email ?? null;
   // Only hit the DB for signed-in visitors; the logged-out landing path stays query-free.
-  const { streak, listCount, firstRun, digest } = session
+  const { streak, listCount, firstRun, digest, pantry } = session
     ? await loadHomeData()
     : { ...EMPTY_HOME_DATA, firstRun: null as FirstRun | null };
   // Show the activation checklist only while there's setup left and the user hasn't dismissed it.
@@ -240,6 +256,11 @@ export default async function HomePage() {
               {readiness.state === "clear" ? "You're all stocked up." : runLine}
             </h2>
             <p className="mt-1 text-sm text-white/90">{readiness.reason}</p>
+            {readiness.state === "clear" && digest.nextRunOutAt && (
+              <p className="mt-2 text-sm text-white/80">
+                Next grocery run likely {buyBy(digest.nextRunOutAt)}.
+              </p>
+            )}
             {readiness.state !== "clear" && (
               <a
                 href="/list"
@@ -249,6 +270,29 @@ export default async function HomePage() {
               </a>
             )}
           </section>
+
+          {/* Pantry snapshot — the core log, always one tap away (also where likely-expired items are
+              reviewed). Shows a fill CTA when empty so it's never a dead-end. */}
+          <a href="/pantry" className="card-link mt-6 block">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <span className="tile shrink-0">
+                  <Package className="h-5 w-5" strokeWidth={2} />
+                </span>
+                <div>
+                  <h2 className="section-title">Pantry</h2>
+                  <p className="mt-0.5 text-sm text-ink-500">
+                    {pantry.tracked === 0
+                      ? "Empty — fill it from receipts, a scan, or a quick add."
+                      : `${pantry.tracked} item${pantry.tracked === 1 ? "" : "s"} tracked` +
+                        (pantry.low > 0 ? ` · ${pantry.low} running low` : "") +
+                        (pantry.expiredReview > 0 ? ` · ${pantry.expiredReview} to review` : "")}
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="h-5 w-5 shrink-0 text-ink-300" strokeWidth={2} aria-hidden />
+            </div>
+          </a>
 
           {/* When to buy — upcoming reorders with their recommend-by dates. */}
           {digest.topReorder.length > 0 && (
@@ -303,6 +347,12 @@ export default async function HomePage() {
             </a>
             <a href="/recipes" className="btn-secondary px-5 py-3 text-base">
               Cook tonight
+            </a>
+            <a href="/pantry" className="btn-ghost px-5 py-3 text-base">
+              Pantry
+            </a>
+            <a href="/list" className="btn-ghost px-5 py-3 text-base">
+              Shopping list
             </a>
             <a href="/ask" className="btn-ghost px-5 py-3 text-base">
               Ask your kitchen
