@@ -5,6 +5,7 @@ import {
   getLatestSourcesByCanonical,
   getPantryView,
   getReviewQueue,
+  isOnboarded,
   withTenant,
 } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
@@ -47,14 +48,16 @@ const RESOLVE = [
 async function loadPantry() {
   try {
     const userId = await currentUserId();
-    if (!userId) return { rows: [], review: [], connected: false, error: null as string | null };
-    const { rows, cred, review, sources } = await withTenant(getDb(), userId, async (tx) => {
+    if (!userId)
+      return { rows: [], review: [], connected: false, onboarded: true, error: null as string | null };
+    const { rows, cred, review, sources, onboarded } = await withTenant(getDb(), userId, async (tx) => {
       const rows = await getPantryView(tx, userId);
       return {
         rows,
         cred: await getGoogleCredential(tx, userId),
         review: await getReviewQueue(tx, userId),
         sources: await getLatestSourcesByCanonical(tx, userId, rows.map((r) => r.canonicalItemId)),
+        onboarded: await isOnboarded(tx, userId),
       };
     });
     // Attach a "where it came from" label (Instacart / Whole Foods / Added by you / …) per item.
@@ -63,9 +66,9 @@ async function loadPantry() {
       const s = srcMap.get(r.canonicalItemId);
       return { ...r, source: sourceLabel(s?.source, s?.retailer) };
     });
-    return { rows: enriched, review, connected: Boolean(cred), error: null as string | null };
+    return { rows: enriched, review, connected: Boolean(cred), onboarded, error: null as string | null };
   } catch (e) {
-    return { rows: [], review: [], connected: false, error: e instanceof Error ? e.message : String(e) };
+    return { rows: [], review: [], connected: false, onboarded: true, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
@@ -149,7 +152,7 @@ export default async function PantryPage({
     from?: string;
   }>;
 }) {
-  const { rows, review, connected, error } = await loadPantry();
+  const { rows, review, connected, onboarded, error } = await loadPantry();
   const sp = await searchParams;
   const env = loadEnv();
   const oauthConfigured = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
@@ -197,7 +200,9 @@ export default async function PantryPage({
         }
       />
 
-      {sp.from === "onboarding" && <OnboardingFinish />}
+      {/* Finish-onboarding affordance — only once the pantry actually has something AND the user hasn't
+          finished onboarding yet (robust across the sync/backfill redirects that drop query params). */}
+      {!onboarded && rows.length > 0 && <OnboardingFinish />}
 
       {/* Receipts → pantry: connect Gmail once, then auto-fill from receipt emails. */}
       <section className="card-pad mt-6">

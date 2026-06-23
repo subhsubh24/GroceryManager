@@ -185,6 +185,16 @@ export async function finishOnboardingAction(): Promise<void> {
           qualityPrefs: model.qualityPrefs,
           confidencePerField: model.confidencePerField,
         });
+        // Mark onboarding done so the seeding pages stop showing the "finish setup" affordance —
+        // survives every redirect (no fragile query param). Append-only; the check is existence.
+        await appendPreferenceSignal(tx, {
+          userId,
+          topic: "onboarded",
+          value: "true",
+          polarity: "positive",
+          source: "onboarding_q",
+          confidence: 1,
+        });
       });
     }
   } catch (e) {

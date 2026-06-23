@@ -53,6 +53,16 @@ export async function appendPreferenceSignal(
   });
 }
 
+/** Whether the user has finished onboarding (a persisted "onboarded" signal exists). */
+export async function isOnboarded(db: Querier, userId: string): Promise<boolean> {
+  const rows = await db
+    .select({ id: preferenceSignals.id })
+    .from(preferenceSignals)
+    .where(and(eq(preferenceSignals.userId, userId), eq(preferenceSignals.topic, "onboarded")))
+    .limit(1);
+  return rows.length > 0;
+}
+
 /** Load a user's preference signals (shape feeds projectUserModel). */
 export async function loadPreferenceSignals(db: Querier, userId: string) {
   const rows = await db
