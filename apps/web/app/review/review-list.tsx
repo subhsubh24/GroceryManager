@@ -14,6 +14,14 @@ export type ReviewItem = {
   purchasedAt: Date | string | null;
 };
 
+// The honest "didn't keep it" reasons. All remove the line from review (it shouldn't enter the
+// current pantry); the reason is recorded for learning (expired → waste, not mine → parse fix).
+const REMOVE: { reason: "used" | "expired" | "not_mine"; label: string }[] = [
+  { reason: "used", label: "Used / ate" },
+  { reason: "expired", label: "Expired" },
+  { reason: "not_mine", label: "Not mine" },
+];
+
 /**
  * Multi-select review list — tick the real items and Add/Dismiss them in one go instead of clicking
  * each row. The whole card is a checkbox label (tap anywhere), with a select-all + bulk-action bar.
@@ -21,6 +29,7 @@ export type ReviewItem = {
  */
 export function ReviewList({ items }: { items: ReviewItem[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [busy, setBusy] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
   const sorted = [...items].sort(
@@ -37,12 +46,14 @@ export function ReviewList({ items }: { items: ReviewItem[] }) {
     });
   const toggleAll = () => setSelected(allSelected ? new Set() : new Set(items.map((i) => i.id)));
 
-  function run(action: (ids: string[]) => Promise<void>) {
+  function run(key: string, action: (ids: string[]) => Promise<void>) {
     if (selected.size === 0 || pending) return;
     const chosen = [...selected];
+    setBusy(key);
     start(async () => {
       await action(chosen);
       setSelected(new Set());
+      setBusy(null);
     });
   }
 
@@ -61,24 +72,29 @@ export function ReviewList({ items }: { items: ReviewItem[] }) {
           <input type="checkbox" checked={allSelected} onChange={toggleAll} className="control-accent" />
           {choosing ? `${selected.size} selected` : "Select all"}
         </label>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex flex-wrap items-center gap-2">
           <button
             type="button"
             disabled={selected.size === 0 || pending}
-            onClick={() => run(confirmReviewItems)}
+            onClick={() => run("add", confirmReviewItems)}
             className="btn-primary btn-sm"
           >
-            {pending ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} /> : <Check className="h-4 w-4" strokeWidth={2} />}
+            {busy === "add" ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} /> : <Check className="h-4 w-4" strokeWidth={2} />}
             Add to pantry
           </button>
-          <button
-            type="button"
-            disabled={selected.size === 0 || pending}
-            onClick={() => run(dismissReviewItems)}
-            className="btn-ghost btn-sm"
-          >
-            Not mine / expired
-          </button>
+          <span className="text-xs text-ink-400">or remove —</span>
+          {REMOVE.map((r) => (
+            <button
+              key={r.reason}
+              type="button"
+              disabled={selected.size === 0 || pending}
+              onClick={() => run(r.reason, (ids) => dismissReviewItems(ids, r.reason))}
+              className="btn-ghost btn-sm"
+            >
+              {busy === r.reason && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />}
+              {r.label}
+            </button>
+          ))}
         </div>
       </div>
 
