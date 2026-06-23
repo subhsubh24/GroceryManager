@@ -38,6 +38,38 @@ describe("estimateOnHand", () => {
     expect(r.baseQtyOnHand).toBe(0);
   });
 
+  it("a confirmation re-grounds the spoilage clock (still have it) without faking the purchase date", () => {
+    // Bought spinach day 0 (shelf life 7), then confirmed present on day 18 — on day 21 it's NOT expired
+    // because freshness runs from the later confirmation, even though lastPurchaseAt stays day 0.
+    const r = estimateOnHand({
+      events: [
+        { baseQtyDelta: 200, occurredAt: day(0) },
+        { baseQtyDelta: 0, occurredAt: day(18) }, // "still have it"
+      ],
+      asOf: day(21),
+      ratePerDay: null,
+      perishable: true,
+      shelfLifeDays: 7,
+      lastPurchaseAt: day(0),
+      lastConfirmedAt: day(18),
+    });
+    expect(r.status).toBe("in_stock");
+    expect(r.baseQtyOnHand).toBe(200);
+  });
+
+  it("a STALE confirmation doesn't save an item past shelf life from when it was last confirmed", () => {
+    const r = estimateOnHand({
+      events: [{ baseQtyDelta: 200, occurredAt: day(0) }],
+      asOf: day(21),
+      ratePerDay: null,
+      perishable: true,
+      shelfLifeDays: 7,
+      lastPurchaseAt: day(0),
+      lastConfirmedAt: day(2), // confirmed day 2, but that's still >7 days before day 21
+    });
+    expect(r.status).toBe("expired_likely");
+  });
+
   it("predicts a run-out date from the rate", () => {
     const r = estimateOnHand({ events: purchase, asOf: day(1), ratePerDay: 100 });
     expect(r.estimatedRunOutAt).not.toBeNull();

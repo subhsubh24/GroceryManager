@@ -27,8 +27,14 @@ export interface DepletionInput {
   ratePerDay?: number | null;
   perishable?: boolean;
   shelfLifeDays?: number | null;
-  /** When the current stock was last acquired (for the spoilage ceiling). */
+  /** When the current stock was last acquired — the base of the spoilage ceiling + the "bought" date. */
   lastPurchaseAt?: Date | null;
+  /**
+   * When the user/vision last CONFIRMED the item is present. A confirmation re-grounds freshness, so
+   * the spoilage clock runs from the later of purchase-or-confirmation — "still have it" un-expires an
+   * item without pretending it was just bought. Omit → freshness is measured from the purchase alone.
+   */
+  lastConfirmedAt?: Date | null;
   /** Optional reorder point (base units) used to flag `low`. */
   reorderPointQty?: number | null;
   /** Confidence of the last known event/source (PLAN §6). */
@@ -87,6 +93,7 @@ export function estimateOnHand(input: DepletionInput): DepletionResult {
     perishable = false,
     shelfLifeDays = null,
     lastPurchaseAt = null,
+    lastConfirmedAt = null,
     reorderPointQty = null,
     baseConfidence = 0.85,
     tauDays = 30,
@@ -100,12 +107,17 @@ export function estimateOnHand(input: DepletionInput): DepletionResult {
 
   const days = Math.max(0, (asOf.getTime() - lastEventAt.getTime()) / DAY_MS);
 
-  // Spoilage ceiling: a perishable can't outlive its shelf life regardless of cadence.
+  // Spoilage ceiling: a perishable can't outlive its shelf life regardless of cadence. Measured from
+  // the later of last purchase or last confirmation — confirming "still have it" re-grounds freshness.
+  const freshFrom =
+    lastConfirmedAt && (!lastPurchaseAt || lastConfirmedAt.getTime() > lastPurchaseAt.getTime())
+      ? lastConfirmedAt
+      : lastPurchaseAt;
   const expired =
     perishable &&
     shelfLifeDays != null &&
-    lastPurchaseAt != null &&
-    (asOf.getTime() - lastPurchaseAt.getTime()) / DAY_MS > shelfLifeDays;
+    freshFrom != null &&
+    (asOf.getTime() - freshFrom.getTime()) / DAY_MS > shelfLifeDays;
 
   const inferred = ratePerDay && ratePerDay > 0 ? ratePerDay * days : 0;
   const onHand = expired ? 0 : Math.max(0, onHandAtLast - inferred);

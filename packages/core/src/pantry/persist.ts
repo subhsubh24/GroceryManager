@@ -43,7 +43,11 @@ export async function reprojectStock(
   ratePerDay: number | null,
 ) {
   const events = await db
-    .select({ delta: stockLedger.baseQtyDelta, occurredAt: stockLedger.occurredAt })
+    .select({
+      delta: stockLedger.baseQtyDelta,
+      occurredAt: stockLedger.occurredAt,
+      eventType: stockLedger.eventType,
+    })
     .from(stockLedger)
     .where(and(eq(stockLedger.userId, userId), eq(stockLedger.canonicalItemId, canonicalItemId)));
 
@@ -59,8 +63,18 @@ export async function reprojectStock(
   const item = itemRows[0];
 
   const mapped = events.map((e) => ({ baseQtyDelta: Number(e.delta), occurredAt: e.occurredAt }));
-  const lastPurchaseAt =
-    mapped.length > 0 ? new Date(Math.max(...mapped.map((m) => m.occurredAt.getTime()))) : null;
+
+  // "Bought" = the last time stock was actually ADDED (a positive delta: purchase / manual add / vision
+  // new-item). A zero-delta confirmation must NOT shift this, so the displayed acquisition date stays true.
+  const acquisitions = events.filter((e) => Number(e.delta) > 0).map((e) => e.occurredAt.getTime());
+  const lastPurchaseAt = acquisitions.length > 0 ? new Date(Math.max(...acquisitions)) : null;
+
+  // "Confirmed" = the last explicit "it's here" signal (a vision confirm, or a zero-delta manual
+  // "still have it"). This re-grounds the spoilage clock WITHOUT pretending the item was just bought.
+  const confirmations = events
+    .filter((e) => e.eventType === "vision_confirmed" || Number(e.delta) === 0)
+    .map((e) => e.occurredAt.getTime());
+  const lastConfirmedAt = confirmations.length > 0 ? new Date(Math.max(...confirmations)) : null;
 
   // Learn this item's consumption rate from its own purchase cadence (positive deltas), weighting
   // recent intervals (EWMA), so backfilled history actually depletes toward a realistic "what's left
@@ -78,6 +92,7 @@ export async function reprojectStock(
     perishable: item ? item.perishability !== "shelf_stable" : false,
     shelfLifeDays: item ? (item.fridge ?? item.pantryDays ?? null) : null,
     lastPurchaseAt,
+    lastConfirmedAt,
   });
 
   const rate =
@@ -89,6 +104,7 @@ export async function reprojectStock(
     estimatedRunOutAt: proj.estimatedRunOutAt,
     estimatedConsumptionRatePerDay: rate,
     lastPurchaseAt,
+    lastConfirmedAt,
   };
 
   await db
