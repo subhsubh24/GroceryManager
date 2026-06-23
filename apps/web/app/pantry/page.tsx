@@ -351,7 +351,7 @@ export default async function PantryPage({
               <div className="min-w-0">
                 <div className="font-semibold text-ink-900">{titleCase(r.name)}</div>
                 <div className="mt-0.5 text-xs text-ink-400">
-                  {humanize(r.domain)} · {Math.round(Number(r.baseQtyOnHand))} on hand · {Math.round(r.confidence * 100)}% sure
+                  {humanize(r.domain)} · {Math.round(Number(r.baseQtyOnHand))} on hand{r.lastPurchaseAt ? ` · bought ${timeAgo(r.lastPurchaseAt)}` : ""} · {Math.round(r.confidence * 100)}% sure
                   {r.estimatedRunOutAt ? ` · runs out ~${new Date(r.estimatedRunOutAt).toISOString().slice(0, 10)}` : ""}
                 </div>
               </div>

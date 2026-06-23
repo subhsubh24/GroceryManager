@@ -1247,6 +1247,7 @@ export async function getPantryView(db: Querier, userId: string) {
       baseQtyOnHand: pantryStock.baseQtyOnHand,
       confidence: pantryStock.confidence,
       estimatedRunOutAt: pantryStock.estimatedRunOutAt,
+      lastPurchaseAt: pantryStock.lastPurchaseAt,
     })
     .from(pantryStock)
     .innerJoin(canonicalItems, eq(pantryStock.canonicalItemId, canonicalItems.id))
