@@ -28,6 +28,7 @@ import { refreshGoogleAccessToken } from "../integrations/google/oauth.js";
 import { createGeminiEmbedder, getGeminiClient } from "../llm/index.js";
 import { createDbNormalizationPorts } from "./db-ports.js";
 import { createLlmNormalizer } from "./llm-normalizer.js";
+import { createLlmShelfLifeEstimator } from "../pantry/shelf-life-llm.js";
 import { ingestReceipt } from "./ingest.js";
 import { cleanReceiptText, extractReceipt } from "./receipt-parse.js";
 
@@ -172,6 +173,7 @@ export async function parseReceiptForUser(
   const ports = createDbNormalizationPorts(db, userId, {
     embed: createGeminiEmbedder(geminiClient),
     llm: createLlmNormalizer(geminiClient),
+    shelfLife: createLlmShelfLifeEstimator(geminiClient),
   });
   const result = await ingestReceipt(
     {

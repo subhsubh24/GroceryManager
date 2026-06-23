@@ -153,7 +153,12 @@ const DEFAULT: ShelfLifeEstimate = {
   shelfLifePantryDays: 90,
 };
 
-export function estimateShelfLife(name: string): ShelfLifeEstimate {
+/**
+ * Match the keyword rules; returns null when NOTHING matches (an unknown item). The null is the useful
+ * signal: a known food gets an instant, free estimate, while an unknown one is exactly where the LLM
+ * estimator earns its keep (instead of falling back to the generic 90-day default).
+ */
+export function matchShelfLifeRule(name: string): ShelfLifeEstimate | null {
   const n = ` ${name.toLowerCase()} `;
   for (const rule of RULES) {
     if (rule.keywords.some((k) => n.includes(k))) {
@@ -161,5 +166,9 @@ export function estimateShelfLife(name: string): ShelfLifeEstimate {
       return estimate;
     }
   }
-  return DEFAULT;
+  return null;
+}
+
+export function estimateShelfLife(name: string): ShelfLifeEstimate {
+  return matchShelfLifeRule(name) ?? DEFAULT;
 }

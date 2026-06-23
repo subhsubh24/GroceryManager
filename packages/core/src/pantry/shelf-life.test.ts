@@ -1,5 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { estimateShelfLife } from "./shelf-life.js";
+import { estimateShelfLife, matchShelfLifeRule } from "./shelf-life.js";
+
+describe("matchShelfLifeRule", () => {
+  it("returns an estimate for a KNOWN item (so it never needs the LLM)", () => {
+    expect(matchShelfLifeRule("organic hass avocados")).not.toBeNull();
+    expect(matchShelfLifeRule("whole milk")?.perishability).toBe("perishable");
+  });
+
+  it("returns null for an UNKNOWN item (the signal to ask the LLM instead of defaulting)", () => {
+    expect(matchShelfLifeRule("fresh mozzarella di bufala")).toBeNull();
+    expect(matchShelfLifeRule("zalabia")).toBeNull();
+  });
+
+  it("estimateShelfLife falls back to the generic default for unknowns", () => {
+    expect(estimateShelfLife("zalabia").perishability).toBe("semi_perishable");
+  });
+});
 
 describe("estimateShelfLife", () => {
   it("soft produce → perishable, short fridge life", () => {

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { loadEnv } from "@gm/config/env";
 import { NORMALIZE } from "@gm/config/constants";
-import { getDb, clearPantry, removePantryItem, withTenant } from "@gm/db";
+import { getDb, clearPantry, getRawStockSum, removePantryItem, withTenant } from "@gm/db";
 import {
   backfillGmailForUser,
   createDbNormalizationPorts,
@@ -127,6 +127,52 @@ export async function addPantryItemAction(formData: FormData) {
       confidence: 0.9,
       refType: "manual",
       refId: null,
+      occurredAt: new Date(),
+    });
+  });
+
+  revalidatePath("/pantry");
+}
+
+/**
+ * Resolve a "likely expired" item — the app flags it from the shelf-life ceiling, but it never assumes;
+ * the user confirms what really happened (PLAN §6, "ask before mutate"):
+ *   - "have"   → still here. A zero-delta event at NOW resets the spoilage clock (reproject keys the
+ *                ceiling off the last event time) + refreshes confidence → back to in stock.
+ *   - "used"   → eaten. Append a consume event of -rawSum so on-hand goes to zero.
+ *   - "tossed" → wasted. Same zeroing, but a `spoilage` event so it feeds waste tracking.
+ * RLS-scoped; silent no-op when signed out or the item id is missing.
+ */
+export async function resolveExpiringAction(formData: FormData) {
+  const canonicalItemId = String(formData.get("canonicalItemId") ?? "");
+  const outcome = String(formData.get("outcome") ?? "");
+  if (!canonicalItemId) return;
+  const userId = await currentUserId();
+  if (!userId) return;
+
+  await withTenant(getDb(), userId, async (tx) => {
+    if (outcome === "have") {
+      await appendLedgerAndReproject(tx, {
+        userId,
+        canonicalItemId,
+        baseQtyDelta: 0,
+        eventType: "manual_adjust",
+        confidence: 0.9,
+        refType: "manual",
+        occurredAt: new Date(),
+      });
+      return;
+    }
+    if (outcome !== "used" && outcome !== "tossed") return;
+    const raw = await getRawStockSum(tx, userId, canonicalItemId);
+    if (raw <= 0) return; // already empty — nothing to remove
+    await appendLedgerAndReproject(tx, {
+      userId,
+      canonicalItemId,
+      baseQtyDelta: -raw,
+      eventType: outcome === "tossed" ? "spoilage" : "consume_inferred",
+      confidence: 0.9,
+      refType: "manual",
       occurredAt: new Date(),
     });
   });

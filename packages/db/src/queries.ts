@@ -1278,6 +1278,19 @@ export async function getLatestSourcesByCanonical(
     .orderBy(purchaseLineItems.canonicalItemId, desc(purchases.purchasedAt));
 }
 
+/**
+ * Raw on-hand = the signed sum of ALL ledger deltas for one (user, item). Distinct from the projected
+ * on-hand (which applies the spoilage ceiling and can read 0 while the raw sum is still positive) — use
+ * this when you need to fully zero an item out (append a delta of -rawSum).
+ */
+export async function getRawStockSum(db: Querier, userId: string, canonicalItemId: string): Promise<number> {
+  const rows = await db
+    .select({ sum: sql<string>`coalesce(sum(${stockLedger.baseQtyDelta}), 0)` })
+    .from(stockLedger)
+    .where(and(eq(stockLedger.userId, userId), eq(stockLedger.canonicalItemId, canonicalItemId)));
+  return Number(rows[0]?.sum ?? 0);
+}
+
 export async function getReviewQueue(db: Querier, userId: string) {
   // Dedupe by item GROUP — the same product bought across several receipts (over a long backfill)
   // otherwise shows up many times. Group by canonical id (or the raw text when unmatched) and keep the

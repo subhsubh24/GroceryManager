@@ -2,6 +2,7 @@
 import { loadEnv } from "@gm/config/env";
 import { getDb, withTenant } from "@gm/db";
 import { GeminiClient, createGeminiEmbedder } from "@gm/core/llm";
+import { createLlmShelfLifeEstimator } from "@gm/core/pantry";
 import {
   createDbNormalizationPorts,
   createLlmNormalizer,
@@ -74,6 +75,7 @@ export async function analyzeAndIngestReceipt(
           ports: createDbNormalizationPorts(tx, userId, {
             embed: createGeminiEmbedder(client),
             llm: createLlmNormalizer(client),
+            shelfLife: createLlmShelfLifeEstimator(client),
           }),
           extract: async () => (await extractReceiptImage(client, images)).value,
         },

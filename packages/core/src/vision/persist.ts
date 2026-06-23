@@ -18,6 +18,7 @@ import { createDbNormalizationPorts } from "../ingestion/db-ports.js";
 import { createLlmNormalizer } from "../ingestion/llm-normalizer.js";
 import { normalizeLineItem, type NormalizationResult } from "../ingestion/normalize.js";
 import { appendLedgerAndReproject } from "../pantry/persist.js";
+import { createLlmShelfLifeEstimator } from "../pantry/shelf-life-llm.js";
 import type { ReconciledDetection } from "./reconcile.js";
 import type { ScanLocation } from "./detect.js";
 
@@ -121,7 +122,13 @@ export async function applyVisionScan(
   const ports = createDbNormalizationPorts(
     db,
     userId,
-    aiClient ? { embed: createGeminiEmbedder(aiClient), llm: createLlmNormalizer(aiClient) } : undefined,
+    aiClient
+      ? {
+          embed: createGeminiEmbedder(aiClient),
+          llm: createLlmNormalizer(aiClient),
+          shelfLife: createLlmShelfLifeEstimator(aiClient),
+        }
+      : undefined,
   );
   let added = 0;
   for (const n of input.newItems) {

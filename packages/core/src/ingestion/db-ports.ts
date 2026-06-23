@@ -6,7 +6,7 @@
 import { and, eq, sql } from "drizzle-orm";
 import type { Querier } from "@gm/db";
 import { canonicalItems, ingredientMatchOverrides, products, unitsOfMeasure } from "@gm/db";
-import { estimateShelfLife } from "../pantry/shelf-life.js";
+import { estimateShelfLife, matchShelfLifeRule, type ShelfLifeEstimate } from "../pantry/shelf-life.js";
 import type { CanonicalCandidate, NormalizationPorts } from "./normalize.js";
 
 export interface DbPortsDeps {
@@ -17,6 +17,11 @@ export interface DbPortsDeps {
     name: string,
     candidates: CanonicalCandidate[],
   ) => Promise<{ canonicalItemId: string | null; createName: string | null; confidence: number }>;
+  /**
+   * LLM shelf-life estimator for UNKNOWN items (the keyword heuristic handles known foods for free).
+   * Omit to always use the heuristic. Best-effort: it falls back to the heuristic internally.
+   */
+  shelfLife?: (name: string) => Promise<ShelfLifeEstimate>;
 }
 
 type Row = { id: string; name: string; score: number };
@@ -97,8 +102,11 @@ export function createDbNormalizationPorts(
       if (!baseUnitId) throw new Error("seed missing base unit 'each'");
       // Seed perishability + shelf life (+ the right domain) so the depletion engine's spoilage
       // ceiling works for never-seen items — otherwise a months-old backfilled perishable reads
-      // "in stock" forever. Heuristic from the name; cached on the row (refine with an LLM later).
-      const sl = estimateShelfLife(name);
+      // "in stock" forever. Known foods → instant keyword heuristic (free). UNKNOWN foods → the LLM
+      // estimator when provided (real food knowledge, so a fresh item doesn't default to 90 days),
+      // else the generic default. Cached once on the row.
+      const known = matchShelfLifeRule(name);
+      const sl = known ?? (deps.shelfLife ? await deps.shelfLife(name) : estimateShelfLife(name));
       const rows = await db
         .insert(canonicalItems)
         .values({

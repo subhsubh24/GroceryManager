@@ -14,6 +14,7 @@ import {
   backfillGmailAction,
   connectGmailAction,
   removePantryItemAction,
+  resolveExpiringAction,
   syncGmailAction,
 } from "./actions";
 import { ReviewList } from "../review/review-list";
@@ -35,6 +36,13 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 };
 
 const plural = (n: number) => (n === 1 ? "" : "s");
+
+// "Likely expired" resolve choices — we flag, the user confirms (never auto-assume).
+const RESOLVE = [
+  { outcome: "have", label: "Still have it" },
+  { outcome: "used", label: "Used it" },
+  { outcome: "tossed", label: "Tossed it" },
+] as const;
 
 async function loadPantry() {
   try {
@@ -342,6 +350,21 @@ export default async function PantryPage({
                   {r.source ?? humanize(r.domain)} · {Math.round(Number(r.baseQtyOnHand))} on hand{r.lastPurchaseAt ? ` · bought ${timeAgo(r.lastPurchaseAt)}` : ""} · {Math.round(r.confidence * 100)}% sure
                   {r.estimatedRunOutAt ? ` · runs out ~${new Date(r.estimatedRunOutAt).toISOString().slice(0, 10)}` : ""}
                 </div>
+                {/* Likely expired from its age — confirm what actually happened (we never assume). */}
+                {r.status === "expired_likely" && (
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs text-ink-400">Still good?</span>
+                    {RESOLVE.map((o) => (
+                      <form key={o.outcome} action={resolveExpiringAction}>
+                        <input type="hidden" name="canonicalItemId" value={r.canonicalItemId} />
+                        <input type="hidden" name="outcome" value={o.outcome} />
+                        <button type="submit" className="btn-ghost btn-sm">
+                          {o.label}
+                        </button>
+                      </form>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-3">
                 <span className={s.cls}>{s.label}</span>
