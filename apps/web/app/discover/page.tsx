@@ -75,7 +75,8 @@ async function loadDeck() {
     const ranked = rankRecipes(annotated, {
       limit: 24,
       prefs: {
-        allergens: [...model.allergens, ...exclusions],
+        allergens: model.allergens,
+        dietKeywords: exclusions,
         dislikes: model.dislikes,
         loves: model.loves,
         cuisineAffinity: model.cuisineAffinity,

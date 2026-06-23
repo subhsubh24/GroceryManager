@@ -4,6 +4,30 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-23 — fix(recipe): plant-based compounds wrongly excluded for vegan/dairy-free users
+
+**What:** `rankRecipes` hard-excludes recipes whose ingredients match diet-derived keywords
+(e.g. `"butter"` from `dietExclusions(["vegan"])`). The token-subset matcher
+(`{"butter"} ⊆ {"peanut","butter"}`) caused `"peanut butter"` to trigger the butter exclusion,
+silently filtering vegan-safe recipes (peanut butter cookies, Thai peanut sauce, etc.) for vegan
+and dairy-free users. Same issue for `"almond milk"`, `"oat milk"`, `"soy milk"` with the `"milk"`
+keyword. Affected any recipe with a qualifying prefix: `"2 tablespoons peanut butter"` triggered
+the same false positive.
+
+**Fix:** Added `dietKeywords` field to `RankPrefs` (separate from true `allergens`). Diet keywords
+use the same token-subset matching but skip ingredients that match a `PLANT_BASED_COMPOUND_TOKENS`
+allowlist (nut/seed butters, plant milks, plant creams) — checked via token-subset so
+quantity-qualified strings are also exempt. True allergens retain original behavior: peanut allergy
+still hard-excludes peanut butter. Updated all 4 `rankRecipes` callers to route diet exclusions
+through `dietKeywords`. Added 5 regression tests.
+
+**Tests added:** 5 in `match.test.ts` (plant-based compound exempt from diet filter; quantity-
+qualified form also exempt; true allergen still excludes; plain butter still excluded).
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/15
+
+---
+
 ## 2026-06-23 — fix(shelf-life): "pad " keyword false-positives on pad thai products
 
 **What:** `"pad "` (trailing space, no leading space) in the `personal_care` shelf-life rule matched

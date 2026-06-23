@@ -94,7 +94,8 @@ async function load(lowEnergy: boolean) {
       limit: 8,
       lowEnergy,
       prefs: {
-        allergens: [...model.allergens, ...dietExclusions(model.diets)],
+        allergens: model.allergens,
+        dietKeywords: dietExclusions(model.diets),
         dislikes: model.dislikes,
         loves: model.loves,
         cuisineAffinity: model.cuisineAffinity,
