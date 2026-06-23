@@ -6,6 +6,33 @@
  * days) effort/cleanup fit (§7.4). The provider adapter feeds raw recipes in.
  */
 
+// Plant-based ingredient token sets: compounds that share a word with a dairy/animal allergen keyword
+// but are categorically different (e.g. "peanut butter" has "butter" but contains no dairy).
+// Token-subset matched: any entry whose tokens are a subset of the ingredient's tokens triggers
+// the exemption. This handles qualifiers in real recipe strings ("2 tbsp peanut butter" → still exempt).
+const PLANT_BASED_COMPOUND_TOKENS: string[][] = [
+  // Nut & seed butters
+  ["peanut", "butter"], ["almond", "butter"], ["cashew", "butter"], ["sunflower", "butter"],
+  ["sunflower", "seed", "butter"], ["hazelnut", "butter"], ["walnut", "butter"],
+  ["pecan", "butter"], ["macadamia", "butter"], ["coconut", "butter"],
+  ["nut", "butter"], ["seed", "butter"],
+  // Fruit "butters" (no dairy)
+  ["apple", "butter"], ["pumpkin", "butter"],
+  // Cocoa-derived (no dairy)
+  ["cocoa", "butter"],
+  // Plant milks
+  ["almond", "milk"], ["oat", "milk"], ["soy", "milk"], ["coconut", "milk"], ["rice", "milk"],
+  ["cashew", "milk"], ["hemp", "milk"], ["flax", "milk"], ["hazelnut", "milk"], ["pea", "milk"],
+  // Plant creams
+  ["oat", "cream"], ["coconut", "cream"], ["cashew", "cream"], ["soy", "cream"],
+].map((compound) => compound.map(singular));
+
+/** Returns true when the ingredient's tokens include a known plant-based compound (e.g. "peanut butter"). */
+function isPlantBasedCompound(ingredientName: string): boolean {
+  const it = new Set(tokens(ingredientName));
+  return PLANT_BASED_COMPOUND_TOKENS.some((cand) => cand.every((t) => it.has(t)));
+}
+
 const STOPWORDS = new Set([
   "fresh", "chopped", "minced", "diced", "sliced", "large", "small", "medium", "organic",
   "ground", "grated", "to", "taste", "of", "a", "an", "the", "and", "or", "with",
@@ -135,7 +162,13 @@ const DEFAULT_WEIGHTS: Weights = {
 
 /** Personalization inputs from the projected UserModel (§8.7). */
 export interface RankPrefs {
-  allergens?: string[]; // hard-exclude recipes that contain any of these
+  allergens?: string[]; // true allergens: hard-exclude using subset token matching
+  /**
+   * Diet-derived ingredient keywords (from dietExclusions). Matched with the same token-subset
+   * logic as allergens, but plant-based compounds (e.g. "peanut butter", "almond milk") are
+   * exempted so they never wrongly suppress vegan/dairy-free results.
+   */
+  dietKeywords?: string[];
   dislikes?: string[]; // ingredient names / "cuisine:x" keys to penalize
   loves?: string[]; // ingredient names / "cuisine:x" keys to boost
   cuisineAffinity?: Record<string, number>; // cuisine (lowercase) -> -1..1
@@ -158,13 +191,18 @@ export function rankRecipes(recipes: MatchRecipe[], opts: RankOpts = {}): Ranked
   const w: Weights = { ...DEFAULT_WEIGHTS, ...opts.weights };
   const p = opts.prefs;
   const allergenIdx = p?.allergens?.length ? buildPantryIndex(p.allergens.map((a) => ({ name: a }))) : null;
+  const dietIdx = p?.dietKeywords?.length ? buildPantryIndex(p.dietKeywords.map((k) => ({ name: k }))) : null;
   const loveNames = stripCuisineKeys(p?.loves);
   const dislikeNames = stripCuisineKeys(p?.dislikes);
   const loveIdx = loveNames.length ? buildPantryIndex(loveNames.map((n) => ({ name: n }))) : null;
   const dislikeIdx = dislikeNames.length ? buildPantryIndex(dislikeNames.map((n) => ({ name: n }))) : null;
 
   const ranked = recipes
-    .filter((r) => !(allergenIdx && r.ingredients.some((i) => allergenIdx.has(i.name))))
+    .filter((r) => {
+      if (allergenIdx && r.ingredients.some((i) => allergenIdx.has(i.name))) return false;
+      if (dietIdx && r.ingredients.some((i) => !isPlantBasedCompound(i.name) && dietIdx.has(i.name))) return false;
+      return true;
+    })
     .map((r) => {
       const core = r.ingredients.filter((i) => !i.isOptional);
       const have = core.filter((i) => i.inPantry);

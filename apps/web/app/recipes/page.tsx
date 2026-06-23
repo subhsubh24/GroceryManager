@@ -82,7 +82,8 @@ async function loadRecipes(mood: Mood, guest: string | null) {
       lowEnergy: mood === "easy",
       batchCook: mood === "batch",
       prefs: {
-        allergens: [...model.allergens, ...exclusions],
+        allergens: model.allergens,
+        dietKeywords: exclusions,
         dislikes: model.dislikes,
         loves: model.loves,
         cuisineAffinity: model.cuisineAffinity,

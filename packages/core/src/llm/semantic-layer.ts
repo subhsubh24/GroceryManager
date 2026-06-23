@@ -144,7 +144,8 @@ async function loadRankedRecipes(
     limit: opts.limit,
     lowEnergy: opts.lowEnergy,
     prefs: {
-      allergens: [...model.allergens, ...dietExclusions(model.diets)],
+      allergens: model.allergens,
+      dietKeywords: dietExclusions(model.diets),
       dislikes: model.dislikes,
       loves: model.loves,
       cuisineAffinity: model.cuisineAffinity,
