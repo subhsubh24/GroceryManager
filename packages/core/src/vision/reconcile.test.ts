@@ -138,6 +138,29 @@ describe("reconcileScan", () => {
     expect(r.newItems).toHaveLength(1);
   });
 
+  it("a semantic candidate (softMatchId) is asked about, not auto-confirmed — 'pop' → 'soda'", () => {
+    const r = reconcileScan([det("pop", { softMatchId: "c-soda" })], [item("c-soda", "Soda")]);
+    expect(r.confirmations).toHaveLength(0);
+    expect(r.newItems).toHaveLength(0);
+    expect(r.possibleMatches).toHaveLength(1);
+    expect(r.possibleMatches[0]!.candidateId).toBe("c-soda");
+    expect(r.possibleMatches[0]!.candidateName).toBe("Soda");
+    // pending a decision → not also flagged "didn't see it"
+    expect(r.unconfirmed).toHaveLength(0);
+  });
+
+  it("an explicit in-pantry canonicalItemId still auto-confirms (deterministic match)", () => {
+    const r = reconcileScan([det("fizzy drink", { canonicalItemId: "c-soda" })], [item("c-soda", "Soda")]);
+    expect(r.confirmations).toHaveLength(1);
+    expect(r.possibleMatches).toHaveLength(0);
+  });
+
+  it("a softMatchId that isn't in the pantry doesn't invent a possible match", () => {
+    const r = reconcileScan([det("pop", { softMatchId: "c-ghost" })], [item("c-milk", "Milk")]);
+    expect(r.possibleMatches).toHaveLength(0);
+    expect(r.newItems).toHaveLength(1);
+  });
+
   it("respects the unseen floor so confidence can't collapse", () => {
     const r = reconcileScan([], [item("c-x", "X", { confidence: 0.31 })], {
       unseenDecay: 0.85,

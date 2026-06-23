@@ -11,8 +11,12 @@
 
 export interface ScanDetectionInput {
   rawLabel: string;
-  /** Set when the detector/normalizer already resolved a catalog item. */
+  /** Set when the detector/normalizer already resolved a catalog item with confidence (override / UPC
+   *  / trigram, or a non-pantry catalog id) — treated as a definite match. */
   canonicalItemId?: string | null;
+  /** A SEMANTIC candidate (embedding/LLM cross-wording match — "pop" → your "soda"). Surfaced as a
+   *  "possible match" to ask about rather than auto-confirmed, since semantic matches are less sure. */
+  softMatchId?: string | null;
   presenceConfidence: number; // 0..1
   qtyEstimate?: number | null;
   qtyConfidence?: number | null;
@@ -174,6 +178,13 @@ export function reconcileScan(
       if (matched) partial = null; // a containment match always beats a partial one
     }
 
+    // A semantic candidate from the cascade (cross-wording, e.g. "pop" → tracked "soda") — ask about
+    // it, don't auto-confirm. Only when there's no confident (explicit/containment) match, and it
+    // outranks a weak single-shared-token partial.
+    const soft =
+      !matched && d.softMatchId && byId.has(d.softMatchId) ? byId.get(d.softMatchId)! : null;
+    const candidate = soft ?? partial;
+
     if (matched) {
       const newConfidence = clamp01(Math.max(matched.confidence, 0.6) + o.confirmBoost * d.presenceConfidence);
       const prev = confirmedById.get(matched.canonicalItemId);
@@ -188,14 +199,14 @@ export function reconcileScan(
           newConfidence,
         });
       }
-    } else if (partial) {
+    } else if (candidate) {
       const key = labelKey(d.rawLabel);
       const prev = possibleByKey.get(key);
       if (!prev || d.presenceConfidence > prev.presenceConfidence) {
         possibleByKey.set(key, {
           rawLabel: d.rawLabel,
-          candidateId: partial.canonicalItemId,
-          candidateName: partial.name,
+          candidateId: candidate.canonicalItemId,
+          candidateName: candidate.name,
           presenceConfidence: d.presenceConfidence,
           qtyEstimate: d.qtyEstimate ?? null,
         });

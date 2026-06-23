@@ -5,7 +5,9 @@ import {
   applyVisionScan,
   DEFAULT_SCAN_TIER,
   detectPantryItems,
+  isSemanticMethod,
   reconcileScan,
+  resolveScanLabels,
   scanModelFor,
   type PossibleMatch,
   type ReconciledDetection,
@@ -52,14 +54,30 @@ export async function analyzeScan(_prev: AnalyzeState, formData: FormData): Prom
     const userId = await currentUserId();
     if (!userId) return { status: "error", message: "No user context." };
     const pantry = await withTenant(getDb(), userId, (tx) => getPantryView(tx, userId));
+    const pantryIds = new Set(pantry.map((p) => p.canonicalItemId));
+
+    // Semantic pre-resolution: map each detected label → an existing canonical via the cascade, so a
+    // cross-wording match ("pop" → tracked "soda") is caught even with no shared word. A confident
+    // (deterministic) hit becomes a definite match; a SEMANTIC (embedding/LLM) hit to a pantry item
+    // becomes a softMatch → reconcile asks "is this your X?" rather than auto-confirming.
+    const resolved = await resolveScanLabels(userId, detections.map((d) => d.label));
 
     const result = reconcileScan(
-      detections.map((d) => ({
-        rawLabel: d.label,
-        presenceConfidence: d.presenceConfidence,
-        qtyEstimate: d.qtyEstimate,
-        qtyConfidence: d.qtyConfidence,
-      })),
+      detections.map((d) => {
+        const r = resolved.get(d.label);
+        const id = r?.canonicalItemId ?? null;
+        const semanticInPantry = id != null && pantryIds.has(id) && isSemanticMethod(r!.method);
+        return {
+          rawLabel: d.label,
+          presenceConfidence: d.presenceConfidence,
+          qtyEstimate: d.qtyEstimate,
+          qtyConfidence: d.qtyConfidence,
+          // Definite match (deterministic in-pantry, or a non-pantry catalog id to reuse) vs. a
+          // semantic in-pantry candidate to ask about.
+          canonicalItemId: semanticInPantry ? null : id,
+          softMatchId: semanticInPantry ? id : null,
+        };
+      }),
       pantry.map((p) => ({
         canonicalItemId: p.canonicalItemId,
         name: p.name,
