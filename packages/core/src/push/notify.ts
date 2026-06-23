@@ -19,3 +19,18 @@ export function buildDigestNotification(digest: DigestSummary): PushNotification
   if (digest.isQuiet) return null;
   return { title: digest.headline, body: digest.subline, url: "/digest" };
 }
+
+const cap = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
+
+/**
+ * Map a weekly digest → an SMS body, or null on a quiet week (same don't-nag discipline as push).
+ * Includes the headline, the top reorder items (so you can shop straight from the text), and a link
+ * to the list when an absolute app URL is configured.
+ */
+export function buildDigestSms(digest: DigestSummary, appUrl?: string | null): string | null {
+  if (digest.isQuiet) return null;
+  const items = digest.topReorder.slice(0, 6).map((r) => cap(r.name));
+  const need = items.length ? ` Need: ${items.join(", ")}.` : "";
+  const link = appUrl ? ` ${appUrl.replace(/\/+$/, "")}/list` : "";
+  return `GroceryManager — ${digest.headline}${need}${link}`.trim();
+}

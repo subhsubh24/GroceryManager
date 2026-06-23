@@ -47,6 +47,14 @@ const EnvSchema = z.object({
   VAPID_PRIVATE_KEY: z.string().optional(),
   VAPID_SUBJECT: z.string().default("mailto:admin@example.com"),
 
+  // SMS (Twilio) — the opt-in text channel for the proactive digest. All optional: with no keys the
+  // SMS sender no-ops (web push still works). Sign up + buy a number at twilio.com.
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_FROM_NUMBER: z.string().optional(), // the Twilio "from" number, e.g. +15550001234
+  // Absolute base URL for links in SMS (push uses relative paths; texts need the full URL).
+  APP_URL: z.string().url().optional(),
+
   // Integrations
   INSTACART_API_KEY: z.string().optional(),
   SPOONACULAR_API_KEY: z.string().optional(),

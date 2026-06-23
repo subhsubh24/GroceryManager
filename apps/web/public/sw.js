@@ -74,8 +74,8 @@ self.addEventListener("push", (event) => {
   const options = {
     body: data.body || "",
     data: { url: data.url || "/" },
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-192.png",
+    icon: "/icons/icon.svg",
+    badge: "/icons/icon.svg",
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });

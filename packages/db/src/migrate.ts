@@ -48,6 +48,9 @@ async function main() {
     console.log("→ performance indexes (hot per-user read paths)…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0008_perf_indexes.sql"), "utf8"));
 
+    console.log("→ SMS digest channel (users.phone)…");
+    await sql.unsafe(readFileSync(join(pkgRoot, "sql/0009_notifications.sql"), "utf8"));
+
     console.log("✓ migrations complete");
   } finally {
     await sql.end();

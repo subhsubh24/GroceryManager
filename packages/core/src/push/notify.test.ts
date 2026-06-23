@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDigestNotification } from "./notify.js";
+import { buildDigestNotification, buildDigestSms } from "./notify.js";
 import type { DigestSummary } from "../digest/build.js";
 
 const base: DigestSummary = {
@@ -10,7 +10,11 @@ const base: DigestSummary = {
   spentThisWeekCents: 4200,
   homeCookedThisWeek: 3,
   topExpiring: [],
-  topReorder: [],
+  topReorder: [
+    { name: "whole milk", recommendQty: 1, recommendByDate: null },
+    { name: "eggs", recommendQty: 1, recommendByDate: null },
+  ],
+  nextRunOutAt: null,
   isQuiet: false,
 };
 
@@ -25,5 +29,22 @@ describe("buildDigestNotification", () => {
 
   it("returns null on a quiet week (don't nag)", () => {
     expect(buildDigestNotification({ ...base, isQuiet: true })).toBeNull();
+  });
+});
+
+describe("buildDigestSms", () => {
+  it("includes the headline, the items to get, and a list link when an app URL is set", () => {
+    const sms = buildDigestSms(base, "https://app.example.com/");
+    expect(sms).toContain("2 to reorder · 1 expiring soon.");
+    expect(sms).toContain("Need: Whole Milk, Eggs.");
+    expect(sms).toContain("https://app.example.com/list"); // trailing slash collapsed
+  });
+
+  it("omits the link when no app URL is configured", () => {
+    expect(buildDigestSms(base)).not.toContain("http");
+  });
+
+  it("returns null on a quiet week", () => {
+    expect(buildDigestSms({ ...base, isQuiet: true })).toBeNull();
   });
 });

@@ -1,10 +1,13 @@
 import { redirect } from "next/navigation";
+import { loadEnv } from "@gm/config/env";
 import {
   appendPreferenceSignal,
   getAdminDb,
   getDb,
+  getUserPhone,
   loadPreferenceSignals,
   updateUserName,
+  updateUserPhone,
   withTenant,
 } from "@gm/db";
 import {
@@ -15,6 +18,7 @@ import {
 } from "@gm/core/personalization";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
+import { PushToggle } from "@/app/digest/push-toggle";
 import { User } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +37,7 @@ async function saveProfile(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const ageRaw = String(formData.get("age") ?? "").trim();
   const gender = String(formData.get("gender") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
   const age = Number(ageRaw);
 
   const signals = [
@@ -55,6 +60,8 @@ async function saveProfile(formData: FormData) {
   });
   // Keep the users row's display name in sync (admin scope — name also lives on the user row).
   await updateUserName(getAdminDb(), userId, name || null);
+  // Phone for SMS digests — presence opts in, blank opts out.
+  await updateUserPhone(getAdminDb(), userId, phone || null);
 
   redirect("/profile?saved=1");
 }
@@ -62,11 +69,12 @@ async function saveProfile(formData: FormData) {
 async function load() {
   try {
     const userId = await currentUserId();
-    if (!userId) return { ready: false as const, error: null as string | null };
+    if (!userId) return { ready: false as const, error: null as string | null, phone: null as string | null };
     const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
-    return { ready: true as const, error: null as string | null, model: projectUserModel(signals) };
+    const phone = await getUserPhone(getAdminDb(), userId);
+    return { ready: true as const, error: null as string | null, model: projectUserModel(signals), phone };
   } catch (e) {
-    return { ready: false as const, error: e instanceof Error ? e.message : String(e) };
+    return { ready: false as const, error: e instanceof Error ? e.message : String(e), phone: null as string | null };
   }
 }
 
@@ -78,6 +86,8 @@ export default async function ProfilePage({
   const { saved } = await searchParams;
   const data = await load();
   const model = data.ready ? data.model : null;
+  const phone = data.ready ? data.phone : null;
+  const vapidPublicKey = loadEnv().VAPID_PUBLIC_KEY ?? null;
 
   return (
     <main className="page-narrow">
@@ -131,10 +141,30 @@ export default async function ProfilePage({
             </select>
           </label>
         </div>
+        <label className="block">
+          <span className="field-label">Phone — for order texts (optional)</span>
+          <input
+            name="phone"
+            type="tel"
+            defaultValue={phone ?? ""}
+            placeholder="+1 555 000 1234"
+            autoComplete="tel"
+            className="input"
+          />
+          <span className="field-hint">
+            Get a text when it&apos;s time to order — with your list. Leave blank to opt out. (Needs SMS
+            configured on the server.)
+          </span>
+        </label>
         <button type="submit" className="btn-primary">
           Save profile
         </button>
       </form>
+
+      {/* Web push — the default proactive channel (the same weekly digest, as a notification). */}
+      <div className="mt-6">
+        <PushToggle vapidPublicKey={vapidPublicKey} />
+      </div>
 
       {!data.ready && (
         <p className="notice-warn mt-4">

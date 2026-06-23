@@ -129,6 +129,9 @@ export const users = pgTable("users", {
   email: text("email").unique(),
   name: text("name"),
   image: text("image"),
+  // Optional phone for SMS digests (the opt-in text channel). Presence = opted in; clearing it opts
+  // out. Added in sql/0009_notifications.sql.
+  phone: text("phone"),
   // Credentials login (email + password). Null for Google-only / unset accounts. scrypt: salt:hex.
   passwordHash: text("password_hash"),
   // Membership pointer into `households` (opt-in shared shopping list, FEATURE_HOUSEHOLDS, default OFF).

@@ -3,7 +3,7 @@
  * thin (no direct Drizzle import). Per-user; userId optional until Auth is wired.
  */
 import { randomBytes } from "node:crypto";
-import { and, desc, eq, gte, inArray, isNull, like, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull, isNull, like, or, sql } from "drizzle-orm";
 import type { Querier } from "./client.js";
 import {
   canonicalItems,
@@ -648,6 +648,23 @@ export async function createUserWithPassword(
 /** Update a user's display name (profile edit). Admin scope so it works alongside provisioning. */
 export async function updateUserName(db: Querier, userId: string, name: string | null) {
   await db.update(users).set({ name, updatedAt: new Date() }).where(eq(users.id, userId));
+}
+
+/** The user's SMS phone (or null). */
+export async function getUserPhone(db: Querier, userId: string): Promise<string | null> {
+  const rows = await db.select({ phone: users.phone }).from(users).where(eq(users.id, userId)).limit(1);
+  return rows[0]?.phone ?? null;
+}
+
+/** Set/clear the SMS phone (clearing opts out of texts). */
+export async function updateUserPhone(db: Querier, userId: string, phone: string | null) {
+  await db.update(users).set({ phone, updatedAt: new Date() }).where(eq(users.id, userId));
+}
+
+/** All user ids with a phone on file — the SMS recipients for the digest cron (admin scope). */
+export async function listUserIdsWithPhone(db: Querier): Promise<string[]> {
+  const rows = await db.select({ id: users.id }).from(users).where(isNotNull(users.phone));
+  return rows.map((r) => r.id);
 }
 
 // ---- One-time shelf-life backfill (PLAN §6): classify items ingestion created before shelf-life ----
