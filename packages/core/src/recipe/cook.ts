@@ -10,15 +10,19 @@
  */
 
 const UNICODE_FRAC: Record<string, number> = {
-  "½": 0.5,
+  "⅛": 0.125,
   "¼": 0.25,
-  "¾": 0.75,
   "⅓": 1 / 3,
+  "⅜": 0.375,
+  "½": 0.5,
+  "⅝": 0.625,
   "⅔": 2 / 3,
+  "¾": 0.75,
+  "⅞": 0.875,
 };
 
-/** A single quantity token: "1 1/2", "1½", "1/2", "1.5", "200", "½" (most-specific first). */
-const NUM = "(?:\\d+\\s+\\d/\\d|\\d+\\s*[½¼¾⅓⅔]|\\d/\\d|\\d+(?:[.,]\\d+)?|[½¼¾⅓⅔])";
+/** A single quantity token: "1 1/2", "1½", "1⅛", "1/2", "1.5", "200", "½", "⅛" (most-specific first). */
+const NUM = "(?:\\d+\\s+\\d/\\d|\\d+\\s*[½¼¾⅓⅔⅛⅜⅝⅞]|\\d/\\d|\\d+(?:[.,]\\d+)?|[½¼¾⅓⅔⅛⅜⅝⅞])";
 
 function parseQtyToken(raw: string): number | null {
   const tok = raw.trim();
@@ -26,7 +30,7 @@ function parseQtyToken(raw: string): number | null {
   if (mixed) return Number(mixed[1]) + Number(mixed[2]) / Number(mixed[3]);
   const frac = tok.match(/^(\d)\/(\d)$/); // "1/2"
   if (frac) return Number(frac[1]) / Number(frac[2]);
-  const uni = tok.match(/^(\d+)\s*([½¼¾⅓⅔])$/); // "1½"
+  const uni = tok.match(/^(\d+)\s*([½¼¾⅓⅔⅛⅜⅝⅞])$/); // "1½", "1⅛"
   if (uni) return Number(uni[1]) + (UNICODE_FRAC[uni[2]!] ?? 0);
   if (UNICODE_FRAC[tok] != null) return UNICODE_FRAC[tok]; // "½"
   const n = Number(tok.replace(",", ".")); // "1.5" / "200"
@@ -40,11 +44,15 @@ function formatQty(n: number): string {
   const whole = Math.floor(rounded);
   const frac = rounded - whole;
   const common: [number, string][] = [
+    [0.125, "⅛"],
     [0.25, "¼"],
     [1 / 3, "⅓"],
+    [0.375, "⅜"],
     [0.5, "½"],
+    [0.625, "⅝"],
     [2 / 3, "⅔"],
     [0.75, "¾"],
+    [0.875, "⅞"],
   ];
   for (const [v, g] of common) {
     if (Math.abs(frac - v) < 0.02) return whole ? `${whole}${g}` : g;

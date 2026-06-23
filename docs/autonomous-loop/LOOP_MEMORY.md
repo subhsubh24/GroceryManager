@@ -14,6 +14,10 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   missing-export grep). `next build` needs `NODE_ENV=production` + a dummy `DATABASE_URL`.
 - **Default branch is `main`** (protected, requires the `verify` check). Branch
   feature work off it; PRs auto-merge once `verify` is green + both reviewers approve.
+- **2026-06-23 — Check sister modules for consistency before declaring a bug fixed.** The unicode
+  fraction bug in `cook.ts` only showed up because `consume.ts` already had the correct wider set.
+  When a module handles something correctly, grep for analogous code in related modules that might
+  have drifted — `parseMeasure` vs `scaleMeasure`/`parseQtyToken` was the canonical example.
 - **2026-06-23 — Branch lineages reconciled.** There used to be two diverged lineages
   (`main` and an old `claude/busy-turing-XkEQX`); they were reconciled by promoting the canonical
   content to `main` and deleting the stray branch. There is now ONE lineage: `main`. Always read
