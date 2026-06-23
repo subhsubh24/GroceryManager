@@ -22,7 +22,7 @@ consumption path falls through to `usedUnmeasured` (no precise pantry deduction)
 the macro estimator routes to the LLM fallback instead of FDC — both degrade silently
 over time and erode pantry accuracy.
 
-**PR:** (pending push)
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/13
 
 **Gate:** typecheck ✓ · 435 core tests ✓ · next build ✓ · no missing-export warnings ✓
 
