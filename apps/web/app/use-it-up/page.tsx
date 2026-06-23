@@ -5,6 +5,7 @@ import { currentUserId } from "@/app/lib/tenant";
 import { titleCase } from "@/app/lib/format";
 import { PageHeader } from "@/app/components/page-header";
 import { ChefHat, Recycle, Sprout } from "@/app/components/icons";
+import { CookedItButton } from "@/app/components/cooked-it-button";
 import {
   annotateRecipe,
   buildPantryIndex,
@@ -211,9 +212,12 @@ export default async function UseItUpPage() {
                       {r.missing.length > 0 && (
                         <div className="mt-1 text-xs text-ink-400">missing: {r.missing.join(", ")}</div>
                       )}
-                      <a href={`/cook/${r.id}`} className="mt-2 inline-block text-xs font-medium text-brand-700">
-                        Cook mode →
-                      </a>
+                      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                        <a href={`/cook/${r.id}`} className="btn-secondary btn-sm">
+                          Cook →
+                        </a>
+                        <CookedItButton recipeId={r.id} />
+                      </div>
                     </div>
                   </li>
                 ))}

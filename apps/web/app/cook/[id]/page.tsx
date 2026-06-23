@@ -156,7 +156,7 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
             <SwapFinder action={askSwap} />
           </section>
 
-          <form action={logThisCook} className="card-pad mt-6">
+          <form action={logThisCook} id="log-cook" className="card-pad mt-6 scroll-mt-6">
             <input type="hidden" name="id" value={id} />
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex min-w-0 items-start gap-3">

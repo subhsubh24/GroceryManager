@@ -15,6 +15,7 @@ import { currentUserId } from "@/app/lib/tenant";
 import { addNamesToListAction } from "@/app/lib/list-actions";
 import { PageHeader } from "@/app/components/page-header";
 import { ChefHat, Shuffle } from "@/app/components/icons";
+import { CookedItButton } from "@/app/components/cooked-it-button";
 import { SaveButton } from "@/app/cookbook/save-button";
 
 export const dynamic = "force-dynamic";
@@ -219,10 +220,11 @@ export default async function RecipesPage({
               {r.missing.length > 0 && (
                 <div className="mt-1 text-xs text-ink-400">missing: {r.missing.join(", ")}</div>
               )}
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                <a href={`/cook/${r.id}`} className="text-xs font-medium text-brand-700">
-                  Cook mode →
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                <a href={`/cook/${r.id}`} className="btn-secondary btn-sm">
+                  Cook →
                 </a>
+                <CookedItButton recipeId={r.id} />
                 <a
                   href={`/remix/${r.id}`}
                   className="inline-flex items-center gap-1 text-xs font-medium text-grape-700"

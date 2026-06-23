@@ -164,14 +164,26 @@ export function CookMode({
               >
                 ← Back
               </button>
-              <button
-                type="button"
-                onClick={() => setStepIndex((i) => Math.min(total - 1, i + 1))}
-                disabled={stepIndex >= total - 1}
-                className="flex-1 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-[#0a6e33] shadow-sm transition hover:bg-white/95 active:scale-[0.97] disabled:opacity-40"
-              >
-                Next →
-              </button>
+              {stepIndex >= total - 1 ? (
+                // Post-cook prompt: at the last step, point straight at the "I cooked this" logger.
+                <button
+                  type="button"
+                  onClick={() =>
+                    document.getElementById("log-cook")?.scrollIntoView({ behavior: "smooth", block: "center" })
+                  }
+                  className="flex-1 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-[#0a6e33] shadow-sm transition hover:bg-white/95 active:scale-[0.97]"
+                >
+                  ✓ Done — log it
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setStepIndex((i) => Math.min(total - 1, i + 1))}
+                  className="flex-1 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-[#0a6e33] shadow-sm transition hover:bg-white/95 active:scale-[0.97]"
+                >
+                  Next →
+                </button>
+              )}
             </div>
           </>
         )}
