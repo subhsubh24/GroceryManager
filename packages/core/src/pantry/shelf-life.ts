@@ -52,7 +52,7 @@ const RULES: Rule[] = [
     keywords: [
       "detergent", "cleaner", "bleach", "disinfect", "sanitizer", "paper towel", "toilet paper", "tissue",
       "napkin", "trash bag", "garbage bag", "dish soap", "dishwasher", "laundry", "sponge", "foil",
-      "plastic wrap", "ziploc", "batter", "light bulb",
+      "plastic wrap", "ziploc", " battery ", " batteries ", "light bulb",
     ],
     domain: "household",
     perishability: "shelf_stable",

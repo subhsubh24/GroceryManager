@@ -63,6 +63,15 @@ describe("estimateShelfLife", () => {
     expect(estimateShelfLife("vitamin d3 gummies").domain).toBe("supplement");
   });
 
+  it("batteries → household, but pancake batter/cake batter → grocery (not misclassified as household)", () => {
+    expect(estimateShelfLife("aa batteries").domain).toBe("household");
+    expect(estimateShelfLife("9v battery").domain).toBe("household");
+    expect(estimateShelfLife("rechargeable batteries").domain).toBe("household");
+    // "batter" as food should NOT be mistaken for batteries
+    expect(estimateShelfLife("pancake batter mix").domain).toBe("grocery");
+    expect(estimateShelfLife("cake batter").domain).toBe("grocery");
+  });
+
   it("unknown grocery → semi-perishable default with a months-long window (ages out a stale backfill)", () => {
     const u = estimateShelfLife("zorblax widget");
     expect(u.domain).toBe("grocery");
