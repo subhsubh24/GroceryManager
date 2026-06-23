@@ -2,6 +2,14 @@
 
 The north star for every change. Read this first (the autonomous loop does too).
 
+## The north star (why this exists)
+This is being built to become a **real, sellable product** — shipped to the **App Store** as a
+paid/subscription app that earns **reliable, consistent revenue** as a dependable side income.
+Every decision serves that: it must be polished and trustworthy enough that a stranger pays for it
+and keeps paying. That means a genuinely useful core loop, a professional bar (never "vibe-coded"),
+honest behavior that earns trust, low/degrading run cost (margins matter), and a clean,
+monetizable, multi-tenant foundation. "Good" = something people would happily pay for, every month.
+
 ## What it is
 A personal **grocery + cooking autopilot** PWA (Next.js 15, mobile-first). It ingests
 receipts (Gmail + photo), infers a pantry that depletes over time, predicts run-outs,
