@@ -4,6 +4,31 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-23 — fix(shelf-life): "batter" keyword misclassified food as household
+
+**What:** In `packages/core/src/pantry/shelf-life.ts`, the household rule contained the keyword
+`"batter"` — a truncated form of "batteries". Because `matchShelfLifeRule` checks `n.includes(k)`
+on a space-padded name, it matched both "batteries" (the intended household item) AND food items
+like "pancake batter" and "cake batter mix" (grocery items). Those food items were classified as
+`domain: "household", perishability: "shelf_stable"` — no spoilage ceiling, appearing in the
+wrong vertical.
+
+**Fix:** Replaced `"batter"` with `" battery "` and `" batteries "` (space-wrapped) in the
+household rule keywords. The space wrapping requires the word to appear as a whole token in the
+padded name, so "battery" / "batteries" still match but "batter" (food) no longer does. This
+follows the existing `"pad "` convention in the same file.
+
+**Why:** A perishable food classified as shelf-stable never triggers spoilage warnings and doesn't
+age out of the pantry, causing stale "in stock" signals and wrong reorder timing.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/12
+
+**Gate:** typecheck ✓ · 435 core tests ✓ · next build ✓ · no missing-export warnings ✓
+
+**Reviews:** Reviewer A (correctness & safety) APPROVE · Reviewer B (quality & fit) APPROVE
+
+---
+
 ## 2026-06-23 — fix(recipe): parseMeasure and cleanIngredientName miss mixed-number unicode fractions
 
 **What:** Two related parsing bugs in `packages/core/src/recipe/`:
