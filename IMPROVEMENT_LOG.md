@@ -4,6 +4,32 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-23 — fix(consume): parseMeasure drops unit on unicode-fraction range high-ends
+
+**What:** One-line regex fix in `parseMeasure` (`packages/core/src/recipe/consume.ts`).
+The range-drop step used `(?:\d+\s+)?\d+(?:[\/\.]\d+)?` which only matched numeric
+high-ends. Unicode fraction high-ends (`¾`, `1½`, `2¼`) were never stripped, so a
+measure like `½ - ¾ cup` left `rest = "- ¾ cup"` — the unit was never reached and
+`parseMeasure` returned `{ qty: 0.5, unit: null }` instead of `{ qty: 0.5, unit: "cup" }`.
+
+**Fix:** Added `(?:\d+\s*)?[½⅓⅔¼¾⅛⅜⅝⅞]` as the first alternative in the range-drop
+regex. Standalone fractions (`¾`) and mixed-number forms (`1½`, `1 ½`, `2¼`) are now
+stripped correctly. The second alternative is identical to the original (numeric-only
+cases unchanged). Three golden assertions added covering all three distinct input shapes.
+
+**Why:** Silent under-decrement: when `unit: null` is returned, the cook→pantry
+consumption path falls through to `usedUnmeasured` (no precise pantry deduction) and
+the macro estimator routes to the LLM fallback instead of FDC — both degrade silently
+over time and erode pantry accuracy.
+
+**PR:** (pending push)
+
+**Gate:** typecheck ✓ · 435 core tests ✓ · next build ✓ · no missing-export warnings ✓
+
+**Reviews:** Reviewer A (correctness & safety) APPROVE · Reviewer B (quality & fit) APPROVE
+
+---
+
 ## 2026-06-23 — fix(shelf-life): "batter" keyword misclassified food as household
 
 **What:** In `packages/core/src/pantry/shelf-life.ts`, the household rule contained the keyword
