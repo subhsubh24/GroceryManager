@@ -100,7 +100,7 @@ export function parseMeasure(measure: string | null | undefined): { qty: number;
   }
   if (qty == null || qty <= 0) return null;
 
-  rest = rest.replace(/^[-–—]\s*\d+(?:\.\d+)?\s*/, ""); // drop the high end of a range ("1-2")
+  rest = rest.replace(/^[-–—]\s*(?:\d+\s+)?\d+(?:[\/\.]\d+)?\s*/, ""); // drop the high end of a range ("1-2", "1/2-3/4", "1-1 1/2")
   const unitTok = rest.match(/^([a-z]+)/)?.[1] ?? null;
   const unit = unitTok ? (unitTok.length > 3 && unitTok.endsWith("s") ? unitTok.slice(0, -1) : unitTok) : null;
   return { qty, unit };
