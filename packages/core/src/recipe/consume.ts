@@ -73,6 +73,8 @@ const UNICODE_FRAC: Record<string, number> = {
 function qtyToken(tok: string): number | null {
   const mixed = tok.match(/^(\d+)\s+(\d+)\/(\d+)$/); // "1 1/2"
   if (mixed) return Number(mixed[1]) + Number(mixed[2]) / Number(mixed[3]);
+  const mixedUni = tok.match(/^(\d+)\s*([½⅓⅔¼¾⅛⅜⅝⅞])$/); // "1½", "1 ½"
+  if (mixedUni) return Number(mixedUni[1]) + (UNICODE_FRAC[mixedUni[2]!] ?? 0);
   const frac = tok.match(/^(\d+)\/(\d+)$/); // "1/2"
   if (frac) return Number(frac[1]) / Number(frac[2]);
   const num = Number(tok);
@@ -93,7 +95,7 @@ export function parseMeasure(measure: string | null | undefined): { qty: number;
     qty = uni;
     rest = s.slice(1).trim();
   } else {
-    const m = s.match(/^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?)/);
+    const m = s.match(/^(\d+\s+\d+\/\d+|\d+\s*[½⅓⅔¼¾⅛⅜⅝⅞]|\d+\/\d+|\d+(?:\.\d+)?)/);
     if (!m) return null;
     qty = qtyToken(m[1]!);
     rest = s.slice(m[0]!.length).trim();

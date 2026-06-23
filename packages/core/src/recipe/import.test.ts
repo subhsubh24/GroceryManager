@@ -90,6 +90,9 @@ describe("cleanIngredientName", () => {
     expect(cleanIngredientName("200 g chicken breast")).toBe("chicken breast");
     expect(cleanIngredientName("1 1/2 cups flour")).toBe("flour");
     expect(cleanIngredientName("½ tsp chili flakes")).toBe("chili flakes");
+    expect(cleanIngredientName("1½ tsp salt")).toBe("salt"); // mixed number + unicode fraction (no space)
+    expect(cleanIngredientName("1 ½ tsp salt")).toBe("salt"); // mixed number + unicode fraction (with space)
+    expect(cleanIngredientName("2¼ cups flour")).toBe("flour"); // mixed number + unicode fraction
   });
 
   it("drops prep after a comma and the leading count+unit", () => {
