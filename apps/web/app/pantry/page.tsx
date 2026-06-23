@@ -1,7 +1,7 @@
 import { loadEnv } from "@gm/config/env";
 import { getDb, getGoogleCredential, getPantryView, getReviewQueue, withTenant } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
-import { humanize, titleCase } from "@/app/lib/format";
+import { humanize, timeAgo, titleCase } from "@/app/lib/format";
 import {
   addPantryItemAction,
   backfillGmailAction,
@@ -289,30 +289,38 @@ export default async function PantryPage({
             We couldn&apos;t place these with certainty — add the real ones, skip the rest.
           </p>
           <ul className="space-y-2.5">
-            {review.map((r) => (
-              <li key={r.id} className="card p-4">
-                <div className="font-semibold text-ink-900">{titleCase(r.rawText)}</div>
-                <div className="mt-0.5 text-xs text-ink-400">
-                  {humanize(r.retailer)}
-                  {r.canonicalName ? ` · best guess: ${titleCase(r.canonicalName)}` : " · no confident match"}
-                  {r.matchConfidence != null ? ` · ${Math.round(r.matchConfidence * 100)}% sure` : ""}
-                </div>
-                <div className="mt-3 flex items-center gap-2">
-                  <form action={confirmReviewItemAction}>
-                    <input type="hidden" name="id" value={r.id} />
-                    <SubmitButton className="btn-primary btn-sm" pendingLabel="Adding…">
-                      Add to pantry
-                    </SubmitButton>
-                  </form>
-                  <form action={dismissReviewItemAction}>
-                    <input type="hidden" name="id" value={r.id} />
-                    <SubmitButton className="btn-ghost btn-sm" pendingLabel="Removing…">
-                      Not mine
-                    </SubmitButton>
-                  </form>
-                </div>
-              </li>
-            ))}
+            {[...review]
+              .sort(
+                (a, b) =>
+                  new Date(b.purchasedAt ?? 0).getTime() - new Date(a.purchasedAt ?? 0).getTime(),
+              )
+              .map((r) => (
+                <li key={r.id} className="card p-4">
+                  {/* Lead with the clean best-guess name; the raw receipt line is secondary. */}
+                  <div className="font-semibold text-ink-900">{titleCase(r.canonicalName ?? r.rawText)}</div>
+                  <div className="mt-0.5 text-xs text-ink-400">
+                    {humanize(r.retailer)} · {timeAgo(r.purchasedAt)}
+                    {r.matchConfidence != null ? ` · ${Math.round(r.matchConfidence * 100)}% sure` : ""}
+                  </div>
+                  <div className="mt-1 truncate text-xs text-ink-300" title={r.rawText}>
+                    {r.rawText}
+                  </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <form action={confirmReviewItemAction}>
+                      <input type="hidden" name="id" value={r.id} />
+                      <SubmitButton className="btn-primary btn-sm" pendingLabel="Adding…">
+                        Add to pantry
+                      </SubmitButton>
+                    </form>
+                    <form action={dismissReviewItemAction}>
+                      <input type="hidden" name="id" value={r.id} />
+                      <SubmitButton className="btn-ghost btn-sm" pendingLabel="Removing…">
+                        Not mine / expired
+                      </SubmitButton>
+                    </form>
+                  </div>
+                </li>
+              ))}
           </ul>
         </section>
       )}

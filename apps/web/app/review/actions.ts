@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import {
   addMatchOverride,
-  clearLineItemReview,
+  clearReviewGroup,
   getDb,
   getReviewLineItem,
   withTenant,
@@ -49,9 +49,11 @@ export async function confirmReviewItemAction(formData: FormData) {
 
     if (item.rawText) await addMatchOverride(tx, userId, item.rawText, canonicalItemId);
 
-    await clearLineItemReview(tx, userId, id);
+    // Clear the whole group — confirming one row also clears the same item's duplicate purchases.
+    await clearReviewGroup(tx, userId, { canonicalItemId: item.canonicalItemId, rawText: item.rawText });
   });
 
+  revalidatePath("/pantry");
   revalidatePath("/review");
 }
 
@@ -65,7 +67,12 @@ export async function dismissReviewItemAction(formData: FormData) {
   const userId = await currentUserId();
   if (!userId) return;
 
-  await withTenant(getDb(), userId, (tx) => clearLineItemReview(tx, userId, id));
+  await withTenant(getDb(), userId, async (tx) => {
+    const item = await getReviewLineItem(tx, userId, id);
+    if (!item) return;
+    await clearReviewGroup(tx, userId, { canonicalItemId: item.canonicalItemId, rawText: item.rawText });
+  });
 
+  revalidatePath("/pantry");
   revalidatePath("/review");
 }

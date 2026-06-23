@@ -3,7 +3,7 @@
  * thin (no direct Drizzle import). Per-user; userId optional until Auth is wired.
  */
 import { randomBytes } from "node:crypto";
-import { and, desc, eq, gte, isNull, like, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, like, or, sql } from "drizzle-orm";
 import type { Querier } from "./client.js";
 import {
   canonicalItems,
@@ -1255,9 +1255,14 @@ export async function getPantryView(db: Querier, userId: string) {
 }
 
 export async function getReviewQueue(db: Querier, userId: string) {
+  // Dedupe by item GROUP — the same product bought across several receipts (over a long backfill)
+  // otherwise shows up many times. Group by canonical id (or the raw text when unmatched) and keep the
+  // most RECENT line per group, so the review reads as one row per distinct item.
+  const groupKey = sql`coalesce(${purchaseLineItems.canonicalItemId}::text, lower(${purchaseLineItems.rawText}))`;
   return db
-    .select({
+    .selectDistinctOn([groupKey], {
       id: purchaseLineItems.id,
+      canonicalItemId: purchaseLineItems.canonicalItemId,
       rawText: purchaseLineItems.rawText,
       matchConfidence: purchaseLineItems.matchConfidence,
       canonicalName: canonicalItems.name,
@@ -1268,7 +1273,29 @@ export async function getReviewQueue(db: Querier, userId: string) {
     .innerJoin(purchases, eq(purchaseLineItems.purchaseId, purchases.id))
     .leftJoin(canonicalItems, eq(purchaseLineItems.canonicalItemId, canonicalItems.id))
     .where(and(eq(purchases.userId, userId), eq(purchaseLineItems.needsReview, true)))
-    .orderBy(desc(purchases.purchasedAt));
+    .orderBy(groupKey, desc(purchases.purchasedAt));
+}
+
+/**
+ * Clear needs-review for an entire item GROUP (all purchases of the same canonical, or the same raw
+ * text when unmatched), so confirming/dismissing one review row also clears its duplicates. RLS-scoped
+ * (the purchase subquery restricts to the user; needsReview keeps it to open rows).
+ */
+export async function clearReviewGroup(
+  db: Querier,
+  userId: string,
+  group: { canonicalItemId: string | null; rawText: string },
+) {
+  const userPurchases = db.select({ id: purchases.id }).from(purchases).where(eq(purchases.userId, userId));
+  const match = group.canonicalItemId
+    ? eq(purchaseLineItems.canonicalItemId, group.canonicalItemId)
+    : eq(purchaseLineItems.rawText, group.rawText);
+  await db
+    .update(purchaseLineItems)
+    .set({ needsReview: false })
+    .where(
+      and(inArray(purchaseLineItems.purchaseId, userPurchases), eq(purchaseLineItems.needsReview, true), match),
+    );
 }
 
 /** One review line item joined to its purchase (ownership-scoped), or null — feeds the confirm action. */
