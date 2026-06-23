@@ -305,6 +305,9 @@ export default async function HomePage() {
             <a href="/ask" className="btn-ghost px-5 py-3 text-base">
               Ask your kitchen
             </a>
+            <a href="/add-receipt" className="btn-ghost px-5 py-3 text-base">
+              Snap a receipt
+            </a>
           </div>
 
           <div className="mt-8">
