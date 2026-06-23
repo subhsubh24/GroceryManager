@@ -4,6 +4,32 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-23 — fix(recipe): parseMeasure and cleanIngredientName miss mixed-number unicode fractions
+
+**What:** Two related parsing bugs in `packages/core/src/recipe/`:
+- `parseMeasure` in `consume.ts`: "1½ cups flour" parsed as `{ qty: 1, unit: null }` instead of
+  `{ qty: 1.5, unit: "cup" }` — pantry decrement fell through to `usedUnmeasured`.
+- `cleanIngredientName` in `import.ts`: "1½ tsp salt" → `"½ tsp salt"` instead of `"salt"` —
+  ingredient name couldn't match the pantry or shopping list.
+
+Both modules handled bare unicode fractions ("½ cup") and slash fractions ("1 1/2 cups") but not
+mixed-number + unicode combinations ("1½", "1 ½").
+
+**Fix:** Added `\d+\s*[½⅓⅔¼¾⅛⅜⅝⅞]` to the `parseMeasure` regex, the `qtyToken` helper, and
+`LEADING_QTY` in import.ts. `cook.ts`'s `NUM` regex already had this form — now all three modules
+are consistent. 6 new golden assertions (no-space and spaced variants for both modules).
+
+**Why:** `1½ tsp` is common in recipes (baking, sauces). Silent parse failure means either a missed
+ingredient match on import or a lost pantry decrement on cook — both degrade the core loop silently.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/11
+
+**Gate:** typecheck ✓ · 434 core tests ✓ · next build ✓ · no missing-export warnings ✓
+
+**Reviews:** Reviewer A (correctness) APPROVE · Reviewer B (quality) APPROVE (cycle 2)
+
+---
+
 ## 2026-06-23 — fix(cook): scaleMeasure silently skips ⅛ ⅜ ⅝ ⅞ unicode fractions
 
 **What:** `parseMeasure` in `consume.ts` already handled all 9 common unicode fractions,
