@@ -9,7 +9,7 @@ It's committed so the loop survives session/container loss — on resume, read t
 > hourly cron) runs one iteration per fire via `anthropics/claude-code-action`, independent of any
 > chat session. It must live on the **default branch** to fire, and needs the repo secret
 > `ANTHROPIC_API_KEY`. Each run: read this file → build/tune ONE feature → self-review → gate
-> (typecheck + tests + web build) → update this file → commit + push to `claude/busy-turing-XkEQX`.
+> (typecheck + tests + web build) → update this file → commit + push to `main`.
 
 ## North star
 Be the one app that quietly handles groceries + cooking — and is delightful enough that a
@@ -107,7 +107,7 @@ supplements.
 - **iter 10 — First-run + finalize (DONE):** data-aware getting-started checklist + PWA install
   prompt (the two real first-impression gaps), a bento coherence fix, and a refreshed README. The
   product is judged **feature-complete for this scope** — further additions would be sprawl, not
-  improvement — so the loop **converges** here and the PR (`claude/busy-turing-XkEQX` → `main`) is
+  improvement — so the loop **converges** here and the PR (`main` → `main`) is
   opened. Gates: typecheck, 330 core tests, `next build`.
 
 ## Next up

@@ -29,5 +29,5 @@ usage limit in the Anthropic Console — that's the only true ceiling.
 
 ## This repo's setup
 - Routine cadence: `0 */3 * * *` · model `claude-sonnet-4-6` · tools include `Task`.
-- Default (protected) branch: `claude/busy-turing-XkEQX`.
+- Default (protected) branch: `main`.
 - Gate: `pnpm -r run typecheck` · `pnpm -r run test` · production `next build` (+ missing-export grep).

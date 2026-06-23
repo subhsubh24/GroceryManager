@@ -12,10 +12,10 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   workflow files.
 - **The gate is `pnpm -r run typecheck` · `pnpm -r run test` · production `next build`** (with the
   missing-export grep). `next build` needs `NODE_ENV=production` + a dummy `DATABASE_URL`.
-- **Default branch is `claude/busy-turing-XkEQX`** (protected, requires the `verify` check). Branch
+- **Default branch is `main`** (protected, requires the `verify` check). Branch
   feature work off it; PRs auto-merge once `verify` is green + both reviewers approve.
-- **2026-06-23 — Two lineages exist: `claude/busy-turing-XkEQX` (our default) and `main`.** These
-  branches diverged and do not share a common ancestor in this clone. Fixes or features committed
-  to `main` (e.g. via PRs targeting main) are NOT automatically on our default branch, and vice
-  versa. Always `git show HEAD:path/to/file` or `grep` the actual working tree before assuming a
-  fix is present. Never assume a fix from a PR targeting `main` has landed here.
+- **2026-06-23 — Branch lineages reconciled.** There used to be two diverged lineages
+  (`main` and an old `claude/busy-turing-XkEQX`); they were reconciled by promoting the canonical
+  content to `main` and deleting the stray branch. There is now ONE lineage: `main`. Always read
+  the actual working tree (`git show HEAD:path` / `grep`) before assuming a fix is present, and
+  target `main` (the default) for all work.
