@@ -8,6 +8,7 @@ import {
   withTenant,
 } from "@gm/db";
 import { currentStreak } from "@gm/core/recipe";
+import { assessOrderReadiness } from "@gm/core/reorder";
 import { buildDigest, type DigestSummary } from "@gm/core/digest";
 import { currentUserId } from "@/app/lib/tenant";
 import { titleCase } from "@/app/lib/format";
@@ -145,10 +146,21 @@ export default async function HomePage() {
     firstRun != null &&
     !firstRun.dismissed &&
     !(firstRun.tasteSet && firstRun.hasPantry && firstRun.hasCooked);
-  // Autopilot status: is there a grocery run to surface (something due to reorder or already on the
-  // active list)? Drives the home's hero panel — all derived from real reorder/list data.
-  const reorderCount = digest.reorderCount;
-  const hasRun = reorderCount > 0 || listCount > 0;
+  // Autopilot status — an honest, item-aware verdict on the grocery run (deterministic; rendered on
+  // every load). "Time to order" when something runs out soon, "Ready to order" once it's a worthwhile
+  // size, else a quiet building/clear state. Urgency reads the real recommend-by dates.
+  const readiness = assessOrderReadiness({
+    reorderCount: digest.reorderCount,
+    dueDates: digest.topReorder.map((r) => r.recommendByDate),
+    listCount,
+    now: new Date(),
+  });
+  const runLine =
+    digest.reorderCount > 0 && listCount > 0
+      ? `${digest.reorderCount} to reorder · ${listCount} on your list`
+      : digest.reorderCount > 0
+        ? `${digest.reorderCount} ${digest.reorderCount === 1 ? "item" : "items"} to reorder`
+        : `${listCount} ${listCount === 1 ? "item" : "items"} on your list`;
 
   return (
     <main className="relative overflow-hidden">
@@ -210,41 +222,23 @@ export default async function HomePage() {
           <p className="eyebrow">Your kitchen, on autopilot</p>
           <h1 className="page-title mt-3">Welcome back</h1>
 
-          {/* Autopilot status — your next grocery run, drafted from what's running low + already listed.
-              Instacart is deep-link only, so the honest promise is: drafted for you, ordered in one tap. */}
+          {/* Autopilot status — an honest, item-aware verdict (Time to order / Ready to order / building
+              / all-stocked). Instacart is deep-link only, so the promise is: drafted for you, one tap to order. */}
           <section className="panel-brand mt-6">
-            {hasRun ? (
-              <>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
-                  Your next grocery run
-                </p>
-                <h2 className="mt-2 font-display text-2xl font-semibold">
-                  {reorderCount > 0 && listCount > 0
-                    ? `${reorderCount} to reorder · ${listCount} on your list`
-                    : reorderCount > 0
-                      ? `${reorderCount} item${reorderCount === 1 ? "" : "s"} ready to reorder`
-                      : `${listCount} item${listCount === 1 ? "" : "s"} on your list`}
-                </h2>
-                <p className="mt-1 text-sm text-white/90">
-                  Drafted from what you have and what&apos;s running low — review, then check out in one tap.
-                </p>
-                <a
-                  href="/list"
-                  className="btn mt-4 inline-flex bg-white px-5 py-3 text-base text-brand-solid hover:bg-white/90"
-                >
-                  Review &amp; order →
-                </a>
-              </>
-            ) : (
-              <>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
-                  On autopilot
-                </p>
-                <h2 className="mt-2 font-display text-2xl font-semibold">You&apos;re all stocked up.</h2>
-                <p className="mt-1 text-sm text-white/90">
-                  Nothing&apos;s running low. I&apos;ll draft your next order the moment something is.
-                </p>
-              </>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
+              {readiness.state === "clear" ? "On autopilot" : readiness.headline}
+            </p>
+            <h2 className="mt-2 font-display text-2xl font-semibold">
+              {readiness.state === "clear" ? "You're all stocked up." : runLine}
+            </h2>
+            <p className="mt-1 text-sm text-white/90">{readiness.reason}</p>
+            {readiness.state !== "clear" && (
+              <a
+                href="/list"
+                className="btn mt-4 inline-flex bg-white px-5 py-3 text-base text-brand-solid hover:bg-white/90"
+              >
+                {readiness.state === "building" ? "Review list →" : "Review & order →"}
+              </a>
             )}
           </section>
 

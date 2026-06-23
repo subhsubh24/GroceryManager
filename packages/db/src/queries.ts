@@ -1255,6 +1255,29 @@ export async function getPantryView(db: Querier, userId: string) {
     .orderBy(desc(pantryStock.updatedAt));
 }
 
+/**
+ * Latest purchase retailer + source per canonical item (most-recent wins), for the given ids. Lets
+ * the pantry surface where each item came from (Instacart / Whole Foods / Amazon / added by you).
+ * Items with no purchase row (e.g. vision-only) simply won't appear in the result.
+ */
+export async function getLatestSourcesByCanonical(
+  db: Querier,
+  userId: string,
+  canonicalItemIds: string[],
+): Promise<{ canonicalItemId: string | null; retailer: string | null; source: string | null }[]> {
+  if (canonicalItemIds.length === 0) return [];
+  return db
+    .selectDistinctOn([purchaseLineItems.canonicalItemId], {
+      canonicalItemId: purchaseLineItems.canonicalItemId,
+      retailer: purchases.retailer,
+      source: purchases.source,
+    })
+    .from(purchaseLineItems)
+    .innerJoin(purchases, eq(purchaseLineItems.purchaseId, purchases.id))
+    .where(and(eq(purchases.userId, userId), inArray(purchaseLineItems.canonicalItemId, canonicalItemIds)))
+    .orderBy(purchaseLineItems.canonicalItemId, desc(purchases.purchasedAt));
+}
+
 export async function getReviewQueue(db: Querier, userId: string) {
   // Dedupe by item GROUP — the same product bought across several receipts (over a long backfill)
   // otherwise shows up many times. Group by canonical id (or the raw text when unmatched) and keep the

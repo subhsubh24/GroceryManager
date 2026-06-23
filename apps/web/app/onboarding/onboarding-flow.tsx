@@ -686,21 +686,23 @@ function ChipMultiSelect({
 /* Step 3 — Add your first items (skippable)                                                         */
 /* ------------------------------------------------------------------------------------------------ */
 
+// Each seeding entrypoint carries ?from=onboarding so the destination shows a "Finish setup → my
+// kitchen" bar (instead of dead-ending) — see OnboardingFinish.
 const ITEM_ACTIONS: { href: string; label: string; blurb: string; icon: React.ReactNode }[] = [
   {
-    href: "/scan",
+    href: "/scan?from=onboarding",
     label: "Scan your fridge",
     blurb: "Snap a photo and we'll read what's inside.",
     icon: <ScanIcon className="h-5 w-5" aria-hidden />,
   },
   {
-    href: "/capture",
+    href: "/capture?from=onboarding",
     label: "Quick add",
     blurb: "Type a few items to fill your pantry fast.",
     icon: <QuickAddIcon className="h-5 w-5" aria-hidden />,
   },
   {
-    href: "/pantry",
+    href: "/pantry?from=onboarding",
     label: "Connect receipts",
     blurb: "Import purchases to keep stock in sync.",
     icon: <ReceiptsIcon className="h-5 w-5" aria-hidden />,

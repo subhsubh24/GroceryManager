@@ -7,6 +7,7 @@ import { GeminiClient } from "@gm/core/llm";
 import { currentUserId } from "@/app/lib/tenant";
 import { titleCase } from "@/app/lib/format";
 import { PageHeader } from "@/app/components/page-header";
+import { OnboardingFinish } from "@/app/components/onboarding-finish";
 import { PencilLine, ShoppingCart } from "@/app/components/icons";
 import { CaptureForm } from "./capture-form";
 
@@ -47,8 +48,13 @@ const REASON_LABEL: Record<string, string> = {
   low_stock: "low",
 };
 
-export default async function CapturePage() {
+export default async function CapturePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string }>;
+}) {
   const data = await load();
+  const sp = await searchParams;
 
   return (
     <main className="page">
@@ -65,6 +71,8 @@ export default async function CapturePage() {
         }
         back={{ href: "/list", label: "Reorder" }}
       />
+
+      {sp.from === "onboarding" && <OnboardingFinish />}
 
       <CaptureForm action={capture} />
 

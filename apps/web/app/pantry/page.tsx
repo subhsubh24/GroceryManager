@@ -1,7 +1,14 @@
 import { loadEnv } from "@gm/config/env";
-import { getDb, getGoogleCredential, getPantryView, getReviewQueue, withTenant } from "@gm/db";
+import {
+  getDb,
+  getGoogleCredential,
+  getLatestSourcesByCanonical,
+  getPantryView,
+  getReviewQueue,
+  withTenant,
+} from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
-import { humanize, timeAgo, titleCase } from "@/app/lib/format";
+import { humanize, sourceLabel, timeAgo, titleCase } from "@/app/lib/format";
 import {
   addPantryItemAction,
   backfillGmailAction,
@@ -13,6 +20,7 @@ import { ReviewList } from "../review/review-list";
 import { SubmitButton } from "./sync-buttons";
 import { ClearPantryButton } from "./clear-button";
 import { PageHeader } from "@/app/components/page-header";
+import { OnboardingFinish } from "@/app/components/onboarding-finish";
 import { Check, Mail, Package, Trash2 } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -32,12 +40,22 @@ async function loadPantry() {
   try {
     const userId = await currentUserId();
     if (!userId) return { rows: [], review: [], connected: false, error: null as string | null };
-    const { rows, cred, review } = await withTenant(getDb(), userId, async (tx) => ({
-      rows: await getPantryView(tx, userId),
-      cred: await getGoogleCredential(tx, userId),
-      review: await getReviewQueue(tx, userId),
-    }));
-    return { rows, review, connected: Boolean(cred), error: null as string | null };
+    const { rows, cred, review, sources } = await withTenant(getDb(), userId, async (tx) => {
+      const rows = await getPantryView(tx, userId);
+      return {
+        rows,
+        cred: await getGoogleCredential(tx, userId),
+        review: await getReviewQueue(tx, userId),
+        sources: await getLatestSourcesByCanonical(tx, userId, rows.map((r) => r.canonicalItemId)),
+      };
+    });
+    // Attach a "where it came from" label (Instacart / Whole Foods / Added by you / …) per item.
+    const srcMap = new Map(sources.map((s) => [s.canonicalItemId, s]));
+    const enriched = rows.map((r) => {
+      const s = srcMap.get(r.canonicalItemId);
+      return { ...r, source: sourceLabel(s?.source, s?.retailer) };
+    });
+    return { rows: enriched, review, connected: Boolean(cred), error: null as string | null };
   } catch (e) {
     return { rows: [], review: [], connected: false, error: e instanceof Error ? e.message : String(e) };
   }
@@ -120,6 +138,7 @@ export default async function PantryPage({
     ingested?: string;
     lines?: string;
     review?: string;
+    from?: string;
   }>;
 }) {
   const { rows, review, connected, error } = await loadPantry();
@@ -169,6 +188,8 @@ export default async function PantryPage({
           </div>
         }
       />
+
+      {sp.from === "onboarding" && <OnboardingFinish />}
 
       {/* Receipts → pantry: connect Gmail once, then auto-fill from receipt emails. */}
       <section className="card-pad mt-6">
@@ -318,7 +339,7 @@ export default async function PantryPage({
               <div className="min-w-0">
                 <div className="font-semibold text-ink-900">{titleCase(r.name)}</div>
                 <div className="mt-0.5 text-xs text-ink-400">
-                  {humanize(r.domain)} · {Math.round(Number(r.baseQtyOnHand))} on hand{r.lastPurchaseAt ? ` · bought ${timeAgo(r.lastPurchaseAt)}` : ""} · {Math.round(r.confidence * 100)}% sure
+                  {r.source ?? humanize(r.domain)} · {Math.round(Number(r.baseQtyOnHand))} on hand{r.lastPurchaseAt ? ` · bought ${timeAgo(r.lastPurchaseAt)}` : ""} · {Math.round(r.confidence * 100)}% sure
                   {r.estimatedRunOutAt ? ` · runs out ~${new Date(r.estimatedRunOutAt).toISOString().slice(0, 10)}` : ""}
                 </div>
               </div>

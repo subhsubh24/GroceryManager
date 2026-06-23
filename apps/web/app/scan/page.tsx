@@ -1,10 +1,16 @@
 import { ScanClient } from "./scan-client";
 import { PageHeader } from "@/app/components/page-header";
+import { OnboardingFinish } from "@/app/components/onboarding-finish";
 import { Camera } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
-export default function ScanPage() {
+export default async function ScanPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string }>;
+}) {
+  const sp = await searchParams;
   return (
     <main className="page">
       <PageHeader
@@ -20,6 +26,7 @@ export default function ScanPage() {
           </>
         }
       />
+      {sp.from === "onboarding" && <OnboardingFinish />}
       <div className="mt-6">
         <ScanClient />
       </div>

@@ -30,6 +30,22 @@ export function humanize(s: string): string {
   return titleCase(s.replace(/[_-]+/g, " "));
 }
 
+/**
+ * A friendly "where it came from" label from the latest purchase's source + retailer:
+ * "instacart" → "Instacart", "whole_foods" → "Whole Foods", manual → "Added by you", barcode →
+ * "Scanned". Returns null when there's nothing meaningful to show.
+ */
+export function sourceLabel(
+  source: string | null | undefined,
+  retailer: string | null | undefined,
+): string | null {
+  if (source === "manual") return "Added by you";
+  if (source === "barcode") return "Scanned";
+  if (retailer && retailer !== "other") return humanize(retailer); // Instacart / Whole Foods / Amazon
+  if (source) return humanize(source.replace(/^gmail_/, "").replace(/_scrape$/, ""));
+  return null;
+}
+
 /** Compact relative age for receipt/review dates: "today", "yesterday", "5d ago", "3mo ago", "1y ago". */
 export function timeAgo(d: Date | string | null | undefined, now: Date = new Date()): string {
   if (!d) return "";
