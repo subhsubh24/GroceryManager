@@ -67,4 +67,15 @@ describe("scaleMeasure", () => {
     expect(scaleMeasure("", 2)).toBe("");
     expect(scaleMeasure("2 cups", 1)).toBe("2 cups");
   });
+
+  it("scales unicode fractions that parseMeasure already handles (⅛ ⅜ ⅝ ⅞)", () => {
+    // ⅛ tsp is common in recipes ("⅛ tsp salt" × 2 must become "¼ tsp", not pass through unchanged)
+    expect(scaleMeasure("⅛ tsp", 2)).toBe("¼ tsp");
+    expect(scaleMeasure("⅛ cup", 4)).toBe("½ cup");
+    expect(scaleMeasure("⅜ tsp", 2)).toBe("¾ tsp");
+    expect(scaleMeasure("⅝ cup", 2)).toBe("1¼ cup");
+    expect(scaleMeasure("⅞ tsp", 2)).toBe("1¾ tsp");
+    // mixed number with these fractions
+    expect(scaleMeasure("1⅛ cups", 2)).toBe("2¼ cups");
+  });
 });
