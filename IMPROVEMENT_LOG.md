@@ -4,6 +4,30 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-23 — fix(shelf-life): "pad " keyword false-positives on pad thai products
+
+**What:** `"pad "` (trailing space, no leading space) in the `personal_care` shelf-life rule matched
+any item starting with "pad " — including "Pad Thai Sauce", "Pad Thai Noodles", "Pad Thai Kit".
+These common Thai grocery products were misclassified as `personal_care`, routing them to Amazon
+instead of Instacart and giving them a null shelf-life ceiling (so they'd never show as expired).
+
+**Fix:** Replaced `"pad "` with `" pads "` (both-sided word boundary for plural; catches "overnight
+pads", "always pads", "nursing pads") plus explicit singular keywords `"heating pad"`, `"nursing
+pad"`, `"breast pad"`, `"cotton pad"` for the most common singular personal-care pad items in
+receipts. No food item name contains "pads" as a substring, so zero false positives.
+
+**Why:** Wrong domain classification silently corrupts the order channel routing and spoilage
+ceiling for common grocery items. "Pad Thai Sauce" is sold at Trader Joe's, Whole Foods, etc. and
+would never appear in the grocery pantry or be routed to Instacart reorder.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/14
+
+**Gate:** typecheck ✓ · 437 core tests ✓ (2 new `it()` blocks, 5 new assertions) · next build ✓ · no missing-export warnings ✓
+
+**Reviews:** Reviewer A (correctness & safety) APPROVE · Reviewer B (quality & fit) APPROVE
+
+---
+
 ## 2026-06-23 — fix(consume): parseMeasure drops unit on unicode-fraction range high-ends
 
 **What:** One-line regex fix in `parseMeasure` (`packages/core/src/recipe/consume.ts`).
