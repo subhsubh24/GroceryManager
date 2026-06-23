@@ -36,7 +36,7 @@ async function load() {
       Promise.all([getPantryView(tx, userId), loadWasteEvents(tx, userId, 30)]),
     );
     const waste = summarizeWaste(wasteEvents);
-    const expiring = selectExpiringSoon(pantry, { domain: "grocery", withinDays: 5 });
+    const expiring = selectExpiringSoon(pantry, { domain: "grocery", withinDays: 5, excludeExpired: true });
 
     // Index every in-stock item (accurate coverage/missing), flagging the at-risk ones so the
     // matcher's usesExpiring counts exactly what we're trying to rescue.

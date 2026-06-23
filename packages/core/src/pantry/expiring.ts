@@ -35,6 +35,11 @@ export interface SelectExpiringOpts {
   now?: Date;
   /** Restrict to one domain (e.g. "grocery" — recipes don't apply to household). */
   domain?: string | null;
+  /**
+   * Drop confidently-expired items. "Use it up" surfaces set this — you can't cook something that's
+   * already gone, so those belong in the pantry's review (still have it? / used / tossed), not here.
+   */
+  excludeExpired?: boolean;
 }
 
 export function selectExpiringSoon(rows: PantryRowLike[], opts: SelectExpiringOpts = {}): ExpiringItem[] {
@@ -50,7 +55,7 @@ export function selectExpiringSoon(rows: PantryRowLike[], opts: SelectExpiringOp
     const daysLeft = runOut ? Math.ceil((runOut.getTime() - now.getTime()) / DAY_MS) : null;
 
     let reason: ExpiringItem["reason"] | null = null;
-    if (r.status === "expired_likely") reason = "expired_likely";
+    if (r.status === "expired_likely") reason = opts.excludeExpired ? null : "expired_likely";
     else if (daysLeft != null && daysLeft <= withinDays) reason = "runs_out_soon";
     if (!reason) continue;
 

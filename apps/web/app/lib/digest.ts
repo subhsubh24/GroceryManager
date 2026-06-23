@@ -20,7 +20,7 @@ export async function buildDigestForUser(
   const reorder = await loadReorderInputs(tx, userId);
   const wrapped = await loadWrappedInputs(tx, userId, 7);
 
-  const expiring = selectExpiringSoon(p, { domain: "grocery", withinDays: 5 }).map((e) => ({
+  const expiring = selectExpiringSoon(p, { domain: "grocery", withinDays: 5, excludeExpired: true }).map((e) => ({
     name: e.name,
     reason: e.reason,
     daysLeft: e.daysLeft,

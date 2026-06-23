@@ -2,6 +2,7 @@ import { loadEnv } from "@gm/config/env";
 import {
   getDb,
   getGoogleCredential,
+  getLatestAcquisition,
   getLatestSourcesByCanonical,
   getPantryView,
   getReviewQueue,
@@ -50,21 +51,34 @@ async function loadPantry() {
     const userId = await currentUserId();
     if (!userId)
       return { rows: [], review: [], connected: false, onboarded: true, error: null as string | null };
-    const { rows, cred, review, sources, onboarded } = await withTenant(getDb(), userId, async (tx) => {
+    const { rows, cred, review, sources, acq, onboarded } = await withTenant(getDb(), userId, async (tx) => {
       const rows = await getPantryView(tx, userId);
+      const ids = rows.map((r) => r.canonicalItemId);
       return {
         rows,
         cred: await getGoogleCredential(tx, userId),
         review: await getReviewQueue(tx, userId),
-        sources: await getLatestSourcesByCanonical(tx, userId, rows.map((r) => r.canonicalItemId)),
+        sources: await getLatestSourcesByCanonical(tx, userId, ids),
+        acq: await getLatestAcquisition(tx, userId, ids),
         onboarded: await isOnboarded(tx, userId),
       };
     });
-    // Attach a "where it came from" label (Instacart / Whole Foods / Added by you / …) per item.
+    // Source = where it most recently came FROM (latest acquisition wins): you typed it ("Added by
+    // you"), a scan ("Scanned"), or a receipt (the retailer). userDriven items skip the confidence %
+    // — you put them there, so "% sure" is noise.
     const srcMap = new Map(sources.map((s) => [s.canonicalItemId, s]));
+    const acqMap = new Map(acq.map((a) => [a.canonicalItemId, a.eventType]));
     const enriched = rows.map((r) => {
+      const ev = acqMap.get(r.canonicalItemId);
+      const userDriven = ev === "manual_adjust" || ev === "vision_confirmed";
       const s = srcMap.get(r.canonicalItemId);
-      return { ...r, source: sourceLabel(s?.source, s?.retailer) };
+      const source =
+        ev === "manual_adjust"
+          ? "Added by you"
+          : ev === "vision_confirmed"
+            ? "Scanned"
+            : sourceLabel(s?.source, s?.retailer);
+      return { ...r, source, userDriven };
     });
     return { rows: enriched, review, connected: Boolean(cred), onboarded, error: null as string | null };
   } catch (e) {
@@ -352,7 +366,7 @@ export default async function PantryPage({
               <div className="min-w-0">
                 <div className="font-semibold text-ink-900">{titleCase(r.name)}</div>
                 <div className="mt-0.5 text-xs text-ink-400">
-                  {r.source ?? humanize(r.domain)} · {Math.round(Number(r.baseQtyOnHand))} on hand{r.lastPurchaseAt ? ` · bought ${timeAgo(r.lastPurchaseAt)}` : ""} · {Math.round(r.confidence * 100)}% sure
+                  {r.source ?? humanize(r.domain)} · {Math.round(Number(r.baseQtyOnHand))} on hand{r.lastPurchaseAt ? ` · bought ${timeAgo(r.lastPurchaseAt)}` : ""}{r.userDriven ? "" : ` · ${Math.round(r.confidence * 100)}% sure`}
                   {r.estimatedRunOutAt ? ` · runs out ~${new Date(r.estimatedRunOutAt).toISOString().slice(0, 10)}` : ""}
                 </div>
                 {/* Likely expired from its age — confirm what actually happened (we never assume). */}

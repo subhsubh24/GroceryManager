@@ -25,17 +25,33 @@ describe("estimateOnHand", () => {
     expect(estimateOnHand({ events: purchase, asOf: day(20), ratePerDay: 100 }).baseQtyOnHand).toBe(0);
   });
 
-  it("applies the shelf-life ceiling for perishables (absence by spoilage)", () => {
+  it("applies the shelf-life ceiling for perishables once WELL past shelf life (+ grace)", () => {
     const r = estimateOnHand({
-      events: [{ baseQtyDelta: 200, occurredAt: day(0) }], // spinach
-      asOf: day(21),
-      ratePerDay: null, // no consumption signal at all…
+      events: [{ baseQtyDelta: 200, occurredAt: day(0) }], // spinach, shelf life 7
+      asOf: day(30), // 30 > 7 + 14 grace → confidently expired
+      ratePerDay: null,
       perishable: true,
       shelfLifeDays: 7,
       lastPurchaseAt: day(0),
     });
-    expect(r.status).toBe("expired_likely"); // …still gone after 3 weeks
+    expect(r.status).toBe("expired_likely");
     expect(r.baseQtyOnHand).toBe(0);
+  });
+
+  it("does NOT auto-expire inside the grace window — stays in stock, flags as expiring", () => {
+    const r = estimateOnHand({
+      events: [{ baseQtyDelta: 200, occurredAt: day(0) }], // shelf life 7
+      asOf: day(12), // past shelf life (7) but within grace (7+14) → review, don't assume
+      ratePerDay: null,
+      perishable: true,
+      shelfLifeDays: 7,
+      lastPurchaseAt: day(0),
+    });
+    expect(r.status).toBe("in_stock"); // not assumed dead
+    expect(r.baseQtyOnHand).toBe(200);
+    // …but its run-out is the (now-passed) spoil date, so "use it up" surfaces it.
+    expect(r.estimatedRunOutAt).not.toBeNull();
+    expect(r.estimatedRunOutAt!.getTime()).toBe(day(7).getTime());
   });
 
   it("a confirmation re-grounds the spoilage clock (still have it) without faking the purchase date", () => {
@@ -57,15 +73,15 @@ describe("estimateOnHand", () => {
     expect(r.baseQtyOnHand).toBe(200);
   });
 
-  it("a STALE confirmation doesn't save an item past shelf life from when it was last confirmed", () => {
+  it("a STALE confirmation doesn't save an item well past shelf life from when it was last confirmed", () => {
     const r = estimateOnHand({
       events: [{ baseQtyDelta: 200, occurredAt: day(0) }],
-      asOf: day(21),
+      asOf: day(30),
       ratePerDay: null,
       perishable: true,
       shelfLifeDays: 7,
       lastPurchaseAt: day(0),
-      lastConfirmedAt: day(2), // confirmed day 2, but that's still >7 days before day 21
+      lastConfirmedAt: day(2), // confirmed day 2 → 28 days later is well past shelf life + grace
     });
     expect(r.status).toBe("expired_likely");
   });

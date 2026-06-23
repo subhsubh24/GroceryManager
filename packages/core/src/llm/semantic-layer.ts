@@ -104,7 +104,7 @@ async function loadRankedRecipes(
   }));
 
   const inStock = pantry.filter((p) => p.status === "in_stock" || p.status === "low");
-  const expiringNames = selectExpiringSoon(pantry, { domain: "grocery", withinDays: 5 }).map((e) => e.name);
+  const expiringNames = selectExpiringSoon(pantry, { domain: "grocery", withinDays: 5, excludeExpired: true }).map((e) => e.name);
 
   const idx = buildPantryIndex(
     inStock.map((p) => ({

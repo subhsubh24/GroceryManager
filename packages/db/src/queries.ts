@@ -1301,6 +1301,33 @@ export async function getRawStockSum(db: Querier, userId: string, canonicalItemI
   return Number(rows[0]?.sum ?? 0);
 }
 
+/**
+ * The event type of the most recent ACQUISITION (a positive ledger delta) per canonical item — what
+ * actually put it in the pantry most recently: "purchase" (a receipt), "manual_adjust" (you typed it),
+ * or "vision_confirmed" (a scan). Drives an honest source label + whether to show a parse confidence.
+ */
+export async function getLatestAcquisition(
+  db: Querier,
+  userId: string,
+  canonicalItemIds: string[],
+): Promise<{ canonicalItemId: string | null; eventType: string }[]> {
+  if (canonicalItemIds.length === 0) return [];
+  return db
+    .selectDistinctOn([stockLedger.canonicalItemId], {
+      canonicalItemId: stockLedger.canonicalItemId,
+      eventType: stockLedger.eventType,
+    })
+    .from(stockLedger)
+    .where(
+      and(
+        eq(stockLedger.userId, userId),
+        inArray(stockLedger.canonicalItemId, canonicalItemIds),
+        sql`${stockLedger.baseQtyDelta} > 0`,
+      ),
+    )
+    .orderBy(stockLedger.canonicalItemId, desc(stockLedger.occurredAt));
+}
+
 export async function getReviewQueue(db: Querier, userId: string) {
   // Dedupe by item GROUP — the same product bought across several receipts (over a long backfill)
   // otherwise shows up many times. Group by canonical id (or the raw text when unmatched) and keep the

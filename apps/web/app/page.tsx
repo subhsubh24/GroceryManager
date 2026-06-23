@@ -97,7 +97,10 @@ async function loadHomeData(): Promise<HomeData> {
         tasteSet: signals.some((s) => TASTE_KINDS.some((k) => s.topic.startsWith(k))),
         hasPantry: pantry.length > 0,
         hasCooked: cookedAt.length > 0,
-        dismissed: signals.some((s) => s.topic === DISMISSED_TOPIC),
+        // Treat finishing onboarding as dismissing the checklist too — otherwise it lingers showing a
+        // half-done state (e.g. taste "not done") right after setup, which reads as a bug.
+        dismissed:
+          signals.some((s) => s.topic === DISMISSED_TOPIC) || signals.some((s) => s.topic === "onboarded"),
       },
     };
   } catch {

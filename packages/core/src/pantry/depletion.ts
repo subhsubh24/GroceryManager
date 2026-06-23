@@ -35,6 +35,13 @@ export interface DepletionInput {
    * item without pretending it was just bought. Omit → freshness is measured from the purchase alone.
    */
   lastConfirmedAt?: Date | null;
+  /**
+   * Grace days past shelf life before we CONFIDENTLY call a perishable `expired_likely`. Inside this
+   * window the item isn't auto-expired — it's still in stock but flags as "expiring soon" (use it up),
+   * so we review rather than assume. Only well past shelf life (≈3–4 weeks for short-lived foods) does
+   * it become a definite expiry.
+   */
+  graceDays?: number;
   /** Optional reorder point (base units) used to flag `low`. */
   reorderPointQty?: number | null;
   /** Confidence of the last known event/source (PLAN §6). */
@@ -94,6 +101,7 @@ export function estimateOnHand(input: DepletionInput): DepletionResult {
     shelfLifeDays = null,
     lastPurchaseAt = null,
     lastConfirmedAt = null,
+    graceDays = 14,
     reorderPointQty = null,
     baseConfidence = 0.85,
     tauDays = 30,
@@ -107,17 +115,19 @@ export function estimateOnHand(input: DepletionInput): DepletionResult {
 
   const days = Math.max(0, (asOf.getTime() - lastEventAt.getTime()) / DAY_MS);
 
-  // Spoilage ceiling: a perishable can't outlive its shelf life regardless of cadence. Measured from
-  // the later of last purchase or last confirmation — confirming "still have it" re-grounds freshness.
+  // Freshness clock: the later of last purchase or last confirmation — confirming "still have it"
+  // re-grounds it. A perishable's shelf life dates from here.
   const freshFrom =
     lastConfirmedAt && (!lastPurchaseAt || lastConfirmedAt.getTime() > lastPurchaseAt.getTime())
       ? lastConfirmedAt
       : lastPurchaseAt;
-  const expired =
-    perishable &&
-    shelfLifeDays != null &&
-    freshFrom != null &&
-    (asOf.getTime() - freshFrom.getTime()) / DAY_MS > shelfLifeDays;
+  const ageDays =
+    perishable && shelfLifeDays != null && freshFrom != null
+      ? (asOf.getTime() - freshFrom.getTime()) / DAY_MS
+      : null;
+  // Confident expiry ONLY when well past shelf life (+ grace). Inside the grace window we don't
+  // assume — the item stays in stock and surfaces as "expiring soon" (use it up) instead.
+  const expired = ageDays != null && shelfLifeDays != null && ageDays > shelfLifeDays + graceDays;
 
   const inferred = ratePerDay && ratePerDay > 0 ? ratePerDay * days : 0;
   const onHand = expired ? 0 : Math.max(0, onHandAtLast - inferred);
@@ -129,10 +139,22 @@ export function estimateOnHand(input: DepletionInput): DepletionResult {
   else if (reorderPointQty != null && onHand <= reorderPointQty) status = "low";
   else status = "in_stock";
 
-  const estimatedRunOutAt =
+  // Run-out = whichever comes first: consumption emptying it, or a perishable reaching its shelf life.
+  // The spoil date gives perishables a real "expiring soon" signal even with no consumption history.
+  const spoilAt =
+    perishable && shelfLifeDays != null && freshFrom != null
+      ? new Date(freshFrom.getTime() + shelfLifeDays * DAY_MS)
+      : null;
+  const consumeRunOut =
     ratePerDay && ratePerDay > 0 && onHandAtLast > 0
       ? new Date(lastEventAt.getTime() + (onHandAtLast / ratePerDay) * DAY_MS)
       : null;
+  const estimatedRunOutAt =
+    consumeRunOut && spoilAt
+      ? spoilAt.getTime() < consumeRunOut.getTime()
+        ? spoilAt
+        : consumeRunOut
+      : (consumeRunOut ?? spoilAt);
 
   return {
     baseQtyOnHand: onHand,

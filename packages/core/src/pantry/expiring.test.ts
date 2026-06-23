@@ -45,6 +45,13 @@ describe("selectExpiringSoon", () => {
     expect(all).toContain("soap");
   });
 
+  it("excludeExpired drops confidently-expired items (for 'use it up')", () => {
+    const got = selectExpiringSoon(rows, { now, domain: "grocery", excludeExpired: true });
+    const ids = got.map((g) => g.canonicalItemId);
+    expect(ids).toContain("spinach"); // still usable, runs out soon
+    expect(ids).not.toContain("milk"); // expired → goes to review, not "use it up"
+  });
+
   it("honors a custom withinDays window", () => {
     const tight = selectExpiringSoon(rows, { now, withinDays: 1, domain: "grocery" }).map((g) => g.canonicalItemId);
     expect(tight).not.toContain("spinach"); // 2d > 1d window
