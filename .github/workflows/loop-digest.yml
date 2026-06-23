@@ -1,0 +1,75 @@
+name: Loop digest email
+
+# Daily email of what the autonomous improvement loop did in the last 24h, sent from your own Gmail
+# via SMTP. Dormant until three repo secrets are set — until then the send step skips cleanly:
+#   MAIL_USERNAME  your Gmail address (also the "from")
+#   MAIL_PASSWORD  a Gmail App Password (NOT your login password) — myaccount.google.com → Security
+#   MAIL_TO        where to send (can be the same Gmail)
+# Once these exist, the cloud "Daily loop digest" routine can be disabled to avoid double emails.
+
+on:
+  schedule:
+    - cron: "0 13 * * *" # 13:00 UTC ≈ 8 AM America/Chicago
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compose digest
+        id: compose
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SINCE=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)
+          BR=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)
+          PRS=$(gh pr list --state merged --search "merged:>=$SINCE" --json number,title,url \
+                  --jq '.[] | "- #\(.number) \(.title) — \(.url)"' 2>/dev/null || true)
+          ISSUES=$(gh issue list --state all --search "created:>=$SINCE" --json number,title,url,state \
+                  --jq '.[] | "- #\(.number) [\(.state)] \(.title) — \(.url)"' 2>/dev/null || true)
+          COMMITS=$(git log --since="24 hours ago" --pretty="- %h %s" "origin/$BR" 2>/dev/null || true)
+          {
+            echo "GroceryManager loop — daily digest ($(date -u +%Y-%m-%d))"
+            echo
+            echo "Merged PRs (last 24h):"
+            [ -n "$PRS" ] && echo "$PRS" || echo "- none"
+            echo
+            echo "Issues opened/closed (last 24h):"
+            [ -n "$ISSUES" ] && echo "$ISSUES" || echo "- none"
+            echo
+            echo "Commits on $BR (last 24h):"
+            [ -n "$COMMITS" ] && echo "$COMMITS" || echo "- none"
+            echo
+            echo "— Autonomous loop digest. https://github.com/subhsubh24/GroceryManager"
+          } > digest.txt
+          cat digest.txt
+          {
+            echo "body<<DIGEST_EOF"
+            cat digest.txt
+            echo "DIGEST_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Email digest (skips if SMTP secrets are not set)
+        if: ${{ secrets.MAIL_PASSWORD != '' }}
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: GroceryManager Loop <${{ secrets.MAIL_USERNAME }}>
+          to: ${{ secrets.MAIL_TO }}
+          subject: GroceryManager loop — daily digest
+          body: ${{ steps.compose.outputs.body }}
+
+      - name: Note when SMTP is not configured
+        if: ${{ secrets.MAIL_PASSWORD == '' }}
+        run: echo "MAIL_* secrets not set — digest composed but not emailed. Add MAIL_USERNAME/MAIL_PASSWORD/MAIL_TO to enable."
