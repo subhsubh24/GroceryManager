@@ -4,6 +4,26 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-23 — fix(use-it-up): apply user diet/allergen prefs to recipe ranking
+
+**What:** `use-it-up/page.tsx` called `rankRecipes` with no `prefs`, silently ignoring the
+user's allergens, diet exclusions (vegan, dairy-free, gluten-free…), dislikes, and cuisine
+affinity when suggesting expiry-rescue recipes. Fixed by loading `preferenceSignals` inside
+the existing `withTenant` tx (parallel with pantry + waste reads), projecting the user model,
+deriving diet keyword exclusions, and passing the full `prefs` object — exactly mirroring the
+already-correct `recipes/page.tsx`.
+
+**Why:** A vegan or allergen-restricted user could be shown unsafe recipes on the page they
+act on under time pressure. Known gap called out in LOOP_MEMORY. Category: correctness / trust.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/16
+
+**Gate:** typecheck ✓ · 442 core tests ✓ · next build ✓ · no missing-export warnings ✓
+
+**Reviews:** Reviewer A (correctness & safety) APPROVE · Reviewer B (quality & value) APPROVE
+
+---
+
 ## 2026-06-23 — fix(recipe): plant-based compounds wrongly excluded for vegan/dairy-free users
 
 **What:** `rankRecipes` hard-excludes recipes whose ingredients match diet-derived keywords

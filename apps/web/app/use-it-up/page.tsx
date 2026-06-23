@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
-import { getDb, getPantryView, loadWasteEvents, withTenant } from "@gm/db";
+import { getDb, getPantryView, loadPreferenceSignals, loadWasteEvents, withTenant } from "@gm/db";
 import { recordWaste, selectExpiringSoon, summarizeWaste } from "@gm/core/pantry";
+import { dietExclusions, projectUserModel } from "@gm/core/personalization";
 import { currentUserId } from "@/app/lib/tenant";
 import { titleCase } from "@/app/lib/format";
 import { PageHeader } from "@/app/components/page-header";
@@ -33,9 +34,15 @@ async function load() {
     const userId = await currentUserId();
     if (!userId) return { ready: false as const, error: null as string | null };
 
-    const [pantry, wasteEvents] = await withTenant(getDb(), userId, (tx) =>
-      Promise.all([getPantryView(tx, userId), loadWasteEvents(tx, userId, 30)]),
+    const [pantry, wasteEvents, signals] = await withTenant(getDb(), userId, (tx) =>
+      Promise.all([
+        getPantryView(tx, userId),
+        loadWasteEvents(tx, userId, 30),
+        loadPreferenceSignals(tx, userId),
+      ]),
     );
+    const model = projectUserModel(signals);
+    const exclusions = dietExclusions(model.diets);
     const waste = summarizeWaste(wasteEvents);
     const expiring = selectExpiringSoon(pantry, { domain: "grocery", withinDays: 5, excludeExpired: true });
 
@@ -78,9 +85,17 @@ async function load() {
         );
       });
       // Heavily weight expiring usage; only show recipes that actually rescue something.
-      recipes = rankRecipes(annotated, { limit: 6, weights: { expiring: 1 } }).filter(
-        (r) => r.usesExpiring > 0,
-      );
+      recipes = rankRecipes(annotated, {
+        limit: 6,
+        weights: { expiring: 1 },
+        prefs: {
+          allergens: model.allergens,
+          dietKeywords: exclusions,
+          dislikes: model.dislikes,
+          loves: model.loves,
+          cuisineAffinity: model.cuisineAffinity,
+        },
+      }).filter((r) => r.usesExpiring > 0);
     }
 
     return {
