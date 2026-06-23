@@ -1,10 +1,9 @@
 "use client";
 import { useActionState } from "react";
-import {
-  analyzeAndIngestReceipt,
-  initialReceiptState,
-  type AnalyzeReceiptState,
-} from "./actions";
+import { analyzeAndIngestReceipt, type AnalyzeReceiptState } from "./actions";
+
+// Defined here (not in actions.ts) — a "use server" file may only export async functions.
+const initialReceiptState: AnalyzeReceiptState = { status: "idle" };
 
 /**
  * Snap/upload a paper or email receipt — mirrors the fridge-scan uploader: one file input (camera on

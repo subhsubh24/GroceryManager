@@ -26,8 +26,6 @@ export type AnalyzeReceiptState =
   | { status: "error"; message: string }
   | { status: "ready"; message: string; addedCount: number; needsReview: number };
 
-const initial: AnalyzeReceiptState = { status: "idle" };
-
 const plural = (n: number) => (n === 1 ? "" : "s");
 
 /** Map a raw ingest/LLM error to a calm, actionable line — quota is the common one (free-tier keys). */
@@ -105,5 +103,3 @@ export async function analyzeAndIngestReceipt(
     return { status: "error", message: friendlyError(e instanceof Error ? e.message : String(e)) };
   }
 }
-
-export { initial as initialReceiptState };

@@ -120,6 +120,7 @@ export default async function RecipesPage({
 
   const tab = (h: string, label: string, active: boolean, cap = false) => (
     <a
+      key={h}
       href={h}
       className={`tab ${cap ? "capitalize " : ""}${active ? "tab-active" : "tab-idle"}`}
     >
@@ -230,11 +231,12 @@ export default async function RecipesPage({
                 </a>
                 {r.missing.length > 0 && (
                   <form action={addNamesToListAction}>
-                    {r.missing.map((m) => (
+                    {/* dedupe — a recipe can list the same missing item twice (would collide on key + double-add) */}
+                    {[...new Set(r.missing)].map((m) => (
                       <input key={m} type="hidden" name="name" value={m} />
                     ))}
                     <button type="submit" className="text-xs font-medium text-brand-700">
-                      + Add {r.missing.length} missing to list
+                      + Add {new Set(r.missing).size} missing to list
                     </button>
                   </form>
                 )}
