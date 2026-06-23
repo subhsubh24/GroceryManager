@@ -13,7 +13,10 @@ describe("parseMeasure", () => {
     expect(parseMeasure("1/2 tsp")).toEqual({ qty: 0.5, unit: "tsp" });
     expect(parseMeasure("½ cup")).toEqual({ qty: 0.5, unit: "cup" });
     expect(parseMeasure("2")).toEqual({ qty: 2, unit: null });
-    expect(parseMeasure("1-2 tbsp")).toEqual({ qty: 1, unit: "tbsp" }); // low end of a range
+    expect(parseMeasure("1-2 tbsp")).toEqual({ qty: 1, unit: "tbsp" }); // low end of integer range
+    expect(parseMeasure("1/2 - 3/4 cup")).toEqual({ qty: 0.5, unit: "cup" }); // low end of fractional range
+    expect(parseMeasure("½ - 3/4 cup")).toEqual({ qty: 0.5, unit: "cup" }); // unicode fraction + fractional range
+    expect(parseMeasure("1 1/2 - 2 1/4 cups")).toEqual({ qty: 1.5, unit: "cup" }); // mixed-number range
   });
 
   it("returns null for non-quantities", () => {
