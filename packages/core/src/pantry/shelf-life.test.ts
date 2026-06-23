@@ -44,6 +44,18 @@ describe("estimateShelfLife", () => {
     expect(w.shelfLifePantryDays).toBeNull();
   });
 
+  it("pads (plural) and specific singular pad items → personal_care (not misclassified as grocery)", () => {
+    expect(estimateShelfLife("overnight pads").domain).toBe("personal_care");
+    expect(estimateShelfLife("heating pad").domain).toBe("personal_care");
+    expect(estimateShelfLife("nursing pad").domain).toBe("personal_care");
+  });
+
+  it("pad thai sauce/noodles → grocery, NOT personal_care ('pad ' false-positive)", () => {
+    expect(estimateShelfLife("pad thai sauce").domain).toBe("grocery");
+    expect(estimateShelfLife("pad thai noodles").domain).toBe("grocery");
+    expect(estimateShelfLife("pad thai kit").domain).toBe("grocery");
+  });
+
   it("cleaning supplies → household, shelf-stable", () => {
     const d = estimateShelfLife("laundry detergent");
     expect(d.domain).toBe("household");

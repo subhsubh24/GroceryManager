@@ -41,7 +41,7 @@ const RULES: Rule[] = [
     keywords: [
       "shampoo", "conditioner", "soap", "body wash", "toothpaste", "deodorant", "lotion", "moisturizer",
       "sunscreen", "razor", "shave", "floss", "makeup", "cosmetic", "skincare", "serum", "cleanser",
-      "tampon", "pad ", "diaper", "wipe",
+      "tampon", " pads ", "heating pad", "nursing pad", "breast pad", "cotton pad", "diaper", "wipe",
     ],
     domain: "personal_care",
     perishability: "shelf_stable",
