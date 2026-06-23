@@ -17,6 +17,9 @@ describe("parseMeasure", () => {
     expect(parseMeasure("1/2 - 3/4 cup")).toEqual({ qty: 0.5, unit: "cup" }); // low end of fractional range
     expect(parseMeasure("½ - 3/4 cup")).toEqual({ qty: 0.5, unit: "cup" }); // unicode fraction + fractional range
     expect(parseMeasure("1 1/2 - 2 1/4 cups")).toEqual({ qty: 1.5, unit: "cup" }); // mixed-number range
+    expect(parseMeasure("1½ cups")).toEqual({ qty: 1.5, unit: "cup" }); // mixed number + unicode fraction (no space)
+    expect(parseMeasure("1 ½ cups")).toEqual({ qty: 1.5, unit: "cup" }); // mixed number + unicode fraction (with space)
+    expect(parseMeasure("2¼ tsp")).toEqual({ qty: 2.25, unit: "tsp" }); // mixed number + unicode fraction
   });
 
   it("returns null for non-quantities", () => {

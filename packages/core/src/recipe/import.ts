@@ -173,7 +173,7 @@ export function buildImportImagePrompt(): string {
   );
 }
 
-const LEADING_QTY = /^\s*(?:\d+\s+\d+\/\d+|\d+\/\d+|[½⅓⅔¼¾⅛⅜⅝⅞]|\d+(?:[.,]\d+)?)\s*/;
+const LEADING_QTY = /^\s*(?:\d+\s+\d+\/\d+|\d+\s*[½⅓⅔¼¾⅛⅜⅝⅞]|\d+\/\d+|[½⅓⅔¼¾⅛⅜⅝⅞]|\d+(?:[.,]\d+)?)\s*/;
 const LEADING_UNIT =
   /^(?:lbs?|pounds?|oz|ounces?|kgs?|g|grams?|cups?|tbsps?|tsps?|tablespoons?|teaspoons?|cloves?|cans?|bottles?|bunch(?:es)?|sticks?|heads?|slices?|mls?|l|liters?|litres?|packs?|packets?|jars?|bags?|boxes?|pinch(?:es)?|dash(?:es)?|sprigs?|handful)\b\.?\s*/i;
 
