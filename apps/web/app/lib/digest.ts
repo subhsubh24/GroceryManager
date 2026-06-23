@@ -12,12 +12,15 @@ export async function buildDigestForUser(
   tx: Querier,
   userId: string,
   now = new Date(),
+  // Optional pre-loaded pantry — pass it when the caller already has the pantry view (e.g. the home
+  // page) so we don't run getPantryView twice on the same request.
+  pantry?: Awaited<ReturnType<typeof getPantryView>>,
 ): Promise<DigestSummary> {
-  const pantry = await getPantryView(tx, userId);
+  const p = pantry ?? (await getPantryView(tx, userId));
   const reorder = await loadReorderInputs(tx, userId);
   const wrapped = await loadWrappedInputs(tx, userId, 7);
 
-  const expiring = selectExpiringSoon(pantry, { domain: "grocery", withinDays: 5 }).map((e) => ({
+  const expiring = selectExpiringSoon(p, { domain: "grocery", withinDays: 5 }).map((e) => ({
     name: e.name,
     reason: e.reason,
     daysLeft: e.daysLeft,

@@ -75,13 +75,18 @@ async function loadHomeData(): Promise<HomeData> {
     if (!userId) return EMPTY_HOME_DATA;
     const now = new Date();
 
-    const { signals, pantry, cookedAt, list, digest } = await withTenant(getDb(), userId, async (tx) => ({
-      signals: await loadPreferenceSignals(tx, userId),
-      pantry: await getPantryView(tx, userId),
-      cookedAt: await loadCookedAt(tx, userId),
-      list: await getActiveListView(tx, userId),
-      digest: await buildDigestForUser(tx, userId, now),
-    }));
+    const { signals, pantry, cookedAt, list, digest } = await withTenant(getDb(), userId, async (tx) => {
+      // Load the pantry once and hand it to the digest (it would otherwise re-query it) — this is the
+      // most-hit page, so a duplicate getPantryView per load is worth removing.
+      const pantry = await getPantryView(tx, userId);
+      return {
+        signals: await loadPreferenceSignals(tx, userId),
+        pantry,
+        cookedAt: await loadCookedAt(tx, userId),
+        list: await getActiveListView(tx, userId),
+        digest: await buildDigestForUser(tx, userId, now, pantry),
+      };
+    });
 
     return {
       streak: currentStreak(cookedAt, now),

@@ -49,11 +49,14 @@ export async function analyzeScan(_prev: AnalyzeState, formData: FormData): Prom
       })),
     );
 
-    const detections = await detectPantryItems(images, { location });
-
     const userId = await currentUserId();
     if (!userId) return { status: "error", message: "No user context." };
-    const pantry = await withTenant(getDb(), userId, (tx) => getPantryView(tx, userId));
+
+    // The vision call is the slow part; the pantry read is independent of it, so run them together.
+    const [detections, pantry] = await Promise.all([
+      detectPantryItems(images, { location }),
+      withTenant(getDb(), userId, (tx) => getPantryView(tx, userId)),
+    ]);
     const pantryIds = new Set(pantry.map((p) => p.canonicalItemId));
 
     // Semantic pre-resolution: map each detected label → an existing canonical via the cascade, so a
