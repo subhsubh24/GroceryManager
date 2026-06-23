@@ -46,13 +46,20 @@ export function ReviewList({ items }: { items: ReviewItem[] }) {
     });
   }
 
+  const choosing = selected.size > 0;
+
   return (
     <div>
-      {/* Bulk action bar */}
-      <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2 shadow-xs">
+      {/* Bulk action bar — sticky so the primary action stays thumb-reachable while you scroll a long
+          list ticking items; a soft brand ring marks "selection mode" once anything is chosen. */}
+      <div
+        className={`sticky top-3 z-20 mb-3 flex flex-wrap items-center gap-3 rounded-xl border bg-surface px-3 py-2 shadow-sm transition-colors ${
+          choosing ? "border-brand-200 ring-1 ring-brand-200" : "border-line"
+        }`}
+      >
         <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-ink-700">
           <input type="checkbox" checked={allSelected} onChange={toggleAll} className="control-accent" />
-          {selected.size > 0 ? `${selected.size} selected` : "Select all"}
+          {choosing ? `${selected.size} selected` : "Select all"}
         </label>
         <div className="ml-auto flex items-center gap-2">
           <button
