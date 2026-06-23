@@ -14,3 +14,8 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   missing-export grep). `next build` needs `NODE_ENV=production` + a dummy `DATABASE_URL`.
 - **Default branch is `claude/busy-turing-XkEQX`** (protected, requires the `verify` check). Branch
   feature work off it; PRs auto-merge once `verify` is green + both reviewers approve.
+- **2026-06-23 — Two lineages exist: `claude/busy-turing-XkEQX` (our default) and `main`.** These
+  branches diverged and do not share a common ancestor in this clone. Fixes or features committed
+  to `main` (e.g. via PRs targeting main) are NOT automatically on our default branch, and vice
+  versa. Always `git show HEAD:path/to/file` or `grep` the actual working tree before assuming a
+  fix is present. Never assume a fix from a PR targeting `main` has landed here.
