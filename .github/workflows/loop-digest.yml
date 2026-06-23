@@ -23,6 +23,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Decide whether SMTP is configured WITHOUT using `secrets` in an `if:` (not allowed there).
+      - name: Check SMTP config
+        id: guard
+        env:
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+        run: |
+          if [ -n "$MAIL_PASSWORD" ]; then
+            echo "send=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "send=false" >> "$GITHUB_OUTPUT"
+            echo "MAIL_* secrets not set — digest will be composed but not emailed."
+          fi
+
       - name: Compose digest
         id: compose
         env:
@@ -56,8 +69,8 @@ jobs:
             echo "DIGEST_EOF"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Email digest (skips if SMTP secrets are not set)
-        if: ${{ secrets.MAIL_PASSWORD != '' }}
+      - name: Email digest
+        if: steps.guard.outputs.send == 'true'
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -69,7 +82,3 @@ jobs:
           to: ${{ secrets.MAIL_TO }}
           subject: GroceryManager loop — daily digest
           body: ${{ steps.compose.outputs.body }}
-
-      - name: Note when SMTP is not configured
-        if: ${{ secrets.MAIL_PASSWORD == '' }}
-        run: echo "MAIL_* secrets not set — digest composed but not emailed. Add MAIL_USERNAME/MAIL_PASSWORD/MAIL_TO to enable."
