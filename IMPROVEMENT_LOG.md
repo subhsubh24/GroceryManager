@@ -594,3 +594,32 @@ initialized state.
 
 **Reviews:** Dual APPROVE (Reviewer A initially flagged false positives due to knowledge cutoff —
 Expo adopted unified SDK-matching version numbers in SDK 56; TypeScript 6 released in 2026)
+
+---
+
+## 2026-06-24 — feat(brand+analytics): brand kit, launch content drafts, Plausible analytics scaffold
+
+**What:** Three Track E deliverables in one PR:
+1. `docs/brand/BRAND_KIT.md` — comprehensive brand guide: working identity mark (Leaf tile on
+   brand-solid with Hanken Grotesk wordmark), per-candidate mark directions (Pantri/Mise/Larder),
+   full color token table sourced from `tailwind.config.ts` and `globals.css`, typography system,
+   lucide-react icon rules, design system class catalogue, voice/tone guide with concrete examples.
+2. `docs/brand/CONTENT_DRAFTS.md` — full staged launch content: 4-email drip sequence (waitlist
+   confirmation → launch day → D+7 onboarding nudge → D+30 upgrade nudge), social posts for
+   Twitter/X + Instagram + LinkedIn, App Store/Play Store promotional copy (within char limits),
+   hashtag bank. All clearly marked STAGED with [brackets] for owner-fill before publishing.
+3. `apps/web/app/layout.tsx` — Plausible analytics script (GDPR-compliant, cookie-free) gated on
+   `NEXT_PUBLIC_PLAUSIBLE_DOMAIN`; zero impact until owner sets the env var.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/50
+
+**Gate:** `pnpm -r run typecheck` ✓ · `pnpm --filter web build` ✓ (no missing-export warnings)
+
+**Reviews:** Reviewer A REQUEST CHANGES (10 blockers fixed: CSS variable prefix `--color-brand-*`
+→ `--brand-*`; three wrong brand hex values; cream/surface token descriptions swapped; nonexistent
+`ok` token → `success`/`success-soft`/`success-ink`; accent ramp feature-area assignments were
+wrong (berry/grape are legacy/back-compat); `.page-title` weight 700→600, size 1.875rem→1.85rem;
+`.section-title` not uppercase; iOS promo char count 126→127; `defer` prop → `strategy="afterInteractive"`).
+Reviewer B APPROVE (no blockers; non-blocking suggestions only).
+
+**ROADMAP ticks:** Track E — Brand kit ✓, Content drafts ✓, Analytics ✓
