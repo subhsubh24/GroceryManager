@@ -1,34 +1,33 @@
-# @gm/mobile — GroceryManager native app (skeleton)
+# @gm/mobile — GroceryManager native app (Expo)
 
-> **Status: non-functional skeleton.** This directory sketches the intended native (Expo) app and
-> proves the architecture (UI here, engines reused from `packages/core`). It is **not installed or
-> built** by the monorepo — it's deliberately **excluded from the pnpm workspace** (`!apps/mobile` in
-> `pnpm-workspace.yaml`) so it can never affect the root `pnpm install --frozen-lockfile` or CI. The
-> Expo/React-Native dependencies are intentionally **not** in `package.json`; a developer initializes
-> them (below) when picking this up.
+> **Status: typecheckable skeleton.** The directory has real Expo 56 deps and a working `typecheck`
+> script. Run the dev app with `cd apps/mobile && npm install && npx expo start`. Full feature parity
+> with `apps/web` is the goal (see ROADMAP Track B) — the screens below are placeholders.
 
-## Why this exists
-The monorepo was structured from day one so the UI is replaceable but the logic isn't: all business
-logic lives in framework-agnostic `packages/core` (ingestion, pantry, reorder, recipe, personalization,
-…). The web app (`apps/web`) is one consumer; this is the start of a second (native) consumer that
-reuses the exact same engines — see `app/index.tsx`, which imports `scaleMeasure` from
-`@gm/core/recipe` (the same helper the web Cook Mode uses).
+## Architecture
 
-## Make it real
+All business logic lives in framework-agnostic `packages/core` — the web app is one consumer; this
+native app is a second. See `app/index.tsx`, which imports `scaleMeasure` from `@gm/core/recipe`
+(the same helper the web Cook Mode uses) to prove the engines are directly reusable in native without
+any reimplementation.
+
+`@gm/core/*` resolves via tsconfig path aliases (`../../packages/core/src/*`) so no pnpm workspace
+link is needed — the mobile app remains excluded from the root `pnpm-workspace.yaml`.
+
+## Getting started
+
 ```bash
-# from apps/mobile/
-npx create-expo-app@latest . --template tabs   # or wire expo-router into this skeleton
-pnpm add expo expo-router react-native react react-dom
-pnpm add -D typescript @types/react
-# add "@gm/core": "workspace:*" to dependencies and remove the "!apps/mobile" exclusion in
-# pnpm-workspace.yaml so the workspace links packages/core, then:
-npx expo start
+cd apps/mobile
+npm install                  # install Expo 56 deps (once)
+npm run typecheck            # tsc --noEmit
+npx expo start               # start Metro bundler
 ```
-Then replace the placeholder screens (`app/index.tsx`, `app/pantry.tsx`) with real ones that call the
-GroceryManager API and render `packages/core` outputs natively.
 
 ## Layout
+
 - `app/_layout.tsx` — expo-router root stack (brand-themed header).
-- `app/index.tsx` — Home; demonstrates `packages/core` reuse.
-- `app/pantry.tsx` — placeholder pantry screen.
-- `app.json` — Expo config.
+- `app/index.tsx` — Home screen; demonstrates `@gm/core` reuse via `scaleMeasure`.
+- `app/pantry.tsx` — Placeholder pantry screen (wire to the API + `packages/core/pantry`).
+- `app.json` — Expo config (SDK 56, typed routes, portrait).
+- `tsconfig.json` — extends `expo/tsconfig.base`, strict, with `@gm/core/*` path alias.
+- `babel.config.js` — standard `babel-preset-expo` config.
