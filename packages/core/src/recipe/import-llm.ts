@@ -70,6 +70,8 @@ export async function importRecipe(
       throw new Error("That URL isn't allowed — paste a public http(s) recipe link.");
     }
     const res = await fetchImpl(url, {
+      redirect: "error", // SSRF: never follow redirects — isPublicHttpUrl guards the initial host but not redirect targets
+      signal: AbortSignal.timeout(10_000),
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; GroceryManager/1.0; +recipe-import)",
         Accept: "text/html",
