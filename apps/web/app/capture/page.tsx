@@ -78,7 +78,7 @@ export default async function CapturePage({
 
       {!data.ready && (
         <p className="notice-warn">
-          Couldn&apos;t reach the database. {data.error?.slice(0, 120)}
+          Couldn&apos;t reach the database.
         </p>
       )}
 

@@ -180,7 +180,7 @@ export default async function PlanPage({
 
       {!data.ready && (
         <p className="notice-warn mb-4">
-          Couldn&apos;t build a plan (DB or recipe provider). {data.error?.slice(0, 120)}
+          Couldn&apos;t build a plan (DB or recipe provider).
         </p>
       )}
 

@@ -64,7 +64,7 @@ export default async function WrappedPage() {
 
       {!data.ready && (
         <p className="notice-warn mt-6">
-          Couldn&apos;t reach the database. {data.error?.slice(0, 120)}
+          Couldn&apos;t reach the database.
         </p>
       )}
 
