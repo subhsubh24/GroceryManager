@@ -25,8 +25,9 @@ a fuss. Sentences are short; microcopy is active ("Scanned 3 new items", "You're
 oats"). Warm but never gushing — no exclamation marks in UI strings, light use in marketing.
 
 ### Why this name wins
-"Pantry" is the single most searched term in the grocery-app category and Pantri claims it with a
-modern, app-native spelling that is immediately understood by any English speaker.
+"Pantry" is among the highest-intent search terms in the grocery-app category (verify in App Store
+Connect Search Ads before committing) and Pantri claims it with a modern, app-native spelling that
+is immediately understood by any English speaker.
 
 ### Why this name might not win
 The -i respelling reads as a trend-following convention (Fiverr, Tumblr) that can feel dated in a

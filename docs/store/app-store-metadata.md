@@ -16,10 +16,6 @@ All character counts are noted. Fields marked [INDEXED] are used by Apple's sear
 > 9 extra characters for a keyword in the title slot.
 
 ### Subtitle [INDEXED]
-`Auto-track what's in your fridge`
-(32 chars — trim to 30 before submission)
-
-Revised to 30 chars:
 `Track fridge, plan meals, save`
 (30 chars)
 
@@ -99,7 +95,7 @@ MEAL PLANNING
 Plan the week in a few taps. The app checks your pantry, fills gaps intelligently, and builds a shopping list of only what you need — nothing extra, nothing forgotten.
 
 SHOPPING LIST
-A living list that knows your pantry. Recurring items appear automatically when you're running low. Add anything manually. Share with a partner or housemate in real time.
+A living list that knows your pantry. Recurring items appear automatically when you're running low. Add anything manually. Household sharing is available for households using the shared list feature.
 
 COOKBOOK & RECIPE REMIX
 Save recipes from anywhere. The app adapts them to what you have — swapping ingredients, scaling portions, and flagging what to buy. Your cookbook gets smarter the more you cook.
@@ -125,7 +121,7 @@ Your pantry data stays private. GroceryManager does not sell your data or use it
 
 ----- SUBSCRIPTION -----
 
-GroceryManager is free to download. A subscription unlocks unlimited receipt imports, fridge scanning, meal planning, and all smart features.
+GroceryManager is free to download. The core pantry, cook, and shopping-list features are free. A subscription unlocks power features: automatic Gmail receipt import, AI weekly meal planning, unlimited recipe remix, and Grocery Wrapped+.
 
 • Monthly: $4.99/month
 • Annual: $39.99/year (save 33%)
@@ -138,6 +134,33 @@ Questions? Visit https://grocerymanager.app/support
 ```
 
 (Character count: ~3 410 — within 4 000 limit. Room to add localisations or expand features.)
+
+---
+
+## Screenshots & App Preview
+
+Apple requires 2–10 screenshots per device family. Required sizes for v1:
+
+| Device | Canvas | Priority |
+|---|---|---|
+| iPhone 6.9" (15 Pro Max) | 1320 × 2868 px | **Required** |
+| iPhone 6.7" (14 Plus) | 1284 × 2778 px | Required |
+| iPad 13" (M4) | 2064 × 2752 px | Required if app supports iPad |
+
+### Recommended screenshot sequence (5 screens):
+1. **Home / Pantry** — "Your pantry, always current" — show the pantry list with depletion chips
+2. **Cook Tonight** — "Cook what you have, tonight" — show 3 recipe suggestions from pantry
+3. **Fridge Scan** — "Scan your fridge in seconds" — show the camera scan UI with items found
+4. **Meal Planning** — "Plan the week, fill the gaps" — show the weekly plan + smart list
+5. **Spend / Wrapped** — "See where your food budget goes" — show the spend insights chart
+
+### App icon
+Source: `/apps/web/public/icons/icon.svg` (512 × 512 SVG, garden-green on light background)
+Export as PNG-32 at 1024 × 1024 px for App Store Connect upload (no alpha, full-bleed square —
+Apple adds rounded corners automatically).
+
+### App Preview video (optional for v1)
+15–30 second screen recording of the core loop: snap a receipt → watch pantry update → cook tonight suggestion appears. Capture on an iPhone 15 Pro at 1290 × 2796 px. No voiceover required; add captions if used.
 
 ---
 
