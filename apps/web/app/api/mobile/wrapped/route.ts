@@ -1,0 +1,22 @@
+import { getDb, loadWrappedInputs, withTenant } from "@gm/db";
+import { buildWrapped } from "@gm/core/spend";
+import { verifyMobileToken } from "../_lib";
+
+export const runtime = "nodejs";
+
+export async function GET(req: Request) {
+  const auth = req.headers.get("Authorization");
+  const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
+  if (!token) return Response.json({ error: "Authorization header required" }, { status: 401 });
+  const userId = verifyMobileToken(token);
+  if (!userId) return Response.json({ error: "Invalid or expired token" }, { status: 401 });
+
+  try {
+    const input = await withTenant(getDb(), userId, (tx) => loadWrappedInputs(tx, userId));
+    const stats = buildWrapped(input);
+    return Response.json({ stats });
+  } catch (err) {
+    console.error("[mobile/wrapped]", err);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

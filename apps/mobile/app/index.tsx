@@ -79,6 +79,10 @@ export default function HomeScreen() {
           <Text style={styles.cardLabel}>Cooking stats →</Text>
           <Text style={styles.cardNote}>Streak, weekly activity, totals</Text>
         </Link>
+        <Link href="/wrapped" style={styles.card}>
+          <Text style={styles.cardLabel}>Grocery Wrapped →</Text>
+          <Text style={styles.cardNote}>Your year in food — meals, savings, top recipes</Text>
+        </Link>
         <Link href="/capture" style={styles.card}>
           <Text style={styles.cardLabel}>Quick add →</Text>
           <Text style={styles.cardNote}>Add items to your list</Text>
