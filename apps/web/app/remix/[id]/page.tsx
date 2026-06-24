@@ -1,5 +1,9 @@
+import { redirect } from "next/navigation";
 import { parseAxis, REMIX_AXES, type RemixAxis, type RemixResult } from "@gm/core/recipe";
 import { geminiRemix, suggestRemix } from "@gm/core/recipe/remix-llm";
+import { getDb, loadPreferenceSignals, withTenant } from "@gm/db";
+import { canUse, isPremium } from "@gm/core/billing";
+import { currentUserId } from "@/app/lib/tenant";
 import { loadRecipeAnySource } from "@/app/lib/recipe";
 import { addNamesToListAction } from "@/app/lib/list-actions";
 import { PageHeader } from "@/app/components/page-header";
@@ -15,6 +19,19 @@ const AXIS_LABEL: Record<RemixAxis, string> = {
 };
 
 async function load(id: string, axis: RemixAxis) {
+  // Entitlement check runs outside the main try/catch so a DB error during signal loading
+  // fails closed (a 500) rather than silently bypassing the gate. No-op when billing is off.
+  const billingOn = process.env.FEATURE_BILLING === "1";
+  if (billingOn) {
+    const userId = await currentUserId();
+    if (userId) {
+      const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+      if (!canUse("remix", isPremium(signals), billingOn)) {
+        return { recipe: null, remix: null as RemixResult | null, error: null as string | null, upgradeRequired: true as const };
+      }
+    }
+  }
+
   try {
     const recipe = await loadRecipeAnySource(id);
     if (!recipe) return { recipe: null, remix: null as RemixResult | null, error: null as string | null };
@@ -39,7 +56,9 @@ export default async function RemixPage({
 }) {
   const { id } = await params;
   const axis = parseAxis((await searchParams).axis);
-  const { recipe, remix, error } = await load(id, axis);
+  const result = await load(id, axis);
+  if (result.upgradeRequired) redirect("/upgrade");
+  const { recipe, remix, error } = result;
 
   const replacements = remix?.swaps.map((s) => s.replacement) ?? [];
 

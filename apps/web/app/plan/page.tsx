@@ -17,6 +17,7 @@ import { selectExpiringSoon } from "@gm/core/pantry";
 import { dietExclusions, projectUserModel } from "@gm/core/personalization";
 import { geminiPlanGenerator, planWeek, type PlanCandidate } from "@gm/core/agent";
 import { captureToList } from "@gm/core/capture";
+import { canUse, isPremium } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
 import { CalendarDays, Sparkles, Sprout } from "@/app/components/icons";
@@ -54,6 +55,11 @@ async function load(lowEnergy: boolean) {
       signals: await loadPreferenceSignals(tx, userId),
       budgetCents: await getUserBudgetCents(tx, userId),
     }));
+
+    const billingOn = process.env.FEATURE_BILLING === "1";
+    if (!canUse("plan_week", isPremium(signals), billingOn)) {
+      return { ready: false as const, error: null as string | null, upgradeRequired: true as const };
+    }
 
     const inStock = pantry.filter((p) => p.status === "in_stock" || p.status === "low");
     const expiringNames = selectExpiringSoon(pantry, { domain: "grocery", withinDays: 5, excludeExpired: true }).map((e) => e.name);
@@ -141,6 +147,7 @@ export default async function PlanPage({
 }) {
   const lowEnergy = (await searchParams).energy === "low";
   const data = await load(lowEnergy);
+  if (data.upgradeRequired) redirect("/upgrade");
 
   const tab = (href: string, label: string, active: boolean) => (
     <a
