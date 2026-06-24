@@ -51,18 +51,15 @@ async function loadPantry() {
     const userId = await currentUserId();
     if (!userId)
       return { rows: [], review: [], connected: false, onboarded: true, error: null as string | null };
-    const { rows, cred, review, sources, acq, onboarded } = await withTenant(getDb(), userId, async (tx) => {
-      const rows = await getPantryView(tx, userId);
-      const ids = rows.map((r) => r.canonicalItemId);
-      return {
-        rows,
-        cred: await getGoogleCredential(tx, userId),
-        review: await getReviewQueue(tx, userId),
-        sources: await getLatestSourcesByCanonical(tx, userId, ids),
-        acq: await getLatestAcquisition(tx, userId, ids),
-        onboarded: await isOnboarded(tx, userId),
-      };
-    });
+    const rows = await withTenant(getDb(), userId, (tx) => getPantryView(tx, userId));
+    const ids = rows.map((r) => r.canonicalItemId);
+    const [cred, review, sources, acq, onboarded] = await Promise.all([
+      withTenant(getDb(), userId, (tx) => getGoogleCredential(tx, userId)),
+      withTenant(getDb(), userId, (tx) => getReviewQueue(tx, userId)),
+      withTenant(getDb(), userId, (tx) => getLatestSourcesByCanonical(tx, userId, ids)),
+      withTenant(getDb(), userId, (tx) => getLatestAcquisition(tx, userId, ids)),
+      withTenant(getDb(), userId, (tx) => isOnboarded(tx, userId)),
+    ]);
     // Source = where it most recently came FROM (latest acquisition wins): you typed it ("Added by
     // you"), a scan ("Scanned"), or a receipt (the retailer). userDriven items skip the confidence %
     // — you put them there, so "% sure" is noise.

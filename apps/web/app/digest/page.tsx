@@ -17,11 +17,10 @@ async function load() {
     const userId = await currentUserId();
     if (!userId) return { ready: false as const, error: null as string | null };
     const now = new Date();
-    const [digest, cookedAt] = await withTenant(getDb(), userId, async (tx) => {
-      const d = await buildDigestForUser(tx, userId);
-      const c = await loadCookedAt(tx, userId);
-      return [d, c] as const;
-    });
+    const [digest, cookedAt] = await Promise.all([
+      withTenant(getDb(), userId, (tx) => buildDigestForUser(tx, userId)),
+      withTenant(getDb(), userId, (tx) => loadCookedAt(tx, userId)),
+    ]);
     const cooking = {
       currentStreak: currentStreak(cookedAt, now),
       longestStreak: longestStreak(cookedAt),
