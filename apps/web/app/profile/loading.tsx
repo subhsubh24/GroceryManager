@@ -1,6 +1,6 @@
 export default function ProfileLoading() {
   return (
-    <main className="page">
+    <main className="page-narrow">
       {/* PageHeader placeholder */}
       <div className="h-24 animate-pulse rounded-2xl bg-ink-100" />
 

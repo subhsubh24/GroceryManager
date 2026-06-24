@@ -12,9 +12,9 @@ export default function UseItUpError({
   return (
     <main className="page">
       <PageHeader
-        accent="brand"
+        accent="berry"
         icon={Recycle}
-        eyebrow="Pantry"
+        eyebrow="Reduce waste"
         title="Use it up"
       />
       <div className="card-pad mt-6">
