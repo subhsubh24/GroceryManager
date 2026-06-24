@@ -82,7 +82,9 @@ feature parity with `apps/web`** before submission (owner decision, locked).
       UX, not an iframe — then expand to **parity**: receipts/review, plan-my-week, cookbook,
       discover, remix, spend, Wrapped, onboarding, settings/profile, account deletion, paywall.
       _(Done: home nav ✅ (#62), pantry FlatList + expiry coding ✅ (#62), shopping list ✅ (#68),
-      cookbook/recipes ✅ (#70). Remaining: cook + cook-mode, capture/scan, then parity screens.)_
+      cookbook/recipes browser ✅ (#75: thumbnails + pull-to-refresh + cook-mode nav), cook mode ✅
+      (#75: hero image + ingredient list + step-through Prev/Next/Start-over). Remaining: capture/scan,
+      then parity screens.)_
 - [ ] Push notifications + offline behavior appropriate to native.
 - [ ] Mobile gate green in CI (the graceful-skip `mobile` job starts enforcing once initialized).
 - [ ] EAS build config staged (credentials are Human Core).
