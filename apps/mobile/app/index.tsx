@@ -30,6 +30,10 @@ export default function HomeScreen() {
           <Text style={styles.cardLabel}>Cookbook →</Text>
           <Text style={styles.cardNote}>Your saved recipes</Text>
         </Link>
+        <Link href="/capture" style={styles.card}>
+          <Text style={styles.cardLabel}>Quick add →</Text>
+          <Text style={styles.cardNote}>Add items to your list</Text>
+        </Link>
       </View>
 
       <Pressable style={styles.signOut} onPress={logout}>
