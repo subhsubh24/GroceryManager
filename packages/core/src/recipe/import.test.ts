@@ -77,6 +77,26 @@ describe("extractRecipeJsonLd", () => {
     expect(r!.instructions).toBe("Prep.\nBake.");
   });
 
+  it("handles HowToIngredient objects in recipeIngredient array", () => {
+    const r = extractRecipeJsonLd(
+      page({
+        "@type": "Recipe",
+        name: "Salad",
+        recipeIngredient: [
+          { "@type": "HowToIngredient", name: "1 tsp salt" },
+          "2 cups lettuce",
+          { "@type": "HowToIngredient", text: "olive oil" },
+        ],
+        recipeInstructions: "Mix.",
+      }),
+    );
+    expect(r!.ingredients).toEqual([
+      { name: "1 tsp salt" },
+      { name: "2 cups lettuce" },
+      { name: "olive oil" },
+    ]);
+  });
+
   it("returns null when there's no Recipe node or no name", () => {
     expect(extractRecipeJsonLd(page({ "@type": "WebPage", name: "Not a recipe" }))).toBeNull();
     expect(extractRecipeJsonLd("<html><body>no json-ld here</body></html>")).toBeNull();
@@ -103,6 +123,15 @@ describe("cleanIngredientName", () => {
   it("leaves a plain food name (or unrecognized text) intact", () => {
     expect(cleanIngredientName("olive oil")).toBe("olive oil");
     expect(cleanIngredientName("salt to taste")).toBe("salt to taste");
+  });
+
+  it("strips parentheticals inline with quantity/unit", () => {
+    // qty followed by parenthetical qty then unit: parenthetical stripped, then unit stripped
+    expect(cleanIngredientName("2 (14.5 oz) cans diced tomatoes")).toBe("diced tomatoes");
+    // unit followed by parenthetical: parenthetical stripped after unit
+    expect(cleanIngredientName("1/2 cup (120ml) milk")).toBe("milk");
+    // qty followed by parenthetical then non-unit word
+    expect(cleanIngredientName("3 (400g) packets frozen spinach")).toBe("frozen spinach");
   });
 
   it("does NOT strip a leading unit word when no quantity preceded it (regression)", () => {

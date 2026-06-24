@@ -125,7 +125,11 @@ export function extractRecipeJsonLd(html: string, sourceUrl?: string): ImportedR
   if (!title) return null;
 
   const ingredients = asArray(recipe.recipeIngredient ?? recipe.ingredients)
-    .map((x) => (typeof x === "string" ? x.trim() : ""))
+    .map((x) => {
+      if (typeof x === "string") return x.trim();
+      if (x && typeof x === "object") return (firstString((x as Json).name) ?? firstString((x as Json).text) ?? "").trim();
+      return "";
+    })
     .filter((s) => s.length > 0)
     .map((line) => ({ name: line }));
 
@@ -189,7 +193,9 @@ export function cleanIngredientName(line: string): string {
     s = s.slice(qty[0].length).trimStart();
     // A unit word only counts as a unit when it FOLLOWED a quantity ("3 cloves garlic" → "garlic").
     // Don't strip a leading word from an unquantified name ("gram flour", "cans of tomatoes", "g").
+    s = s.replace(/^\([^)]*\)\s*/, "").trimStart(); // e.g. "2 (14.5 oz) cans diced tomatoes" → after qty strip → "(14.5 oz) cans diced tomatoes"
     s = s.replace(LEADING_UNIT, "").trimStart();
+    s = s.replace(/^\([^)]*\)\s*/, "").trimStart(); // e.g. "1/2 cup (120ml) milk" → after unit strip → "(120ml) milk"
   }
   return s.trim();
 }
