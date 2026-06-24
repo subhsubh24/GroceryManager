@@ -53,7 +53,11 @@ function tokenize(s: string): Set<string> {
   return new Set(
     normalizeIngredientName(s)
       .split(" ")
-      .map((t) => (t.length > 3 && t.endsWith("s") && !t.endsWith("ss") ? t.slice(0, -1) : t))
+      .map((t) => {
+        if (t.length > 4 && t.endsWith("oes")) return t.slice(0, -2); // tomatoes→tomato, potatoes→potato
+        if (t.length > 3 && t.endsWith("s") && !t.endsWith("ss")) return t.slice(0, -1);
+        return t;
+      })
       .filter((t) => t.length > 1 && !STOP.has(t)),
   );
 }
@@ -100,11 +104,15 @@ export function parseMeasure(measure: string | null | undefined): { qty: number;
     qty = qtyToken(m[1]!);
     rest = s.slice(m[0]!.length).trim();
   }
-  if (qty == null || qty <= 0) return null;
+  if (qty == null || !Number.isFinite(qty) || qty <= 0) return null;
 
   rest = rest.replace(/^[-–—]\s*(?:(?:\d+\s*)?[½⅓⅔¼¾⅛⅜⅝⅞]|(?:\d+\s+)?\d+(?:[\/\.]\d+)?)\s*/, ""); // drop the high end of a range ("1-2", "1/2-3/4", "1-1 1/2", "½-¾", "1-1½")
   const unitTok = rest.match(/^([a-z]+)/)?.[1] ?? null;
-  const unit = unitTok ? (unitTok.length > 3 && unitTok.endsWith("s") ? unitTok.slice(0, -1) : unitTok) : null;
+  // Explicit short-plural overrides (3-char units the generic length>3 check misses).
+  const SHORT_PLURAL: Record<string, string> = { lbs: "lb", ozs: "oz", kgs: "kg", mls: "ml" };
+  const unit = unitTok
+    ? (SHORT_PLURAL[unitTok] ?? (unitTok.length > 3 && unitTok.endsWith("s") ? unitTok.slice(0, -1) : unitTok))
+    : null;
   return { qty, unit };
 }
 
