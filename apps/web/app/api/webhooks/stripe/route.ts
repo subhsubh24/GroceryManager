@@ -41,10 +41,13 @@ export async function POST(req: Request) {
   //     return new Response(`Webhook signature verification failed: ${String(err)}`, { status: 400 });
   //   }
   //
-  // Until then, signature verification is skipped (dev/staging only — never expose without secrets).
-  if (env.STRIPE_WEBHOOK_SECRET && sig) {
-    // TODO: wire in Stripe SDK constructEvent here when STRIPE_SECRET_KEY is configured.
-    console.warn("[stripe-webhook] STRIPE_WEBHOOK_SECRET is set but signature verification is not yet wired. Add the Stripe SDK.");
+  // Until then (no Stripe SDK installed), fail-closed when the secret is configured.
+  if (env.STRIPE_WEBHOOK_SECRET) {
+    // Fail-closed: when a webhook secret is configured, reject ALL requests until the Stripe SDK
+    // is installed and `constructEvent` is wired (see the commented block above). Prevents an
+    // accidental production deploy from accepting unauthenticated entitlement writes.
+    // To enable: install `stripe` in apps/web, then uncomment constructEvent above.
+    return new Response("Webhook signature verification not yet wired — add Stripe SDK first.", { status: 400 });
   }
 
   // ---------------------------------------------------------------------------

@@ -57,7 +57,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     trialDays: 7,
     features: [
       "Everything in Premium Monthly",
-      "2 months free vs monthly",
+      "save ~33% vs monthly",
     ],
   },
 ];
