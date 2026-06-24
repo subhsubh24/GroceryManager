@@ -1,5 +1,6 @@
 "use server";
 import { redirect } from "next/navigation";
+import { loadEnv } from "@gm/config/env";
 import { getDb, getPantryView, withTenant } from "@gm/db";
 import {
   applyVisionScan,
@@ -33,8 +34,9 @@ export type AnalyzeState =
 /** Detect items in the uploaded photo(s) and reconcile against the pantry — read-only (no writes). */
 export async function analyzeScan(_prev: AnalyzeState, formData: FormData): Promise<AnalyzeState> {
   try {
-    if (!process.env.GEMINI_API_KEY) {
-      return { status: "error", message: "Vision scan needs a Gemini API key configured." };
+    const env = loadEnv();
+    if (!env.GEMINI_API_KEY && !env.GOOGLE_VERTEX_PROJECT) {
+      return { status: "error", message: "Vision scan requires Gemini or Google Vertex AI configured." };
     }
     const location = (String(formData.get("location") || "fridge")) as ScanLocation;
     const files = formData
