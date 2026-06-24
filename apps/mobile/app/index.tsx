@@ -108,5 +108,5 @@ const styles = StyleSheet.create({
   cardLabel: { fontSize: 16, fontWeight: "700", color: "#0c8a3e" },
   cardNote: { fontSize: 13, color: "#525d6a", marginTop: 2 },
   signOut: { marginTop: 32 },
-  signOutText: { fontSize: 14, color: "#9ba8b4" },
+  signOutText: { fontSize: 14, color: "#a3acb5" },
 });

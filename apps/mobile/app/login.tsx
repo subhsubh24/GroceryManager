@@ -49,7 +49,7 @@ export default function LoginScreen() {
           autoCapitalize="none"
           autoCorrect={false}
           placeholder="your_username"
-          placeholderTextColor="#9ba8b4"
+          placeholderTextColor="#a3acb5"
           returnKeyType="next"
         />
 
@@ -60,7 +60,7 @@ export default function LoginScreen() {
           onChangeText={setPassword}
           secureTextEntry
           placeholder="••••••••"
-          placeholderTextColor="#9ba8b4"
+          placeholderTextColor="#a3acb5"
           returnKeyType="done"
           onSubmitEditing={handleLogin}
         />

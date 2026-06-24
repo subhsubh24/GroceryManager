@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   navBtnText: { fontSize: 15, fontWeight: "600", color: "#525d6a" },
   navBtnTextDisabled: { color: "#c8c1b8" },
   navBtnTextPrimary: { fontSize: 15, fontWeight: "600", color: "#ffffff" },
-  errorText: { fontSize: 15, color: "#991b1b", textAlign: "center", marginBottom: 16 },
+  errorText: { fontSize: 15, color: "#8e261b", textAlign: "center", marginBottom: 16 },
   backButton: {
     paddingVertical: 10,
     paddingHorizontal: 24,

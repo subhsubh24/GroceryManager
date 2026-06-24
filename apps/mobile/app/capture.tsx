@@ -68,7 +68,7 @@ export default function CaptureScreen() {
           multiline
           numberOfLines={4}
           placeholder="we're out of milk and need taco stuff…"
-          placeholderTextColor="#9ba8b4"
+          placeholderTextColor="#a3acb5"
           value={text}
           onChangeText={setText}
           textAlignVertical="top"
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     borderColor: "#bbf7d0",
   },
   successText: { fontSize: 14, color: "#15803d", fontWeight: "500" },
-  errorText: { fontSize: 14, color: "#991b1b", marginTop: 10 },
+  errorText: { fontSize: 14, color: "#8e261b", marginTop: 10 },
   button: {
     marginTop: 16,
     backgroundColor: "#0c8a3e",

@@ -164,7 +164,7 @@ export default function ProfileScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               placeholder="delete"
-              placeholderTextColor="#9ba8b4"
+              placeholderTextColor="#a3acb5"
             />
             <View style={styles.dialogActions}>
               <Pressable
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   heading: { fontSize: 26, fontWeight: "700", color: "#1d2530", marginBottom: 24 },
   loader: { marginTop: 48 },
   errorBox: {
-    backgroundColor: "#fdeceb",
+    backgroundColor: "#fdecea",
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#9ba8b4",
+    color: "#a3acb5",
     letterSpacing: 0.5,
     padding: 16,
     paddingBottom: 8,
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 15,
     color: "#1d2530",
-    backgroundColor: "#fdeceb",
+    backgroundColor: "#fdecea",
   },
   dialogActions: { flexDirection: "row", gap: 10, marginTop: 20 },
   cancelBtn: {
