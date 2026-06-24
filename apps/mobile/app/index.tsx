@@ -9,7 +9,9 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>🧺</Text>
+      <View style={styles.logoMark}>
+        <Text style={styles.logoGlyph}>GM</Text>
+      </View>
       <Text style={styles.title}>GroceryManager</Text>
       <Text style={styles.subtitle}>
         {userName ? `Welcome back, ${userName}` : "Your grocery + cooking autopilot"}
@@ -41,8 +43,16 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: "#faf8f3",
   },
-  logo: { fontSize: 48 },
-  title: { fontSize: 28, fontWeight: "700", color: "#1d2530", marginTop: 8 },
+  logoMark: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: "#0c8a3e",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoGlyph: { color: "#ffffff", fontSize: 24, fontWeight: "800" },
+  title: { fontSize: 28, fontWeight: "700", color: "#1d2530", marginTop: 12 },
   subtitle: { fontSize: 15, color: "#525d6a", marginTop: 6, textAlign: "center", marginBottom: 32 },
   nav: { width: "100%", gap: 12 },
   card: {
