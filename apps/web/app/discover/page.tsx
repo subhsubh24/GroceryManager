@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getDb, getPantryView, loadPreferenceSignals, loadSeenRecipeIds, withTenant } from "@gm/db";
 import {
   annotateRecipe,
@@ -9,6 +10,7 @@ import {
   TheMealDBProvider,
 } from "@gm/core/recipe";
 import { dietExclusions, projectUserModel } from "@gm/core/personalization";
+import { canUse, isPremium } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
 import { Flame } from "@/app/components/icons";
@@ -32,6 +34,11 @@ async function loadDeck() {
       signals: await loadPreferenceSignals(tx, userId),
       seen: await loadSeenRecipeIds(tx, userId),
     }));
+
+    const billingOn = process.env.FEATURE_BILLING === "1";
+    if (!canUse("discover", isPremium(signals), billingOn)) {
+      return { deck: [] as DeckCard[], error: null as string | null, upgradeRequired: true as const };
+    }
 
     const inStock = pantry.filter((p) => p.status === "in_stock" || p.status === "low");
     if (inStock.length === 0) return { deck: [] as DeckCard[], error: null as string | null };
@@ -101,7 +108,9 @@ async function loadDeck() {
 }
 
 export default async function DiscoverPage() {
-  const { deck, error } = await loadDeck();
+  const result = await loadDeck();
+  if (result.upgradeRequired) redirect("/upgrade");
+  const { deck, error } = result;
 
   return (
     <main className="page">

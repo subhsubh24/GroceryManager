@@ -1,5 +1,9 @@
+import { redirect } from "next/navigation";
 import { parseAxis, REMIX_AXES, type RemixAxis, type RemixResult } from "@gm/core/recipe";
 import { geminiRemix, suggestRemix } from "@gm/core/recipe/remix-llm";
+import { getDb, loadPreferenceSignals, withTenant } from "@gm/db";
+import { canUse, isPremium } from "@gm/core/billing";
+import { currentUserId } from "@/app/lib/tenant";
 import { loadRecipeAnySource } from "@/app/lib/recipe";
 import { addNamesToListAction } from "@/app/lib/list-actions";
 import { PageHeader } from "@/app/components/page-header";
@@ -16,6 +20,15 @@ const AXIS_LABEL: Record<RemixAxis, string> = {
 
 async function load(id: string, axis: RemixAxis) {
   try {
+    const userId = await currentUserId();
+    if (userId) {
+      const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+      const billingOn = process.env.FEATURE_BILLING === "1";
+      if (!canUse("remix", isPremium(signals), billingOn)) {
+        return { recipe: null, remix: null as RemixResult | null, error: null as string | null, upgradeRequired: true as const };
+      }
+    }
+
     const recipe = await loadRecipeAnySource(id);
     if (!recipe) return { recipe: null, remix: null as RemixResult | null, error: null as string | null };
     // Keyless-first: the LLM enriches only when a key is configured (mirrors cook/plan gating).
@@ -39,7 +52,9 @@ export default async function RemixPage({
 }) {
   const { id } = await params;
   const axis = parseAxis((await searchParams).axis);
-  const { recipe, remix, error } = await load(id, axis);
+  const result = await load(id, axis);
+  if (result.upgradeRequired) redirect("/upgrade");
+  const { recipe, remix, error } = result;
 
   const replacements = remix?.swaps.map((s) => s.replacement) ?? [];
 
