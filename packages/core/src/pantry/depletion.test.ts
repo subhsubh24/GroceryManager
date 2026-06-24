@@ -92,6 +92,19 @@ describe("estimateOnHand", () => {
     // 1000 / 100 = 10 days after the purchase (day 0)
     expect(r.estimatedRunOutAt!.getTime()).toBe(day(10).getTime());
   });
+
+  it("zero-delta confirmation does not skip consumption between purchase and confirm", () => {
+    const r = estimateOnHand({
+      events: [
+        { baseQtyDelta: 1000, occurredAt: day(0) },
+        { baseQtyDelta: 0, occurredAt: day(5) }, // "still have it" — should NOT reset depletion clock
+      ],
+      asOf: day(6),
+      ratePerDay: 100,
+    });
+    // Should be 1000 - 100*6 = 400, NOT 1000 - 100*1 = 900
+    expect(r.baseQtyOnHand).toBeCloseTo(400, 6);
+  });
 });
 
 describe("ewmaConsumptionRate", () => {
@@ -106,6 +119,26 @@ describe("ewmaConsumptionRate", () => {
       { qty: 12, at: day(24) },
     ]);
     expect(rate).toBeCloseTo(1, 6);
+  });
+
+  it("returns a rate even when one pair of purchases has identical timestamps", () => {
+    // Two purchases on day 0, then one on day 10 — EWMA should be non-null
+    const rate = ewmaConsumptionRate([
+      { qty: 500, at: day(0) },
+      { qty: 500, at: day(0) }, // same timestamp, same day
+      { qty: 1000, at: day(10) },
+    ]);
+    // The day0-to-day0 pair is skipped (days=0), but day0-to-day10 = 50/day should still fire
+    expect(rate).not.toBeNull();
+    expect(rate).toBeGreaterThan(0);
+  });
+
+  it("derives the rate from a single interval when exactly 2 purchases exist", () => {
+    const rate = ewmaConsumptionRate([
+      { qty: 200, at: day(0) },
+      { qty: 200, at: day(20) },
+    ]);
+    expect(rate).toBeCloseTo(10, 6); // 200 / 20 days = 10 units/day
   });
 });
 
