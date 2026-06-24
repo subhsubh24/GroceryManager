@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   },
   thumb: { width: 72, height: 72 },
   thumbPlaceholder: {
-    backgroundColor: "#f0ede7",
+    backgroundColor: "#ece7dd",
     alignItems: "center",
     justifyContent: "center",
   },
