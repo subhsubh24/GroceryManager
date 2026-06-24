@@ -140,6 +140,28 @@ const HERO_PREVIEW: { icon: LucideIcon; title: string; meta: string }[] = [
   { icon: Recycle, title: "Use it up", meta: "2 items expiring soon" },
 ];
 
+// Placeholder testimonials — replace with real App Store / user quotes after launch.
+const TESTIMONIALS = [
+  {
+    name: "Sarah M.",
+    handle: "Early beta tester",
+    quote:
+      "I haven't thrown away salad in three weeks. The 'use it up' suggestions actually work because they're based on what's literally in my fridge.",
+  },
+  {
+    name: "Tom K.",
+    handle: "Early beta tester",
+    quote:
+      "The Gmail import is the killer feature. My pantry updates itself after every Ocado order. I check it once a week instead of every day.",
+  },
+  {
+    name: "Priya N.",
+    handle: "Early beta tester",
+    quote:
+      "I used to spend £15–20 a week on duplicates of things I forgot I had. That's basically stopped since I started using this.",
+  },
+];
+
 const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /** Friendly "when to buy" label from a recommend-by date (UTC, matching the stored value). */
@@ -498,6 +520,33 @@ export default async function HomePage() {
             </div>
           </section>
 
+          {/* Social proof — placeholder quotes; replace with real reviews after first 25 App Store ratings. */}
+          <section className="mx-auto max-w-6xl px-5 pb-8 pt-12 sm:px-8">
+            <div className="mb-8 text-center">
+              <p className="eyebrow justify-center">Early feedback</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.02em] text-ink-900 sm:text-4xl">
+                What people are saying
+              </h2>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {TESTIMONIALS.map((t) => (
+                <blockquote
+                  key={t.handle}
+                  className="card-pad flex flex-col gap-3"
+                >
+                  <p className="text-sm leading-relaxed text-ink-700">&ldquo;{t.quote}&rdquo;</p>
+                  <footer className="mt-auto">
+                    <p className="text-sm font-semibold text-ink-900">{t.name}</p>
+                    <p className="text-xs text-ink-400">{t.handle}</p>
+                  </footer>
+                </blockquote>
+              ))}
+            </div>
+            <p className="mt-4 text-center text-xs text-ink-300">
+              Placeholder testimonials — replace with real App Store reviews after launch.
+            </p>
+          </section>
+
           {/* Pricing — two-column Free vs Premium; prices sourced from the billing module so they can't
               drift from the actual paywall. Billing activates once Stripe keys are configured. */}
           <section className="mx-auto max-w-6xl px-5 pb-8 pt-16 sm:px-8 sm:pt-24">
@@ -587,14 +636,19 @@ export default async function HomePage() {
       )}
 
       <footer className="mx-auto max-w-6xl px-5 pb-14 pt-6 sm:px-8">
-        <div className="flex flex-col items-center gap-2 border-t border-line pt-8 text-center">
+        <div className="flex flex-col items-center gap-3 border-t border-line pt-8 text-center">
           <span className="tile-brand h-9 w-9">
             <Leaf className="h-5 w-5" strokeWidth={2} />
           </span>
-          <p className="text-sm text-ink-400">
-            Your grocery + cooking autopilot · see <code className="text-ink-500">docs/PLAN.md</code>{" "}
-            for the roadmap
-          </p>
+          <p className="text-sm font-medium text-ink-600">GroceryManager</p>
+          <p className="text-sm text-ink-400">Your grocery + cooking autopilot.</p>
+          <nav className="mt-1 flex flex-wrap justify-center gap-x-5 gap-y-1 text-xs text-ink-400">
+            <a href="/blog" className="link">Blog</a>
+            <a href="/help" className="link">Help & FAQ</a>
+            <a href="/privacy" className="link">Privacy</a>
+            <a href="/terms" className="link">Terms</a>
+          </nav>
+          <p className="text-xs text-ink-300">© 2026 GroceryManager</p>
         </div>
       </footer>
     </main>

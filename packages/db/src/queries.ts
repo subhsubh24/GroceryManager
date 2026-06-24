@@ -1621,3 +1621,49 @@ export async function deregisterMobilePushToken(
     .delete(pushTokens)
     .where(and(eq(pushTokens.userId, a.userId), eq(pushTokens.token, a.token)));
 }
+
+// ---------------------------------------------------------------------------
+// Waitlist (migration 0012 — table may not exist pre-migration)
+// ---------------------------------------------------------------------------
+
+export interface WaitlistSubmission {
+  id: string;
+  email: string;
+  source: string;
+  created_at: Date;
+}
+
+/** Upsert an email into waitlist_submissions. No-ops on duplicate email. */
+export async function insertWaitlistEmail(db: Querier, email: string): Promise<void> {
+  await db.execute(
+    sql`INSERT INTO waitlist_submissions (email, source)
+        VALUES (${email.toLowerCase().trim()}, 'landing_page')
+        ON CONFLICT (lower(email)) DO NOTHING`,
+  );
+}
+
+/**
+ * Fetch the latest 500 waitlist submissions + total count.
+ * Returns null if the table doesn't exist yet (pre-migration 0012).
+ */
+export async function getWaitlistSubmissions(
+  db: Querier,
+): Promise<{ rows: WaitlistSubmission[]; total: number } | null> {
+  try {
+    const rows = (await db.execute(
+      sql`SELECT id, email, source, created_at
+          FROM waitlist_submissions
+          ORDER BY created_at DESC
+          LIMIT 500`,
+    )) as unknown as WaitlistSubmission[];
+    const countRes = (await db.execute(
+      sql`SELECT count(*)::text AS count FROM waitlist_submissions`,
+    )) as unknown as [{ count: string }];
+    return {
+      rows,
+      total: parseInt(countRes[0]?.count ?? "0", 10),
+    };
+  } catch {
+    return null;
+  }
+}
