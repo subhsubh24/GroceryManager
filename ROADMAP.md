@@ -67,7 +67,9 @@ feature parity with `apps/web`** before submission (owner decision, locked).
       installable + typecheckable (the `mobile` CI job enforces once this exists). _(PR #48: Expo
       56.0.12 / expo-router 56.2.11 / RN 0.85.3 / TS 6.0.3; @gm/core/* via tsconfig paths;
       npm install && npm run typecheck exits 0)_
-- [ ] Auth + tenant context wired to the same backend (RLS-safe).
+- [x] Auth + tenant context wired to the same backend (RLS-safe).
+      _(PR #59: POST /api/v1/auth/token → 30-day mobile JWT; GET /api/v1/pantry + /api/v1/list
+      with withTenant isolation. Foundation for native screens.)_
 - [ ] Core daily-habit screens first (pantry, cook + cook mode, list, capture/scan, home) — native
       UX, not an iframe — then expand to **parity**: receipts/review, plan-my-week, cookbook,
       discover, remix, spend, Wrapped, onboarding, settings/profile, account deletion, paywall.
@@ -108,7 +110,10 @@ Subscription is the **only** revenue stream in v1 (no affiliate ordering — see
       sequence, feature graphic; icon.svg brand color corrected to brand-solid #0c8a3e; PNG export
       + EAS wiring documented in PENDING_OPS.md as Human Core. Descriptions: PR #39)_
 - [x] Stability pass — no crash-on-launch; offline/empty handled; no debug surfaces.
-      _(Error boundaries on 29+ routes — #36 + #40 + #46 + #54; loading skeletons on 26+ routes — #24 + #41 + #46 + #54; raw DB error strings removed from all 8 remaining pages — #51)_
+      _(#36 + #40 + #46 + #54: error boundaries on 30+ routes; #24 + #41 + #46 + #54 + #61:
+      loading skeletons on 27+ routes; #51: raw DB error strings removed from 8 pages; #61:
+      recipe-not-found empty state + home loading skeleton + root error boundary; favicon
+      commit: SVG icon wired as browser favicon in Next.js metadata)_
 
 ## Track E — Marketing engine (BUILD + STAGE only)
 - [x] **Brand naming** — propose 2–3 name candidates (name + logo direction + voice) for the owner

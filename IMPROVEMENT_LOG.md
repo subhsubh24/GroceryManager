@@ -701,3 +701,69 @@ leaking internals; the error boundary (`error.tsx`, PR #40) handles full crash r
 
 **ROADMAP ticks:** Track D — Stability pass ✓ (error boundaries on 29+ routes; loading
 skeletons on 26+ routes; raw DB error strings removed from all 8 remaining pages — #51)
+
+---
+
+## 2026-06-24 — feat(pwa): wire SVG icon as browser favicon in Next.js metadata (Track D)
+
+**What:** Added `icons: { icon, apple }` pointing to `/icons/icon.svg` in the Next.js root
+`metadata` export in `apps/web/app/layout.tsx`. Without this, Next.js served the generic default
+favicon rather than the app icon; all browsers now pick up the correct SVG brand mark in tabs,
+bookmarks, and PWA home-screen shortcuts without any separate PNG build step.
+
+**PR:** inline commit on main (favicon commit `3378990`)
+
+**Gate:** `pnpm -r run typecheck` ✓ · `pnpm --filter web build` ✓
+
+**Reviews:** Inline commit; no separate PR review (metadata-only change)
+
+**ROADMAP impact:** Track D — further completes store assets / PWA icon coverage
+
+---
+
+## 2026-06-24 — feat(mobile): REST API layer — /api/v1/auth/token, /pantry, /list (Track B)
+
+**What:** Created the foundational mobile REST API layer under `apps/web/app/api/v1/`:
+- `POST /api/v1/auth/token` — credential validation → 30-day mobile JWT (aud: `gm-mobile`) signed
+  with NEXTAUTH_SECRET via `jose`. Returns `{ token, userId, username }`.
+- `GET /api/v1/pantry` — returns pantry stock for the authenticated user, isolated via
+  `withTenant(getDb(), userId)`.
+- `GET /api/v1/list` — returns shopping list items, same isolation pattern.
+
+All endpoints validate the mobile JWT on every request; unauthenticated requests get 401.
+This is the RLS-safe, multi-tenant foundation that native screens will call directly.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/59
+
+**Gate:** `pnpm -r run typecheck` ✓ · `pnpm --filter web build` ✓
+
+**Reviews:** Parallel agent-authored; Reviewer A APPROVE (JWT aud check, withTenant isolation,
+no NEXTAUTH_SECRET leakage). Reviewer B APPROVE (clean REST contract; pantry + list endpoints
+ready for native screens).
+
+**ROADMAP ticks:** Track B — Auth + tenant context wired ✓
+
+---
+
+## 2026-06-24 — fix(stability): recipe empty state + home loading skeleton + root error boundary (Track D)
+
+**What:** Three stability gaps closed in one PR:
+1. `cook/[id]/page.tsx` — replaced the bare warning banner (no CTA) with a proper `.empty-state`
+   card (`UtensilsCrossed` icon, descriptive message, "Browse recipes" CTA) for recipe-not-found
+   and recipe-load-error paths.
+2. `apps/web/app/loading.tsx` — added root home loading skeleton with `animate-pulse` tiles
+   matching the actual home page wrapper (`<main className="relative overflow-hidden">` +
+   `<section className="mx-auto max-w-2xl …">`): eyebrow + title, panel-brand autopilot, pantry
+   card, when-to-buy list, use-it-up list, quick-action button row.
+3. `apps/web/app/error.tsx` — added root error boundary with `PageHeader` + Leaf icon, generic
+   "Something went wrong" message, Try again + Sign in again buttons; matches home page wrapper.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/61
+
+**Gate:** `pnpm -r run typecheck` ✓ · `pnpm --filter web build` ✓
+
+**Reviews:** Reviewer A APPROVE (wrapper class match verified; empty-state pattern correct; error
+boundary props include unused `error` param per Next.js spec). Reviewer B APPROVE (all three gaps
+genuine; no fake data; cook empty state now gives user a clear next action).
+
+**ROADMAP ticks:** Track D — Stability pass fully completed; Track B — PR #59 context added
