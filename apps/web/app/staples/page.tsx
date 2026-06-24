@@ -8,6 +8,7 @@ import {
 } from "@gm/db";
 import { defaultReorderPolicy, predictReorder } from "@gm/core/reorder";
 import { currentUserId } from "@/app/lib/tenant";
+import { humanize, titleCase } from "@/app/lib/format";
 import { PageHeader } from "@/app/components/page-header";
 import { Check, Repeat } from "@/app/components/icons";
 
@@ -129,7 +130,7 @@ export default async function StaplesPage() {
           <ul className="mt-2 space-y-1 text-sm text-white/90">
             {recurring.map((i) => (
               <li key={`due-${i.canonicalItemId}`}>
-                {i.name}
+                {titleCase(i.name)}
                 {i.pred.recommendQty ? ` · ~${Math.round(i.pred.recommendQty)}` : ""}
               </li>
             ))}
@@ -142,9 +143,9 @@ export default async function StaplesPage() {
           {data.items.map((i) => (
             <li key={i.canonicalItemId} className="row items-start">
               <div className="min-w-0">
-                <div className="font-medium text-ink-900">{i.name}</div>
+                <div className="font-medium text-ink-900">{titleCase(i.name)}</div>
                 <div className="text-xs text-ink-400">
-                  {i.domain}
+                  {humanize(i.domain)}
                   {i.dosesPerDay != null
                     ? ` · ${i.dosesPerDay}/day`
                     : i.ratePerDay != null
