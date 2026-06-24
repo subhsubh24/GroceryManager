@@ -10,9 +10,11 @@ import {
 import { currentStreak } from "@gm/core/recipe";
 import { assessOrderReadiness } from "@gm/core/reorder";
 import { buildDigest, type DigestSummary } from "@gm/core/digest";
+import { SUBSCRIPTION_PLANS } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
 import { titleCase } from "@/app/lib/format";
 import { buildDigestForUser } from "@/app/lib/digest";
+import { WaitlistForm } from "@/app/components/waitlist-form";
 import { GettingStarted, type FirstRunState } from "@/app/components/getting-started";
 import { FeatureCard } from "@/app/components/feature-card";
 import { SECTIONS, type Section } from "@/app/lib/sections";
@@ -185,6 +187,10 @@ export default async function HomePage() {
       : digest.reorderCount > 0
         ? `${digest.reorderCount} ${digest.reorderCount === 1 ? "item" : "items"} to reorder`
         : `${listCount} ${listCount === 1 ? "item" : "items"} on your list`;
+
+  // Pre-compute plan data for the logged-out pricing section (constant array, always defined).
+  const freePlan = SUBSCRIPTION_PLANS[0];
+  const premiumPlan = SUBSCRIPTION_PLANS[1];
 
   return (
     <main className="relative overflow-hidden">
@@ -489,6 +495,92 @@ export default async function HomePage() {
               <a href="/signup" className="nav-link">
                 See everything →
               </a>
+            </div>
+          </section>
+
+          {/* Pricing — two-column Free vs Premium; prices sourced from the billing module so they can't
+              drift from the actual paywall. Billing activates once Stripe keys are configured. */}
+          <section className="mx-auto max-w-6xl px-5 pb-8 pt-16 sm:px-8 sm:pt-24">
+            <div className="mb-10 text-center">
+              <p className="eyebrow justify-center">Simple pricing</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.02em] text-ink-900 sm:text-4xl">
+                Start free. Upgrade when you&apos;re ready.
+              </h2>
+              <p className="page-subtitle mx-auto text-center">
+                The core loop is always free — premium unlocks the AI power tier.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {/* Free tier */}
+              <div className="card-pad flex flex-col">
+                <p className="section-title">Free</p>
+                <p className="mt-1 text-3xl font-semibold tracking-tight text-ink-900">$0</p>
+                <p className="mt-1 text-sm text-ink-400">forever</p>
+                <ul className="mt-5 flex-1 space-y-2">
+                  {freePlan.features.map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-ink-700">
+                      <Check className="h-4 w-4 shrink-0 text-brand-600" strokeWidth={2.5} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <a href="/signup" className="btn-secondary mt-6 flex w-full items-center justify-center">
+                  Get started free
+                </a>
+              </div>
+              {/* Premium Monthly — the primary paid option shown on the landing */}
+              <div className="card-pad flex flex-col border-brand-200 bg-brand-50/40">
+                <div className="flex items-center justify-between">
+                  <p className="section-title">Premium</p>
+                  <span className="pill-brand">Most popular</span>
+                </div>
+                <p className="mt-1 text-3xl font-semibold tracking-tight text-ink-900">
+                  ${((premiumPlan.priceMonthCents ?? 0) / 100).toFixed(2)}
+                </p>
+                <p className="mt-1 text-sm text-ink-400">
+                  per month &middot; or $39.99/yr (save ~33%)
+                </p>
+                <ul className="mt-5 flex-1 space-y-2">
+                  {premiumPlan.features.map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-ink-700">
+                      <Check className="h-4 w-4 shrink-0 text-brand-600" strokeWidth={2.5} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                {premiumPlan.trialDays > 0 && (
+                  <p className="mt-4 text-xs text-ink-400">
+                    {premiumPlan.trialDays}-day free trial — cancel anytime.
+                  </p>
+                )}
+                <a href="/signup" className="btn-primary mt-4 flex w-full items-center justify-center">
+                  Start {premiumPlan.trialDays}-day free trial
+                </a>
+              </div>
+            </div>
+          </section>
+
+          {/* Waitlist — email capture for launch momentum. Staged: emails displayed in server logs;
+              wire to ConvertKit/Mailchimp via PENDING_OPS.md before the store launch. */}
+          <section className="mx-auto max-w-6xl px-5 pb-16 pt-8 sm:px-8">
+            <div className="panel-brand">
+              <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
+                    Coming soon to the App Store
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.01em]">
+                    Get notified at launch.
+                  </h2>
+                  <p className="mt-1.5 text-[0.95rem] leading-relaxed text-white/90">
+                    Be first in line — drop your email and we&apos;ll reach out the moment the iOS
+                    and Android apps go live.
+                  </p>
+                </div>
+                <div className="w-full sm:max-w-xs">
+                  <WaitlistForm />
+                </div>
+              </div>
             </div>
           </section>
         </>
