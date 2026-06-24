@@ -176,5 +176,5 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: "#ece7dd", marginLeft: 56 },
   empty: { padding: 24 },
   emptyText: { fontSize: 15, color: "#525d6a", textAlign: "center" },
-  error: { fontSize: 14, color: "#dc2626", margin: 16, textAlign: "center" },
+  error: { fontSize: 14, color: "#c0392b", margin: 16, textAlign: "center" },
 });
