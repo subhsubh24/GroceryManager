@@ -90,13 +90,13 @@ async function loadHomeData(): Promise<HomeData> {
       // Load the pantry once and hand it to the digest (it would otherwise re-query it) — this is the
       // most-hit page, so a duplicate getPantryView per load is worth removing.
       const pantry = await getPantryView(tx, userId);
-      return {
-        signals: await loadPreferenceSignals(tx, userId),
-        pantry,
-        cookedAt: await loadCookedAt(tx, userId),
-        list: await getActiveListView(tx, userId),
-        digest: await buildDigestForUser(tx, userId, now, pantry),
-      };
+      const [signals, cookedAt, list, digest] = await Promise.all([
+        loadPreferenceSignals(tx, userId),
+        loadCookedAt(tx, userId),
+        getActiveListView(tx, userId),
+        buildDigestForUser(tx, userId, now, pantry),
+      ]);
+      return { signals, pantry, cookedAt, list, digest };
     });
 
     return {
