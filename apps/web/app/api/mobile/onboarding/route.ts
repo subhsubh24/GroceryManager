@@ -108,6 +108,10 @@ export async function POST(req: Request) {
   }
 
   if (action === "finish") {
+    // Idempotent: if already onboarded, return early without re-projecting or appending duplicate rows.
+    const alreadyDone = await withTenant(getDb(), userId, (tx) => isOnboarded(tx, userId));
+    if (alreadyDone) return Response.json({ ok: true });
+
     await withTenant(getDb(), userId, async (tx) => {
       const model = projectUserModel(await loadPreferenceSignals(tx, userId));
       await persistUserModel(tx, userId, {

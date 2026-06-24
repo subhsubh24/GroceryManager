@@ -21,9 +21,9 @@ const CUISINES = ["Italian", "Mexican", "Thai", "Indian", "Chinese", "Japanese",
 
 function humanizeChip(s: string): string {
   return s
-    .split("-")
+    .split(/[-\s]+/)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join("-");
+    .join(" ");
 }
 
 export default function OnboardingScreen() {
@@ -75,6 +75,8 @@ export default function OnboardingScreen() {
     }
 
     if (step === 1) {
+      // Diets and allergens are sent together with cuisines in the step-2 "taste" POST,
+      // so no API call needed here — the state values persist in React state.
       setStep(2);
       return;
     }
@@ -149,7 +151,7 @@ export default function OnboardingScreen() {
             value={name}
             onChangeText={setName}
             placeholder="What should we call you?"
-            placeholderTextColor="#9ba8b4"
+            placeholderTextColor="#a3acb5"
             autoComplete="name"
             returnKeyType="done"
             onSubmitEditing={goNext}
@@ -227,7 +229,7 @@ export default function OnboardingScreen() {
             value={lovedText}
             onChangeText={setLovedText}
             placeholder="salmon, basil, feta"
-            placeholderTextColor="#9ba8b4"
+            placeholderTextColor="#a3acb5"
             returnKeyType="next"
           />
 
@@ -237,7 +239,7 @@ export default function OnboardingScreen() {
             value={dislikedText}
             onChangeText={setDislikedText}
             placeholder="cilantro, olives"
-            placeholderTextColor="#9ba8b4"
+            placeholderTextColor="#a3acb5"
             returnKeyType="done"
             onSubmitEditing={goNext}
           />
@@ -256,7 +258,8 @@ export default function OnboardingScreen() {
             and skip.
           </Text>
           <Text style={styles.doneNote}>
-            You can refine all of this anytime from Profile → Settings.
+            Head to Pantry → Quick add to add your first items. We&apos;ll learn from what you
+            cook, save, and skip — your taste gets sharper over time.
           </Text>
         </View>
       )}
@@ -315,7 +318,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#ece7dd",
   },
   progressSegmentActive: { backgroundColor: "#0c8a3e" },
-  stepLabel: { fontSize: 11, fontWeight: "700", color: "#9ba8b4", letterSpacing: 0.5, marginBottom: 28 },
+  stepLabel: { fontSize: 11, fontWeight: "700", color: "#a3acb5", letterSpacing: 0.5, marginBottom: 28 },
 
   stepContent: { flex: 1 },
   title: { fontSize: 26, fontWeight: "700", color: "#1d2530", marginBottom: 8 },
@@ -365,10 +368,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   doneGlyph: { color: "#ffffff", fontSize: 32 },
-  doneNote: { fontSize: 13, color: "#9ba8b4", marginTop: 16, lineHeight: 20 },
+  doneNote: { fontSize: 13, color: "#a3acb5", marginTop: 16, lineHeight: 20 },
 
   errorBox: {
-    backgroundColor: "#fdeceb",
+    backgroundColor: "#fdecea",
     borderRadius: 10,
     padding: 12,
     marginBottom: 12,
@@ -386,7 +389,7 @@ const styles = StyleSheet.create({
   backBtn: { paddingVertical: 12, paddingHorizontal: 4 },
   backBtnText: { fontSize: 15, color: "#525d6a" },
   skipBtn: { paddingVertical: 12, paddingHorizontal: 12 },
-  skipBtnText: { fontSize: 15, color: "#9ba8b4" },
+  skipBtnText: { fontSize: 15, color: "#a3acb5" },
   primaryBtn: {
     backgroundColor: "#0c8a3e",
     borderRadius: 12,
@@ -396,6 +399,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minWidth: 140,
   },
-  primaryBtnDisabled: { backgroundColor: "#9ba8b4" },
+  primaryBtnDisabled: { backgroundColor: "#a3acb5" },
   primaryBtnText: { color: "#ffffff", fontSize: 16, fontWeight: "700" },
 });

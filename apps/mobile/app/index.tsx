@@ -23,6 +23,9 @@ export default function HomeScreen() {
   }, [token]);
 
   if (!token) return <Redirect href="/login" />;
+  // While the onboarding check is in-flight (null), render nothing so new users never see
+  // the full home screen before being redirected to onboarding.
+  if (onboarded === null) return null;
   if (onboarded === false) return <Redirect href="/onboarding" />;
 
   return (
