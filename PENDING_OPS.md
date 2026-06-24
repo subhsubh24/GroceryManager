@@ -55,3 +55,24 @@ stdout (`console.log`). Before the App Store launch, wire this to a real email s
 4. **Test with a real submission** to confirm delivery before launch.
 
 **Status:** Code merged (PR #47). Human Core required for email service account + key.
+
+---
+
+## Analytics (Plausible) — activate before store launch
+
+Privacy-first analytics are scaffolded in `apps/web/app/layout.tsx` — the Plausible script loads
+only when `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` is set.
+
+To go live:
+1. **Create a Plausible account** at https://plausible.io (or self-host).
+2. **Add your domain** in the Plausible dashboard.
+3. **Set `NEXT_PUBLIC_PLAUSIBLE_DOMAIN`** in Vercel env (e.g. `grocerymanager.app` — no `https://`).
+4. **Verify tracking** by visiting the site and checking the Plausible real-time view.
+
+**Goals to configure in Plausible:**
+- `Signup` — track the `/signup` page visit
+- `Waitlist` — track the waitlist form submission (custom event, wire if needed)
+- `Upgrade` — track the `/upgrade` page visit
+- `Purchase` — wire from the Stripe webhook response
+
+**Status:** Code merged. Human Core required for Plausible account + domain setup.
