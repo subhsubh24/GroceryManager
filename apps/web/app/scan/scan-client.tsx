@@ -1,6 +1,7 @@
 "use client";
 import { useActionState } from "react";
 import { analyzeScan, applyScan, type AnalyzeState } from "./actions";
+import { titleCase } from "@/app/lib/format";
 
 const initial: AnalyzeState = { status: "idle" };
 const LOCATIONS: { value: string; label: string }[] = [
@@ -59,7 +60,7 @@ export function ScanClient() {
                 {ready.confirmations.map((c) => (
                   <li key={`c-${c.canonicalItemId}`} className="flex items-center gap-2.5 text-sm text-ink-800">
                     <input type="checkbox" name="confirm" value={JSON.stringify(c)} defaultChecked className="control-accent" />
-                    <span className="capitalize">{c.matchedName ?? c.rawLabel}</span>
+                    <span>{titleCase(c.matchedName ?? c.rawLabel)}</span>
                   </li>
                 ))}
               </ul>
@@ -99,8 +100,8 @@ export function ScanClient() {
                       className="rounded-xl border border-line bg-surface p-3.5 shadow-xs"
                     >
                       <p className="text-sm text-ink-800">
-                        Saw <span className="font-semibold capitalize">{p.rawLabel}</span> — is this your{" "}
-                        <span className="font-semibold capitalize">{p.candidateName}</span>?
+                        Saw <span className="font-semibold">{titleCase(p.rawLabel)}</span> — is this your{" "}
+                        <span className="font-semibold">{titleCase(p.candidateName)}</span>?
                       </p>
                       <div className="mt-2.5 flex flex-wrap gap-2">
                         <label className="chip">
@@ -133,7 +134,7 @@ export function ScanClient() {
                 {ready.newItems.map((n, i) => (
                   <li key={`n-${i}-${n.rawLabel}`} className="flex items-center gap-2.5 text-sm text-ink-800">
                     <input type="checkbox" name="add" value={JSON.stringify(n)} defaultChecked className="control-accent" />
-                    <span className="capitalize">{n.rawLabel}</span>
+                    <span>{titleCase(n.rawLabel)}</span>
                   </li>
                 ))}
               </ul>
