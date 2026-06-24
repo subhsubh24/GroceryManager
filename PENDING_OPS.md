@@ -76,3 +76,26 @@ To go live:
 - `Purchase` — wire from the Stripe webhook response
 
 **Status:** Code merged. Human Core required for Plausible account + domain setup.
+
+---
+
+## Store icon PNG export — required before submission
+
+The committed SVG (`apps/web/public/icons/icon.svg`) is the source of truth. PNG exports are
+required for App Store Connect, Google Play Console, and EAS builds.
+
+**Steps (owner):**
+1. Open `apps/web/public/icons/icon.svg` in Figma (File → Import) or equivalent tool.
+2. Export at each required size (see `docs/store/store-assets-spec.md`):
+   - `icon-1024.png` (1024×1024, no alpha) → App Store Connect + EAS
+   - `icon-512.png` (512×512) → Google Play
+   - `icon-192.png` (192×192) → PWA
+3. For EAS: add `"icon": "./assets/icon.png"` to `apps/mobile/app.json`, then save `icon-1024.png`
+   as `apps/mobile/assets/icon.png`. (The field and file don't exist yet — both must be created.)
+4. For PWA PNG fallbacks: add `icon-192.png` and `icon-512.png` to `apps/web/public/icons/`,
+   update `manifest.webmanifest` to list them alongside the SVG.
+
+**Current `manifest.webmanifest` status:** SVG-only (fine for Chrome/Edge PWA; Safari requires PNG).
+Update before launch to add PNG entries.
+
+**Status:** SVG committed (uses correct brand-solid `#0c8a3e`). PNG export = Human Core.
