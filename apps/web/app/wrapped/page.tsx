@@ -1,5 +1,7 @@
-import { getDb, loadWrappedInputs, withTenant } from "@gm/db";
+import { getDb, loadPreferenceSignals, loadWrappedInputs, withTenant } from "@gm/db";
 import { buildWrapped, type WrappedStats } from "@gm/core/spend";
+import { canUse, isPremium } from "@gm/core/billing";
+import { redirect } from "next/navigation";
 import { ShareButton } from "./share-button.js";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
@@ -13,7 +15,13 @@ async function load() {
   try {
     const userId = await currentUserId();
     if (!userId) return { ready: false as const, error: null as string | null };
-    const input = await withTenant(getDb(), userId, (tx) => loadWrappedInputs(tx, userId));
+    const [input, signals] = await withTenant(getDb(), userId, (tx) =>
+      Promise.all([loadWrappedInputs(tx, userId), loadPreferenceSignals(tx, userId)]),
+    );
+    const billingOn = process.env.FEATURE_BILLING === "1";
+    if (!canUse("wrapped_plus", isPremium(signals), billingOn)) {
+      return { ready: false as const, error: null as string | null, upgradeRequired: true as const };
+    }
     return { ready: true as const, error: null as string | null, stats: buildWrapped(input) };
   } catch (e) {
     return { ready: false as const, error: e instanceof Error ? e.message : String(e) };
@@ -44,6 +52,7 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
 
 export default async function WrappedPage() {
   const data = await load();
+  if ("upgradeRequired" in data && data.upgradeRequired) redirect("/upgrade");
   const empty = data.ready && data.stats.homeCookedMeals === 0 && data.stats.totalSpentCents === 0;
 
   return (
