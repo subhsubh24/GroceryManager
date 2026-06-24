@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, Pressable } from "react-native";
+import { View, Text, FlatList, ActivityIndicator, StyleSheet, Pressable, RefreshControl } from "react-native";
 import { Redirect } from "expo-router";
 import { useAuth } from "../lib/auth";
 import { apiFetch } from "../lib/api";
@@ -17,10 +17,10 @@ export default function PantryScreen() {
   const [items, setItems] = useState<PantryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  if (!token) return <Redirect href="/login" />;
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
+    if (!token) return () => {};
     let cancelled = false;
     async function load() {
       setLoading(true);
@@ -28,7 +28,7 @@ export default function PantryScreen() {
       try {
         const res = await apiFetch("/api/mobile/pantry", token!);
         if (!res.ok) {
-          setError("Failed to load pantry.");
+          if (!cancelled) setError("Failed to load pantry.");
           return;
         }
         const data = (await res.json()) as { items: PantryItem[] };
@@ -36,12 +36,28 @@ export default function PantryScreen() {
       } catch {
         if (!cancelled) setError("Network error — check your connection.");
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) { setLoading(false); setRefreshing(false); }
       }
     }
     load();
     return () => { cancelled = true; };
   }, [token]);
+
+  if (!token) return <Redirect href="/login" />;
+
+  function onRefresh() {
+    setRefreshing(true);
+    setError(null);
+    let cancelled = false;
+    apiFetch("/api/mobile/pantry", token!)
+      .then(async (res) => {
+        if (!res.ok) { if (!cancelled) setError("Failed to load pantry."); return; }
+        const data = (await res.json()) as { items: PantryItem[] };
+        if (!cancelled) setItems(data.items ?? []);
+      })
+      .catch(() => { if (!cancelled) setError("Network error — check your connection."); })
+      .finally(() => { if (!cancelled) setRefreshing(false); });
+  }
 
   if (loading) {
     return (
@@ -55,7 +71,7 @@ export default function PantryScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>{error}</Text>
-        <Pressable style={styles.retryButton} onPress={() => setLoading(true)}>
+        <Pressable style={styles.retryButton} onPress={onRefresh}>
           <Text style={styles.retryText}>Retry</Text>
         </Pressable>
       </View>
@@ -74,6 +90,9 @@ export default function PantryScreen() {
           data={items}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0c8a3e" />
+          }
           renderItem={({ item }) => (
             <View style={styles.card}>
               <View style={styles.cardMain}>

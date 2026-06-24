@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, Image, ActivityIndicator, StyleSheet, Pressable } from "react-native";
+import { View, Text, FlatList, Image, ActivityIndicator, StyleSheet, Pressable, RefreshControl } from "react-native";
 import { Redirect } from "expo-router";
 import { useAuth } from "../lib/auth";
 import { apiFetch } from "../lib/api";
@@ -17,25 +17,32 @@ export default function CookTonightScreen() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  if (!token) return <Redirect href="/login" />;
+  const [refreshing, setRefreshing] = useState(false);
 
   function load() {
+    if (!token) return () => {};
     setLoading(true);
     setError(null);
     let cancelled = false;
-    apiFetch("/api/mobile/cook-tonight", token!)
+    apiFetch("/api/mobile/cook-tonight", token)
       .then(async (res) => {
         if (!res.ok) { if (!cancelled) setError("Failed to load suggestions."); return; }
         const data = (await res.json()) as { recipes: Recipe[] };
         if (!cancelled) setRecipes(data.recipes ?? []);
       })
       .catch(() => { if (!cancelled) setError("Network error — check your connection."); })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .finally(() => { if (!cancelled) { setLoading(false); setRefreshing(false); } });
     return () => { cancelled = true; };
   }
 
   useEffect(load, [token]);
+
+  if (!token) return <Redirect href="/login" />;
+
+  function onRefresh() {
+    setRefreshing(true);
+    load();
+  }
 
   if (loading) {
     return (
@@ -70,6 +77,9 @@ export default function CookTonightScreen() {
           data={recipes}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0c8a3e" />
+          }
           renderItem={({ item }) => (
             <View style={styles.card}>
               {item.imageUrl ? (
