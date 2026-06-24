@@ -28,7 +28,9 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>🧺</Text>
+      <View style={styles.logoMark}>
+        <Text style={styles.logoGlyph}>GM</Text>
+      </View>
       <Text style={styles.title}>GroceryManager</Text>
       <Text style={styles.subtitle}>Sign in to your account</Text>
 
@@ -87,20 +89,28 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: "#faf8f3",
   },
-  logo: { fontSize: 48 },
-  title: { fontSize: 26, fontWeight: "700", color: "#1d2530", marginTop: 8 },
+  logoMark: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: "#0c8a3e",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoGlyph: { color: "#ffffff", fontSize: 24, fontWeight: "800" },
+  title: { fontSize: 26, fontWeight: "700", color: "#1d2530", marginTop: 12 },
   subtitle: { fontSize: 15, color: "#525d6a", marginTop: 4, marginBottom: 32 },
   form: { width: "100%", maxWidth: 360 },
   errorBox: {
-    backgroundColor: "#fef2f2",
+    backgroundColor: "#fdeceb",
     borderRadius: 10,
     padding: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#fecaca",
+    borderColor: "#c0392b",
   },
-  errorText: { color: "#991b1b", fontSize: 14 },
-  label: { fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 6, marginTop: 16 },
+  errorText: { color: "#8e261b", fontSize: 14 },
+  label: { fontSize: 13, fontWeight: "600", color: "#2b333d", marginBottom: 6, marginTop: 16 },
   input: {
     borderWidth: 1,
     borderColor: "#d1cfc9",
