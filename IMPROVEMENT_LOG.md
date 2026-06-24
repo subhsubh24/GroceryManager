@@ -360,3 +360,67 @@ artificially full after cooking, degrading reorder predictions over time.
 **Gate:** typecheck ✓ · 432 core tests ✓ · next build ✓ · no missing-export warnings ✓
 
 **Reviews:** Reviewer A (correctness) APPROVE · Reviewer B (quality) APPROVE
+
+---
+
+## 2026-06-24 — feat(profile): in-app account deletion (Apple 5.1.1(v) / GDPR)
+
+**What:** Adds a full account-erasure path required by Apple App Store guidelines (5.1.1(v)) and
+GDPR. Deleting the `users` row cascades to all child tables via `ON DELETE CASCADE` foreign keys
+defined in `schema.ts` — a single-row delete is sufficient. The `/profile` page gains a danger zone
+section (design-system `danger` tokens: `bg-danger-soft`, `text-danger-ink`, new `btn-danger` class)
+with a typed confirmation input ("delete") that is verified server-side before any data is touched.
+On success, the server action calls `signOut` to invalidate the session and redirects to `/`.
+Also fixes a reliability gap: the old error state showed `data.error?.slice(0, 120)` (could expose
+raw DB error messages); replaced with a generic sanitized message.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/30
+
+**Gate:** typecheck ✓ · 450 core tests ✓ · next build ✓
+
+**Reviews:** Reviewer A APPROVE (cascade verified, no IDOR possible, server-side confirmation) ·
+Reviewer B APPROVE after cycle 2 (initial use of raw `red-*` palette fixed to design-system danger tokens)
+
+---
+
+## 2026-06-24 — feat(legal): add /privacy and /terms pages (Track D store readiness)
+
+**What:** Both App Store (Apple) and Google Play require a publicly accessible privacy policy for
+apps that collect user data. Adds two fully static pages:
+- `/privacy` — data collected (account info, Gmail receipts, pantry, cooking history, push
+  subscriptions, device logs), third-party services (Google/Gemini API, Open Food Facts, Instacart),
+  data retention + deletion (links to /profile), security (HTTPS, scrypt, RLS), children policy, contact.
+- `/terms` — acceptance, acceptable use, Gmail access grant/revoke (link to Google permissions),
+  IP ownership, disclaimer + liability limit, California governing law, contact.
+Also adds `ShieldCheck` and `FileText` to the lucide icon registry, and a `.link` component class
+(brand-coloured, dark-mode aware) to `globals.css`.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/32
+
+**Gate:** typecheck ✓ · 450 core tests ✓ · next build ✓ (/privacy ○ + /terms ○ — fully static)
+
+**Reviews:** Reviewer A APPROVE (pure static, no PII rendered, external link has noopener) ·
+Reviewer B APPROVE after cycle 2 (footer links changed from bare `underline hover:text-ink-700` to `.link`)
+
+---
+
+## 2026-06-24 — ux(format): replace CSS capitalize with humanize/titleCase on raw slug values
+
+**What:** CSS `capitalize` only uppercases the first character — "gluten-free" renders as
+"gluten-free" not "Gluten Free". Replaced all affected surfaces with the project's `humanize` /
+`titleCase` helpers per VISION.md ("never show raw slugs/enums in the UI"):
+- `discover/swipe-deck.tsx`: cuisine pill → `humanize(top.cuisine)` ("mexican" → "Mexican")
+- `recipes/page.tsx`: guest diet banner + diet tab labels → `humanize(guest)` / `humanize(g)`;
+  URL href still uses the raw slug; `cap = true` flag removed from tab() call
+- `scan/scan-client.tsx`: 4 raw vision labels (matchedName, rawLabel, candidateName) → `titleCase()`
+  to handle ALL-CAPS scanner output and mixed-case receipt text
+- `onboarding/onboarding-flow.tsx`: diet selection chip labels → `humanize(opt)` ("dairy-free" →
+  "Dairy Free")
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/33
+
+**Gate:** typecheck ✓ · 450 core tests ✓ · next build ✓
+
+**Reviews:** Joint Reviewer A + B APPROVE after cycle 2 (caught missed guest-diet tab call site in
+`recipes/page.tsx` that still passed raw slug `g` to `tab()` — fixed by passing `humanize(g)` as
+the display label)
