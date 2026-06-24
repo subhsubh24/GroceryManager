@@ -4,6 +4,28 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-24 (run 2) — feat(pwa): browser favicon + mobile screens (Track D + Track B)
+
+**PR #60 — favicon (merged):** Wired `/icons/icon.svg` (already used by the PWA manifest) as the
+browser-tab icon via Next.js App Router `metadata.icons`. One-line change in `apps/web/app/layout.tsx`.
+Gate: `verify` ✓, `mobile` ✓ (pre-existing lock-file gap on main, `verify` was the only required
+gate). Advances Track D (stability pass — browser favicon now correct).
+
+**PR #64 — mobile screens (opened then closed, superseded):** Implemented sign-in screen
+(`signin.tsx`), real pantry FlatList (`pantry.tsx`), shopping list screen (`list.tsx`), and API
+client (`app/lib/api.ts`) using the `/api/v1/*` endpoints from PR #59. Two independent reviewer
+agents approved after fixes (401 handling, `data.token` validation, design-token colors, `titleCase`
+ALL-CAPS fix, dead `(tabs)` route removed, no hardcoded prod URL). However, a concurrent run merged
+PR #62 (mobile auth + live pantry via `AuthProvider` context + `/api/mobile/*` endpoints) while
+this review cycle was in progress. PR #64 merged conflicts with PR #62 on all mobile files;
+closed as superseded. The net state: Track B has auth + pantry screen (two competing implementations
+of the auth endpoint — see LOOP_MEMORY lesson below).
+
+**Lesson filed in LOOP_MEMORY:** Concurrent runs must read open PRs before picking Track B work;
+duplicate auth endpoint `/api/v1/auth/token` + `/api/mobile/auth` need reconciliation.
+
+---
+
 ## 2026-06-23 — fix(use-it-up): apply user diet/allergen prefs to recipe ranking
 
 **What:** `use-it-up/page.tsx` called `rankRecipes` with no `prefs`, silently ignoring the
