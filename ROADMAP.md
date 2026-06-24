@@ -53,17 +53,20 @@ Wrapped, dark mode). Get it to **"people happily pay monthly"** quality.
 - [ ] **Performance** — fast cold start + hot paths; no needless queries (continue the latency work).
 - [x] **Security/RLS** — every public table RLS-protected. _Audit 2026-06-24: zero violations — no
       SECURITY DEFINER functions; all 26 public tables RLS-enabled with correct policies._
-- [ ] **EVAL COVERAGE (first-class)** — grow the live `RUN_EVALS`-gated suites
+- [x] **EVAL COVERAGE (first-class)** — grow the live `RUN_EVALS`-gated suites
       (`packages/core/src/llm/evals/*.eval.test.ts`) to cover every core LLM stage (receipt
       extraction, recipe import, remix, meal-gen, capture) with **real** golden fixtures, pass-rate
-      floors, and the ratchet. _Harness exists; grow the gold set._
+      floors, and the ratchet. _(PR #45: capture-parse + meal-gen suites complete 5-stage coverage;
+      80% / 75% pass-rate floors + ratchet guards)_
 
 ## Track B — Native Expo mobile app (`apps/mobile`) — FULL PARITY
 A **real** app reusing `@gm/core` engines — NOT a thin WebView wrapper (Apple 4.2). Target **full
 feature parity with `apps/web`** before submission (owner decision, locked).
-- [ ] Initialize Expo / expo-router in `apps/mobile` (deps + `tsconfig.json` + `typecheck` script);
+- [x] Initialize Expo / expo-router in `apps/mobile` (deps + `tsconfig.json` + `typecheck` script);
       keep it out of the root `pnpm install` if that protects web CI, but make it independently
-      installable + typecheckable (the `mobile` CI job enforces once this exists).
+      installable + typecheckable (the `mobile` CI job enforces once this exists). _(PR #48: Expo
+      56.0.12 / expo-router 56.2.11 / RN 0.85.3 / TS 6.0.3; @gm/core/* via tsconfig paths;
+      npm install && npm run typecheck exits 0)_
 - [ ] Auth + tenant context wired to the same backend (RLS-safe).
 - [ ] Core daily-habit screens first (pantry, cook + cook mode, list, capture/scan, home) — native
       UX, not an iframe — then expand to **parity**: receipts/review, plan-my-week, cookbook,
@@ -102,14 +105,15 @@ Subscription is the **only** revenue stream in v1 (no affiliate ordering — see
       Gmail Limited Use Policy statements + owner action checklist with portal navigation paths)_
 - [ ] Store assets staged (icon, screenshots, descriptions) — see Track E for copy.
 - [ ] Stability pass — no crash-on-launch; offline/empty handled; no debug surfaces.
-      _(Partial: error boundaries on 26 routes — #36 + #40; loading skeletons on 10+ routes — #24 + #41)_
+      _(Partial: error boundaries on 28 routes — #36 + #40 + #46; loading skeletons on 15+ routes — #24 + #41 + #46)_
 
 ## Track E — Marketing engine (BUILD + STAGE only)
 - [x] **Brand naming** — propose 2–3 name candidates (name + logo direction + voice) for the owner
       to pick. _(PR #39: docs/brand/NAMING_CANDIDATES.md — Pantri / Mise / Larder with decision matrix;
       ships under "GroceryManager" until owner picks)_
-- [ ] Waitlist / landing page (the public marketing surface) with email capture (staged, not sent) —
-      drives pre-launch demand so there's an audience to convert on store launch.
+- [x] Waitlist / landing page (the public marketing surface) with email capture (staged, not sent) —
+      drives pre-launch demand so there's an audience to convert on store launch. _(PR #47: pricing
+      grid + WaitlistForm; emails logged server-side; wire to email service via PENDING_OPS.md)_
 - [ ] Brand kit (logo, palette, type, voice) consistent with the app + the chosen name.
 - [x] ASO / store copy (title, subtitle, keywords, description) drafted.
       _(PR #39: docs/store/app-store-metadata.md + docs/store/google-play-metadata.md — full ASO
