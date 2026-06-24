@@ -1643,12 +1643,12 @@ export async function insertWaitlistEmail(db: Querier, email: string): Promise<v
 }
 
 /**
- * Fetch the latest 500 waitlist submissions + total count.
+ * Fetch the latest 500 waitlist submissions + total count + 7-day count.
  * Returns null if the table doesn't exist yet (pre-migration 0012).
  */
 export async function getWaitlistSubmissions(
   db: Querier,
-): Promise<{ rows: WaitlistSubmission[]; total: number } | null> {
+): Promise<{ rows: WaitlistSubmission[]; total: number; lastSevenDays: number } | null> {
   try {
     const rows = (await db.execute(
       sql`SELECT id, email, source, created_at
@@ -1656,14 +1656,21 @@ export async function getWaitlistSubmissions(
           ORDER BY created_at DESC
           LIMIT 500`,
     )) as unknown as WaitlistSubmission[];
-    const countRes = (await db.execute(
-      sql`SELECT count(*)::text AS count FROM waitlist_submissions`,
-    )) as unknown as [{ count: string }];
+    const statsRes = (await db.execute(
+      sql`SELECT
+            count(*)::text AS total,
+            count(*) FILTER (WHERE created_at > now() - interval '7 days')::text AS last_seven
+          FROM waitlist_submissions`,
+    )) as unknown as [{ total: string; last_seven: string }];
     return {
       rows,
-      total: parseInt(countRes[0]?.count ?? "0", 10),
+      total: parseInt(statsRes[0]?.total ?? "0", 10),
+      lastSevenDays: parseInt(statsRes[0]?.last_seven ?? "0", 10),
     };
-  } catch {
-    return null;
+  } catch (err) {
+    // Only swallow "relation does not exist" (pre-migration 0012). Re-throw everything else.
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("waitlist_submissions") && msg.includes("does not exist")) return null;
+    throw err;
   }
 }

@@ -542,9 +542,7 @@ export default async function HomePage() {
                 </blockquote>
               ))}
             </div>
-            <p className="mt-4 text-center text-xs text-ink-300">
-              Placeholder testimonials — replace with real App Store reviews after launch.
-            </p>
+            {/* TODO: replace placeholders with real App Store / beta reviews after launch */}
           </section>
 
           {/* Pricing — two-column Free vs Premium; prices sourced from the billing module so they can't

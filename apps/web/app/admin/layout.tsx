@@ -8,7 +8,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const session = await auth();
   const userEmail = (session?.user as { email?: string } | undefined)?.email;
 
-  if (!adminEmail || !userEmail || userEmail.toLowerCase() !== adminEmail.toLowerCase()) {
+  if (!adminEmail) {
+    console.error("[admin] ADMIN_EMAIL env var is not set — admin area is inaccessible");
+    redirect("/signin");
+  }
+
+  if (!userEmail || userEmail.toLowerCase() !== adminEmail.toLowerCase()) {
     redirect("/signin");
   }
 

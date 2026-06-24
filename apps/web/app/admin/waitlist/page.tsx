@@ -31,11 +31,7 @@ export default async function WaitlistAdminPage() {
             </div>
             <div className="card-pad flex-1 text-center">
               <p className="text-3xl font-semibold tracking-tight text-ink-900">
-                {
-                  data.rows.filter(
-                    (r) => new Date(r.created_at) > new Date(Date.now() - 7 * 86400_000),
-                  ).length
-                }
+                {data.lastSevenDays}
               </p>
               <p className="mt-1 text-sm text-ink-400">Last 7 days</p>
             </div>
