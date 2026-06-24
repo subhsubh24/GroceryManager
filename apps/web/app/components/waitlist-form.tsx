@@ -2,23 +2,25 @@
 
 import { useState } from "react";
 import { Check } from "@/app/components/icons";
+import { submitWaitlistEmail } from "./waitlist-action";
 
 /**
- * Staged email capture for the landing page waitlist. Emails are collected client-side for now;
- * see PENDING_OPS.md to wire up to ConvertKit / Mailchimp before launch.
+ * Staged email capture for the landing page waitlist. Emails are sent server-side (logged to
+ * stdout); see PENDING_OPS.md to wire up to ConvertKit / Mailchimp before launch.
  */
 export function WaitlistForm() {
   const [email, setEmail] = useState("");
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !email.includes("@")) {
       setError("Enter a valid email address.");
       return;
     }
     setError("");
+    await submitWaitlistEmail(email);
     setDone(true);
   }
 
@@ -32,13 +34,16 @@ export function WaitlistForm() {
   }
 
   return (
-    <form onSubmit={submit} className="flex w-full max-w-md flex-col gap-3 sm:flex-row">
+    <form
+      onSubmit={submit}
+      className="grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]"
+    >
       <input
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Your email"
-        className="input input-lg flex-1"
+        className="input input-lg"
         autoComplete="email"
         required
       />

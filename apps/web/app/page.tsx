@@ -189,8 +189,8 @@ export default async function HomePage() {
         : `${listCount} ${listCount === 1 ? "item" : "items"} on your list`;
 
   // Pre-compute plan data for the logged-out pricing section (constant array, always defined).
-  const freePlan = SUBSCRIPTION_PLANS[0];
-  const premiumPlan = SUBSCRIPTION_PLANS[1];
+  const freePlan = SUBSCRIPTION_PLANS.find((p) => p.tier === "free")!;
+  const premiumPlan = SUBSCRIPTION_PLANS.find((p) => p.tier === "premium_monthly")!;
 
   return (
     <main className="relative overflow-hidden">
@@ -532,7 +532,7 @@ export default async function HomePage() {
               <div className="card-pad flex flex-col border-brand-200 bg-brand-50/40">
                 <div className="flex items-center justify-between">
                   <p className="section-title">Premium</p>
-                  <span className="pill-brand">Most popular</span>
+                  <span className="pill-brand">Recommended</span>
                 </div>
                 <p className="mt-1 text-3xl font-semibold tracking-tight text-ink-900">
                   ${((premiumPlan.priceMonthCents ?? 0) / 100).toFixed(2)}
