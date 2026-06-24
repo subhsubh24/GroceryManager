@@ -64,4 +64,6 @@ export {
   Mail, // connect Gmail / receipts
   UtensilsCrossed, // generic meal / dish
   Sprout, // fresh / nothing-expiring
+  ShieldCheck, // privacy policy
+  FileText, // terms of use
 } from "lucide-react";
