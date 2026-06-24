@@ -107,9 +107,8 @@ Subscription is the **only** revenue stream in v1 (no affiliate ordering — see
       _(PR #55: docs/store/store-assets-spec.md — screenshot spec with all device sizes, 6-screen
       sequence, feature graphic; icon.svg brand color corrected to brand-solid #0c8a3e; PNG export
       + EAS wiring documented in PENDING_OPS.md as Human Core. Descriptions: PR #39)_
-- [ ] Stability pass — no crash-on-launch; offline/empty handled; no debug surfaces.
-      _(Partial: error boundaries on 29+ routes — #36 + #40 + #46 + #54; loading skeletons on
-      26+ routes — #24 + #41 + #46 + #54)_
+- [x] Stability pass — no crash-on-launch; offline/empty handled; no debug surfaces.
+      _(Error boundaries on 29+ routes — #36 + #40 + #46 + #54; loading skeletons on 26+ routes — #24 + #41 + #46 + #54; raw DB error strings removed from all 8 remaining pages — #51)_
 
 ## Track E — Marketing engine (BUILD + STAGE only)
 - [x] **Brand naming** — propose 2–3 name candidates (name + logo direction + voice) for the owner

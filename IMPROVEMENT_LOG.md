@@ -665,3 +665,39 @@ PENDING_OPS was inaccurate — app.json has no icon field). Both fixed and re-ap
 APPROVE (ticks Track D store assets box; Human Core boundary clean).
 
 **ROADMAP ticks:** Track D — Store assets staged ✓
+
+---
+
+## 2026-06-24 — ux(design-bar): humanize capture reason fallback; show — for null reorder dates
+
+**What:** Two micro-fixes caught by the design-bar audit:
+1. `capture/page.tsx` fell through to `i.reason` (raw slug) when the reason wasn't in
+   `REASON_LABEL`. Added `humanize` to the import and changed the fallback to
+   `humanize(i.reason)` so unknown reasons display as "Running Low" not "predicted_runout".
+2. `digest/page.tsx` rendered `""` for items with no `recommendByDate`. Changed
+   `fmtDate(r.recommendByDate) ?? ""` → `fmtDate(r.recommendByDate) ?? "—"` so the reorder
+   table always has a value in the date column.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/44
+
+**Gate:** typecheck ✓ · next build ✓
+
+---
+
+## 2026-06-24 — fix(stability): remove raw DB error strings from 8 pages (Track D)
+
+**What:** Eight pages displayed `data.error?.slice(0, 120)` directly to users when the
+database was unreachable — a debug surface that could leak raw internal error messages
+(DB connection strings, table names, Postgres error codes) in production. The pattern was
+already fixed in `/profile` (PR #30) but left in 8 other routes.
+
+Removed from: `capture`, `cooked`, `digest`, `plan`, `spend`, `staples`, `use-it-up`,
+`wrapped`. The static "Couldn't reach the database." message remains for user context without
+leaking internals; the error boundary (`error.tsx`, PR #40) handles full crash recovery.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/51
+
+**Gate:** typecheck ✓ · next build ✓
+
+**ROADMAP ticks:** Track D — Stability pass ✓ (error boundaries on 29+ routes; loading
+skeletons on 26+ routes; raw DB error strings removed from all 8 remaining pages — #51)
