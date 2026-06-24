@@ -62,7 +62,7 @@ export default function CookTonightScreen() {
         <View style={styles.empty}>
           <Text style={styles.emptyTitle}>Nothing to suggest yet</Text>
           <Text style={styles.emptyNote}>
-            Add items to your pantry in the web app and we'll find matching recipes.
+            Once your pantry has items in stock, we'll suggest recipes you can make tonight.
           </Text>
         </View>
       ) : (
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   image: { width: "100%", height: 160 },
-  imagePlaceholder: { width: "100%", height: 100, backgroundColor: "#ece7dd" },
+  imagePlaceholder: { width: "100%", height: 160, backgroundColor: "#ece7dd" },
   cardBody: { padding: 14 },
   recipeTitle: { fontSize: 15, fontWeight: "700", color: "#1d2530" },
   meta: { flexDirection: "row", gap: 8, marginTop: 6, flexWrap: "wrap" },

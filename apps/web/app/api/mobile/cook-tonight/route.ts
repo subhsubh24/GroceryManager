@@ -25,7 +25,9 @@ export async function GET(req: Request) {
       signals: await loadPreferenceSignals(tx, userId),
     }));
 
-    const inStock = pantry.filter((p) => p.status === "in_stock" || p.status === "low");
+    const inStock = pantry.filter(
+      (p) => p.status === "in_stock" || p.status === "low" || p.status === "expired_likely",
+    );
     if (inStock.length === 0) return Response.json({ recipes: [] });
 
     const idx = buildPantryIndex(
@@ -85,7 +87,8 @@ export async function GET(req: Request) {
     }));
 
     return Response.json({ recipes });
-  } catch {
-    return Response.json({ recipes: [] });
+  } catch (err) {
+    console.error("[cook-tonight]", err);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }
