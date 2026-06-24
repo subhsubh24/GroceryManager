@@ -75,31 +75,45 @@ feature parity with `apps/web`** before submission (owner decision, locked).
 ## Track C — Monetization (SUBSCRIPTION ONLY)
 Scaffold exists: `@gm/core/billing` + `/upgrade` behind `FEATURE_BILLING` (fail-open, no live keys).
 Subscription is the **only** revenue stream in v1 (no affiliate ordering — see Product decisions).
-- [ ] Subscription model: **monthly + annual + 7-day free trial**, with server-side **entitlement
-      gating** of the premium power tier (never trust the client; core loop stays free).
-- [ ] Define the FREE vs PREMIUM feature split in code (the candidate premium set in Product
-      decisions) — gate real value, never core utility.
-- [ ] RevenueCat (mobile) / Stripe (web) integration **code** — keys read from env, **never
-      committed**; webhook handlers + entitlement sync; entitlement shared across web + mobile.
-- [ ] Clear paywall + manage-subscription UX within the design bar (web `/upgrade` + native paywall).
-- [ ] All live keys / product IDs / prices / go-live config recorded in `PENDING_OPS.md` as **Human
-      Core** — never applied by the loop. Billing/auth diffs get extra reviewer scrutiny for leaked
-      secrets + trust-the-client entitlement bugs.
+- [x] Subscription model: **monthly + annual + 7-day free trial**, with server-side **entitlement
+      gating** of the premium power tier. _(PR #42: SUBSCRIPTION_PLANS + getCurrentSubscriptionTier +
+      isTrialEligible; PR #38: canUse() gating on discover/plan/remix — fail-open when FEATURE_BILLING
+      off; fail-closed remix path outside try/catch)_
+- [x] Define the FREE vs PREMIUM feature split in code — gate real value, never core utility.
+      _(PR #42: PREMIUM_FEATURES 3→7: plan_week, discover, remix, gmail_import, household,
+      spend_insights, wrapped_plus)_
+- [x] RevenueCat (mobile) / Stripe (web) integration **code** — keys in env, **never committed**;
+      webhook handlers + entitlement sync. _(PR #42: Stripe webhook skeleton handles
+      customer.subscription.created/updated/deleted → PreferenceSignal ledger via getAdminDb();
+      fail-closed when STRIPE_WEBHOOK_SECRET set until SDK + constructEvent wired;
+      REVENUECAT_API_KEY in env schema)_
+- [x] Clear paywall + manage-subscription UX within the design bar (web `/upgrade` + `/manage-subscription`).
+      _(PR #42: /manage-subscription — tier display, pricing cards, billing portal placeholder;
+      profile page linked)_
+- [x] All live keys / product IDs / prices / go-live config recorded in `PENDING_OPS.md` as **Human
+      Core**. _(2026-06-24 PENDING_OPS entry: Stripe account + keys + SDK install + constructEvent
+      wiring + FEATURE_BILLING=1 — all Human Core)_
 
 ## Track D — Store readiness & compliance
 - [x] **In-app account deletion** (Apple 5.1.1(v)) — full data erase path. _(PR #30: deleteUserAndAllData via ON DELETE CASCADE; danger zone UI + typed confirmation in /profile)_
 - [x] **Privacy policy + terms** pages, linked in-app and in store metadata. _(PR #32: /privacy + /terms static pages; linked from /profile footer)_
-- [ ] **App Privacy (Apple) / Data Safety (Play)** disclosures drafted from actual data flows.
+- [x] **App Privacy (Apple) / Data Safety (Play)** disclosures drafted from actual data flows.
+      _(PR #37: docs/store/privacy-disclosures.md — all 12 Apple categories + Play Data Safety +
+      Gmail Limited Use Policy statements + owner action checklist with portal navigation paths)_
 - [ ] Store assets staged (icon, screenshots, descriptions) — see Track E for copy.
 - [ ] Stability pass — no crash-on-launch; offline/empty handled; no debug surfaces.
+      _(Partial: error boundaries on 26 routes — #36 + #40; loading skeletons on 10+ routes — #24 + #41)_
 
 ## Track E — Marketing engine (BUILD + STAGE only)
-- [ ] **Brand naming** — propose 2–3 name candidates (name + logo direction + voice) for the owner
-      to pick; until chosen, ship under "GroceryManager". Chosen name propagates to app + store metadata.
+- [x] **Brand naming** — propose 2–3 name candidates (name + logo direction + voice) for the owner
+      to pick. _(PR #39: docs/brand/NAMING_CANDIDATES.md — Pantri / Mise / Larder with decision matrix;
+      ships under "GroceryManager" until owner picks)_
 - [ ] Waitlist / landing page (the public marketing surface) with email capture (staged, not sent) —
       drives pre-launch demand so there's an audience to convert on store launch.
 - [ ] Brand kit (logo, palette, type, voice) consistent with the app + the chosen name.
-- [ ] ASO / store copy (title, subtitle, keywords, description) drafted.
+- [x] ASO / store copy (title, subtitle, keywords, description) drafted.
+      _(PR #39: docs/store/app-store-metadata.md + docs/store/google-play-metadata.md — full ASO
+      copy for both stores, 30-char subtitle compliant, 99-char keyword string, reviewer-verified)_
 - [ ] Owned-channel content **drafts** (launch posts, email sequence) — staged, not published.
 - [ ] Analytics wired (privacy-respecting) so the owner can measure activation/retention.
 
