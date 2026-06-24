@@ -108,9 +108,13 @@ export function estimateOnHand(input: DepletionInput): DepletionResult {
   } = input;
 
   const onHandAtLast = events.reduce((sum, e) => sum + e.baseQtyDelta, 0);
+  // Zero-delta "confirmation" events only update freshness (lastConfirmedAt); they must NOT advance
+  // the depletion reference point, or we'd skip counting consumption between the last real purchase
+  // and the confirmation date.
+  const nonZeroEvents = events.filter((e) => e.baseQtyDelta !== 0);
   const lastEventAt =
-    events.length > 0
-      ? new Date(Math.max(...events.map((e) => e.occurredAt.getTime())))
+    nonZeroEvents.length > 0
+      ? new Date(Math.max(...nonZeroEvents.map((e) => e.occurredAt.getTime())))
       : asOf;
 
   const days = Math.max(0, (asOf.getTime() - lastEventAt.getTime()) / DAY_MS);
