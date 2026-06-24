@@ -68,6 +68,18 @@ const EnvSchema = z.object({
   S3_BUCKET: z.string().default("grocery-manager"),
   S3_ACCESS_KEY_ID: z.string().optional(),
   S3_SECRET_ACCESS_KEY: z.string().optional(),
+
+  // Billing — Stripe (Human Core: never commit; set in Vercel environment variables).
+  // STRIPE_SECRET_KEY:     sk_live_… (or sk_test_… for staging)
+  // STRIPE_WEBHOOK_SECRET: whsec_… from the Stripe dashboard → Webhooks → signing secret
+  // STRIPE_PRICE_MONTHLY:  price_… for the $4.99/mo plan
+  // STRIPE_PRICE_ANNUAL:   price_… for the $39.99/yr plan
+  // REVENUECAT_API_KEY:    For future mobile entitlement sync (iOS / Android)
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_PRICE_MONTHLY: z.string().optional(),
+  STRIPE_PRICE_ANNUAL: z.string().optional(),
+  REVENUECAT_API_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

@@ -21,7 +21,7 @@ import { signOut } from "@/auth";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
 import { PushToggle } from "@/app/digest/push-toggle";
-import { User } from "@/app/components/icons";
+import { User, ChevronRight } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -181,6 +181,20 @@ export default async function ProfilePage({
       {/* Web push — the default proactive channel (the same weekly digest, as a notification). */}
       <div className="mt-6">
         <PushToggle vapidPublicKey={vapidPublicKey} />
+      </div>
+
+      {/* Subscription — manage plan and upgrade */}
+      <div className="mt-6">
+        <a
+          href="/manage-subscription"
+          className="card-pad flex items-center justify-between transition-colors hover:bg-ink-50"
+        >
+          <div>
+            <p className="text-sm font-medium">Subscription</p>
+            <p className="mt-0.5 text-xs text-ink-500">View your plan and upgrade options</p>
+          </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-ink-400" strokeWidth={2} />
+        </a>
       </div>
 
       {!data.ready && (
