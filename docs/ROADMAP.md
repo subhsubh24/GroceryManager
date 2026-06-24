@@ -110,14 +110,16 @@ supplements.
   improvement — so the loop **converges** here and the PR (`main` → `main`) is
   opened. Gates: typecheck, 330 core tests, `next build`.
 
-- **Track B — Native Expo mobile app full parity (DONE, 2026-06-24):** 15 screens across 8 PRs,
+- **Track B — Native Expo mobile app full parity (DONE, 2026-06-24):** 18 screens across 11 PRs,
   full feature parity with the web. Auth (`/api/mobile/auth`, HMAC-SHA256 7-day JWT, `AUTH_SECRET`),
   onboarding taste interview, pantry view, shopping list, cookbook, cook tonight, cook mode
   (`/cook/[id]` with ingredient list + steps), discover swipe feed (personalization flywheel on mobile),
   meals & macros log, cooking streak & stats, use-it-up (expiring pantry items → recipes). Design token
   sweep PR #85 corrected off-by-one hex values (`#9ba8b4`→`#a3acb5`, `#fdeceb`→`#fdecea`,
-  `#991b1b`→`#8e261b`) across 7 screens. Every mobile API route is wrapped in try/catch with 500
-  fallback; all image renders guarded by `startsWith("https://")`. Gates: typecheck + core tests +
+  `#991b1b`→`#8e261b`) across 7 screens. Run 6 added spend intelligence (#87), plan-my-week (#89),
+  and Grocery Wrapped (#92) — all with Rules-of-Hooks compliant patterns, amber expired-items
+  styling, and scrollable home with 13 nav links. Every mobile API route is wrapped in try/catch with
+  500 fallback; all image renders guarded by `startsWith("https://")`. Gates: typecheck + core tests +
   `next build` green + `cd apps/mobile && npm run typecheck` on every PR.
 
 ## Next up
@@ -134,11 +136,12 @@ will otherwise keep this list curated and tackle anything that becomes buildable
 - **Shared household** — DONE (shared shopping list, `FEATURE_HOUSEHOLDS` off by default). True
   realtime push + a shared *pantry* (vs just the list) still later.
 - **Premium/billing** — scaffold DONE behind `FEATURE_BILLING`; real payments need Stripe keys + webhook.
-- **Native (Expo) app** — **DONE (Track B, 2026-06-24).** 15 screens, full parity with web
+- **Native (Expo) app** — **DONE (Track B, 2026-06-24).** 18 screens, full parity with web
   (pantry, list, cookbook, cook tonight, cook mode, discover, meals & macros, streak/stats, use-it-up,
-  auth, onboarding, profile, capture, upgrade, quick-add). Remaining: EAS build + App Store submission
-  (human-applied; requires icon PNG export — see PENDING_OPS.md), Expo push notification token
-  (requires EAS project ID), Stripe/RevenueCat billing wiring for in-app purchases.
+  auth, onboarding, profile, capture, upgrade, quick-add, spend, plan my week, Grocery Wrapped).
+  Remaining: EAS build + App Store submission (human-applied; requires icon PNG export — see
+  PENDING_OPS.md), Expo push notification token (requires EAS project ID), Stripe/RevenueCat billing
+  wiring for in-app purchases.
 - **ML depletion model / price forecasting** — need data + offline tuning. **Calendar awareness** — opt-in/3P.
 
 ## Conventions
