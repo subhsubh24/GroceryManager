@@ -54,6 +54,9 @@ async function main() {
     console.log("→ RLS on shared catalog tables…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0010_rls_catalog.sql"), "utf8"));
 
+    console.log("→ Expo mobile push token table…");
+    await sql.unsafe(readFileSync(join(pkgRoot, "sql/0011_push_tokens.sql"), "utf8"));
+
     console.log("✓ migrations complete");
   } finally {
     await sql.end();
