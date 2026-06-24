@@ -20,7 +20,7 @@
 | Google Play | 512 × 512 px | PNG or JPEG, ≤ 1 MB | No alpha required |
 | PWA / favicon | 192 × 192 px | PNG | Already listed in `manifest.webmanifest` (SVG fallback) |
 | PWA / large | 512 × 512 px | PNG | Already listed in `manifest.webmanifest` (SVG fallback) |
-| Expo / EAS | 1024 × 1024 px | PNG, no alpha | Referenced in `apps/mobile/app.json` as `./assets/icon.png` |
+| Expo / EAS | 1024 × 1024 px | PNG, no alpha | Add `"icon": "./assets/icon.png"` to `apps/mobile/app.json` first |
 
 **Export method:** open `icon.svg` in Figma (import SVG → frame to 1024×1024 → export PNG), or use
 `sharp`/`svgexport` in a one-off script. Never use the SVG directly for store submission — stores
@@ -37,7 +37,7 @@ Apple requires at least 3 screenshots per device class. Google Play requires at 
 | Platform | Size | Count |
 |---|---|---|
 | iPhone 6.9" (primary) | 1320 × 2868 px | 6–10 |
-| iPhone 6.5" (required) | 1242 × 2688 px | 6–10 |
+| iPhone 6.5" (required) | 1284 × 2778 px (12/13 Pro Max) or 1290 × 2796 px (14/15 Pro Max) | 6–10 |
 | iPad Pro 12.9" (required if universal) | 2048 × 2732 px | 3+ |
 | Google Play phone | 1080 × 1920 px (min) | 2–8 |
 | Google Play 7" tablet | 1080 × 1920 px | optional |

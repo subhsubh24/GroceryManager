@@ -90,7 +90,8 @@ required for App Store Connect, Google Play Console, and EAS builds.
    - `icon-1024.png` (1024×1024, no alpha) → App Store Connect + EAS
    - `icon-512.png` (512×512) → Google Play
    - `icon-192.png` (192×192) → PWA
-3. For EAS: save `icon-1024.png` as `apps/mobile/assets/icon.png` (the path in `app.json`).
+3. For EAS: add `"icon": "./assets/icon.png"` to `apps/mobile/app.json`, then save `icon-1024.png`
+   as `apps/mobile/assets/icon.png`. (The field and file don't exist yet — both must be created.)
 4. For PWA PNG fallbacks: add `icon-192.png` and `icon-512.png` to `apps/web/public/icons/`,
    update `manifest.webmanifest` to list them alongside the SVG.
 
