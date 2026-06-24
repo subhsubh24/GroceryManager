@@ -25,11 +25,15 @@ buildable is left undone, and that is the bar.) Reaching Done **also requires th
 (see below) to exist and be current.
 
 **FULL AUTONOMY.** You may create whatever it takes to reach the bar: new pages, routes, packages,
-the marketing site + assets, internal tools/scripts, dashboards, docs — anything inside the repo's
-blast radius. Do not wait for permission and do not artificially cap scope to the listed tracks; the
-tracks are the FLOOR, not the ceiling. The ONLY work you may not do is the Human-Core set (things that
-legally or physically require the owner — store accounts, live billing keys, app signing, funding paid
-channels). Build everything else yourself.
+the marketing site + assets, **internal tools** (admin dashboard, analytics views, content
+generators, growth/referral tooling), dashboards, docs — anything inside the repo's blast radius.
+**You may also ADD NEW ROADMAP tracks/phases yourself** when you find real, on-mission work the
+current tracks don't cover (record them in the bookkeeping PR). Do not wait for permission and do not
+artificially cap scope to the listed tracks; the tracks are the FLOOR, not the ceiling. **If the loop
+COULD build it, the loop MUST build it** — never list as an owner step anything you could have done
+yourself. The ONLY work you may not do is the Human-Core set (things that legally or physically
+require the owner — store accounts, live billing keys, app signing, funding paid channels). Build
+everything else yourself.
 
 ## Operating model
 - **Milestone/phase-driven, coherence over volume.** A store-acceptable app is one cohesive product,
@@ -186,6 +190,20 @@ Subscription is the **only** revenue stream in v1 (no affiliate ordering — see
       the actual sending stays behind the owner's connected channels).
 - [ ] **Press / outreach kit** — short press release, product one-pager, founder-story draft,
       directory/launch-list target list (Product Hunt etc.) — staged, not submitted.
+- [ ] **Full email lifecycle** — not just a launch drip: waitlist welcome, onboarding/activation,
+      trial-start, trial-ending, win-back/churn, and re-engagement sequences (templated, staged;
+      sending stays behind the owner's connected provider).
+- [ ] **ASO package ready-to-paste** — final titles/subtitles/keywords/descriptions for BOTH stores
+      in a single copy-paste-ready file, plus localized variants if research supports them.
+- [ ] **A/B landing variants** — at least 2 headline/hero/pricing-framing variants behind the
+      analytics flag so the owner can test conversion on day one.
+- [ ] **Internal growth tooling** — e.g. a referral/invite admin view, a waitlist/analytics dashboard,
+      or a content generator — whatever genuinely accelerates demand-gen (build it; don't list it).
+- [ ] **End-user + operator docs** — a user-facing help/FAQ (in-app or `/help`) AND an operator
+      runbook in the repo (`docs/OPERATIONS.md`: how to run, deploy, rotate keys, read analytics).
+
+> **Marketing 100% bar:** you could launch demand-generation the SAME DAY the owner connects + funds
+> the accounts — nothing left to write, design, or wire on your side.
 
 ---
 
@@ -211,6 +229,17 @@ issue while ANY box is unchecked, and do not add scope after Done.
       Review Guidelines + Google Play policies (fetch them via web research), record findings in
       `docs/store/ACCEPTANCE_AUDIT.md`, and resolve every issue you can control. High confidence both
       stores would accept.
+- [ ] **Revenue viability estimate** (`docs/REVENUE_MODEL.md`) — a HONEST, research-grounded
+      bottom-up model of whether ≥ $100K/yr is achievable. Pull real benchmarks via web research
+      (category install→trial→paid conversion rates, subscription churn, ARPU/price points for
+      comparable grocery/meal-planning apps) and show the funnel math: at our price, **how many paying
+      subscribers** = $100K/yr, and **what install + conversion volume** that implies — with
+      conservative / base / optimistic scenarios and the key assumptions + sources. State plainly
+      whether the target looks reachable, what it would take (e.g. installs/month, conversion %), and
+      the biggest risks. NEVER fake the numbers; if the honest model says the target is hard at the
+      current price/feature set, SAY SO and propose concrete, buildable levers (pricing, a stronger
+      premium tier, ASO, retention) — then build the ones in your control. This is monetization
+      realism, not a sales pitch.
 - [ ] **Self-run pre-submission checklist passes** — no broken flows, no leaked secrets, full gate +
       evals green, no debug surfaces, every owner-required step captured in PENDING_OPS / handoff.
 - [ ] **Confidence statement** — you can honestly write, in the handoff doc: *the product is complete
@@ -227,12 +256,14 @@ required for Done. It MUST contain, in this order:
    and the full marketing engine — with where each lives in the repo.
 3. **Store-acceptance summary** — the result of the `ACCEPTANCE_AUDIT.md` self-audit (what was checked
    against Apple/Google guidelines, and that it passes).
-4. **REMAINING STEPS FOR YOU (the owner) — IN ORDER.** A numbered, sequential checklist of ONLY the
+4. **Revenue outlook** — the headline of `REVENUE_MODEL.md`: the honest $100K/yr verdict + what it
+   takes (installs/month, conversion %, paying subscribers) + the key assumptions and risks.
+5. **REMAINING STEPS FOR YOU (the owner) — IN ORDER.** A numbered, sequential checklist of ONLY the
    things the factory physically/legally cannot do (Human Core): each step = what to do, where (exact
    portal/URL), what value/secret to set and where it goes, and how to verify it worked. Ordered so the
    owner can execute top-to-bottom (accounts → signing → billing → migrations → analytics/marketing
    connect → submit). NOTHING the factory could have built itself belongs in this list.
-5. **Go-to-market** — pointer to the launch plan + content calendar so the owner can execute marketing.
+6. **Go-to-market** — pointer to the launch plan + content calendar so the owner can execute marketing.
 
 ## HUMAN CORE (the unavoidable ~5% — only the owner can do these)
 - Apple Developer account ($99/yr) + Google Play account ($25) + identity verification.
