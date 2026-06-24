@@ -8,6 +8,7 @@ import { loadEnv } from "@gm/config/env";
 import { getAdminDb, getDb, listGoogleUserIds, withTenant } from "@gm/db";
 import {
   QUEUES,
+  RECEIPT_JOB_OPTS,
   connection,
   gmailPollQueue,
   predictRecomputeQueue,
@@ -37,7 +38,7 @@ const workers = [
               await receiptParseQueue.add(
                 "parse",
                 { userId, messageId },
-                { jobId: `rp-${userId}-${messageId}` },
+                { jobId: `rp-${userId}-${messageId}`, ...RECEIPT_JOB_OPTS },
               );
             }),
           );

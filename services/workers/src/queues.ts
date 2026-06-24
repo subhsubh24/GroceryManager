@@ -19,8 +19,38 @@ export const QUEUES = {
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
 
-export const gmailPollQueue = new Queue(QUEUES.gmailPoll, { connection });
-export const receiptParseQueue = new Queue(QUEUES.receiptParse, { connection });
+/**
+ * Retry + retention config for receipt-parse jobs.
+ * 3 attempts with exponential backoff handles transient LLM timeouts and Gemini 429s.
+ * removeOnFail caps Redis memory usage; removeOnComplete keeps a short audit trail.
+ */
+export const RECEIPT_JOB_OPTS = {
+  attempts: 3,
+  backoff: { type: "exponential" as const, delay: 5000 },
+  removeOnComplete: 100,
+  removeOnFail: 200,
+} as const;
+
+/** Retention-only defaults for fire-and-forget cron-style queues. */
+const CRON_JOB_OPTS = {
+  removeOnComplete: 10,
+  removeOnFail: 50,
+} as const;
+
+export const gmailPollQueue = new Queue(QUEUES.gmailPoll, {
+  connection,
+  defaultJobOptions: CRON_JOB_OPTS,
+});
+export const receiptParseQueue = new Queue(QUEUES.receiptParse, {
+  connection,
+  defaultJobOptions: RECEIPT_JOB_OPTS,
+});
 export const visionScanQueue = new Queue(QUEUES.visionScan, { connection });
-export const predictRecomputeQueue = new Queue(QUEUES.predictRecompute, { connection });
-export const watchRenewQueue = new Queue(QUEUES.watchRenew, { connection });
+export const predictRecomputeQueue = new Queue(QUEUES.predictRecompute, {
+  connection,
+  defaultJobOptions: CRON_JOB_OPTS,
+});
+export const watchRenewQueue = new Queue(QUEUES.watchRenew, {
+  connection,
+  defaultJobOptions: CRON_JOB_OPTS,
+});
