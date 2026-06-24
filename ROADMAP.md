@@ -207,18 +207,48 @@ Subscription is the **only** revenue stream in v1 (no affiliate ordering — see
 
 ---
 
+## EVIDENCE-BASED DONE (no self-certification — read before ticking ANY box)
+A box is "done" ONLY with **verifiable evidence**, never self-assessment. Before ticking a DoD box or
+opening the ready issue you MUST be able to point to the proof and record it. Reviewer A
+REQUEST_CHANGES on any box ticked without proof. **If an artifact is a SPEC/plan where the bar requires
+a built/rendered thing, it is NOT done.** Required proof per gate:
+- **Gate green THIS run** — `pnpm -r run typecheck` + `pnpm -r run test` + production
+  `pnpm --filter @gm/web build` (+ missing-export grep) + `cd apps/mobile && npm ci && npm run typecheck`
+  ALL exit 0 in the SAME run (not "CI was green once"). 
+- **Rendered store assets** — actual committed IMAGE files (e.g. `docs/store/assets/*.png`): the
+  required screenshot count per device for BOTH Apple + Google + a feature graphic. A spec doc does
+  NOT count. Prove with `ls` of the images.
+- **Store-acceptance audit** — `docs/store/ACCEPTANCE_AUDIT.md` exists AND has ZERO unresolved
+  FAIL/TODO items you control (prove by grepping for open items → none).
+- **Business case** — `docs/BUSINESS_CASE.md` has ALL required sections AND the **base case** shows a
+  credible ≥ $100K/yr path using the **median/conservative** end of the cited ranges (NO cherry-picking
+  the optimistic end to clear the bar).
+- **Marketing 100%** — every Track E item exists as a real route/file (landing/site, blog routes,
+  waitlist, A/B variants, rendered assets, email lifecycle, ASO file, press kit, growth tooling,
+  `docs/OPERATIONS.md`) — not just a doc describing it.
+- **Launch handoff** — `docs/LAUNCH.md` exists, current, with the ordered owner-only steps.
+
+**PRE-FLIGHT VERIFICATION (required before opening the ready issue).** Build + run `scripts/preflight.sh`
+(create it if missing): it re-runs the full gate AND asserts every required artifact exists
+(`test -f`/`ls`/`grep`), exiting non-zero on the first failure. PASTE its output into the
+`FACTORY: ready for submission` issue as evidence — the issue must show proof, not claims. If ANY check
+fails, do NOT open the issue; fix the gap and keep building. NEVER tick a box you cannot prove right
+now, and if a previously-ticked box fails its proof, UNCHECK it and fix it.
+
 ## DEFINITION OF DONE (the 100% bar — strict)
-Done requires **ALL** of the gates below genuinely true and CI-verified — BOTH product AND marketing
-at 100%. Only then: produce/refresh the **LAUNCH HANDOFF** doc, open ONE issue titled
-**`FACTORY: ready for submission`** linking it + the Human-Core checklist, and STOP. Do not open that
-issue while ANY box is unchecked, and do not add scope after Done.
+Done requires **ALL** of the gates below genuinely true, **each with the EVIDENCE-BASED DONE proof
+above** and the pre-flight verification passing. Only then: produce/refresh the **LAUNCH HANDOFF** doc,
+open ONE issue titled **`FACTORY: ready for submission`** with the pasted pre-flight evidence + the
+Human-Core checklist, and STOP. Do not open that issue while ANY box is unchecked or any proof is
+missing, and do not add scope after Done.
 
 **Product 100%:**
 - [x] Track A complete — web app at paid quality, **live eval suite passes**.
 - [ ] Track B complete — native Expo app at full parity (not a wrapper), mobile CI green, push +
       offline behavior code complete (only Human-Core keys/IDs pending).
 - [x] Track C complete — subscription + entitlement gating in code (live keys pending in Human Core).
-- [x] Track D complete — account deletion, privacy/terms, disclosures, **rendered** assets, stability.
+- [x] Track D complete — account deletion, privacy/terms, disclosures, stability. _(Store-asset SPEC
+      done; the RENDERED image files are a Track E gate below and are NOT yet built — still required.)_
 
 **Marketing 100%:**
 - [ ] Track E complete — FULL engine: marketing website, SEO/content, rendered store assets, launch
