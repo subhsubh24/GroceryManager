@@ -45,7 +45,7 @@ export async function analyzeAndIngestReceipt(
 ): Promise<AnalyzeReceiptState> {
   const env = loadEnv();
   if (!env.GEMINI_API_KEY && !env.GOOGLE_VERTEX_PROJECT) {
-    return { status: "error", message: "Receipt scanning needs a Gemini key." };
+    return { status: "error", message: "Receipt scanning requires Gemini or Google Vertex AI configured." };
   }
 
   const files = formData

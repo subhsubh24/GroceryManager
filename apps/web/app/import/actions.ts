@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { loadEnv } from "@gm/config/env";
 import { getDb, getPantryView, saveImportedRecipe, withTenant } from "@gm/db";
 import { buildPantryIndex, splitSteps } from "@gm/core/recipe";
 import { cleanIngredientName, importRecipe } from "@gm/core/recipe/import-llm";
@@ -20,16 +21,25 @@ export async function importRecipeAction(_prev: ImportState, formData: FormData)
   if (!url && !text && !hasImage) return { status: "idle" };
 
   try {
+    const env = loadEnv();
+    const hasLLM = !!(env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT);
+
     let input: Parameters<typeof importRecipe>[0];
     if (url) {
       input = { url };
     } else if (imageFile instanceof File && imageFile.size > 0) {
+      if (!hasLLM) {
+        return { status: "error", message: "Importing recipes from photos requires Gemini or Google Vertex AI configured." };
+      }
       if (imageFile.size > 6 * 1024 * 1024) {
         return { status: "error", message: "That image is too large — keep it under ~6 MB." };
       }
       const buf = Buffer.from(await imageFile.arrayBuffer());
       input = { image: { mimeType: imageFile.type || "image/jpeg", dataBase64: buf.toString("base64") } };
     } else {
+      if (!hasLLM) {
+        return { status: "error", message: "Importing recipes from text requires Gemini or Google Vertex AI configured." };
+      }
       input = { text };
     }
 
