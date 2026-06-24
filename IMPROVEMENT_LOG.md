@@ -196,6 +196,153 @@ fetch from its own loopback interface.
 
 ---
 
+## 2026-06-24 — security(cron): fail-closed auth when CRON_SECRET / GMAIL_WEBHOOK_SECRET env vars are absent
+
+**What:** `/api/cron/gmail`, `/api/cron/digest`, and `/api/webhooks/gmail` only checked the
+secret when the env var was set (`if (env.CRON_SECRET) { check }`). When the var was absent
+the guard was bypassed entirely — any unauthenticated caller could trigger Gmail syncs, digest
+pushes, or Pub/Sub processing. New pattern: if no secret is configured, allow only in
+`NODE_ENV !== "production"` (dev stays frictionless); in production → 403.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/28
+
+**Gate:** typecheck ✓ (3 changed files, no new deps)
+
+---
+
+## 2026-06-24 — security(import): block redirects + add 10s timeout on URL recipe fetch
+
+**What:** `import-llm.ts` used `fetch()` with its default `redirect: "follow"`. An attacker
+could supply a public URL that 3xx-redirects to `169.254.169.254` (IMDS) or another private
+host, bypassing `isPublicHttpUrl()` entirely. Added `redirect: "error"` (any 3xx throws) and
+`AbortSignal.timeout(10_000)` (cap at 10 seconds to prevent request-hold attacks).
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/26
+
+**Gate:** typecheck ✓ · next build ✓
+
+---
+
+## 2026-06-24 — fix(import): handle HowToIngredient objects + strip inline parentheticals
+
+**What:** Two bugs in `packages/core/src/recipe/import.ts`:
+- `extractRecipeJsonLd` silently dropped `HowToIngredient` objects in `recipeIngredient` arrays
+  (e.g. `{ "@type": "HowToIngredient", name: "1 tsp salt" }`). Only plain strings were handled.
+  Fix: fall back to `firstString(obj.name) ?? firstString(obj.text)`.
+- `cleanIngredientName` left inline parentheticals in the food name:
+  `"2 (14.5 oz) cans diced tomatoes"` → `"cans diced tomatoes"` instead of `"diced tomatoes"`;
+  `"1/2 cup (120ml) milk"` → `"(120ml) milk"` instead of `"milk"`.
+  Fix: strip parenthetical before and after the unit-word strip inside the `if (qty)` block.
+
+**Tests added:** 2 new `it()` blocks (HowToIngredient parsing; parenthetical stripping with 3 cases).
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/25
+
+**Gate:** typecheck ✓ · 444 core tests ✓ (all 14 import tests pass)
+
+---
+
+## 2026-06-24 — ux(loading): add loading skeletons for /discover, /recipes, /use-it-up
+
+**What:** Three high-traffic pages had no `loading.tsx`, causing Next.js to show a blank
+screen for up to 4 seconds while TheMealDB and pantry queries ran. Added branded skeleton files
+(`loading.tsx`) for `/discover`, `/recipes`, and `/use-it-up`, matching the pattern from
+the existing `/plan/loading.tsx` — `PageHeader` + animated placeholder rows.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/24
+
+**Gate:** typecheck ✓ · next build ✓
+
+---
+
+## 2026-06-24 — fix(consume): guard Infinity qty, singularize 3-char units, fix -oes plural stripping
+
+**What:** Three bugs in `packages/core/src/recipe/consume.ts`:
+- `parseMeasure("1/0 cups")` returned `{qty: Infinity}` — `Infinity > 0` passed the guard,
+  so `Math.min(Infinity, onHand)` consumed the entire pantry stock. Added `!Number.isFinite(qty)`.
+- `lbs`, `ozs`, `kgs`, `mls` were not singularized (they're exactly 3 chars; the generic
+  singularizer requires `length > 3`). Added an explicit `SHORT_PLURAL` map.
+- `tokenize()` reduced `"tomatoes"` → `"tomatoe"` (wrong) via the generic -s strip. Added a
+  pre-check: if a word ends in `"oes"` and `length > 4`, strip last 2 chars (`tomatoes→tomato`).
+
+**Tests added:** 4 new assertions (Infinity guard, lbs/ozs singularization, -oes pantry matching).
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/23
+
+**Gate:** typecheck ✓ · 445 core tests ✓ · next build ✓
+
+---
+
+## 2026-06-24 — ux(cooked): show — instead of 0-values when macros are unavailable
+
+**What:** When `FDC_API_KEY` is not set, all meals have `null` macros. The daily-totals
+panel summed with `?? 0` and displayed `"0 kcal · P 0g · C 0g · F 0g"` — indistinguishable
+from a real zero-calorie day. Added `hasMacros = todays.some(m => m.kcal != null)` and
+conditionally render `"—"` when no macros are available, consistent with `macroLine()`.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/22
+
+**Gate:** typecheck ✓ · next build ✓
+
+---
+
+## 2026-06-24 — ux(staples): apply titleCase to item names and humanize to domain labels
+
+**What:** `apps/web/app/staples/page.tsx` rendered raw DB slugs (`"grocery"`, `"personal_care"`)
+and lowercase item names directly. Applied `titleCase(i.name)` in both the "Coming up on your
+list" panel and the item-list rows; `humanize(i.domain)` on the metadata line
+(`"personal_care"` → `"Personal Care"`).
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/21
+
+**Gate:** typecheck ✓ · next build ✓
+
+---
+
+## 2026-06-24 — fix(depletion): zero-delta confirmation events must not advance the depletion clock
+
+**What:** `estimateOnHand` used `max(all event timestamps)` as `lastEventAt`. A zero-delta
+"still have it" confirmation on day 5 advanced the depletion reference to day 5, so only
+1 day of consumption was inferred on day 6 (900 ml) instead of the correct 6 days (400 ml).
+Fix: filter zero-delta events before computing `lastEventAt` — only purchases and adjustments
+move the reference point; confirmations only affect `lastConfirmedAt`.
+
+**Tests added:** 3 new `it()` blocks (zero-delta + ratePerDay regression; EWMA same-day
+duplicate timestamps; EWMA single-interval rate derivation).
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/20
+
+**Gate:** typecheck ✓ · 445 core tests ✓ · next build ✓
+
+---
+
+## 2026-06-24 — fix(workers): add retry config and failed-job retention to receipt-parse worker
+
+**What:** Receipt-parse jobs had no retry policy (`attempts: 1` default) and no job-retention
+limits, so a transient Gemini 429 or DB hiccup silently dropped the receipt and let Redis
+accumulate unlimited failed-job records. Added `RECEIPT_JOB_OPTS` (`attempts: 3, backoff:
+{ type: "exponential", delay: 5000 }, removeOnComplete: 100, removeOnFail: 200`) and
+`CRON_JOB_OPTS` (`removeOnComplete: 10, removeOnFail: 50`) for fire-and-forget cron queues.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/19
+
+**Gate:** typecheck ✓ · 445 core tests ✓ · next build ✓
+
+---
+
+## 2026-06-24 — perf(home): parallelize home-page DB queries to eliminate serial waterfall
+
+**What:** `apps/web/app/page.tsx` ran 4 DB queries serially after `getPantryView` — adding
+~400 ms of avoidable latency per page load. Parallelized with `Promise.all([loadPreferenceSignals,
+loadCookedAt, getActiveListView, buildDigestForUser])`. Also parallelized `loadReorderInputs` and
+`loadWrappedInputs` inside `buildDigestForUser` in `apps/web/app/lib/digest.ts`.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/18
+
+**Gate:** typecheck ✓ · 445 core tests ✓ · next build ✓
+
+---
+
 ## 2026-06-23 — fix(consume): parseMeasure drops unit on fractional high-end ranges
 
 **What:** One-line regex fix in `parseMeasure` (`packages/core/src/recipe/consume.ts`).
