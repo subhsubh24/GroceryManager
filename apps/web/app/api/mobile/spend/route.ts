@@ -1,5 +1,6 @@
-import { getDb, getUserBudgetCents, loadLineItemsForSpend, loadPurchasesForSpend, withTenant } from "@gm/db";
+import { getDb, getUserBudgetCents, loadLineItemsForSpend, loadPreferenceSignals, loadPurchasesForSpend, withTenant } from "@gm/db";
 import { budgetVsActual, spendByPeriod, topItemsBySpend } from "@gm/core/spend";
+import { canUse, isPremium } from "@gm/core/billing";
 import { verifyMobileToken } from "../_lib";
 
 export const runtime = "nodejs";
@@ -12,13 +13,19 @@ export async function GET(req: Request) {
   if (!userId) return Response.json({ error: "Invalid or expired token" }, { status: 401 });
 
   try {
-    const [purchases, lines, budgetCents] = await withTenant(getDb(), userId, (tx) =>
+    const [signals, purchases, lines, budgetCents] = await withTenant(getDb(), userId, (tx) =>
       Promise.all([
+        loadPreferenceSignals(tx, userId),
         loadPurchasesForSpend(tx, userId),
         loadLineItemsForSpend(tx, userId),
         getUserBudgetCents(tx, userId),
       ]),
     );
+
+    const billingOn = process.env.FEATURE_BILLING === "1";
+    if (!canUse("spend_insights", isPremium(signals), billingOn)) {
+      return Response.json({ upgradeRequired: true });
+    }
 
     const months = spendByPeriod(purchases, "month");
     const weeks = spendByPeriod(purchases, "week");

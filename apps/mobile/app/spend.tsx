@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, ActivityIndicator, Pressable, StyleSheet, ScrollView } from "react-native";
-import { Redirect } from "expo-router";
+import { Redirect, Link } from "expo-router";
 import { useAuth } from "../lib/auth";
 import { apiFetch } from "../lib/api";
 
@@ -13,6 +13,7 @@ type BudgetStatus = {
   overBudget: boolean;
 };
 type SpendData = {
+  upgradeRequired?: boolean;
   empty: boolean;
   thisMonthCents: number;
   months: MonthPeriod[];
@@ -33,13 +34,12 @@ export default function SpendScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  if (!token) return <Redirect href="/login" />;
-
   function load() {
+    if (!token) return () => {};
     setLoading(true);
     setError(null);
     let cancelled = false;
-    apiFetch("/api/mobile/spend", token!)
+    apiFetch("/api/mobile/spend", token)
       .then(async (res) => {
         if (!res.ok) { if (!cancelled) setError("Failed to load spend data."); return; }
         const d = (await res.json()) as SpendData;
@@ -51,6 +51,8 @@ export default function SpendScreen() {
   }
 
   useEffect(load, [token]);
+
+  if (!token) return <Redirect href="/login" />;
 
   if (loading) {
     return (
@@ -67,6 +69,18 @@ export default function SpendScreen() {
         <Pressable style={styles.retryButton} onPress={load}>
           <Text style={styles.retryText}>Retry</Text>
         </Pressable>
+      </View>
+    );
+  }
+
+  if (data?.upgradeRequired) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.emptyTitle}>Premium feature</Text>
+        <Text style={styles.emptyNote}>Spend insights are a premium feature.</Text>
+        <Link href="/upgrade" style={styles.upgradeButton}>
+          <Text style={styles.upgradeText}>See plans →</Text>
+        </Link>
       </View>
     );
   }
@@ -136,7 +150,7 @@ export default function SpendScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#faf8f3" },
   content: { padding: 20, paddingBottom: 40 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 12 },
   heroCard: {
     backgroundColor: "#0c8a3e",
     borderRadius: 20,
@@ -167,6 +181,8 @@ const styles = StyleSheet.create({
   under: { color: "#0c8a3e" },
   emptyTitle: { fontSize: 18, fontWeight: "700", color: "#1d2530", marginBottom: 8 },
   emptyNote: { fontSize: 14, color: "#525d6a", textAlign: "center" },
+  upgradeButton: { backgroundColor: "#0c8a3e", paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, marginTop: 8 },
+  upgradeText: { color: "#ffffff", fontWeight: "700", fontSize: 15 },
   errorText: { fontSize: 15, color: "#c0392b", marginBottom: 16 },
   retryButton: { backgroundColor: "#0c8a3e", paddingHorizontal: 24, paddingVertical: 10, borderRadius: 10 },
   retryText: { color: "#ffffff", fontWeight: "700" },

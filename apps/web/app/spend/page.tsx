@@ -2,10 +2,13 @@ import {
   getDb,
   getUserBudgetCents,
   loadLineItemsForSpend,
+  loadPreferenceSignals,
   loadPurchasesForSpend,
   withTenant,
 } from "@gm/db";
 import { budgetVsActual, cheaperRetailer, spendByPeriod, topItemsBySpend } from "@gm/core/spend";
+import { canUse, isPremium } from "@gm/core/billing";
+import { redirect } from "next/navigation";
 import { currentUserId } from "@/app/lib/tenant";
 import { humanize, titleCase } from "@/app/lib/format";
 import { PageHeader } from "@/app/components/page-header";
@@ -19,13 +22,18 @@ async function load() {
   try {
     const userId = await currentUserId();
     if (!userId) return { ready: false as const, error: null as string | null };
-    const [purchases, lines, budgetCents] = await withTenant(getDb(), userId, (tx) =>
+    const [purchases, lines, budgetCents, signals] = await withTenant(getDb(), userId, (tx) =>
       Promise.all([
         loadPurchasesForSpend(tx, userId),
         loadLineItemsForSpend(tx, userId),
         getUserBudgetCents(tx, userId),
+        loadPreferenceSignals(tx, userId),
       ]),
     );
+    const billingOn = process.env.FEATURE_BILLING === "1";
+    if (!canUse("spend_insights", isPremium(signals), billingOn)) {
+      return { ready: false as const, error: null as string | null, upgradeRequired: true as const };
+    }
     const months = spendByPeriod(purchases, "month");
     const weeks = spendByPeriod(purchases, "week");
     return {
@@ -45,6 +53,7 @@ async function load() {
 
 export default async function SpendPage() {
   const data = await load();
+  if ("upgradeRequired" in data && data.upgradeRequired) redirect("/upgrade");
 
   return (
     <main className="page">
