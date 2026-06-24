@@ -17,8 +17,10 @@ export async function buildDigestForUser(
   pantry?: Awaited<ReturnType<typeof getPantryView>>,
 ): Promise<DigestSummary> {
   const p = pantry ?? (await getPantryView(tx, userId));
-  const reorder = await loadReorderInputs(tx, userId);
-  const wrapped = await loadWrappedInputs(tx, userId, 7);
+  const [reorder, wrapped] = await Promise.all([
+    loadReorderInputs(tx, userId),
+    loadWrappedInputs(tx, userId, 7),
+  ]);
 
   const expiring = selectExpiringSoon(p, { domain: "grocery", withinDays: 5, excludeExpired: true }).map((e) => ({
     name: e.name,
