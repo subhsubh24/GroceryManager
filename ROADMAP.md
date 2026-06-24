@@ -13,6 +13,24 @@ Ship GroceryManager as a **web app + native Expo mobile app**, **subscription-mo
 **store-acceptable with high confidence** and primed to earn **reliable, consistent revenue — target
 ≥ $100K/yr** — as a dependable side income.
 
+## THE 100% BAR (do NOT stop early — read every run)
+"Done" means **BOTH the PRODUCT and the MARKETING are genuinely 100% complete** — not one, not
+"mostly," not "staged minimally." Keep building until you can **honestly** state: *the product is
+complete and polished; it will be accepted into the Apple App Store AND Google Play with high
+confidence (self-audited against the CURRENT published Apple/Google review guidelines via web
+research); and everything within our control to maximize the odds of reaching ≥ $100K/yr has been
+built and verified.* If you cannot honestly say that, you are NOT done — find the gap and close it.
+(You cannot literally guarantee revenue — the market decides — but you CAN guarantee that nothing
+buildable is left undone, and that is the bar.) Reaching Done **also requires the LAUNCH HANDOFF doc**
+(see below) to exist and be current.
+
+**FULL AUTONOMY.** You may create whatever it takes to reach the bar: new pages, routes, packages,
+the marketing site + assets, internal tools/scripts, dashboards, docs — anything inside the repo's
+blast radius. Do not wait for permission and do not artificially cap scope to the listed tracks; the
+tracks are the FLOOR, not the ceiling. The ONLY work you may not do is the Human-Core set (things that
+legally or physically require the owner — store accounts, live billing keys, app signing, funding paid
+channels). Build everything else yourself.
+
 ## Operating model
 - **Milestone/phase-driven, coherence over volume.** A store-acceptable app is one cohesive product,
   not a pile of disconnected PRs. Advance the lowest incomplete track first.
@@ -155,21 +173,66 @@ Subscription is the **only** revenue stream in v1 (no affiliate ordering — see
       _(PR #50: Plausible script in layout.tsx gated on NEXT_PUBLIC_PLAUSIBLE_DOMAIN — zero impact
       until owner wires it; setup steps in PENDING_OPS.md)_
 
+**Marketing is NOT "done" at the minimum above — build the FULL engine (research-grounded):**
+- [ ] **Full marketing website** (not just one landing page) — hero, features, pricing, FAQ, about,
+      social proof placeholders (no fake testimonials), SEO meta/OG tags, sitemap — design-bar quality.
+- [ ] **SEO / content engine** — keyword-targeted blog/guide pages (e.g. meal-planning, pantry,
+      grocery-budget topics) grounded in real search/competitor research; internal linking; metadata.
+- [ ] **Rendered store assets** — actual screenshot images + feature graphic + app preview
+      storyboard generated from the spec (not just a spec doc), per device sizes.
+- [ ] **Launch plan + content calendar** — a dated, ordered go-to-market plan (waitlist → launch →
+      post-launch), with the content drafts slotted into a schedule the owner can execute.
+- [ ] **Growth loop** — referral/invite mechanics + a share surface wired in-app (build the code;
+      the actual sending stays behind the owner's connected channels).
+- [ ] **Press / outreach kit** — short press release, product one-pager, founder-story draft,
+      directory/launch-list target list (Product Hunt etc.) — staged, not submitted.
+
 ---
 
-## DEFINITION OF DONE (stop condition)
-When **all** of these are genuinely true and CI-verified, STOP building, open ONE issue titled
-**`FACTORY: ready for submission`** with the Human Core checklist below, and exit. After Done, do not
-add scope.
+## DEFINITION OF DONE (the 100% bar — strict)
+Done requires **ALL** of the gates below genuinely true and CI-verified — BOTH product AND marketing
+at 100%. Only then: produce/refresh the **LAUNCH HANDOFF** doc, open ONE issue titled
+**`FACTORY: ready for submission`** linking it + the Human-Core checklist, and STOP. Do not open that
+issue while ANY box is unchecked, and do not add scope after Done.
+
+**Product 100%:**
 - [x] Track A complete — web app at paid quality, **live eval suite passes**.
-- [ ] Track B complete — native Expo app real (not a wrapper), mobile CI green.
-      _(18 screens ✅ · CI green ✅ · EAS staged ✅ · push notification code wired ✅ (PRs #97 #98) —
-      1 Human Core step from complete: set EXPO_PUBLIC_PROJECT_ID + apply migration 0011.)_
+- [ ] Track B complete — native Expo app at full parity (not a wrapper), mobile CI green, push +
+      offline behavior code complete (only Human-Core keys/IDs pending).
 - [x] Track C complete — subscription + entitlement gating in code (live keys pending in Human Core).
-- [x] Track D complete — account deletion, privacy/terms, disclosures, assets, stability.
-- [x] Track E complete — landing, brand kit, store copy, content drafts, analytics — all staged.
-- [ ] Self-run pre-submission checklist passes (no broken flows, no leaked secrets, gate + evals green).
-      _(Blocked by Track B push notifications; will run once that box clears.)_
+- [x] Track D complete — account deletion, privacy/terms, disclosures, **rendered** assets, stability.
+
+**Marketing 100%:**
+- [ ] Track E complete — FULL engine: marketing website, SEO/content, rendered store assets, launch
+      plan + calendar, growth loop, press/outreach kit, analytics — all built + staged, research-grounded.
+
+**Store-acceptance + revenue-readiness:**
+- [ ] **Store-acceptance self-audit** — audit the app against the CURRENT published Apple App Store
+      Review Guidelines + Google Play policies (fetch them via web research), record findings in
+      `docs/store/ACCEPTANCE_AUDIT.md`, and resolve every issue you can control. High confidence both
+      stores would accept.
+- [ ] **Self-run pre-submission checklist passes** — no broken flows, no leaked secrets, full gate +
+      evals green, no debug surfaces, every owner-required step captured in PENDING_OPS / handoff.
+- [ ] **Confidence statement** — you can honestly write, in the handoff doc: *the product is complete
+      and store-acceptable with high confidence, and everything buildable to maximize the ≥ $100K/yr
+      odds is done.* If you cannot write that truthfully, you are NOT done — keep building.
+- [ ] **LAUNCH HANDOFF doc exists + current** (`docs/LAUNCH.md`, see below).
+
+## LAUNCH HANDOFF — `docs/LAUNCH.md` (the deliverable at 100%)
+The single document the owner reads when the factory says "done." Keep it current as you build; it is
+required for Done. It MUST contain, in this order:
+1. **What this is** — one-paragraph product summary + the honest **confidence statement** (product
+   complete, store-acceptable with high confidence, maximally primed for ≥ $100K/yr).
+2. **What's built** — concise documentation: the web app, the native app, monetization, compliance,
+   and the full marketing engine — with where each lives in the repo.
+3. **Store-acceptance summary** — the result of the `ACCEPTANCE_AUDIT.md` self-audit (what was checked
+   against Apple/Google guidelines, and that it passes).
+4. **REMAINING STEPS FOR YOU (the owner) — IN ORDER.** A numbered, sequential checklist of ONLY the
+   things the factory physically/legally cannot do (Human Core): each step = what to do, where (exact
+   portal/URL), what value/secret to set and where it goes, and how to verify it worked. Ordered so the
+   owner can execute top-to-bottom (accounts → signing → billing → migrations → analytics/marketing
+   connect → submit). NOTHING the factory could have built itself belongs in this list.
+5. **Go-to-market** — pointer to the launch plan + content calendar so the owner can execute marketing.
 
 ## HUMAN CORE (the unavoidable ~5% — only the owner can do these)
 - Apple Developer account ($99/yr) + Google Play account ($25) + identity verification.
