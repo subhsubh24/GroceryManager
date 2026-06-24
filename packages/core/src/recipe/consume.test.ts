@@ -31,6 +31,17 @@ describe("parseMeasure", () => {
     expect(parseMeasure("")).toBeNull();
     expect(parseMeasure(null)).toBeNull();
   });
+
+  it("guards against Infinity qty from division by zero", () => {
+    expect(parseMeasure("1/0 cups")).toBeNull();
+  });
+
+  it("singularizes 3-char plural units (lbs, ozs, kgs, mls)", () => {
+    expect(parseMeasure("2 lbs chicken")).toEqual({ qty: 2, unit: "lb" });
+    expect(parseMeasure("8 ozs")).toEqual({ qty: 8, unit: "oz" });
+    expect(parseMeasure("1 kgs")).toEqual({ qty: 1, unit: "kg" });
+    expect(parseMeasure("500 mls")).toEqual({ qty: 500, unit: "ml" });
+  });
 });
 
 const pantry: ConsumePantryItem[] = [
@@ -38,6 +49,7 @@ const pantry: ConsumePantryItem[] = [
   { canonicalItemId: "c-eggs", name: "eggs", baseQtyOnHand: 12 },
   { canonicalItemId: "c-spinach", name: "spinach", aliases: ["baby spinach"], baseQtyOnHand: 100 },
   { canonicalItemId: "c-salt", name: "salt", baseQtyOnHand: 1000 },
+  { canonicalItemId: "c-tomato", name: "tomato", baseQtyOnHand: 6 },
 ];
 
 // Resolver: grams pass through for mass items; bare numbers count for "each"-style items.
@@ -101,5 +113,17 @@ describe("planConsumption", () => {
     const plan = planConsumption([{ name: "chicken breast", measure: "300 g" }], pantry);
     expect(plan.deltas).toEqual([]);
     expect(plan.usedUnmeasured).toEqual(["chicken breast"]);
+  });
+
+  it("matches plural -oes ingredient form (tomatoes) against singular pantry item (tomato)", () => {
+    const plan = planConsumption(
+      [{ name: "tomatoes", measure: "200 g" }],
+      pantry,
+      { resolveBaseQty: resolver },
+    );
+    // resolver returns qty for "g" units; clamped to 6 on-hand
+    expect(plan.deltas).toEqual([
+      { canonicalItemId: "c-tomato", name: "tomato", baseQtyDelta: -6 },
+    ]);
   });
 });
