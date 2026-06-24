@@ -594,6 +594,19 @@ export async function loadWasteEvents(db: Querier, userId: string, sinceDays = 3
   }));
 }
 
+/** Load a user's profile fields by primary key. Admin/tenant-agnostic scope. */
+export async function getUserById(
+  db: Querier,
+  userId: string,
+): Promise<{ id: string; name: string | null; email: string | null; username: string | null } | null> {
+  const rows = await db
+    .select({ id: users.id, name: users.name, email: users.email, username: users.username })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 /**
  * Load a user (by USERNAME) for credentials login — includes the password hash so the NextAuth
  * `authorize` callback can verify it. Pass the NORMALIZED (lowercased) handle. Admin/provisioning

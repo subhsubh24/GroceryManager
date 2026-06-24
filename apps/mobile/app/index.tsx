@@ -34,6 +34,10 @@ export default function HomeScreen() {
           <Text style={styles.cardLabel}>Quick add →</Text>
           <Text style={styles.cardNote}>Add items to your list</Text>
         </Link>
+        <Link href="/profile" style={styles.card}>
+          <Text style={styles.cardLabel}>Profile &amp; settings →</Text>
+          <Text style={styles.cardNote}>Account, subscription, delete account</Text>
+        </Link>
       </View>
 
       <Pressable style={styles.signOut} onPress={logout}>
