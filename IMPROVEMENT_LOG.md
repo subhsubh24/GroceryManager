@@ -4,6 +4,24 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-24 (run 4) — Track B mobile parity: cook-tonight, onboarding wizard, meals/macros log
+
+**PR #76 — cook-tonight screen (merged):** `GET /api/mobile/cook-tonight` (pantry-ranked recipe
+suggestions reusing existing `getCookTonightCandidates`). Native `apps/mobile/app/cook-tonight.tsx`:
+ranked recipe cards with pantry-match indicator, pull-to-refresh, loading/error/empty states. Index
+nav card added. Gate: `verify` ✓ · `mobile` ✓.
+
+**PR #83 — mobile onboarding wizard (merged):** `GET /api/mobile/onboarding` (check status) +
+`POST` (actions: profile / taste / finish). Three-step taste wizard: Profile → Diets/Allergens →
+Cuisines/Taste → Done. Chip multi-selects for 8 diets, 8 allergens, 8 cuisines; text inputs for
+loved/avoided ingredients. Writes to the same preference-signal ledger as the web wizard.
+`finish` is idempotent (pre-checks `isOnboarded`). Home screen gates on onboarding status —
+`null` loading returns `null` (no flash), `false` redirects to `/onboarding`.
+Reviewer fixes: `humanizeChip` split on `/[-\s]+/` (fixes "tree nut"), exact hex tokens
+(`#a3acb5` ink-300, `#fdecea` danger-soft). Gate: `verify` ✓ · `mobile` ✓ · `migrations` ✓.
+
+---
+
 ## 2026-06-24 (run 3) — Track A quality pass (design bar / reliability / performance) + Track B mobile screens
 
 **PR #56 — loading skeletons + parallel profile (merged):** Added `loading.tsx` skeleton files for
