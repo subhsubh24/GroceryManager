@@ -41,6 +41,7 @@ export default async function CookedPage() {
 
   // Today's running total — sum the (present) macros over meals cooked today.
   const todays = data.ready ? data.meals.filter((m) => isToday(m.cookedAt)) : [];
+  const hasMacros = todays.some((m) => m.kcal != null);
   const todayTotal = todays.reduce(
     (acc, m) => ({
       kcal: acc.kcal + (m.kcal ?? 0),
@@ -88,13 +89,19 @@ export default async function CookedPage() {
               <div className="text-xs uppercase tracking-wide text-white/80">
                 Today · {todays.length} {todays.length === 1 ? "meal" : "meals"}
               </div>
-              <div className="mt-1 font-display text-2xl font-bold">
-                {Math.round(todayTotal.kcal)} kcal
-              </div>
-              <div className="mt-1 text-sm text-white/85 tabular-nums">
-                P {Math.round(todayTotal.proteinG)}g · C {Math.round(todayTotal.carbsG)}g · F{" "}
-                {Math.round(todayTotal.fatG)}g
-              </div>
+              {hasMacros ? (
+                <>
+                  <div className="mt-1 font-display text-2xl font-bold">
+                    {Math.round(todayTotal.kcal)} kcal
+                  </div>
+                  <div className="mt-1 text-sm text-white/85 tabular-nums">
+                    P {Math.round(todayTotal.proteinG)}g · C {Math.round(todayTotal.carbsG)}g · F{" "}
+                    {Math.round(todayTotal.fatG)}g
+                  </div>
+                </>
+              ) : (
+                <div className="mt-1 font-display text-2xl font-bold">—</div>
+              )}
             </section>
           )}
 
