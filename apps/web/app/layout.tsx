@@ -22,16 +22,33 @@ const hankenGrotesk = Hanken_Grotesk({
   variable: "--font-sans",
 });
 
+const APP_TITLE = "GroceryManager — know what to cook and what to buy";
+const APP_DESCRIPTION =
+  "A personal grocery + recipe autopilot. It learns what you have, predicts run-outs, builds the order, and suggests meals you can cook right now.";
+const APP_URL = "https://grocerymanager.app";
+
 export const metadata: Metadata = {
-  title: "GroceryManager — know what to cook and what to buy",
-  description:
-    "A personal grocery + recipe autopilot. It learns what you have, predicts run-outs, builds the order, and suggests meals you can cook right now.",
+  metadataBase: new URL(APP_URL),
+  title: APP_TITLE,
+  description: APP_DESCRIPTION,
   applicationName: "GroceryManager",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "GroceryManager", statusBarStyle: "default" },
   icons: {
     icon: "/icons/icon.svg",
     apple: "/icons/icon.svg",
+  },
+  openGraph: {
+    type: "website",
+    url: APP_URL,
+    siteName: "GroceryManager",
+    title: APP_TITLE,
+    description: APP_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary",
+    title: APP_TITLE,
+    description: APP_DESCRIPTION,
   },
 };
 
