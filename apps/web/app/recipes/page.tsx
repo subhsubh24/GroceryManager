@@ -12,6 +12,7 @@ import {
 type Mood = "nice" | "easy" | "batch";
 import { dietExclusions, KNOWN_DIETS, projectUserModel } from "@gm/core/personalization";
 import { currentUserId } from "@/app/lib/tenant";
+import { humanize } from "@/app/lib/format";
 import { addNamesToListAction } from "@/app/lib/list-actions";
 import { PageHeader } from "@/app/components/page-header";
 import { ChefHat, Shuffle } from "@/app/components/icons";
@@ -161,7 +162,7 @@ export default async function RecipesPage({
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium text-ink-400">Cooking for a guest?</span>
-        {GUEST_DIETS.map((g) => tab(href({ guest: guest === g ? null : g }), g, guest === g, true))}
+        {GUEST_DIETS.map((g) => tab(href({ guest: guest === g ? null : g }), humanize(g), guest === g))}
         {guest && (
           <a href={href({ guest: null })} className="text-xs text-ink-400 underline">
             clear
@@ -176,7 +177,7 @@ export default async function RecipesPage({
       )}
       {guest && (
         <p className="notice-ok mb-6">
-          Filtered to fit a <strong className="capitalize">{guest}</strong> guest — meals with conflicting
+          Filtered to fit a <strong>{humanize(guest)}</strong> guest — meals with conflicting
           ingredients are hidden.
         </p>
       )}

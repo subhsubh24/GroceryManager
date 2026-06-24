@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SaveButton } from "@/app/cookbook/save-button";
 import { Check, Heart, Shuffle, UtensilsCrossed, X } from "@/app/components/icons";
+import { humanize } from "@/app/lib/format";
 import { recordSwipeAction } from "./actions";
 
 export type DeckCard = {
@@ -224,7 +225,7 @@ export function SwipeDeck({ deck }: { deck: DeckCard[] }) {
             <div className="p-5">
               <div className="text-lg font-semibold text-ink-900">{top.title}</div>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-400">
-                {top.cuisine && <span className="pill-success capitalize">{top.cuisine}</span>}
+                {top.cuisine && <span className="pill-success">{humanize(top.cuisine)}</span>}
                 {typeof top.haveCount === "number" && typeof top.totalCore === "number" && (
                   <span>
                     have {top.haveCount}/{top.totalCore}

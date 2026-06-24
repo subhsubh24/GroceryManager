@@ -25,6 +25,7 @@ import {
   SpinnerIcon,
   TasteIcon,
 } from "./icons";
+import { humanize } from "@/app/lib/format";
 
 /**
  * Onboarding as a TILE step-flow (mobile-first) — a clean ONE-STEP-PER-SCREEN flow in a centered
@@ -671,10 +672,10 @@ function ChipMultiSelect({
             type="button"
             aria-pressed={on}
             onClick={() => onToggle(opt)}
-            className={`chip-tap capitalize ${on ? "chip-tap-on" : ""}`}
+            className={`chip-tap ${on ? "chip-tap-on" : ""}`}
           >
             {on && <CheckIcon className="h-3.5 w-3.5" aria-hidden />}
-            {opt}
+            {humanize(opt)}
           </button>
         );
       })}
