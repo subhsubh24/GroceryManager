@@ -158,7 +158,7 @@ export default function HelpPage() {
 
         <QA question="How do I save recipes to My Cookbook?">
           <P>
-            Tap the bookmark icon on any recipe card in the Discover feed, on a Cook Tonight
+            Tap the heart icon on any recipe card in the Discover feed, on a Cook Tonight
             suggestion, or on a Remix result. Saved recipes appear in the Cookbook tab. You can
             organize them into custom collections and mark favorites for quick access.
           </P>
@@ -181,7 +181,7 @@ export default function HelpPage() {
             GroceryManager builds your shopping list automatically from three signals: items
             projected to run out before your next likely shopping trip, ingredients needed for
             upcoming planned meals, and staples you have configured. You can also add items manually.
-            The list is grouped by store section (produce, dairy, etc.) for efficient shopping.
+            The list is grouped by category (groceries, household, etc.) for efficient shopping.
           </P>
           <P>
             As you shop, check off items in the app. Checked items are added to your pantry with a
@@ -210,10 +210,10 @@ export default function HelpPage() {
           <UL>
             <li>Full pantry tracking with manual entry and receipt scanning.</li>
             <li>Basic depletion model and low-stock alerts.</li>
-            <li>Smart shopping list (up to 3 planned meals at a time).</li>
+            <li>Smart shopping list with planned meals.</li>
             <li>Discover feed with standard recipe suggestions.</li>
             <li>Cook logging with automatic pantry depletion.</li>
-            <li>Up to 30 cookbook saves.</li>
+            <li>Cookbook saves.</li>
           </UL>
         </QA>
 
@@ -230,7 +230,7 @@ export default function HelpPage() {
             <li>Unlimited cookbook saves and custom collections.</li>
             <li>Gmail receipt import (automatic, continuous sync).</li>
             <li>Recipe Remix powered by AI.</li>
-            <li>Household sharing (up to 6 members).</li>
+            <li>Household sharing.</li>
             <li>Nutrition tracking with macro targets.</li>
             <li>Advanced depletion model with per-item shelf-life tuning.</li>
             <li>Priority support.</li>
