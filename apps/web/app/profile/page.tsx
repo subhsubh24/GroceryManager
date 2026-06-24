@@ -86,8 +86,10 @@ async function load() {
   try {
     const userId = await currentUserId();
     if (!userId) return { ready: false as const, error: null as string | null, phone: null as string | null };
-    const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
-    const phone = await getUserPhone(getAdminDb(), userId);
+    const [signals, phone] = await Promise.all([
+      withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId)),
+      getUserPhone(getAdminDb(), userId),
+    ]);
     return { ready: true as const, error: null as string | null, model: projectUserModel(signals), phone };
   } catch (e) {
     return { ready: false as const, error: e instanceof Error ? e.message : String(e), phone: null as string | null };
