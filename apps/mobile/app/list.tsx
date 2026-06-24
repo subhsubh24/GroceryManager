@@ -25,9 +25,9 @@ export default function ListScreen() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  function load() {
+  function load(refresh = false) {
     if (!token) return () => {};
-    setLoading(true);
+    if (!refresh) setLoading(true);
     setError(null);
     let cancelled = false;
     apiFetch("/api/mobile/list", token)
@@ -47,7 +47,7 @@ export default function ListScreen() {
 
   function onRefresh() {
     setRefreshing(true);
-    load();
+    load(true);
   }
 
   if (loading) {
@@ -62,7 +62,7 @@ export default function ListScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>{error}</Text>
-        <Pressable style={styles.retryButton} onPress={load}>
+        <Pressable style={styles.retryButton} onPress={() => load()}>
           <Text style={styles.retryText}>Retry</Text>
         </Pressable>
       </View>

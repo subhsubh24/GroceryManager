@@ -34,13 +34,12 @@ export default function SpendScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  if (!token) return <Redirect href="/login" />;
-
   function load() {
+    if (!token) return () => {};
     setLoading(true);
     setError(null);
     let cancelled = false;
-    apiFetch("/api/mobile/spend", token!)
+    apiFetch("/api/mobile/spend", token)
       .then(async (res) => {
         if (!res.ok) { if (!cancelled) setError("Failed to load spend data."); return; }
         const d = (await res.json()) as SpendData;
@@ -52,6 +51,8 @@ export default function SpendScreen() {
   }
 
   useEffect(load, [token]);
+
+  if (!token) return <Redirect href="/login" />;
 
   if (loading) {
     return (
