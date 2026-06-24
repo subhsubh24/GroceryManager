@@ -623,3 +623,45 @@ wrong (berry/grape are legacy/back-compat); `.page-title` weight 700→600, size
 Reviewer B APPROVE (no blockers; non-blocking suggestions only).
 
 **ROADMAP ticks:** Track E — Brand kit ✓, Content drafts ✓, Analytics ✓
+
+---
+
+## 2026-06-24 — feat(reliability): loading skeletons for 11 routes + error boundary for household/join
+
+**What:** Added `loading.tsx` instant-feedback skeletons to 11 routes that were missing them, and
+one `error.tsx` to `household/join/[token]`. Following established pattern (no `"use client"`, no
+imports, `animate-pulse` + `bg-ink-100`, `panel-brand` spinner for LLM-backed routes). Routes:
+`add-receipt`, `ask`, `capture`, `cook/[id]`, `import`, `invite`, `manage-subscription`,
+`remix/[id]`, `scan`, `upgrade` (loading) + `household/join/[token]` (error boundary).
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/54
+
+**Gate:** `pnpm -r run typecheck` ✓ · `pnpm --filter web build` ✓
+
+**Reviews:** Reviewer A APPROVE (pattern compliance, page wrapper match, LLM spinners all verified).
+Reviewer B APPROVE (coverage complete; non-blocking: ask spinner copy slightly misleading — could
+say "Setting up assistant…" instead of implying pantry pull on load).
+
+**ROADMAP impact:** Advances Track A (Reliability) + Track D (Stability partial)
+
+---
+
+## 2026-06-24 — feat(store-assets): screenshot spec, fix icon SVG brand color
+
+**What:** Two changes advancing Track D store assets:
+1. `docs/store/store-assets-spec.md` — full screenshot production spec (device sizes, 6-screen
+   sequence with captions, feature graphic spec, production workflow). Complements PR #39's
+   app-store-metadata.md + google-play-metadata.md.
+2. `apps/web/public/icons/icon.svg` — fix tile fill from brand-500 (#13a14a) to brand-solid
+   (#0c8a3e); brand kit explicitly assigns brand-solid to icon tiles.
+3. `PENDING_OPS.md` — icon PNG export runbook (Figma → 3 PNG sizes → manifest + EAS wiring).
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/55
+
+**Gate:** `pnpm -r run typecheck` ✓ · `pnpm --filter web build` ✓
+
+**Reviews:** Reviewer A REQUEST CHANGES (iOS 6.5" size needed clarification; EAS icon path in
+PENDING_OPS was inaccurate — app.json has no icon field). Both fixed and re-approved. Reviewer B
+APPROVE (ticks Track D store assets box; Human Core boundary clean).
+
+**ROADMAP ticks:** Track D — Store assets staged ✓
