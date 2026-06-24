@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    "jsx": "react-native",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "strict": true,
+    "paths": {
+      "@gm/core/recipe": ["../../packages/core/src/recipe/index.ts"],
+      "@gm/shared": ["../../packages/shared/src/index.ts"],
+      "zod": ["./node_modules/zod/index.d.ts"]
+    }
+  },
+  "include": ["app/**/*.ts", "app/**/*.tsx"]
+}
