@@ -6,6 +6,33 @@ on:
   pull_request:
 
 jobs:
+  # Native (Expo) app gate. apps/mobile is excluded from the pnpm workspace and starts life as a
+  # non-functional skeleton, so this job GRACEFULLY SKIPS until Expo is initialized (a tsconfig.json
+  # + a `typecheck` script appear). Once the native app is real, the job installs apps/mobile on its
+  # own and runs its typecheck — so broken mobile code blocks auto-merge. Safe to mark "required"
+  # from day one because it always passes while the app is still a skeleton.
+  mobile:
+    name: mobile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Mobile typecheck (graceful skip until Expo is initialized)
+        run: |
+          set -e
+          if [ ! -f apps/mobile/tsconfig.json ] || ! grep -q '"typecheck"' apps/mobile/package.json; then
+            echo "apps/mobile is still a skeleton (no tsconfig.json / no typecheck script) — skipping. ✅"
+            exit 0
+          fi
+          echo "apps/mobile is initialized — installing + typechecking the native app."
+          cd apps/mobile
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install --no-audit --no-fund
+          fi
+          npm run typecheck
+
   verify:
     runs-on: ubuntu-latest
     steps:
