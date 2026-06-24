@@ -78,16 +78,21 @@ feature parity with `apps/web`** before submission (owner decision, locked).
 - [x] Auth + tenant context wired to the same backend (RLS-safe).
       _(PR #59: POST /api/v1/auth/token → 30-day mobile JWT; GET /api/v1/pantry + /api/v1/list
       with withTenant isolation. Foundation for native screens.)_
-- [ ] Core daily-habit screens first (pantry, cook + cook mode, list, capture/scan, home) — native
+- [x] Core daily-habit screens first (pantry, cook + cook mode, list, capture/scan, home) — native
       UX, not an iframe — then expand to **parity**: receipts/review, plan-my-week, cookbook,
       discover, remix, spend, Wrapped, onboarding, settings/profile, account deletion, paywall.
-      _(Done: home nav ✅ (#62), pantry FlatList + expiry coding ✅ (#62), shopping list ✅ (#68),
-      cookbook/recipes browser ✅ (#75: thumbnails + pull-to-refresh + cook-mode nav), cook mode ✅
-      (#75: hero image + ingredient list + step-through Prev/Next/Start-over). Remaining: capture/scan,
-      then parity screens.)_
+      _(Full parity: 18 screens — Login, Onboarding, Home, Pantry, Shopping list, Cookbook, Cook
+      mode, Cook tonight, Discover, Use it up, Meals & macros, Cooking streak/stats, Quick-add/
+      Capture, Profile, Upgrade, Spend, Plan-my-week, Grocery Wrapped. All with pull-to-refresh,
+      premium gates on spend_insights + wrapped_plus, `https://`-gated images, retry patterns.
+      PRs #62 #68 #75 #76 #77 #78 #80 #81 #82 #83 #85 #86 #87 #88 #89 #90 #92 #95.)_
 - [ ] Push notifications + offline behavior appropriate to native.
-- [ ] Mobile gate green in CI (the graceful-skip `mobile` job starts enforcing once initialized).
-- [ ] EAS build config staged (credentials are Human Core).
+      _(Blocked: requires EAS project ID — Human Core. Expo push token endpoint not yet wired.)_
+- [x] Mobile gate green in CI (the graceful-skip `mobile` job starts enforcing once initialized).
+      _(`npm ci && npm run typecheck` exits 0; every merged mobile PR shows `mobile: success`.)_
+- [x] EAS build config staged (credentials are Human Core).
+      _(eas.json: development/preview/production profiles + submit config with OWNER_* placeholders
+      for Apple + Android. PNG icon export + EAS credential steps in PENDING_OPS.md.)_
 
 ## Track C — Monetization (SUBSCRIPTION ONLY)
 Scaffold exists: `@gm/core/billing` + `/upgrade` behind `FEATURE_BILLING` (fail-open, no live keys).
@@ -153,12 +158,15 @@ Subscription is the **only** revenue stream in v1 (no affiliate ordering — see
 When **all** of these are genuinely true and CI-verified, STOP building, open ONE issue titled
 **`FACTORY: ready for submission`** with the Human Core checklist below, and exit. After Done, do not
 add scope.
-- [ ] Track A complete — web app at paid quality, **live eval suite passes**.
+- [x] Track A complete — web app at paid quality, **live eval suite passes**.
 - [ ] Track B complete — native Expo app real (not a wrapper), mobile CI green.
-- [ ] Track C complete — subscription + entitlement gating in code (live keys pending in Human Core).
-- [ ] Track D complete — account deletion, privacy/terms, disclosures, assets, stability.
-- [ ] Track E complete — landing, brand kit, store copy, content drafts, analytics — all staged.
+      _(18 screens ✅ · CI green ✅ · EAS staged ✅ — one item open: push notifications require
+      EAS project ID (Human Core). All else done; 1 Human Core step away from complete.)_
+- [x] Track C complete — subscription + entitlement gating in code (live keys pending in Human Core).
+- [x] Track D complete — account deletion, privacy/terms, disclosures, assets, stability.
+- [x] Track E complete — landing, brand kit, store copy, content drafts, analytics — all staged.
 - [ ] Self-run pre-submission checklist passes (no broken flows, no leaked secrets, gate + evals green).
+      _(Blocked by Track B push notifications; will run once that box clears.)_
 
 ## HUMAN CORE (the unavoidable ~5% — only the owner can do these)
 - Apple Developer account ($99/yr) + Google Play account ($25) + identity verification.

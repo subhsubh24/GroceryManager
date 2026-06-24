@@ -4,6 +4,37 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-24 (run 7) — Track C premium gates + Track B pull-to-refresh + hooks fix
+
+**PR #95 — premium gates on spend/wrapped (web + mobile) + pull-to-refresh + hooks fix (merged):**
+Four commits, 9 files.
+
+- **Revenue leak fix:** `apps/web/app/spend/page.tsx` and `apps/web/app/wrapped/page.tsx` both
+  served premium features (`spend_insights`, `wrapped_plus`) to all users — `canUse()` was never
+  called despite both features appearing in `PREMIUM_FEATURES`. Added `loadPreferenceSignals` to the
+  `Promise.all` in each page's `withTenant` block; guard redirects free-tier users to `/upgrade`
+  when `FEATURE_BILLING=1`. Same gate applied to `apps/web/app/api/mobile/spend/route.ts` and
+  `apps/web/app/api/mobile/wrapped/route.ts` (returns `{ upgradeRequired: true }` for free tier).
+  `apps/mobile/app/spend.tsx` and `apps/mobile/app/wrapped.tsx` handle the flag with a native
+  upgrade card UI (`Link href="/upgrade"` to the upgrade screen).
+- **Pull-to-refresh (mobile):** Added `RefreshControl` to `pantry.tsx`, `list.tsx`,
+  `cook-tonight.tsx` with `tintColor="#0c8a3e"`. Load functions accept `refresh: boolean = false`
+  — PTR skips `setLoading(true)` so the list stays visible under the native spinner overlay.
+  `onRefresh` calls `load(true)`; retry button calls `() => load()` (avoids TypeScript
+  `GestureResponderEvent` incompatibility).
+- **Rules-of-Hooks fix (spend.tsx, wrapped.tsx, pantry.tsx):** `useEffect(load, [token])` moved
+  before the `if (!token) return <Redirect>` conditional return; `if (!token) return () => {};`
+  guard added inside the load callback. Eliminates "Rendered fewer hooks than expected" crash on
+  token transitions.
+
+**ROADMAP tick-offs this run (housekeeping PR):** Track B boxes ticked: core screens (18 screens,
+full parity), mobile CI green, EAS build config staged. DoD boxes ticked: Track A, C, D, E.
+Track B DoD remains open: push notifications (EAS project ID — Human Core).
+
+**Gate:** `verify` ✓ · `mobile` ✓ · `migrations` ✓.
+
+---
+
 ## 2026-06-24 (run 5) — Track B mobile parity: token sweep, Discover, Digest, Use-it-up
 
 **PR #85 — mobile design token sweep (merged):** Swept all remaining mobile screens (`capture`,
