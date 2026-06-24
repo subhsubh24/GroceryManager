@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { loadEnv } from "@gm/config/env";
 import {
   getDb,
   getPantryView,
@@ -121,7 +122,8 @@ async function load(lowEnergy: boolean) {
     }));
 
     // The LLM upgrades the plan when a key is configured; otherwise the deterministic floor runs.
-    const generate = process.env.GEMINI_API_KEY ? geminiPlanGenerator() : undefined;
+    const env = loadEnv();
+    const generate = (env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT) ? geminiPlanGenerator() : undefined;
     const result = await planWeek(
       {
         candidates,

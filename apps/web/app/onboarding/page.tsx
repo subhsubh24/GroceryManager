@@ -1,3 +1,4 @@
+import { loadEnv } from "@gm/config/env";
 import { OnboardingFlow } from "./onboarding-flow";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,7 @@ export const dynamic = "force-dynamic";
  * server-only LLM is never imported by the client component (it's reached solely through the actions).
  */
 export default function OnboardingPage() {
-  const hasAi = Boolean(process.env.GEMINI_API_KEY);
+  const env = loadEnv();
+  const hasAi = !!(env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT);
   return <OnboardingFlow hasAi={hasAi} />;
 }

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { loadEnv } from "@gm/config/env";
 import { parseAxis, REMIX_AXES, type RemixAxis, type RemixResult } from "@gm/core/recipe";
 import { geminiRemix, suggestRemix } from "@gm/core/recipe/remix-llm";
 import { getDb, loadPreferenceSignals, withTenant } from "@gm/db";
@@ -36,7 +37,8 @@ async function load(id: string, axis: RemixAxis) {
     const recipe = await loadRecipeAnySource(id);
     if (!recipe) return { recipe: null, remix: null as RemixResult | null, error: null as string | null };
     // Keyless-first: the LLM enriches only when a key is configured (mirrors cook/plan gating).
-    const generate = process.env.GEMINI_API_KEY ? geminiRemix() : undefined;
+    const env = loadEnv();
+    const generate = (env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT) ? geminiRemix() : undefined;
     const remix = await suggestRemix(
       { generate },
       { ingredients: recipe.ingredients.map((i) => i.name), axis, title: recipe.title },
