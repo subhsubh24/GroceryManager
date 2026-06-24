@@ -33,8 +33,8 @@ Wrapped, dark mode). Get it to **"people happily pay monthly"** quality.
       tailwind.config.ts). Audit every route for cohesion.
 - [ ] **Reliability** — no broken flows; graceful empty/error states; LLM/keyless paths degrade.
 - [ ] **Performance** — fast cold start + hot paths; no needless queries (continue the latency work).
-- [ ] **Security/RLS** — every public table RLS-protected (see Security bar below). _Catalog-table
-      RLS shipped 2026-06-23 (0010); function `search_path` warnings still open._
+- [x] **Security/RLS** — every public table RLS-protected. _Audit 2026-06-24: zero violations — no
+      SECURITY DEFINER functions; all 26 public tables RLS-enabled with correct policies._
 - [ ] **EVAL COVERAGE (first-class)** — grow the live `RUN_EVALS`-gated suites
       (`packages/core/src/llm/evals/*.eval.test.ts`) to cover every core LLM stage (receipt
       extraction, recipe import, remix, meal-gen, capture) with **real** golden fixtures, pass-rate
@@ -61,8 +61,8 @@ Scaffold exists: `@gm/core/billing` + `/upgrade` behind `FEATURE_BILLING` (fail-
       by the loop. Billing/auth diffs get extra reviewer scrutiny for leaked secrets + trust-the-client.
 
 ## Track D — Store readiness & compliance
-- [ ] **In-app account deletion** (Apple 5.1.1(v)) — full data erase path.
-- [ ] **Privacy policy + terms** pages, linked in-app and in store metadata.
+- [x] **In-app account deletion** (Apple 5.1.1(v)) — full data erase path. _(PR #30: deleteUserAndAllData via ON DELETE CASCADE; danger zone UI + typed confirmation in /profile)_
+- [x] **Privacy policy + terms** pages, linked in-app and in store metadata. _(PR #32: /privacy + /terms static pages; linked from /profile footer)_
 - [ ] **App Privacy (Apple) / Data Safety (Play)** disclosures drafted from actual data flows.
 - [ ] Store assets staged (icon, screenshots, descriptions) — see Track E for copy.
 - [ ] Stability pass — no crash-on-launch; offline/empty handled; no debug surfaces.
