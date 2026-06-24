@@ -219,8 +219,12 @@ export default function HelpPage() {
 
         <QA question="What does Premium include?">
           <P>
-            Premium is <strong>$4.99 per month</strong> or <strong>$39.99 per year</strong> and
-            includes a <strong>7-day free trial</strong> — no charge until the trial ends.
+            Premium unlocks power features with a 7-day free trial — no charge until the trial ends.
+            Current pricing is shown on the{" "}
+            <a href="/" className="link">
+              home page
+            </a>
+            .
           </P>
           <UL>
             <li>Unlimited cookbook saves and custom collections.</li>
@@ -379,7 +383,7 @@ export default function HelpPage() {
           </a>{" "}
           and we'll get back to you within one business day.
         </p>
-        <a href={`mailto:${SUPPORT_EMAIL}`} className="btn-primary mt-4 inline-flex">
+        <a href={`mailto:${SUPPORT_EMAIL}`} className="btn-primary mt-4 inline-flex items-center gap-2">
           <Mail className="h-4 w-4" />
           Contact support
         </a>
