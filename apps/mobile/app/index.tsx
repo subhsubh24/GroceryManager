@@ -1,11 +1,32 @@
+import { useEffect, useState } from "react";
 import { Link, Redirect } from "expo-router";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useAuth } from "../lib/auth";
+import { apiFetch } from "../lib/api";
 
 export default function HomeScreen() {
   const { token, userName, logout } = useAuth();
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    apiFetch("/api/mobile/onboarding", token)
+      .then((res) => res.json())
+      .then((data: { onboarded?: boolean }) => {
+        if (!cancelled) setOnboarded(data.onboarded ?? true);
+      })
+      .catch(() => {
+        if (!cancelled) setOnboarded(true); // fail-open: don't block home on check failure
+      });
+    return () => { cancelled = true; };
+  }, [token]);
 
   if (!token) return <Redirect href="/login" />;
+  // While the onboarding check is in-flight (null), render nothing so new users never see
+  // the full home screen before being redirected to onboarding.
+  if (onboarded === null) return null;
+  if (onboarded === false) return <Redirect href="/onboarding" />;
 
   return (
     <View style={styles.container}>
