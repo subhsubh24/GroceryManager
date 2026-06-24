@@ -20,6 +20,10 @@ export default function HomeScreen() {
           <Text style={styles.cardLabel}>Pantry →</Text>
           <Text style={styles.cardNote}>What you have at home</Text>
         </Link>
+        <Link href="/list" style={styles.card}>
+          <Text style={styles.cardLabel}>Shopping list →</Text>
+          <Text style={styles.cardNote}>What to pick up next</Text>
+        </Link>
       </View>
 
       <Pressable style={styles.signOut} onPress={logout}>
