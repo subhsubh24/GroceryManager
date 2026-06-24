@@ -24,6 +24,24 @@ Ship GroceryManager as a **web app + native Expo mobile app**, **subscription-mo
   lives in `apps/mobile` (excluded from the pnpm workspace). Gate = `pnpm -r run typecheck` ·
   `pnpm -r run test` · `NODE_ENV=production DATABASE_URL=… pnpm --filter @gm/web build`.
 
+## Product decisions (LOCKED — owner, 2026-06-24)
+These are settled; build to them, do not re-litigate.
+1. **Revenue model: SUBSCRIPTION ONLY.** No affiliate/Instacart/Amazon ordering revenue in v1 —
+   explicitly OUT OF SCOPE (ignore the legacy affiliate items in `docs/ROADMAP.md`). One clean
+   subscription is the path; keeps store review simple.
+2. **Free vs paid: GENEROUS FREE + PREMIUM POWER TIER.** The core loop (pantry, cook, list,
+   capture/scan, plan) stays FREE to drive downloads + word-of-mouth. **Premium** unlocks power
+   features — candidate set (factory refines, keep it compelling): unlimited AI meal plans &
+   remix, automatic Gmail receipt import, family/household sharing, advanced spend insights,
+   unlimited photo/barcode scans, Grocery Wrapped+. Premium must gate REAL value, never core utility.
+   Suggested price (owner confirms in App Store Connect / Stripe — Human Core): ~$4.99/mo or
+   ~$39.99/yr with a 7-day free trial.
+3. **Mobile scope: FULL PARITY with the web app** before submission (not a focused subset). The
+   native app should reach feature parity with `apps/web`, reusing `@gm/core` engines.
+4. **Brand/name: factory PROPOSES 2–3 names** (name + logo direction + voice) as an early Track E
+   deliverable; ship under the working title "GroceryManager" until the owner picks one. The chosen
+   name then propagates to app metadata + store assets.
+
 ---
 
 ## Track A — Web app → paid quality
@@ -40,25 +58,33 @@ Wrapped, dark mode). Get it to **"people happily pay monthly"** quality.
       extraction, recipe import, remix, meal-gen, capture) with **real** golden fixtures, pass-rate
       floors, and the ratchet. _Harness exists; grow the gold set._
 
-## Track B — Native Expo mobile app (`apps/mobile`)
-A **real** app reusing `@gm/core` engines — NOT a thin WebView wrapper (Apple 4.2).
+## Track B — Native Expo mobile app (`apps/mobile`) — FULL PARITY
+A **real** app reusing `@gm/core` engines — NOT a thin WebView wrapper (Apple 4.2). Target **full
+feature parity with `apps/web`** before submission (owner decision, locked).
 - [ ] Initialize Expo / expo-router in `apps/mobile` (deps + `tsconfig.json` + `typecheck` script);
       keep it out of the root `pnpm install` if that protects web CI, but make it independently
       installable + typecheckable (the `mobile` CI job enforces once this exists).
-- [ ] Core native screens reusing `@gm/core` (pantry, cook, list, capture/scan) — native UX, not an
-      iframe. Auth + tenant context wired to the same backend.
+- [ ] Auth + tenant context wired to the same backend (RLS-safe).
+- [ ] Core daily-habit screens first (pantry, cook + cook mode, list, capture/scan, home) — native
+      UX, not an iframe — then expand to **parity**: receipts/review, plan-my-week, cookbook,
+      discover, remix, spend, Wrapped, onboarding, settings/profile, account deletion, paywall.
+- [ ] Push notifications + offline behavior appropriate to native.
 - [ ] Mobile gate green in CI (the graceful-skip `mobile` job starts enforcing once initialized).
 - [ ] EAS build config staged (credentials are Human Core).
 
-## Track C — Monetization (subscription)
+## Track C — Monetization (SUBSCRIPTION ONLY)
 Scaffold exists: `@gm/core/billing` + `/upgrade` behind `FEATURE_BILLING` (fail-open, no live keys).
-- [ ] Subscription model: **monthly + annual + free trial**, with server-side **entitlement gating**
-      of premium features (never trust the client).
+Subscription is the **only** revenue stream in v1 (no affiliate ordering — see Product decisions).
+- [ ] Subscription model: **monthly + annual + 7-day free trial**, with server-side **entitlement
+      gating** of the premium power tier (never trust the client; core loop stays free).
+- [ ] Define the FREE vs PREMIUM feature split in code (the candidate premium set in Product
+      decisions) — gate real value, never core utility.
 - [ ] RevenueCat (mobile) / Stripe (web) integration **code** — keys read from env, **never
-      committed**; webhook handlers + entitlement sync.
-- [ ] Clear paywall + manage-subscription UX within the design bar.
-- [ ] All live keys / go-live config recorded in `PENDING_OPS.md` as **Human Core** — never applied
-      by the loop. Billing/auth diffs get extra reviewer scrutiny for leaked secrets + trust-the-client.
+      committed**; webhook handlers + entitlement sync; entitlement shared across web + mobile.
+- [ ] Clear paywall + manage-subscription UX within the design bar (web `/upgrade` + native paywall).
+- [ ] All live keys / product IDs / prices / go-live config recorded in `PENDING_OPS.md` as **Human
+      Core** — never applied by the loop. Billing/auth diffs get extra reviewer scrutiny for leaked
+      secrets + trust-the-client entitlement bugs.
 
 ## Track D — Store readiness & compliance
 - [x] **In-app account deletion** (Apple 5.1.1(v)) — full data erase path. _(PR #30: deleteUserAndAllData via ON DELETE CASCADE; danger zone UI + typed confirmation in /profile)_
@@ -68,8 +94,11 @@ Scaffold exists: `@gm/core/billing` + `/upgrade` behind `FEATURE_BILLING` (fail-
 - [ ] Stability pass — no crash-on-launch; offline/empty handled; no debug surfaces.
 
 ## Track E — Marketing engine (BUILD + STAGE only)
-- [ ] Waitlist / landing page (the public marketing surface) with email capture (staged, not sent).
-- [ ] Brand kit (logo, palette, type, voice) consistent with the app.
+- [ ] **Brand naming** — propose 2–3 name candidates (name + logo direction + voice) for the owner
+      to pick; until chosen, ship under "GroceryManager". Chosen name propagates to app + store metadata.
+- [ ] Waitlist / landing page (the public marketing surface) with email capture (staged, not sent) —
+      drives pre-launch demand so there's an audience to convert on store launch.
+- [ ] Brand kit (logo, palette, type, voice) consistent with the app + the chosen name.
 - [ ] ASO / store copy (title, subtitle, keywords, description) drafted.
 - [ ] Owned-channel content **drafts** (launch posts, email sequence) — staged, not published.
 - [ ] Analytics wired (privacy-respecting) so the owner can measure activation/retention.
