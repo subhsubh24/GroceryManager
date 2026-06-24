@@ -4,6 +4,59 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-24 (run 3) — Track A quality pass (design bar / reliability / performance) + Track B mobile screens
+
+**PR #56 — loading skeletons + parallel profile (merged):** Added `loading.tsx` skeleton files for
+3 routes that were missing them (the last gap in the 27-route skeleton coverage). Parallelized the
+profile page DB reads from sequential to `Promise.all`. Gate: `verify` ✓. Advances Track A (design
+bar + reliability — all major routes now have error boundary + skeleton).
+
+**PR #62 — mobile auth + pantry screen (merged):** Added `/api/mobile/auth` (POST credentials →
+HMAC-SHA256 JWT with AUTH_SECRET, 7-day TTL, returns `{token, userId, name}`) and `/api/mobile/pantry`
+(GET Bearer → `withTenant` → `getPantryView`). Native `apps/mobile/app/pantry.tsx`: real FlatList with
+expiry color-coding (red ≤2d, amber ≤5d, neutral otherwise), loading/error/retry/empty states, auth
+guard. Gate: `verify` ✓. Advances Track B (first real pantry screen on native).
+
+**PR #65 — parallel digest + pantry DB reads (merged):** `apps/web/app/digest/page.tsx` — changed
+from one `withTenant` with two sequential awaits to `Promise.all([withTenant(…digest…),
+withTenant(…cookedAt…)])` using separate connections. `apps/web/app/pantry/page.tsx` — `getPantryView`
+first (to get canonical IDs), then 5 independent reads (`getGoogleCredential`, `getReviewQueue`,
+`getLatestSourcesByCanonical`, `getLatestAcquisition`, `isOnboarded`) run in `Promise.all` via
+separate `withTenant` connections. Gate: `verify` ✓. Closes the last performance gap found in
+the run-3 audit — Track A Performance complete.
+
+**PR #68 — shopping list screen (merged):** Added `/api/mobile/list` (GET Bearer →
+`withTenant` → `getActiveListView`, returns `{items}`). Native `apps/mobile/app/list.tsx`: FlatList
+of unchecked items with `REASON_LABEL` map (`manual / reorder_engine / recipe_plan / agent`), green
+dot indicator, loading/error/retry/empty states, auth guard. Gate: `verify` ✓. Advances Track B.
+
+**PR #69 — consistent LLM/Vertex keyless guards (merged):** Applied uniform fail-closed keyless
+fallback guards to the scan, import, and add-receipt routes — every LLM path now wraps the Vertex
+call in try/catch and degrades gracefully when `GEMINI_API_KEY` is absent. Closes the last
+reliability gap found in the run-3 audit — Track A Reliability complete.
+
+**PR #70 — cookbook/recipes screen (merged):** Added `/api/mobile/recipes` (GET Bearer →
+`withTenant` → `loadSavedRecipes` → `dedupeSaved`). Native `apps/mobile/app/recipes.tsx`: FlatList
+of saved recipes with title + cuisine, loading/error/retry/empty states, auth guard. Added
+"Cookbook →" nav card to `apps/mobile/app/index.tsx`. Also regenerated `apps/mobile/package-lock.json`
+to sync with expo-router 56.2.11 transitive deps (fixes `npm ci` in the mobile CI job). Gate: `verify` ✓.
+Advances Track B (cookbook screen done; remaining: cook + cook-mode, capture/scan).
+
+**PR #71 — mobile design-token hex values (merged):** Corrected all off-token color values across
+three mobile screens (`pantry.tsx`, `list.tsx`, `login.tsx`) — Tailwind palette approximations
+replaced with exact hex from `globals.css` CSS variable RGB tuples (`--danger` #c0392b,
+`--danger-soft` #fdeceb, `--danger-ink` #8e261b, `--warn` #b6791a, `--ink-700` #2b333d). Also
+replaced emoji 🧺 logo in `login.tsx` with a branded `GM` mark (#0c8a3e rounded square) per
+BRAND_KIT rule. Gate: `verify` ✓ · `mobile` ✓. Advances Track B design bar.
+
+**PR #72 — Vertex AI guard extended to ask/plan/remix/onboarding (merged):** Four page-level
+files used only `GEMINI_API_KEY` as an AI capability flag, so Vertex-only deployments saw AI
+as "unavailable" for ask/plan/remix/onboarding even when fully configured. Fixed by gating on
+`GEMINI_API_KEY || GOOGLE_VERTEX_PROJECT` in all four. Follow-up to PR #69. Gate: `verify` ✓.
+Closes Track A Reliability fully — all LLM capability checks now Vertex-aware.
+
+---
+
 ## 2026-06-24 (run 2) — feat(pwa): browser favicon + mobile screens (Track D + Track B)
 
 **PR #60 — favicon (merged):** Wired `/icons/icon.svg` (already used by the PWA manifest) as the
