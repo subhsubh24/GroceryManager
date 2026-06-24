@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, Pressable } from "react-native";
-import { Redirect } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import { useAuth } from "../lib/auth";
 import { apiFetch } from "../lib/api";
 
@@ -13,6 +13,7 @@ type Recipe = {
 
 export default function RecipesScreen() {
   const { token } = useAuth();
+  const router = useRouter();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,12 +71,13 @@ export default function RecipesScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
-            <View style={styles.card}>
+            <Pressable style={styles.card} onPress={() => router.push(`/cook-mode?id=${item.id}`)}>
               <Text style={styles.recipeTitle}>{item.title}</Text>
               {item.cuisine ? (
                 <Text style={styles.recipeCuisine}>{item.cuisine}</Text>
               ) : null}
-            </View>
+              <Text style={styles.cookCta}>Cook →</Text>
+            </Pressable>
           )}
         />
       )}
@@ -96,6 +98,7 @@ const styles = StyleSheet.create({
   },
   recipeTitle: { fontSize: 15, fontWeight: "700", color: "#1d2530" },
   recipeCuisine: { fontSize: 12, color: "#525d6a", marginTop: 4 },
+  cookCta: { fontSize: 12, color: "#0c8a3e", fontWeight: "600", marginTop: 6 },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40 },
   emptyTitle: { fontSize: 18, fontWeight: "700", color: "#1d2530" },
   emptyNote: { fontSize: 14, color: "#525d6a", marginTop: 6, textAlign: "center" },
