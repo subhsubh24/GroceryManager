@@ -4,7 +4,7 @@ Dated entries from each autonomous loop run.
 
 ---
 
-## 2026-06-24 (run 5) — Track B mobile parity: design token sweep + Discover swipe feed
+## 2026-06-24 (run 5) — Track B mobile parity: token sweep, Discover, Digest, Use-it-up
 
 **PR #85 — mobile design token sweep (merged):** Swept all remaining mobile screens (`capture`,
 `upgrade`, `profile`, `login`, `recipes`, `index`, `cook/[id]`) for off-token hex values.
@@ -12,13 +12,34 @@ Dated entries from each autonomous loop run.
 → `#8e261b` (danger-ink). Completes the work PR #71 started — zero off-token values now remain
 across all 13 mobile app files. Gate: `verify` ✓ · `mobile` ✓.
 
-**PR #86 — Discover swipe feed (pending CI):** `GET /api/mobile/discover` (pantry→TheMealDB→rank
+**PR #86 — Discover swipe feed (merged):** `GET /api/mobile/discover` (pantry→TheMealDB→rank
 →`nextDiscoveryBatch` filtered by `loadSeenRecipeIds`; up to 12 cards) + `POST /api/mobile/discover`
 (`swipeToSignals` → `recordSwipeSignals` — writes `recipe_seen` + `cuisine:<x>` affinity signal to
 preference ledger, same flywheel as web). `apps/mobile/app/discover.tsx`: card stack with `https://`-
 gated image, cuisine label, pantry-match chip, Like/Skip buttons, progress counter, ghost-card hint,
 "Cook this recipe →" deep-link, auto-reload on deck exhaustion. No gesture library — buttons-first.
-Gate: `verify` ✓ · `mobile` ✓.
+Gate: `verify` ✓ · `mobile` ✓ · `migrations` ✓.
+
+**PR #88 — Cooking streak & stats screen (merged):** `GET /api/mobile/digest` — loads `loadCookLog`,
+derives `currentStreak` / `longestStreak` / `cooksThisWeek` / `totalCooks` / `weeklyActivity(8)` from
+pure `@gm/core/recipe` streak helpers (0 new logic). `apps/mobile/app/digest.tsx`: brand-green streak
+hero (72px number), 3-column stat row, 8-week proportional bar chart (Mon-start, date labels), CTA
+buttons to cook log + cook tonight. Retry via attempt counter. Home nav card added. Gate: `verify` ✓
+· `mobile` ✓ · `migrations` ✓.
+
+**PR #90 — Use it up screen (merged):** `GET /api/mobile/use-it-up` — `selectExpiringSoon(grocery,
+withinDays:5, excludeExpired:true)`, seeds TheMealDB with expiring item names, ranks then filters
+`usesExpiring > 0`. Returns up to 10 recipes + expiring list (name + daysLeft). Typecheck fix: filter
+runs on `RankedRecipe` (not `MatchRecipe`) since `usesExpiring` is computed during ranking.
+`apps/mobile/app/use-it-up.tsx`: amber "Use these up soon" banner (at-risk items + days-left chips),
+FlatList recipe cards with "Uses N expiring" + pantry-coverage badges, tap → cook mode, empty state.
+Home nav card added. Gate: `verify` ✓ · `mobile` ✓ · `migrations` ✓.
+
+**Track B status after run 5:** Native Expo mobile app has full feature parity with the web across
+15 screens: Login, Onboarding, Home, Pantry, Shopping list, Cookbook, Cook mode, Cook tonight,
+Discover, Use it up, Meals & macros, Cooking stats, Quick add, Profile, Upgrade. All mobile API
+routes backed (`/api/mobile/*`). Zero off-token hex values. No emoji. All retry patterns use attempt
+counter. All image renders `https://`-gated. Track B is functionally complete.
 
 ---
 
