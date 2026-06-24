@@ -35,4 +35,23 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   the actual working tree (`git show HEAD:path` / `grep`) before assuming a fix is present, and
   target `main` (the default) for all work.
 - **2026-06-24 — When fixing a formatting pattern, grep for ALL call sites before declaring done.** The "replace `capitalize` with `humanize()`" change correctly fixed 4 surfaces but missed `recipes/page.tsx` line 165, where `tab(..., g, ..., true)` still passed the raw diet slug `g` as a display label with `cap = true`. The reviewer caught it. Fix: before closing a "replace pattern X everywhere" change, run `grep -rn "capitalize\|the pattern"` across the changed files and their siblings to confirm no instances remain.
+- **2026-06-24 — Billing webhooks must be fail-closed when the signing secret is configured.**
+  A Stripe webhook that only `console.warn`s on missing signature verification is effectively open —
+  anyone who knows the endpoint URL can write entitlement signals. The correct pattern: when
+  `STRIPE_WEBHOOK_SECRET` is set, return 400 immediately until the Stripe SDK + `constructEvent`
+  are wired. When the secret is absent, the guard passes (dev/staging only). "The SDK isn't installed
+  yet" is not a reason to accept unauthenticated entitlement writes in production.
+- **2026-06-24 — Pricing copy requires exact arithmetic, not feel.** "2 months free" for a 33%
+  annual discount is wrong: $4.99×12=$59.88, savings=$19.89 ≈ 33.2%. "save ~33% vs monthly" is
+  correct and passes the math test. Any pricing copy should be verified with actual numbers before
+  committing, not eyeballed.
+- **2026-06-24 — Skeleton fills need an existing Tailwind class, not an invented one.** `bg-surface-1`
+  does not exist in the project's Tailwind config — invisible skeletons. The correct class is
+  `bg-ink-100` (verified by grepping existing `/recipes/loading.tsx` and `/plan/loading.tsx`).
+  Before shipping any new loading skeleton, grep the existing skeletons for the fill class in use.
+- **2026-06-24 — Store copy must not contain unverifiable superlatives or invented feature claims.**
+  "The most searched term" (unverifiable), "organises by store aisle" (not built), "real-time household
+  sync" (household sharing is flag-gated, no real-time push) — all removed by reviewers. Rule: every
+  claim in store metadata must correspond to a shipped, default-on feature, and any market-position
+  claim must be qualified with a verification note (e.g., "verify in App Store Connect Search Ads").
 - **2026-06-24 — Design system has `--danger` / `--danger-soft` / `--danger-ink` CSS tokens.** Using raw Tailwind `red-*` palette classes for destructive UX bypasses these tokens and breaks dark-mode adaptation (manual `dark:` overrides become necessary). Any danger/destructive surface should use `bg-danger-soft`, `border-danger`, `text-danger-ink`, and the `btn-danger` component class (now in globals.css). The `notice-danger` component class also already exists.

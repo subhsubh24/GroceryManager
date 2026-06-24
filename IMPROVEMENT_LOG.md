@@ -404,6 +404,101 @@ Reviewer B APPROVE after cycle 2 (footer links changed from bare `underline hove
 
 ---
 
+## 2026-06-24 — feat(billing): expand subscription model — plans, Stripe webhook, manage-subscription UX (Track C)
+
+**What:** Expanded the billing scaffold from a 3-feature placeholder into a full subscription model.
+`@gm/core/billing`: `SubscriptionTier` type, `SUBSCRIPTION_PLANS` ($4.99/mo + $39.99/yr, both with
+7-day trial), `PREMIUM_FEATURES` expanded 3→7 (added `gmail_import`, `household`, `spend_insights`,
+`wrapped_plus`), `getCurrentSubscriptionTier(signals)` (reads `subscription_tier` signal, falls back
+to `entitlement`), `isTrialEligible(signals)`. `packages/config/src/env.ts`: all Stripe + RevenueCat
+env keys added as optional. New `apps/web/app/api/webhooks/stripe/route.ts`: handles
+`customer.subscription.created/updated/deleted`, syncs entitlement to PreferenceSignal ledger via
+`getAdminDb()`, always returns 200 (prevents Stripe retry storms), **fail-closed** when
+`STRIPE_WEBHOOK_SECRET` is set (returns 400 until Stripe SDK + `constructEvent` wired). New
+`apps/web/app/manage-subscription/page.tsx`: tier display, upgrade pricing cards (free users), billing
+portal button (premium users). Profile page linked to `/manage-subscription`.
+
+**Reviewer fixes:** "2 months free" → "save ~33% vs monthly" (correct math); webhook silent warn →
+fail-closed 400 return when secret configured.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/42
+
+**Gate:** typecheck ✓ · 450 core tests ✓ · next build ✓
+
+---
+
+## 2026-06-24 — feat(reliability): error boundaries for 21 routes; skeleton loaders for 7 routes (Track D/A)
+
+**What:** Two separate PRs covering crash recovery and loading UX.
+
+**PR #40** — Added `error.tsx` to 21 routes that had zero crash recovery: pantry, discover, cookbook,
+capture, spend, digest, review, barcode, import, invite, make, onboarding, profile, staples, upgrade,
+household, wrapped, scan, cooked, add-receipt, remix/[id]. Each boundary uses route-appropriate icon/
+accent from the existing PageHeader, renders no raw error data, always offers "Try again" + "Back home".
+Reviewer A (correctness/security): APPROVE. Reviewer B (value-first): APPROVE.
+
+**PR #41** — Added `loading.tsx` to 7 high-latency routes: pantry, make, digest, spend, cookbook,
+staples, review. All self-contained JSX (no imports, no "use client"), `animate-pulse`, `bg-ink-100`
+for skeleton fill (matching existing `/recipes/loading.tsx` and `/plan/loading.tsx` patterns). Reviewer
+caught initial `bg-surface-1` (nonexistent class → invisible skeletons); fixed to `bg-ink-100`.
+
+**PR #36** — Error boundaries for 5 routes missed in the previous run: ask, list, recipes, plan, cook/[id].
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/40 · https://github.com/subhsubh24/GroceryManager/pull/41 · https://github.com/subhsubh24/GroceryManager/pull/36
+
+**Gate:** typecheck ✓ · 450 core tests ✓ · next build ✓
+
+---
+
+## 2026-06-24 — feat(billing): wire server-side canUse() gate on discover, plan, remix (Track C)
+
+**What:** Wired the existing `canUse()` check into three premium-feature route loaders: `/discover`
+(`discover`), `/plan` (`plan_week`), `/remix/[id]` (`remix`). All fail-open when `FEATURE_BILLING` is
+unset — zero behavior change today. When `FEATURE_BILLING=1`, non-premium users redirect to `/upgrade`.
+`remix` entitlement check placed outside the main `try/catch` (fail-closed: DB failure propagates as
+500 rather than silently bypassing the gate).
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/38
+
+**Gate:** typecheck ✓ · 450 core tests ✓ · next build ✓
+
+---
+
+## 2026-06-24 — feat(marketing): brand naming candidates + App Store / Play Store ASO metadata (Track E)
+
+**What:** Three Track E doc assets staged in `docs/`:
+- `docs/brand/NAMING_CANDIDATES.md` — three name candidates (Pantri, Mise, Larder) each with tagline,
+  logo direction, voice/tone, decision matrix. Owner picks one; name propagates to app metadata.
+- `docs/store/app-store-metadata.md` — Apple App Store Connect fields: App Name (30 chars), Subtitle
+  (30-char compliant "Track fridge, plan meals, save"), Keywords (99/100 chars), full ~3,410-char
+  Description, Screenshots/App Preview spec (6.9" + 6.7" iPhone + 13" iPad), localisation notes.
+- `docs/store/google-play-metadata.md` — Play Console fields: Short Description (73/80 chars), Full
+  Description (~3,310 chars), icon/feature graphic specs, developer contact callout.
+
+**Reviewer fixes:** removed "most searched term" unverifiable claim; fixed 32-char subtitle draft;
+removed invented "organises by aisle" feature; qualified household sharing (not default-on); fixed
+subscription copy; added screenshots spec; added "replace before submission" callout on developer email.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/39
+
+**Gate:** typecheck ✓ · 450 core tests ✓ · next build ✓ (docs-only)
+
+---
+
+## 2026-06-24 — docs(store): App Privacy (Apple) + Data Safety (Play) disclosures (Track D)
+
+**What:** Added `docs/store/privacy-disclosures.md` — a complete worksheet for App Store App Privacy
+labels and Google Play Data Safety section. All 12 Apple data categories answered (YES/NO, linked-to-
+identity, tracking flags). Gmail Limited Use Policy all 6 required statements + OAuth verification
+checklist. Owner action checklist with exact navigation paths in both portals. Two ambiguous items
+flagged for owner decision (grocery prices as "Financial Info"; meal macros as "Health").
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/37
+
+**Gate:** typecheck ✓ (docs-only)
+
+---
+
 ## 2026-06-24 — ux(format): replace CSS capitalize with humanize/titleCase on raw slug values
 
 **What:** CSS `capitalize` only uppercases the first character — "gluten-free" renders as
