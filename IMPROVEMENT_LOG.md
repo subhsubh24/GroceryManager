@@ -20,6 +20,14 @@ loved/avoided ingredients. Writes to the same preference-signal ledger as the we
 Reviewer fixes: `humanizeChip` split on `/[-\s]+/` (fixes "tree nut"), exact hex tokens
 (`#a3acb5` ink-300, `#fdecea` danger-soft). Gate: `verify` ✓ · `mobile` ✓ · `migrations` ✓.
 
+**PR (pending) — meals & macros log screen:** `GET /api/mobile/cooked` (returns up to 30 cook-log
+entries from `loadCookLog` — id, title, imageUrl, cookedAt ISO, servingsMade, kcal/proteinG/carbsG/fatG).
+`try/catch` wraps the DB call; 500 on failure. Native `apps/mobile/app/cooked.tsx`: today's macro
+summary panel (brand-green, running totals), FlatList of meal cards with `https://`-gated image
+rendering (first-letter text mark fallback), retry via `attempt` counter in `useEffect` deps
+(fix for retry-not-refetching bug). Empty state and image placeholder use branded text marks —
+no emoji. Gate: `verify` ✓ · `mobile` ✓.
+
 ---
 
 ## 2026-06-24 (run 3) — Track A quality pass (design bar / reliability / performance) + Track B mobile screens

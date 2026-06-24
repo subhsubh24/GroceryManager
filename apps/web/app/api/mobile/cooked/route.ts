@@ -10,18 +10,22 @@ export async function GET(req: Request) {
   const userId = verifyMobileToken(token);
   if (!userId) return Response.json({ error: "Invalid or expired token" }, { status: 401 });
 
-  const meals = await withTenant(getDb(), userId, (tx) => loadCookLog(tx, userId));
-  return Response.json({
-    meals: meals.map((m) => ({
-      id: m.id,
-      title: m.title,
-      imageUrl: m.imageUrl,
-      cookedAt: m.cookedAt.toISOString(),
-      servingsMade: m.servingsMade,
-      kcal: m.kcal,
-      proteinG: m.proteinG,
-      carbsG: m.carbsG,
-      fatG: m.fatG,
-    })),
-  });
+  try {
+    const meals = await withTenant(getDb(), userId, (tx) => loadCookLog(tx, userId));
+    return Response.json({
+      meals: meals.map((m) => ({
+        id: m.id,
+        title: m.title,
+        imageUrl: m.imageUrl,
+        cookedAt: m.cookedAt.toISOString(),
+        servingsMade: m.servingsMade,
+        kcal: m.kcal,
+        proteinG: m.proteinG,
+        carbsG: m.carbsG,
+        fatG: m.fatG,
+      })),
+    });
+  } catch {
+    return Response.json({ error: "Failed to load cook log" }, { status: 500 });
+  }
 }

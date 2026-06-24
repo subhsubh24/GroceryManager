@@ -50,6 +50,7 @@ export default function CookedScreen() {
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!token) return;
@@ -71,7 +72,7 @@ export default function CookedScreen() {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [token]);
+  }, [token, attempt]);
 
   if (!token) return <Redirect href="/login" />;
 
@@ -89,7 +90,7 @@ export default function CookedScreen() {
         <Text style={styles.errorText}>{error}</Text>
         <Pressable
           style={styles.retryBtn}
-          onPress={() => { setError(null); setLoading(true); }}
+          onPress={() => setAttempt((a) => a + 1)}
         >
           <Text style={styles.retryBtnText}>Retry</Text>
         </Pressable>
@@ -114,7 +115,7 @@ export default function CookedScreen() {
     return (
       <View style={styles.center}>
         <View style={styles.emptyMark}>
-          <Text style={styles.emptyGlyph}>🍳</Text>
+          <Text style={styles.emptyGlyph}>GM</Text>
         </View>
         <Text style={styles.emptyTitle}>No cooks logged yet</Text>
         <Text style={styles.emptyNote}>
@@ -155,11 +156,13 @@ export default function CookedScreen() {
       }
       renderItem={({ item: m }) => (
         <View style={styles.mealCard}>
-          {m.imageUrl ? (
+          {m.imageUrl?.startsWith("https://") ? (
             <Image source={{ uri: m.imageUrl }} style={styles.mealImg} />
           ) : (
             <View style={styles.mealImgPlaceholder}>
-              <Text style={styles.mealImgPlaceholderText}>🍽</Text>
+              <Text style={styles.mealImgPlaceholderText}>
+                {(m.title ?? "M").charAt(0).toUpperCase()}
+              </Text>
             </View>
           )}
           <View style={styles.mealInfo}>
@@ -201,12 +204,12 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: "#f0faf4",
+    backgroundColor: "#0c8a3e",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
   },
-  emptyGlyph: { fontSize: 32 },
+  emptyGlyph: { color: "#ffffff", fontSize: 20, fontWeight: "800" },
   emptyTitle: { fontSize: 17, fontWeight: "700", color: "#1d2530", marginBottom: 8 },
   emptyNote: {
     fontSize: 14,
@@ -256,11 +259,11 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 10,
-    backgroundColor: "#f0f0eb",
+    backgroundColor: "#f0faf4",
     alignItems: "center",
     justifyContent: "center",
   },
-  mealImgPlaceholderText: { fontSize: 24 },
+  mealImgPlaceholderText: { fontSize: 22, fontWeight: "700", color: "#0c8a3e" },
   mealInfo: { flex: 1 },
   mealTitleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8 },
   mealTitle: { fontSize: 15, fontWeight: "600", color: "#1d2530", flex: 1 },
