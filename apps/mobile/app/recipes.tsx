@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  thumbLabel: { fontSize: 11, fontWeight: "600", color: "#9ba8b4", letterSpacing: 0.5, textTransform: "uppercase" },
+  thumbLabel: { fontSize: 11, fontWeight: "600", color: "#a3acb5", letterSpacing: 0.5, textTransform: "uppercase" },
   cardText: { flex: 1, paddingHorizontal: 14, paddingVertical: 10 },
   title: { fontSize: 15, fontWeight: "600", color: "#1d2530", lineHeight: 20 },
   cuisine: { fontSize: 12, color: "#0c8a3e", marginTop: 4, fontWeight: "500" },

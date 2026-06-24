@@ -122,13 +122,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   recommendedText: { color: "#ffffff", fontSize: 11, fontWeight: "700" },
-  planLabel: { fontSize: 13, fontWeight: "700", color: "#9ba8b4", marginBottom: 4 },
+  planLabel: { fontSize: 13, fontWeight: "700", color: "#a3acb5", marginBottom: 4 },
   planLabelFeatured: { color: "rgba(255,255,255,0.75)" },
   planPrice: { fontSize: 28, fontWeight: "800", color: "#1d2530" },
   planPriceFeatured: { color: "#ffffff" },
-  planPer: { fontSize: 12, color: "#9ba8b4", marginBottom: 4 },
+  planPer: { fontSize: 12, color: "#a3acb5", marginBottom: 4 },
   planPerFeatured: { color: "rgba(255,255,255,0.75)" },
-  planTrial: { fontSize: 11, color: "#9ba8b4", textAlign: "center" },
+  planTrial: { fontSize: 11, color: "#a3acb5", textAlign: "center" },
   planTrialFeatured: { color: "rgba(255,255,255,0.7)" },
 
   section: {
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#9ba8b4",
+    color: "#a3acb5",
     letterSpacing: 0.5,
     textTransform: "uppercase",
     marginBottom: 12,
@@ -156,14 +156,14 @@ const styles = StyleSheet.create({
   ctaSection: { alignItems: "center" },
   ctaBtn: {
     width: "100%",
-    backgroundColor: "#9ba8b4",
+    backgroundColor: "#a3acb5",
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
     marginBottom: 8,
   },
   ctaBtnText: { color: "#ffffff", fontSize: 16, fontWeight: "700" },
-  ctaHint: { fontSize: 12, color: "#9ba8b4", textAlign: "center", marginBottom: 16 },
+  ctaHint: { fontSize: 12, color: "#a3acb5", textAlign: "center", marginBottom: 16 },
   backLink: { paddingVertical: 8 },
-  backLinkText: { fontSize: 14, color: "#9ba8b4" },
+  backLinkText: { fontSize: 14, color: "#a3acb5" },
 });
