@@ -4,6 +4,24 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-24 (run 5) — Track B mobile parity: design token sweep + Discover swipe feed
+
+**PR #85 — mobile design token sweep (merged):** Swept all remaining mobile screens (`capture`,
+`upgrade`, `profile`, `login`, `recipes`, `index`, `cook/[id]`) for off-token hex values.
+`#9ba8b4` → `#a3acb5` (ink-300 exact), `#fdeceb` → `#fdecea` (danger-soft exact), `#991b1b`
+→ `#8e261b` (danger-ink). Completes the work PR #71 started — zero off-token values now remain
+across all 13 mobile app files. Gate: `verify` ✓ · `mobile` ✓.
+
+**PR #86 — Discover swipe feed (pending CI):** `GET /api/mobile/discover` (pantry→TheMealDB→rank
+→`nextDiscoveryBatch` filtered by `loadSeenRecipeIds`; up to 12 cards) + `POST /api/mobile/discover`
+(`swipeToSignals` → `recordSwipeSignals` — writes `recipe_seen` + `cuisine:<x>` affinity signal to
+preference ledger, same flywheel as web). `apps/mobile/app/discover.tsx`: card stack with `https://`-
+gated image, cuisine label, pantry-match chip, Like/Skip buttons, progress counter, ghost-card hint,
+"Cook this recipe →" deep-link, auto-reload on deck exhaustion. No gesture library — buttons-first.
+Gate: `verify` ✓ · `mobile` ✓.
+
+---
+
 ## 2026-06-24 (run 4) — Track B mobile parity: cook-tonight, onboarding wizard, meals/macros log
 
 **PR #76 — cook-tonight screen (merged):** `GET /api/mobile/cook-tonight` (pantry-ranked recipe
@@ -20,7 +38,7 @@ loved/avoided ingredients. Writes to the same preference-signal ledger as the we
 Reviewer fixes: `humanizeChip` split on `/[-\s]+/` (fixes "tree nut"), exact hex tokens
 (`#a3acb5` ink-300, `#fdecea` danger-soft). Gate: `verify` ✓ · `mobile` ✓ · `migrations` ✓.
 
-**PR (pending) — meals & macros log screen:** `GET /api/mobile/cooked` (returns up to 30 cook-log
+**PR #84 — meals & macros log screen (merged):** `GET /api/mobile/cooked` (returns up to 30 cook-log
 entries from `loadCookLog` — id, title, imageUrl, cookedAt ISO, servingsMade, kcal/proteinG/carbsG/fatG).
 `try/catch` wraps the DB call; 500 on failure. Native `apps/mobile/app/cooked.tsx`: today's macro
 summary panel (brand-green, running totals), FlatList of meal cards with `https://`-gated image
