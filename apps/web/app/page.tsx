@@ -140,6 +140,42 @@ const HERO_PREVIEW: { icon: LucideIcon; title: string; meta: string }[] = [
   { icon: Recycle, title: "Use it up", meta: "2 items expiring soon" },
 ];
 
+// A/B landing hero variants — select with ?v=a (default) or ?v=b or ?v=c.
+// Track conversion in Plausible via the data-ab-variant attribute on the hero section.
+interface HeroVariant {
+  eyebrow: string;
+  headline: string;
+  subtext: string;
+  primaryCta: string;
+  trustBadges: string[];
+}
+const HERO_VARIANTS: Record<string, HeroVariant> = {
+  a: {
+    eyebrow: "Your grocery + cooking autopilot",
+    headline: "Always know what to cook, and what to buy.",
+    subtext:
+      "It tracks what's in your kitchen, flags what you're about to run out of, builds the order, and suggests meals you can cook tonight — food and household essentials alike.",
+    primaryCta: "Get started — it's free",
+    trustBadges: ["Fills from your receipts", "No bank link needed", "Works offline"],
+  },
+  b: {
+    eyebrow: "End food waste. Simplify meal planning.",
+    headline: "Stop guessing at dinner. Stop buying things you already have.",
+    subtext:
+      "GroceryManager tracks your pantry automatically from receipts, flags what's expiring, and tells you exactly what you can cook tonight — so nothing gets wasted and nothing gets forgotten.",
+    primaryCta: "Try it free",
+    trustBadges: ["Reduces food waste", "Auto-fills from receipts", "Meal ideas every night"],
+  },
+  c: {
+    eyebrow: "Pantry · Shopping · Cooking — connected",
+    headline: "Your kitchen, finally in sync.",
+    subtext:
+      "One app connects your pantry, shopping list, and meal plan. Know what you have, plan what to cook, and order only what you actually need — all from a single place.",
+    primaryCta: "Get the free app",
+    trustBadges: ["Pantry updates from receipts", "Smart shopping list", "7-day free trial"],
+  },
+};
+
 // Placeholder testimonials — replace with real App Store / user quotes after launch.
 const TESTIMONIALS = [
   {
@@ -182,7 +218,13 @@ function expiringLabel(e: { reason: string; daysLeft: number | null }): string {
   return e.daysLeft != null ? `${e.daysLeft}d left` : "soon";
 }
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ v?: string }>;
+}) {
+  const sp = await searchParams;
+  const heroVariant: HeroVariant = HERO_VARIANTS[sp.v ?? "a"] ?? HERO_VARIANTS.a;
   const session = await auth();
   const email = (session?.user as { email?: string } | undefined)?.email ?? null;
   // Only hit the DB for signed-in visitors; the logged-out landing path stays query-free.
@@ -400,37 +442,35 @@ export default async function HomePage() {
 
       {!session && (
         <>
-          {/* Hero — clean, spacious, type-driven. One headline, concise subtext, two CTAs. */}
-          <section className="mx-auto max-w-6xl px-5 pb-14 pt-16 sm:px-8 sm:pt-24">
+          {/* Hero — clean, spacious, type-driven. Variant driven by ?v= param for A/B testing.
+              Track conversions in Plausible via data-ab-variant on the section. */}
+          <section
+            className="mx-auto max-w-6xl px-5 pb-14 pt-16 sm:px-8 sm:pt-24"
+            data-ab-variant={sp.v ?? "a"}
+          >
             <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="animate-fade-in-up">
-                <p className="eyebrow">Your grocery + cooking autopilot</p>
+                <p className="eyebrow">{heroVariant.eyebrow}</p>
                 <h1 className="mt-5 text-[2.6rem] font-semibold leading-[1.05] tracking-[-0.02em] text-ink-900 sm:text-5xl lg:text-6xl">
-                  Always know what to cook, and what to buy.
+                  {heroVariant.headline}
                 </h1>
                 <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-500">
-                  It tracks what&apos;s in your kitchen, flags what you&apos;re about to run out of,
-                  builds the order, and suggests meals you can cook tonight — food and household
-                  essentials alike.
+                  {heroVariant.subtext}
                 </p>
                 <div className="mt-8 flex flex-wrap items-center gap-3">
                   <a href="/signup" className="btn-primary px-5 py-3 text-base">
-                    Get started — it&apos;s free
+                    {heroVariant.primaryCta}
                   </a>
                   <a href="/recipes" className="btn-secondary px-5 py-3 text-base">
                     Cook something tonight
                   </a>
                 </div>
                 <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-400">
-                  <span className="inline-flex items-center gap-1.5">
-                    <Check className="h-4 w-4 text-brand-600" strokeWidth={2} /> Fills from your receipts
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <Check className="h-4 w-4 text-brand-600" strokeWidth={2} /> No bank link needed
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <Check className="h-4 w-4 text-brand-600" strokeWidth={2} /> Works offline
-                  </span>
+                  {heroVariant.trustBadges.map((badge) => (
+                    <span key={badge} className="inline-flex items-center gap-1.5">
+                      <Check className="h-4 w-4 text-brand-600" strokeWidth={2} /> {badge}
+                    </span>
+                  ))}
                 </div>
               </div>
 
