@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Hanken_Grotesk } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { RegisterSW } from "./register-sw";
 import { BottomNav } from "./components/bottom-nav";
@@ -55,6 +56,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
+        {/* Privacy-first analytics (Plausible) — activates only when NEXT_PUBLIC_PLAUSIBLE_DOMAIN
+            is set. No cookies, no cross-site tracking, GDPR-compliant. See PENDING_OPS.md. */}
+        {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
+          <Script
+            defer
+            data-domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
+            src="https://plausible.io/js/script.js"
+          />
+        )}
         <RegisterSW />
         <LaunchGuard />
         {children}
