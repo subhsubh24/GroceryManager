@@ -4,6 +4,37 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-24 (run 9) — Track E: marketing engine, waitlist DB, A/B variants, launch handoff
+
+**PR #106 — Track E marketing engine: blog, waitlist DB, social proof, admin (merged):**
+Three deliverables shipped together: (1) **Blog** — `apps/web/app/blog/posts.ts` (3 SEO-targeted
+posts: food waste, meal planning, grocery budget), `/blog` index, `/blog/[slug]` dynamic renderer
+with `generateStaticParams` + `generateMetadata`; `/blog` added to middleware PUBLIC allowlist (was
+behind auth wall — crawlers got redirected to `/signin`). (2) **Waitlist DB** — migration
+`0012_waitlist.sql` (`waitlist_submissions` table + unique email index), wired into `migrate.ts`;
+`insertWaitlistEmail` + `getWaitlistSubmissions` query helpers added to `packages/db/src/queries.ts`
+(drizzle `sql` tag, RowList-as-array cast pattern, 7-day count via DB-side FILTER clause);
+`submitWaitlistEmail` server action updated from stdout-only to DB-backed (`getAdminDb()`, RFC 5321
+validation, no PII in logs); `/admin/waitlist` page updated to use `data.lastSevenDays` (DB-accurate).
+(3) **Admin layout** — fail-fast log when `ADMIN_EMAIL` is absent; case-insensitive email comparison.
+Also added `/help`, `/privacy`, `/terms` to middleware PUBLIC allowlist (SEO + App Store review
+requirement). Sitemap extended with blog entries + those three routes.
+
+**PR #108 — A/B landing hero variants ?v=a/b/c (merged):**
+Three hero copy variants served via `searchParams.v` in `apps/web/app/page.tsx` (`HERO_VARIANTS`
+constant; `data-ab-variant` attribute for Plausible analytics). Secondary CTA changed from `/recipes`
+(auth-gated dead end) to `/signin`. Variant C "7-day free trial" trust badge changed to "No credit
+card to start" (billing not live). Placeholder testimonial comment moved from visible DOM text to JSX
+comment. Created on clean branch from `origin/main` after cherry-picking only the A/B commits from
+a stale branch that had an unresolvable rebase conflict with PR #106 (already merged to main).
+
+**Gate:** typecheck ✓ · core tests ✓ · next build ✓ · no missing-export warnings ✓
+
+**ROADMAP ticks:** Track E fully complete. All buildable items shipped. Human Core remainder:
+rendered store screenshots + live billing/EAS keys (see PENDING_OPS.md and docs/LAUNCH.md).
+
+---
+
 ## 2026-06-24 (run 8) — Track B: push notification infrastructure + token persistence
 
 **PR #97 — Push token server API (merged):**

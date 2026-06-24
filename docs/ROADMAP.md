@@ -122,12 +122,25 @@ supplements.
   500 fallback; all image renders guarded by `startsWith("https://")`. Gates: typecheck + core tests +
   `next build` green + `cd apps/mobile && npm run typecheck` on every PR.
 
+- **Track E — Marketing engine + store readiness (DONE, 2026-06-24):** Full marketing website
+  (landing page bento + three A/B hero variants `?v=a/b/c`), blog (`/blog` + 3 SEO posts), `/help`,
+  `/privacy`, `/terms`, XML sitemap, OG/Twitter metadata. Waitlist email capture (DB-backed via
+  migration 0012 + `/admin/waitlist` dashboard). Content + doc assets: brand kit, naming candidates,
+  15-email lifecycle (6 sequences), launch plan + content calendar, press kit (press release,
+  one-pager, launch directories), ASO ready-to-paste copy. Store-acceptance self-audit
+  (`docs/store/ACCEPTANCE_AUDIT.md`). Business case + revenue model (`docs/BUSINESS_CASE.md`).
+  Operator runbook (`docs/OPERATIONS.md`). `docs/LAUNCH.md` — full 11-step launch handoff to owner.
+  PRs #39, #47, #50, #55, #100–108.
+  **DoD:** all buildable items ✓. Remaining Human Core: rendered store screenshots (iPhone 15 Pro,
+  5 required — see `docs/store/store-assets-spec.md`) + Google Play feature graphic.
+
 ## Next up
-**The keyless, blind-safe backlog is COMPLETE** (iters 1–8 shipped this session). Everything still
-open needs one of: *your API keys*, a *larger platform effort*, or a *human eye on the screen* — see
-Deferred below. To resume building, point me at a Deferred item (and drop in any required keys) and
-I'll pick it up from here. The hourly GitHub Actions loop (once on `main` + `ANTHROPIC_API_KEY` set)
-will otherwise keep this list curated and tackle anything that becomes buildable.
+**The product factory is complete.** All five tracks (A: quality pass, B: native mobile, C: billing
+scaffold, D: store readiness, E: marketing engine) have reached their Definition of Done for
+everything buildable in a headless/keyless environment. The product is ready for human handoff.
+See `docs/LAUNCH.md` for the ordered checklist of owner-required steps (migrations, accounts, signing,
+screenshots, live keys, store submission). The hourly Actions loop has nothing left to build and can
+be retired or repurposed for future feature work.
 
 ## Deferred (not buildable in this keyless/headless runner — need keys, scale, or a human eye)
 - **Instacart production API** (one-tap prefilled cart + Impact affiliate) — needs Instacart key.
