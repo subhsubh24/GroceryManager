@@ -150,7 +150,7 @@ export default async function ManageSubscriptionPage() {
 
       {/* Back to profile */}
       <p className="mt-6 text-sm text-ink-400">
-        <a href="/profile" className="underline hover:text-ink-700">
+        <a href="/profile" className="link">
           &larr; Back to profile
         </a>
       </p>
