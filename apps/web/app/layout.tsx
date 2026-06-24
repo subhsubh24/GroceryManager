@@ -60,7 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             is set. No cookies, no cross-site tracking, GDPR-compliant. See PENDING_OPS.md. */}
         {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
           <Script
-            defer
+            strategy="afterInteractive"
             data-domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
             src="https://plausible.io/js/script.js"
           />

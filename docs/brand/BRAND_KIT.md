@@ -37,11 +37,11 @@ Sourced directly from `apps/web/tailwind.config.ts` (`brand` + `ink` + `surface`
 
 | Token | CSS variable | Hex | Use |
 |---|---|---|---|
-| `brand-solid` | `--color-brand-solid` | `#0c8a3e` | Primary CTA backgrounds, icon tiles |
-| `brand-600` | `--color-brand-600` | `#0a7a36` | Hover on primary CTAs |
-| `brand-500` | `--color-brand-500` | `#13a14a` | Accent text, status-bar meta-theme |
-| `brand-200` | `--color-brand-200` | approx `#a5d6b7` | Borders on premium cards |
-| `brand-50` | `--color-brand-50` | approx `#f0faf4` | Premium card fill tint |
+| `brand-solid` | `--brand-solid` | `#0c8a3e` | Primary CTA backgrounds, icon tiles |
+| `brand-600` | `--brand-600` | `#0c8a3e` | Hover on primary CTAs (equals brand-solid in light mode) |
+| `brand-500` | `--brand-500` | `#13a14a` | Accent text, status-bar meta-theme |
+| `brand-200` | `--brand-200` | `#9fe6b8` | Borders on premium cards |
+| `brand-50` | `--brand-50` | `#ecfaf0` | Premium card fill tint |
 
 ### Neutral (ink + surface)
 
@@ -52,16 +52,16 @@ Sourced directly from `apps/web/tailwind.config.ts` (`brand` + `ink` + `surface`
 | `ink-500` | Secondary text, metadata |
 | `ink-400` | Tertiary, timestamps |
 | `ink-200` / `ink-100` | Borders, skeleton fills |
-| `surface` | Page background (light mode `#faf8f3`, dark mode `#0f1216`) |
-| `cream` | Card surface (light mode `#f5f0e8`) |
+| `cream` | Page / body background (light `#faf8f3`, dark `#0f1216`) |
+| `surface` | Card / raised surface (light `#ffffff`, dark `#181c22`) |
 
-### Accent (used sparingly for specific feature areas)
+### Accent (used sparingly)
 
-| Token | Feature area |
+| Token | Notes |
 |---|---|
-| `berry-*` | Reduce waste / use-it-up flows |
-| `grape-*` | Billing / subscription |
-| `ok` | Success states |
+| `berry-*` | Legacy/back-compat ramp — not actively assigned to a feature area |
+| `grape-*` | Legacy/back-compat ramp — not actively assigned to a feature area |
+| `success` / `success-soft` / `success-ink` | Success states (confirmed green) |
 | `danger-*` | Destructive actions (always via `btn-danger`, `notice-danger`) |
 
 ### Rules
@@ -82,8 +82,8 @@ not a second family.
 
 | Role | Class / CSS | Weight | Size |
 |---|---|---|---|
-| Page title | `.page-title` | 700 | 1.875rem (30px) |
-| Section title | `.section-title` | 600 | 0.875rem (14px), uppercase-tracking |
+| Page title | `.page-title` | 600 | 1.85rem base / 2.25rem sm+, tight tracking (`-0.02em`) |
+| Section title | `.section-title` | 600 | 1rem (16px), tight tracking (`-0.01em`), no uppercase |
 | Body | default | 400 | 0.9375rem (15px) |
 | Eyebrow | `.eyebrow` | 700 | 0.6875rem (11px), 0.14em letter-spacing |
 | Display heading | `font-display` | 700 | varies |

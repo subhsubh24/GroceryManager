@@ -17,7 +17,7 @@
 Your grocery + cooking autopilot is here. Know what to cook, build the order, and track what's in
 your kitchen — automatically.
 ```
-(126 chars)
+(127 chars)
 
 ### Google Play — short description (80 chars max)
 
