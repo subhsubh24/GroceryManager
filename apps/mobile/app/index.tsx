@@ -55,6 +55,10 @@ export default function HomeScreen() {
           <Text style={styles.cardLabel}>Cook tonight →</Text>
           <Text style={styles.cardNote}>Recipes from what you have</Text>
         </Link>
+        <Link href="/discover" style={styles.card}>
+          <Text style={styles.cardLabel}>Discover →</Text>
+          <Text style={styles.cardNote}>For-you feed — like or skip to tune your taste</Text>
+        </Link>
         <Link href="/cooked" style={styles.card}>
           <Text style={styles.cardLabel}>Meals &amp; macros →</Text>
           <Text style={styles.cardNote}>Your cook log with nutrition</Text>
