@@ -4,6 +4,20 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-24 (run 3) — fix(mobile): design tokens + lockfile + cook-tonight screen (Track B)
+
+**Context:** Continuation run. Started by merging PR #66 (bookkeeping from run 2) and PR #68 (shopping list screen, opened by a concurrent run).
+
+**PR #71 — mobile design token fixes (merged):** Replaced all Tailwind palette approximations in the three mobile screens with exact hex values derived from `globals.css` CSS variable RGB tuples: `pantry.tsx` (`#d97706`→`#b6791a` warn, `#dc2626`→`#c0392b` danger, `#991b1b`→`#c0392b`), `list.tsx` (`#991b1b`→`#c0392b`), `login.tsx` (errorBox bg `#fef2f2`→`#fdecea`, border `#fecaca`→`#e8a09a`, text `#991b1b`→`#8e261b`, label `#374151`→`#2b333d`). Also replaced emoji `🧺` logo with a branded GM mark on both `login.tsx` and `index.tsx`. Gate: `verify` ✓, `mobile` ✓ (pre-existing lockfile failure at that point).
+
+**PR #73 — mobile lockfile sync (merged, mobile CI now fully green):** `npm ci` was failing on every PR due to 12 missing transitive packages in `apps/mobile/package-lock.json` (Expo SDK 56 indirect deps). Fixed by running `npm install` locally to regenerate the lockfile, verifying `npm ci` passes, and committing a lockfile-only standalone PR. First CI run where `mobile` was ✓ — all future PRs now have full CI coverage.
+
+**PR #76 — cook-tonight screen (merged):** Added the fourth Track B daily-habit screen. `GET /api/mobile/cook-tonight` loads the user's pantry (`in_stock` + `low` + `expired_likely` items), seeds `TheMealDBProvider` with up to 4 items, fetches up to 8 full recipes, annotates + ranks via `rankRecipes()` respecting user diet/allergen/preference signals (mirrors `recipes/page.tsx` logic). `apps/mobile/app/cook-tonight.tsx` renders a FlatList with 160px recipe image thumbnails, ingredient-match badge ("N ingredients on hand"), and design-token error colors. Also fixed `recipes.tsx` off-token `errorText #991b1b`→`#c0392b` and added "Cook tonight →" nav card to `index.tsx`.
+
+**Track B daily-habit screens status:** pantry ✅ · list ✅ · cookbook ✅ · cook tonight ✅ · remaining: settings/profile, capture/scan, cook-mode, EAS builds.
+
+---
+
 ## 2026-06-24 (run 2) — feat(pwa): browser favicon + mobile screens (Track D + Track B)
 
 **PR #60 — favicon (merged):** Wired `/icons/icon.svg` (already used by the PWA manifest) as the
