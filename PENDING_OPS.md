@@ -37,3 +37,21 @@ errors (anon/authenticated could read+write the shared catalog via PostgREST).
 **Status: ALREADY APPLIED to the production Supabase DB on 2026-06-23 (via MCP `apply_migration`).**
 The migration is idempotent, so the next `pnpm --filter @gm/db db:migrate` run is a safe no-op
 that simply brings other environments in sync. No further action required for prod.
+
+---
+
+## Waitlist email capture — wire to email service before store launch
+
+The landing page waitlist form (`apps/web/app/components/waitlist-form.tsx`) calls the server action
+`submitWaitlistEmail` in `apps/web/app/components/waitlist-action.ts`, which currently only logs to
+stdout (`console.log`). Before the App Store launch, wire this to a real email service:
+
+1. **Sign up for ConvertKit / Mailchimp / Loops / similar** (owner picks service).
+2. **Add the API key to env** (e.g. `CONVERTKIT_API_KEY` or `LOOPS_API_KEY`) — never committed.
+3. **Replace the `console.log` in `waitlist-action.ts`** with the SDK call:
+   ```ts
+   await emailService.subscribe({ email, listId: process.env.EMAIL_LIST_ID });
+   ```
+4. **Test with a real submission** to confirm delivery before launch.
+
+**Status:** Code merged (PR #47). Human Core required for email service account + key.

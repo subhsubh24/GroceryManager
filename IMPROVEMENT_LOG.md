@@ -519,3 +519,78 @@ flagged for owner decision (grocery prices as "Financial Info"; meal macros as "
 **Reviews:** Joint Reviewer A + B APPROVE after cycle 2 (caught missed guest-diet tab call site in
 `recipes/page.tsx` that still passed raw slug `g` to `tab()` — fixed by passing `humanize(g)` as
 the display label)
+
+---
+
+## 2026-06-24 — feat(evals): add capture-parse and meal-gen eval suites — Track A eval coverage
+
+**What:** Extended the `RUN_EVALS`-gated eval harness (`packages/core/src/llm/evals/`) with two new
+suites completing 5-stage LLM coverage: capture-parse (barcode/photo → item struct) and meal-gen
+(pantry state → weekly meal plan JSON). Each suite ships with real golden fixtures, pass-rate floors
+(80% and 75% respectively), and ratchet guards. All five core LLM stages now have CI-enforced eval
+coverage: receipt extraction, recipe import, remix, meal-gen, and capture-parse.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/45
+
+**Gate:** typecheck ✓ · 408+ core tests ✓ · next build ✓
+
+**Reviews:** Dual APPROVE (correctness + eval quality verified)
+
+---
+
+## 2026-06-24 — feat(reliability): add error boundaries and loading skeletons for 7 unprotected routes
+
+**What:** Gap analysis found 2 routes with DB calls and no `error.tsx`, and 5 routes with DB calls
+and no `loading.tsx`. Added:
+- `use-it-up/error.tsx` and `manage-subscription/error.tsx` (error boundaries with correct
+  `accent`/`eyebrow` to match each page header; `"use client"`, `{error, reset}` props, Try again +
+  Back home actions)
+- `cooked/loading.tsx`, `list/loading.tsx`, `household/loading.tsx`, `wrapped/loading.tsx`,
+  `profile/loading.tsx` (pure JSX skeletons, no imports, `animate-pulse` + `bg-ink-100`)
+- Fixed `manage-subscription/page.tsx` back-to-profile anchor to use `.link` class (dark-mode
+  correct) instead of raw `underline hover:text-ink-700`
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/46
+
+**Gate:** typecheck ✓ · next build ✓
+
+**Reviews:** Dual APPROVE after cycle 2 (caught: use-it-up error.tsx used wrong accent="brand"/
+eyebrow="Pantry"; profile/loading.tsx used `page` instead of `page-narrow` — both fixed)
+
+---
+
+## 2026-06-24 — feat(landing): pricing section and email waitlist on home page
+
+**What:** Extended the logged-out marketing landing (`apps/web/app/page.tsx`) with:
+- Two-column Free vs Premium pricing grid sourced from `@gm/core/billing` (prices can't drift from
+  the actual paywall); "Recommended" pill on the premium card
+- Email waitlist capture panel (`WaitlistForm` component + `submitWaitlistEmail` server action);
+  emails are logged server-side to stdout pending wire-up to ConvertKit/Mailchimp (see PENDING_OPS.md)
+
+Both sections inside `{!session}` — authenticated users see the dashboard only.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/47
+
+**Gate:** typecheck ✓ · next build ✓
+
+**Reviews:** Dual APPROVE after cycle 2 (cycle 1 caught: form was a no-op with false promise →
+added server action; grid layout bug with dead `sm:col-span-2` in flex → switched to grid;
+"Most popular" superlative → "Recommended"; fragile array index → `.find()` by tier)
+
+---
+
+## 2026-06-24 — feat(mobile): initialize Expo SDK 56 in apps/mobile
+
+**What:** Wired up the `apps/mobile` skeleton with real Expo 56 deps, tsconfig, and babel config,
+making it independently installable and typecheckable. `cd apps/mobile && npm install && npm run
+typecheck` passes clean. Expo 56.0.12 / expo-router 56.2.11 / React 19.2.7 / RN 0.85.3 /
+TypeScript 6.0.3. `@gm/core/*` imports resolve via tsconfig path aliases so no pnpm workspace link
+is needed — mobile remains excluded from `pnpm-workspace.yaml`. README updated to reflect the
+initialized state.
+
+**PR:** https://github.com/subhsubh24/GroceryManager/pull/48
+
+**Gate:** `npm install && npm run typecheck` ✓ · root `pnpm -r run typecheck` unaffected ✓
+
+**Reviews:** Dual APPROVE (Reviewer A initially flagged false positives due to knowledge cutoff —
+Expo adopted unified SDK-matching version numbers in SDK 56; TypeScript 6 released in 2026)
