@@ -55,6 +55,10 @@ export default function HomeScreen() {
           <Text style={styles.cardLabel}>Cook tonight →</Text>
           <Text style={styles.cardNote}>Recipes from what you have</Text>
         </Link>
+        <Link href="/use-it-up" style={styles.card}>
+          <Text style={styles.cardLabel}>Use it up →</Text>
+          <Text style={styles.cardNote}>Recipes for items expiring soon</Text>
+        </Link>
         <Link href="/discover" style={styles.card}>
           <Text style={styles.cardLabel}>Discover →</Text>
           <Text style={styles.cardNote}>For-you feed — like or skip to tune your taste</Text>
