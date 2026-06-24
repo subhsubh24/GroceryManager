@@ -55,6 +55,16 @@ as "unavailable" for ask/plan/remix/onboarding even when fully configured. Fixed
 `GEMINI_API_KEY || GOOGLE_VERTEX_PROJECT` in all four. Follow-up to PR #69. Gate: `verify` ✓.
 Closes Track A Reliability fully — all LLM capability checks now Vertex-aware.
 
+**PR #75 — recipes browser + cook mode native screens (merged):** Added
+`GET /api/mobile/recipes/[id]` (UUID→DB via `loadRecipeForCook`; numeric→TheMealDB provider;
+returns full recipe with ingredients). Replaced the simpler PR #70 recipes screen with a richer
+`apps/mobile/app/recipes.tsx`: thumbnail Image (72×72), pull-to-refresh via RefreshControl, `Link
+href={/cook/${id}}` navigation, text placeholder box (no emoji). New `apps/mobile/app/cook/[id].tsx`:
+hero image, ingredient list with bullet + measure + name, step-through cook mode (Prev / Next /
+"Start over" on last step), auth redirect guard (`if (!token) return <Redirect href="/login" />`),
+loading/error/not-found states. Gate: `verify` ✓. Advances Track B: cook + cook-mode done;
+remaining: capture/scan, then parity screens.
+
 ---
 
 ## 2026-06-24 (run 2) — feat(pwa): browser favicon + mobile screens (Track D + Track B)
