@@ -1,31 +1,40 @@
 export default function HomeLoading() {
   return (
-    <main className="page">
-      {/* Header greeting */}
-      <div className="h-8 w-48 animate-pulse rounded-xl bg-ink-100" />
-      <div className="mt-2 h-4 w-64 animate-pulse rounded bg-ink-100" />
+    <main className="relative overflow-hidden">
+      <section className="mx-auto max-w-2xl px-5 pb-16 pt-10 sm:px-8 sm:pt-12">
+        {/* eyebrow + page-title */}
+        <div className="h-3 w-36 animate-pulse rounded bg-ink-100" />
+        <div className="mt-3 h-9 w-56 animate-pulse rounded-xl bg-ink-100" />
 
-      {/* Streak / stat tiles */}
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-20 animate-pulse rounded-2xl bg-ink-100" />
-        ))}
-      </div>
+        {/* panel-brand autopilot section */}
+        <div className="mt-6 h-28 animate-pulse rounded-2xl bg-ink-100" />
 
-      {/* Digest / reorder section */}
-      <div className="mt-6 space-y-3">
-        <div className="h-4 w-32 animate-pulse rounded bg-ink-100" />
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-12 animate-pulse rounded-xl bg-ink-100" />
-        ))}
-      </div>
+        {/* pantry card-link */}
+        <div className="mt-6 h-24 animate-pulse rounded-2xl bg-ink-100" />
 
-      {/* Quick-action row */}
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-24 animate-pulse rounded-2xl bg-ink-100" />
-        ))}
-      </div>
+        {/* when-to-buy card-pad */}
+        <div className="mt-6 space-y-2">
+          <div className="h-4 w-28 animate-pulse rounded bg-ink-100" />
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-10 animate-pulse rounded-xl bg-ink-100" />
+          ))}
+        </div>
+
+        {/* use-it-up card-pad */}
+        <div className="mt-6 space-y-2">
+          <div className="h-4 w-24 animate-pulse rounded bg-ink-100" />
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="h-10 animate-pulse rounded-xl bg-ink-100" />
+          ))}
+        </div>
+
+        {/* quick-action button row */}
+        <div className="mt-6 flex flex-wrap gap-2" aria-hidden>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-10 w-28 animate-pulse rounded-full bg-ink-100" />
+          ))}
+        </div>
+      </section>
     </main>
   );
 }
