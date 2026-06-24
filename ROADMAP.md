@@ -87,7 +87,10 @@ feature parity with `apps/web`** before submission (owner decision, locked).
       premium gates on spend_insights + wrapped_plus, `https://`-gated images, retry patterns.
       PRs #62 #68 #75 #76 #77 #78 #80 #81 #82 #83 #85 #86 #87 #88 #89 #90 #92 #95.)_
 - [ ] Push notifications + offline behavior appropriate to native.
-      _(Blocked: requires EAS project ID — Human Core. Expo push token endpoint not yet wired.)_
+      _(Code fully wired — PRs #97 + #98: push_tokens DB table + RLS + /api/mobile/push-token
+      endpoint; expo-notifications client + permission request + token registration/deregistration;
+      AsyncStorage session persistence + cold-launch ready flag. Remaining Human Core: apply
+      migration 0011 + set EXPO_PUBLIC_PROJECT_ID (EAS project ID) — see PENDING_OPS.md.)_
 - [x] Mobile gate green in CI (the graceful-skip `mobile` job starts enforcing once initialized).
       _(`npm ci && npm run typecheck` exits 0; every merged mobile PR shows `mobile: success`.)_
 - [x] EAS build config staged (credentials are Human Core).
@@ -160,8 +163,8 @@ When **all** of these are genuinely true and CI-verified, STOP building, open ON
 add scope.
 - [x] Track A complete — web app at paid quality, **live eval suite passes**.
 - [ ] Track B complete — native Expo app real (not a wrapper), mobile CI green.
-      _(18 screens ✅ · CI green ✅ · EAS staged ✅ — one item open: push notifications require
-      EAS project ID (Human Core). All else done; 1 Human Core step away from complete.)_
+      _(18 screens ✅ · CI green ✅ · EAS staged ✅ · push notification code wired ✅ (PRs #97 #98) —
+      1 Human Core step from complete: set EXPO_PUBLIC_PROJECT_ID + apply migration 0011.)_
 - [x] Track C complete — subscription + entitlement gating in code (live keys pending in Human Core).
 - [x] Track D complete — account deletion, privacy/terms, disclosures, assets, stability.
 - [x] Track E complete — landing, brand kit, store copy, content drafts, analytics — all staged.

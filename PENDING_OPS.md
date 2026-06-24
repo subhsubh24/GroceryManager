@@ -5,6 +5,31 @@ The autonomous loop appends here when a code change requires a manual step at de
 
 ---
 
+## 2026-06-24 — Push notification migration + EAS project ID (Track B, PRs #97 + #98)
+
+The push notification infrastructure is fully wired in code. To activate:
+
+1. **Apply migration 0011** (creates `push_tokens` table + RLS policy):
+   ```bash
+   pnpm --filter @gm/db db:migrate
+   ```
+   Idempotent; safe to run multiple times.
+
+2. **Set `EXPO_PUBLIC_PROJECT_ID`** in the Expo/EAS env (`.env` for local dev;
+   EAS secrets for builds):
+   - Get the project ID from the EAS dashboard after creating the project:
+     `npx eas project:info` (in `apps/mobile/`)
+   - Set it: `EXPO_PUBLIC_PROJECT_ID=<your-eas-project-id>`
+   - Without this value, `registerForPushNotifications` is a no-op — the rest of
+     the app is unaffected.
+
+3. **Rebuild the native app** after setting the env var (the value is baked into
+   the JS bundle at build time via `EXPO_PUBLIC_*` convention).
+
+**Status:** Code merged (PRs #97 + #98). Human Core required for steps 1–3 above.
+
+---
+
 ## 2026-06-24 — Stripe + RevenueCat billing keys (Track C monetization)
 
 Code is merged and ready (`packages/core/src/billing`, `apps/web/app/api/webhooks/stripe/route.ts`,

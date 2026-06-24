@@ -4,6 +4,33 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-24 (run 8) — Track B: push notification infrastructure + token persistence
+
+**PR #97 — Push token server API (merged):**
+Server-side infrastructure for Expo push notifications: `push_tokens` DB table (migration
+`0011_push_tokens.sql` with RLS via `grocery_app` + `app_current_user_id()` GUC, matching the
+tenant isolation model in `0002_rls.sql`), Drizzle schema + `registerMobilePushToken` /
+`deregisterMobilePushToken` query helpers in `@gm/db`, and `POST /DELETE /api/mobile/push-token`
+endpoint (Expo token format validated with `/^ExponentPushToken\[[A-Za-z0-9_-]{10,64}\]$/` on
+both handlers; `withTenant` isolation; `deviceId` ≤ 200 chars guard).
+
+**PR #98 — Mobile push notifications + token persistence (merged):**
+Client-side completion: `expo-notifications@^56.0.18` + `expo-device@^56.0.4` + 
+`@react-native-async-storage/async-storage@^3.1.1` added to `apps/mobile`. 
+`lib/notifications.ts`: permission request → `getExpoPushTokenAsync` → POST to server;
+Android 13+ channel; fully best-effort (try/catch throughout); gated on `EXPO_PUBLIC_PROJECT_ID`
+(no-op until Human Core sets EAS project ID). `lib/auth.tsx`: session persisted to AsyncStorage
+on login and restored on cold launch — eliminates the re-login-every-restart regression; 
+`ready` flag exposes hydration status. `app/_layout.tsx`: `AppStack` inner component reads
+`ready`, shows branded `ActivityIndicator` while AsyncStorage loads — prevents flash-to-login.
+
+**Gate:** typecheck ✓ (web + mobile) · 450+ core tests ✓ · next build ✓
+
+**ROADMAP ticks:** Track B push notifications code fully wired — remaining Human Core: set
+`EXPO_PUBLIC_PROJECT_ID` (EAS project ID) + apply migration 0011 (`pnpm --filter @gm/db db:migrate`).
+
+---
+
 ## 2026-06-24 (run 7) — Track C premium gates + Track B pull-to-refresh + hooks fix
 
 **PR #95 — premium gates on spend/wrapped (web + mobile) + pull-to-refresh + hooks fix (merged):**
