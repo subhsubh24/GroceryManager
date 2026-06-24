@@ -47,10 +47,18 @@ These are settled; build to them, do not re-litigate.
 ## Track A — Web app → paid quality
 The web PWA is feature-rich already (receipts→pantry, scan, cook/plan, cookbook, discover, spend,
 Wrapped, dark mode). Get it to **"people happily pay monthly"** quality.
-- [ ] **Design bar held everywhere** — no vibe-coded screens; design system only (globals.css +
-      tailwind.config.ts). Audit every route for cohesion.
-- [ ] **Reliability** — no broken flows; graceful empty/error states; LLM/keyless paths degrade.
-- [ ] **Performance** — fast cold start + hot paths; no needless queries (continue the latency work).
+- [x] **Design bar held everywhere** — no vibe-coded screens; design system only (globals.css +
+      tailwind.config.ts). Audit every route for cohesion. _(Run-3 full-route audit: 0 design-system
+      violations. Error boundaries on 30+ routes (PRs #30 #40 #46 #54 #56 #61); loading skeletons on
+      27+ routes (PRs #24 #41 #46 #54 #56 #61); all components use globals.css + tailwind tokens only.)_
+- [x] **Reliability** — no broken flows; graceful empty/error states; LLM/keyless paths degrade.
+      _(PRs #30 #40 #46 #54 #56 #61: error boundaries + skeletons on all major routes; PR #69:
+      Vertex/keyless guards on scan/import/add-receipt; PR #72: guards extended to ask/plan/remix/
+      onboarding — all LLM capability checks now Vertex-aware. Run-3 audit: 0 reliability gaps.)_
+- [x] **Performance** — fast cold start + hot paths; no needless queries (continue the latency work).
+      _(PR #56: profile page parallelized DB reads; PR #65: digest + pantry — 5 independent queries
+      run in Promise.all via separate withTenant connections. Run-3 audit: 0 remaining sequential
+      hot-path gaps.)_
 - [x] **Security/RLS** — every public table RLS-protected. _Audit 2026-06-24: zero violations — no
       SECURITY DEFINER functions; all 26 public tables RLS-enabled with correct policies._
 - [x] **EVAL COVERAGE (first-class)** — grow the live `RUN_EVALS`-gated suites
@@ -73,6 +81,8 @@ feature parity with `apps/web`** before submission (owner decision, locked).
 - [ ] Core daily-habit screens first (pantry, cook + cook mode, list, capture/scan, home) — native
       UX, not an iframe — then expand to **parity**: receipts/review, plan-my-week, cookbook,
       discover, remix, spend, Wrapped, onboarding, settings/profile, account deletion, paywall.
+      _(Done: home nav ✅ (#62), pantry FlatList + expiry coding ✅ (#62), shopping list ✅ (#68),
+      cookbook/recipes ✅ (#70). Remaining: cook + cook-mode, capture/scan, then parity screens.)_
 - [ ] Push notifications + offline behavior appropriate to native.
 - [ ] Mobile gate green in CI (the graceful-skip `mobile` job starts enforcing once initialized).
 - [ ] EAS build config staged (credentials are Human Core).
