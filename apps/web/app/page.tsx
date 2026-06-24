@@ -172,7 +172,7 @@ const HERO_VARIANTS: Record<string, HeroVariant> = {
     subtext:
       "One app connects your pantry, shopping list, and meal plan. Know what you have, plan what to cook, and order only what you actually need — all from a single place.",
     primaryCta: "Get the free app",
-    trustBadges: ["Pantry updates from receipts", "Smart shopping list", "7-day free trial"],
+    trustBadges: ["Pantry updates from receipts", "Smart shopping list", "No credit card to start"],
   },
 };
 
@@ -461,8 +461,8 @@ export default async function HomePage({
                   <a href="/signup" className="btn-primary px-5 py-3 text-base">
                     {heroVariant.primaryCta}
                   </a>
-                  <a href="/recipes" className="btn-secondary px-5 py-3 text-base">
-                    Cook something tonight
+                  <a href="/signin" className="btn-secondary px-5 py-3 text-base">
+                    Sign in
                   </a>
                 </div>
                 <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-400">
