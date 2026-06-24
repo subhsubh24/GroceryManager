@@ -1,16 +1,21 @@
-// Expo Router root layout. SKELETON: `expo-router`/`react-native` are not installed in this repo
-// (see ../README.md) — this package is excluded from the pnpm workspace + typecheck on purpose, so
-// these imports are intentionally unresolved until a developer initializes Expo here.
 import { Stack } from "expo-router";
+import { configureApi } from "./lib/api";
+
+// Point at your deployed web app URL. In dev: ngrok or local IP.
+// IMPORTANT: Replace with actual URL before shipping.
+const _envUrl =
+  typeof process !== "undefined"
+    ? (process.env as Record<string, string | undefined>)["EXPO_PUBLIC_API_URL"]
+    : undefined;
+const API_BASE: string = _envUrl ?? "https://grocerymanager.vercel.app";
+configureApi(API_BASE);
 
 export default function RootLayout() {
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: "#13a14a" }, // brand-500, shared with the web theme
-        headerTintColor: "#ffffff",
-        headerTitleStyle: { fontWeight: "600" },
-      }}
-    />
+    <Stack>
+      <Stack.Screen name="signin" options={{ title: "Sign in", headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+    </Stack>
   );
 }

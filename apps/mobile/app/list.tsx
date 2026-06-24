@@ -10,38 +10,22 @@ import {
 import { useRouter } from "expo-router";
 import { api, isAuthenticated } from "./lib/api";
 
-type PantryItem = {
-  canonicalItemId: string;
+type ListItem = {
+  id: string;
   name: string;
-  status: string;
-  baseQtyOnHand: number | null;
-  confidence: number | null;
-  estimatedRunOutAt: string | null;
-  lastPurchaseAt: string | null;
-  domain: string;
-};
-
-const STATUS_COLOR: Record<string, string> = {
-  in_stock: "#0c8a3e",
-  low: "#d97706",
-  out: "#6b7280",
-  expired_likely: "#dc2626",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  in_stock: "In stock",
-  low: "Running low",
-  out: "Out",
-  expired_likely: "Likely expired",
+  qty: number | null;
+  unit: string | null;
+  checked: boolean;
+  domain: string | null;
 };
 
 function titleCase(s: string) {
   return s.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export default function Pantry() {
+export default function List() {
   const router = useRouter();
-  const [items, setItems] = useState<PantryItem[]>([]);
+  const [items, setItems] = useState<ListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,11 +36,11 @@ export default function Pantry() {
       return;
     }
     try {
-      const data = (await api.getPantry()) as { items?: PantryItem[] };
+      const data = (await api.getList()) as { items?: ListItem[] };
       setItems(data.items ?? []);
       setError(null);
     } catch {
-      setError("Couldn't load pantry. Pull to refresh.");
+      setError("Couldn't load your list. Pull to refresh.");
     }
   }, [router]);
 
@@ -78,42 +62,44 @@ export default function Pantry() {
     );
   }
 
+  const unchecked = items.filter((i) => !i.checked);
+  const checked = items.filter((i) => i.checked);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>PANTRY</Text>
-        <Text style={styles.title}>What&apos;s in stock</Text>
+        <Text style={styles.eyebrow}>SHOPPING LIST</Text>
+        <Text style={styles.title}>What to buy</Text>
+        {unchecked.length > 0 && (
+          <Text style={styles.count}>
+            {unchecked.length} item{unchecked.length !== 1 ? "s" : ""}
+          </Text>
+        )}
       </View>
       {error && <Text style={styles.error}>{error}</Text>}
       {items.length === 0 && !error && (
         <View style={styles.empty}>
           <Text style={styles.emptyText}>
-            Your pantry is empty. Add receipts to get started.
+            Your list is empty. Items running low will appear here.
           </Text>
         </View>
       )}
       <FlatList
-        data={items}
-        keyExtractor={(item) => item.canonicalItemId}
+        data={[...unchecked, ...checked]}
+        keyExtractor={(i) => i.id}
         renderItem={({ item }) => (
-          <View style={styles.row}>
-            <View style={styles.rowLeft}>
-              <Text style={styles.itemName}>{titleCase(item.name)}</Text>
-              {item.estimatedRunOutAt && (
-                <Text style={styles.itemSub}>
-                  Runs out ~{new Date(item.estimatedRunOutAt).toLocaleDateString()}
+          <View style={[styles.row, item.checked && styles.rowChecked]}>
+            <View style={[styles.checkbox, item.checked && styles.checkboxChecked]} />
+            <View style={styles.rowContent}>
+              <Text style={[styles.itemName, item.checked && styles.itemNameChecked]}>
+                {titleCase(item.name)}
+              </Text>
+              {(item.qty != null || item.unit) && (
+                <Text style={styles.itemQty}>
+                  {item.qty != null ? String(item.qty) : ""}
+                  {item.unit ? ` ${item.unit}` : ""}
                 </Text>
               )}
-            </View>
-            <View
-              style={[
-                styles.pill,
-                { backgroundColor: STATUS_COLOR[item.status] ?? "#6b7280" },
-              ]}
-            >
-              <Text style={styles.pillText}>
-                {STATUS_LABEL[item.status] ?? item.status}
-              </Text>
             </View>
           </View>
         )}
@@ -151,21 +137,30 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: { fontSize: 22, fontWeight: "700", color: "#1d2530" },
+  count: { fontSize: 14, color: "#525d6a", marginTop: 2 },
   list: { paddingBottom: 24 },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 14,
     backgroundColor: "#fff",
   },
-  rowLeft: { flex: 1, marginRight: 12 },
+  rowChecked: { opacity: 0.5 },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: "#0c8a3e",
+    marginRight: 14,
+  },
+  checkboxChecked: { backgroundColor: "#0c8a3e", borderColor: "#0c8a3e" },
+  rowContent: { flex: 1 },
   itemName: { fontSize: 16, fontWeight: "500", color: "#1d2530" },
-  itemSub: { fontSize: 12, color: "#525d6a", marginTop: 2 },
-  pill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  pillText: { fontSize: 12, fontWeight: "600", color: "#fff" },
-  divider: { height: 1, backgroundColor: "#ece7dd", marginLeft: 20 },
+  itemNameChecked: { textDecorationLine: "line-through", color: "#6b7280" },
+  itemQty: { fontSize: 13, color: "#525d6a", marginTop: 2 },
+  divider: { height: 1, backgroundColor: "#ece7dd", marginLeft: 56 },
   empty: { padding: 24 },
   emptyText: { fontSize: 15, color: "#525d6a", textAlign: "center" },
   error: { fontSize: 14, color: "#dc2626", margin: 16, textAlign: "center" },

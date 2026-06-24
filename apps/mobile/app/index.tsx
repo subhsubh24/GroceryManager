@@ -1,39 +1,76 @@
-// Home screen (skeleton). The whole point of the monorepo split is here: the UI is native, but the
-// ENGINES come from packages/core — the same framework-agnostic, RN-portable logic the web app uses.
-import { Link } from "expo-router";
-import { View, Text, StyleSheet } from "react-native";
-// Pure, dependency-free helper shared with the web Cook Mode — proves packages/core is reusable as-is.
-import { scaleMeasure } from "@gm/core/recipe";
+import { useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { useRouter } from "expo-router";
+import { isAuthenticated } from "./lib/api";
 
 export default function Home() {
-  // Same cooking math the web uses — no reimplementation needed on native.
-  const doubled = scaleMeasure("200g", 2); // → "400g"
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.replace("/signin");
+    }
+  }, [router]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.logo}>🧺</Text>
-      <Text style={styles.title}>GroceryManager</Text>
-      <Text style={styles.subtitle}>Your grocery + cooking autopilot — now native.</Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Text style={styles.eyebrow}>GroceryManager</Text>
+      <Text style={styles.title}>Good evening</Text>
+      <Text style={styles.subtitle}>Here&apos;s what&apos;s going on in your kitchen.</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.cardLabel}>Shared-core check</Text>
-        <Text style={styles.cardValue}>scaleMeasure(&quot;200g&quot;, 2) = {doubled}</Text>
+      <View style={styles.grid}>
+        <TouchableOpacity style={styles.card} onPress={() => router.push("/pantry")} activeOpacity={0.7}>
+          <View style={styles.iconCircle}>
+            <Text style={styles.iconText}>P</Text>
+          </View>
+          <Text style={styles.cardTitle}>Pantry</Text>
+          <Text style={styles.cardSub}>What&apos;s in stock</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.card} onPress={() => router.push("/list")} activeOpacity={0.7}>
+          <View style={styles.iconCircle}>
+            <Text style={styles.iconText}>S</Text>
+          </View>
+          <Text style={styles.cardTitle}>Shopping list</Text>
+          <Text style={styles.cardSub}>What to buy</Text>
+        </TouchableOpacity>
       </View>
-
-      <Link href="/pantry" style={styles.link}>
-        Open pantry →
-      </Link>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, backgroundColor: "#faf8f3" },
-  logo: { fontSize: 48 },
-  title: { fontSize: 28, fontWeight: "700", color: "#1d2530", marginTop: 8 },
-  subtitle: { fontSize: 15, color: "#525d6a", marginTop: 6, textAlign: "center" },
-  card: { marginTop: 24, padding: 16, borderRadius: 16, backgroundColor: "#ffffff", borderWidth: 1, borderColor: "#ece7dd" },
-  cardLabel: { fontSize: 12, fontWeight: "600", color: "#0c8a3e", textTransform: "uppercase", letterSpacing: 1 },
-  cardValue: { fontSize: 16, color: "#1d2530", marginTop: 4 },
-  link: { marginTop: 24, fontSize: 16, fontWeight: "600", color: "#0a6e33" },
+  container: { flex: 1, backgroundColor: "#faf8f3" },
+  content: { padding: 24, paddingTop: 60 },
+  eyebrow: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    color: "#0c8a3e",
+    textTransform: "uppercase",
+    marginBottom: 6,
+  },
+  title: { fontSize: 28, fontWeight: "700", color: "#1d2530", marginBottom: 4 },
+  subtitle: { fontSize: 15, color: "#525d6a", marginBottom: 24 },
+  grid: { gap: 12 },
+  card: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#ece7dd",
+    marginBottom: 4,
+  },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#0c8a3e",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  iconText: { fontSize: 18, fontWeight: "700", color: "#ffffff" },
+  cardTitle: { fontSize: 17, fontWeight: "600", color: "#1d2530" },
+  cardSub: { fontSize: 13, color: "#525d6a", marginTop: 2 },
 });
