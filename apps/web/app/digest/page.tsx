@@ -137,7 +137,7 @@ export default async function DigestPage() {
                 {data.digest.topReorder.map((r) => (
                   <li key={`re-${r.name}`} className="flex justify-between">
                     <span>{titleCase(r.name)}</span>
-                    <span className="text-ink-400">{fmtDate(r.recommendByDate) ?? ""}</span>
+                    <span className="text-ink-400">{fmtDate(r.recommendByDate) ?? "—"}</span>
                   </li>
                 ))}
               </ul>
