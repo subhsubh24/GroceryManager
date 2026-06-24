@@ -94,8 +94,19 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {!recipe ? (
-        <div className="notice-warn mt-6">
-          {error ? `Couldn't load this recipe. ${error.slice(0, 120)}` : "Recipe not found."}
+        <div className="empty-state mt-6">
+          <div className="empty-emoji">
+            <UtensilsCrossed className="h-6 w-6 text-ink-400" strokeWidth={2} />
+          </div>
+          <p className="mt-2 font-semibold text-ink-700">
+            {error ? "Couldn't load this recipe" : "Recipe not found"}
+          </p>
+          <p className="mt-1 max-w-xs text-sm text-ink-400">
+            {error ? error.slice(0, 120) : "This recipe doesn't exist or has been removed."}
+          </p>
+          <a href="/recipes" className="btn-primary mt-6">
+            Browse recipes
+          </a>
         </div>
       ) : (
         <>
