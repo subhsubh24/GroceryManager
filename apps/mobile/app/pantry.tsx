@@ -23,9 +23,9 @@ type PantryItem = {
 
 const STATUS_COLOR: Record<string, string> = {
   in_stock: "#0c8a3e",
-  low: "#d97706",
-  out: "#6b7280",
-  expired_likely: "#dc2626",
+  low: "#b6791a",    // warn token
+  out: "#52596a",    // ink-500 token
+  expired_likely: "#c0392b", // danger token
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -35,8 +35,17 @@ const STATUS_LABEL: Record<string, string> = {
   expired_likely: "Likely expired",
 };
 
-function titleCase(s: string) {
-  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+const SMALL = new Set(["and", "or", "of", "the", "a", "an", "with", "in", "on", "to", "for"]);
+function titleCase(s: string): string {
+  return s
+    .trim()
+    .split(/\s+/)
+    .map((w, i) => {
+      if (!w) return w;
+      if (i > 0 && SMALL.has(w.toLowerCase())) return w.toLowerCase();
+      return w[0]!.toUpperCase() + w.slice(1).toLowerCase();
+    })
+    .join(" ");
 }
 
 export default function Pantry() {
@@ -55,7 +64,11 @@ export default function Pantry() {
       const data = (await api.getPantry()) as { items?: PantryItem[] };
       setItems(data.items ?? []);
       setError(null);
-    } catch {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === "AUTH_401") {
+        router.replace("/signin");
+        return;
+      }
       setError("Couldn't load pantry. Pull to refresh.");
     }
   }, [router]);
@@ -108,7 +121,7 @@ export default function Pantry() {
             <View
               style={[
                 styles.pill,
-                { backgroundColor: STATUS_COLOR[item.status] ?? "#6b7280" },
+                { backgroundColor: STATUS_COLOR[item.status] ?? "#52596a" },
               ]}
             >
               <Text style={styles.pillText}>
@@ -168,5 +181,5 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: "#ece7dd", marginLeft: 20 },
   empty: { padding: 24 },
   emptyText: { fontSize: 15, color: "#525d6a", textAlign: "center" },
-  error: { fontSize: 14, color: "#dc2626", margin: 16, textAlign: "center" },
+  error: { fontSize: 14, color: "#c0392b", margin: 16, textAlign: "center" },
 });

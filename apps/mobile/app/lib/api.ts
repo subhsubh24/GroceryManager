@@ -20,12 +20,19 @@ export function isAuthenticated() {
 }
 
 async function apiFetch(path: string, opts: RequestInit = {}) {
+  if (!_baseUrl) throw new Error("API_NOT_CONFIGURED");
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     ...(opts.headers as Record<string, string>),
   };
+  if (opts.method && opts.method !== "GET") {
+    headers["Content-Type"] = "application/json";
+  }
   if (_token) headers["Authorization"] = `Bearer ${_token}`;
   const res = await fetch(`${_baseUrl}${path}`, { ...opts, headers });
+  if (res.status === 401) {
+    clearToken();
+    throw new Error("AUTH_401");
+  }
   if (!res.ok) throw new Error(`API ${res.status}: ${path}`);
   return res.json();
 }
@@ -36,12 +43,14 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ username, password }),
     });
-    return data.token as string;
+    const token: unknown = data?.token;
+    if (typeof token !== "string" || !token) throw new Error("Invalid auth response");
+    return token;
   },
   async getPantry() {
-    return apiFetch("/api/v1/pantry");
+    return apiFetch("/api/v1/pantry", { method: "GET" });
   },
   async getList() {
-    return apiFetch("/api/v1/list");
+    return apiFetch("/api/v1/list", { method: "GET" });
   },
 };

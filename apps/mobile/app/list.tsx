@@ -19,8 +19,17 @@ type ListItem = {
   domain: string | null;
 };
 
-function titleCase(s: string) {
-  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+const SMALL = new Set(["and", "or", "of", "the", "a", "an", "with", "in", "on", "to", "for"]);
+function titleCase(s: string): string {
+  return s
+    .trim()
+    .split(/\s+/)
+    .map((w, i) => {
+      if (!w) return w;
+      if (i > 0 && SMALL.has(w.toLowerCase())) return w.toLowerCase();
+      return w[0]!.toUpperCase() + w.slice(1).toLowerCase();
+    })
+    .join(" ");
 }
 
 export default function List() {
@@ -39,7 +48,11 @@ export default function List() {
       const data = (await api.getList()) as { items?: ListItem[] };
       setItems(data.items ?? []);
       setError(null);
-    } catch {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === "AUTH_401") {
+        router.replace("/signin");
+        return;
+      }
       setError("Couldn't load your list. Pull to refresh.");
     }
   }, [router]);
@@ -158,7 +171,7 @@ const styles = StyleSheet.create({
   checkboxChecked: { backgroundColor: "#0c8a3e", borderColor: "#0c8a3e" },
   rowContent: { flex: 1 },
   itemName: { fontSize: 16, fontWeight: "500", color: "#1d2530" },
-  itemNameChecked: { textDecorationLine: "line-through", color: "#6b7280" },
+  itemNameChecked: { textDecorationLine: "line-through", color: "#52596a" },
   itemQty: { fontSize: 13, color: "#525d6a", marginTop: 2 },
   divider: { height: 1, backgroundColor: "#ece7dd", marginLeft: 56 },
   empty: { padding: 24 },

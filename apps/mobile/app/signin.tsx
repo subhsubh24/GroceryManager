@@ -54,7 +54,7 @@ export default function SignIn() {
           autoCorrect={false}
           returnKeyType="next"
           placeholder="your username"
-          placeholderTextColor="#6b7280"
+          placeholderTextColor="#52596a"
         />
 
         <Text style={styles.label}>Password</Text>
@@ -66,7 +66,7 @@ export default function SignIn() {
           returnKeyType="go"
           onSubmitEditing={handleSignIn}
           placeholder="••••••••"
-          placeholderTextColor="#6b7280"
+          placeholderTextColor="#52596a"
         />
 
         <TouchableOpacity
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   sub: { fontSize: 15, color: "#525d6a", textAlign: "center", marginBottom: 32 },
-  label: { fontSize: 13, fontWeight: "600", color: "#2d3748", marginBottom: 6 },
+  label: { fontSize: 13, fontWeight: "600", color: "#2b333d", marginBottom: 6 },
   input: {
     height: 48,
     borderWidth: 1,
@@ -120,8 +120,8 @@ const styles = StyleSheet.create({
   btnDisabled: { opacity: 0.6 },
   btnText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   error: {
-    backgroundColor: "#fef2f2",
-    color: "#b91c1c",
+    backgroundColor: "#fdeceb",
+    color: "#8e261b",
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
