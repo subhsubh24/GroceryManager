@@ -5,6 +5,30 @@ The autonomous loop appends here when a code change requires a manual step at de
 
 ---
 
+## 2026-06-24 — Waitlist DB migration + admin email (Track E, PR #106)
+
+Migration 0012 creates the `waitlist_submissions` table. The waitlist form on the landing page
+now writes to this table (and `/admin/waitlist` reads from it). To activate:
+
+1. **Apply migration 0012** (`waitlist_submissions` table + unique email index):
+   ```bash
+   pnpm --filter @gm/db db:migrate
+   ```
+   Idempotent; safe to run multiple times. Requires `DIRECT_DATABASE_URL` (Supabase direct connection).
+
+2. **Set `ADMIN_EMAIL`** in Vercel env (the email address you use to sign in to GroceryManager):
+   ```
+   ADMIN_EMAIL=you@example.com
+   ```
+   Without this, `/admin/waitlist` redirects to `/signin` for all users (logged in the server error log).
+   With it set, only the matching account can access the admin area.
+
+3. **Verify:** Submit the waitlist form on the landing page → check `/admin/waitlist` shows count = 1.
+
+**Status:** Code merged (PR #106). Human Core required for steps 1–2 above.
+
+---
+
 ## 2026-06-24 — Push notification migration + EAS project ID (Track B, PRs #97 + #98)
 
 The push notification infrastructure is fully wired in code. To activate:
@@ -68,18 +92,21 @@ that simply brings other environments in sync. No further action required for pr
 ## Waitlist email capture — wire to email service before store launch
 
 The landing page waitlist form (`apps/web/app/components/waitlist-form.tsx`) calls the server action
-`submitWaitlistEmail` in `apps/web/app/components/waitlist-action.ts`, which currently only logs to
-stdout (`console.log`). Before the App Store launch, wire this to a real email service:
+`submitWaitlistEmail` in `apps/web/app/components/waitlist-action.ts`. As of PR #106 this action
+persists the email to the `waitlist_submissions` DB table (apply migration 0012 above first).
+
+To also trigger a drip email sequence, wire the action to a real email service:
 
 1. **Sign up for ConvertKit / Mailchimp / Loops / similar** (owner picks service).
 2. **Add the API key to env** (e.g. `CONVERTKIT_API_KEY` or `LOOPS_API_KEY`) — never committed.
-3. **Replace the `console.log` in `waitlist-action.ts`** with the SDK call:
+3. **Add an email-service SDK call** in `waitlist-action.ts` after the `insertWaitlistEmail` line:
    ```ts
    await emailService.subscribe({ email, listId: process.env.EMAIL_LIST_ID });
    ```
-4. **Test with a real submission** to confirm delivery before launch.
+4. **Wire the 15-email lifecycle** from `docs/brand/EMAIL_LIFECYCLE.md` into your chosen provider.
+5. **Test** with a real submission to confirm delivery + DB persistence before launch.
 
-**Status:** Code merged (PR #47). Human Core required for email service account + key.
+**Status:** DB persistence wired (PR #106). Human Core required for email service account + key.
 
 ---
 
