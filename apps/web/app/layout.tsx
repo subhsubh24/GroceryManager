@@ -29,6 +29,10 @@ export const metadata: Metadata = {
   applicationName: "GroceryManager",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "GroceryManager", statusBarStyle: "default" },
+  icons: {
+    icon: "/icons/icon.svg",
+    apple: "/icons/icon.svg",
+  },
 };
 
 export const viewport: Viewport = {
