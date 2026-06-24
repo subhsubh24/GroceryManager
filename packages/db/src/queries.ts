@@ -1467,6 +1467,16 @@ export async function clearPantry(db: Querier, userId: string) {
 }
 
 /**
+ * Full account erasure — GDPR / Apple 5.1.1(v). Deletes the users row; all child tables
+ * (purchases, pantry_stock, preference_signals, meal_logs, etc.) cascade automatically via
+ * ON DELETE CASCADE foreign keys defined in schema.ts. Requires the admin/super connection
+ * that bypasses RLS (same as updateUserName / updateUserPhone).
+ */
+export async function deleteUserAndAllData(db: Querier, userId: string): Promise<void> {
+  await db.delete(users).where(eq(users.id, userId));
+}
+
+/**
  * Inputs for the reorder/draft-order engine: pantry stock + (optional) reorder policy per item,
  * normalized to plain numbers so `buildDraftOrders` can consume it directly.
  * (asin/packageQty/unit are null until the products/Amazon vertical is wired.)

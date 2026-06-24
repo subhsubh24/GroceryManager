@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { loadEnv } from "@gm/config/env";
 import {
   appendPreferenceSignal,
+  deleteUserAndAllData,
   getAdminDb,
   getDb,
   getUserPhone,
@@ -16,6 +17,7 @@ import {
   signalFromProfileGender,
   signalFromProfileName,
 } from "@gm/core/personalization";
+import { signOut } from "@/auth";
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
 import { PushToggle } from "@/app/digest/push-toggle";
@@ -66,6 +68,20 @@ async function saveProfile(formData: FormData) {
   redirect("/profile?saved=1");
 }
 
+async function deleteAccount(formData: FormData) {
+  "use server";
+  const userId = await currentUserId();
+  if (!userId) redirect("/signin");
+  // Double-check the confirmation word before doing anything irreversible.
+  const confirm = String(formData.get("confirm") ?? "").trim().toLowerCase();
+  if (confirm !== "delete") redirect("/profile?deleteError=1");
+  // Erase all user data; ON DELETE CASCADE propagates to every child table.
+  await deleteUserAndAllData(getAdminDb(), userId);
+  // Invalidate the session so the browser doesn't retain stale cookies.
+  await signOut({ redirect: false });
+  redirect("/");
+}
+
 async function load() {
   try {
     const userId = await currentUserId();
@@ -81,9 +97,9 @@ async function load() {
 export default async function ProfilePage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string }>;
+  searchParams: Promise<{ saved?: string; deleteError?: string }>;
 }) {
-  const { saved } = await searchParams;
+  const { saved, deleteError } = await searchParams;
   const data = await load();
   const model = data.ready ? data.model : null;
   const phone = data.ready ? data.phone : null;
@@ -105,6 +121,7 @@ export default async function ProfilePage({
       />
 
       {saved && <p className="notice-ok mt-6">Saved.</p>}
+      {deleteError && <p className="notice-danger mt-6">Type the word "delete" to confirm.</p>}
 
       <form action={saveProfile} className="card-pad mt-6 space-y-4">
         <label className="block">
@@ -167,10 +184,40 @@ export default async function ProfilePage({
       </div>
 
       {!data.ready && (
-        <p className="notice-warn mt-4">
-          Couldn&apos;t reach the database. {data.error?.slice(0, 120)}
-        </p>
+        <p className="notice-warn mt-4">Couldn&apos;t load your profile. Please try again.</p>
       )}
+
+      {/* Danger zone — account deletion (Apple 5.1.1(v) / GDPR) */}
+      <section className="mt-10 rounded-2xl border border-danger bg-danger-soft p-5">
+        <h2 className="text-sm font-semibold text-danger-ink">Danger zone</h2>
+        <p className="mt-1 text-xs text-danger-ink/80">
+          Permanently deletes your account and all data — pantry, receipts, recipes, cook history.
+          This cannot be undone.
+        </p>
+        <form action={deleteAccount} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+          <label className="flex-1">
+            <span className="field-label text-danger-ink">
+              Type <em>delete</em> to confirm
+            </span>
+            <input
+              name="confirm"
+              type="text"
+              autoComplete="off"
+              placeholder="delete"
+              className="input mt-1 border-danger focus:ring-danger"
+            />
+          </label>
+          <button type="submit" className="btn-danger">
+            Delete account
+          </button>
+        </form>
+      </section>
+
+      <p className="mt-6 text-xs text-ink-400">
+        <a href="/privacy" className="underline hover:text-ink-700">Privacy policy</a>
+        {" · "}
+        <a href="/terms" className="underline hover:text-ink-700">Terms of use</a>
+      </p>
     </main>
   );
 }
