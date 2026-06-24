@@ -22,13 +22,13 @@ export const maxDuration = 60;
  */
 export async function GET(req: Request) {
   const env = loadEnv();
-  if (env.CRON_SECRET) {
+  const isAuthorized = (() => {
+    if (!env.CRON_SECRET) return process.env.NODE_ENV !== "production";
     const key = new URL(req.url).searchParams.get("key");
     const auth = req.headers.get("authorization");
-    if (key !== env.CRON_SECRET && auth !== `Bearer ${env.CRON_SECRET}`) {
-      return new NextResponse("forbidden", { status: 403 });
-    }
-  }
+    return key === env.CRON_SECRET || auth === `Bearer ${env.CRON_SECRET}`;
+  })();
+  if (!isAuthorized) return new NextResponse("forbidden", { status: 403 });
 
   // Everyone reachable on either channel: a web-push subscription and/or a phone on file.
   const [pushIds, phoneIds] = await Promise.all([
