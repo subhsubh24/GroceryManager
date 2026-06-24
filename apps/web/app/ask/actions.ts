@@ -11,6 +11,7 @@ import {
   loadWrappedInputs,
   withTenant,
 } from "@gm/db";
+import { loadEnv } from "@gm/config/env";
 import { getGeminiClient } from "@gm/core/llm";
 import { answerKitchenChat, buildKitchenBrief, type ChatMessage } from "@gm/core/chat";
 import { currentUserId } from "@/app/lib/tenant";
@@ -44,7 +45,8 @@ export async function askAction(messages: ChatMessage[]): Promise<{ reply: strin
       return { reply: "Ask me anything about your spending, pantry, or cooking habits." };
     }
 
-    const client = process.env.GEMINI_API_KEY ? getGeminiClient() : undefined;
+    const env = loadEnv();
+    const client = (env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT) ? getGeminiClient() : undefined;
 
     // Build the bounded brief in one RLS round-trip. The agent fetches its own data through scoped
     // tools, but the brief is still the deterministic fallback for BOTH the keyless path AND any
