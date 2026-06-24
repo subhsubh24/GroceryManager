@@ -114,12 +114,18 @@ Subscription is the **only** revenue stream in v1 (no affiliate ordering — see
 - [x] Waitlist / landing page (the public marketing surface) with email capture (staged, not sent) —
       drives pre-launch demand so there's an audience to convert on store launch. _(PR #47: pricing
       grid + WaitlistForm; emails logged server-side; wire to email service via PENDING_OPS.md)_
-- [ ] Brand kit (logo, palette, type, voice) consistent with the app + the chosen name.
+- [x] Brand kit (logo, palette, type, voice) consistent with the app + the chosen name.
+      _(PR #50: docs/brand/BRAND_KIT.md — identity mark, full color token table, Hanken Grotesk
+      type system, lucide-react icon rules, design system class catalogue, voice/tone guide)_
 - [x] ASO / store copy (title, subtitle, keywords, description) drafted.
       _(PR #39: docs/store/app-store-metadata.md + docs/store/google-play-metadata.md — full ASO
       copy for both stores, 30-char subtitle compliant, 99-char keyword string, reviewer-verified)_
-- [ ] Owned-channel content **drafts** (launch posts, email sequence) — staged, not published.
-- [ ] Analytics wired (privacy-respecting) so the owner can measure activation/retention.
+- [x] Owned-channel content **drafts** (launch posts, email sequence) — staged, not published.
+      _(PR #50: docs/brand/CONTENT_DRAFTS.md — 4-email drip sequence, social posts for Twitter/X +
+      Instagram + LinkedIn, App Store/Play Store promo copy, hashtag bank; all staged)_
+- [x] Analytics wired (privacy-respecting) so the owner can measure activation/retention.
+      _(PR #50: Plausible script in layout.tsx gated on NEXT_PUBLIC_PLAUSIBLE_DOMAIN — zero impact
+      until owner wires it; setup steps in PENDING_OPS.md)_
 
 ---
 
