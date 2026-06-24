@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Redirect } from "expo-router";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
 import { useAuth } from "../lib/auth";
 import { apiFetch } from "../lib/api";
 
@@ -29,7 +29,7 @@ export default function HomeScreen() {
   if (onboarded === false) return <Redirect href="/onboarding" />;
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       <View style={styles.logoMark}>
         <Text style={styles.logoGlyph}>GM</Text>
       </View>
@@ -55,6 +55,10 @@ export default function HomeScreen() {
           <Text style={styles.cardLabel}>Cook tonight →</Text>
           <Text style={styles.cardNote}>Recipes from what you have</Text>
         </Link>
+        <Link href="/plan" style={styles.card}>
+          <Text style={styles.cardLabel}>Plan my week →</Text>
+          <Text style={styles.cardNote}>AI-powered weekly dinner plan</Text>
+        </Link>
         <Link href="/use-it-up" style={styles.card}>
           <Text style={styles.cardLabel}>Use it up →</Text>
           <Text style={styles.cardNote}>Recipes for items expiring soon</Text>
@@ -62,6 +66,10 @@ export default function HomeScreen() {
         <Link href="/discover" style={styles.card}>
           <Text style={styles.cardLabel}>Discover →</Text>
           <Text style={styles.cardNote}>For-you feed — like or skip to tune your taste</Text>
+        </Link>
+        <Link href="/spend" style={styles.card}>
+          <Text style={styles.cardLabel}>Spending →</Text>
+          <Text style={styles.cardNote}>Grocery spend from your receipts</Text>
         </Link>
         <Link href="/cooked" style={styles.card}>
           <Text style={styles.cardLabel}>Meals &amp; macros →</Text>
@@ -84,17 +92,16 @@ export default function HomeScreen() {
       <Pressable style={styles.signOut} onPress={logout}>
         <Text style={styles.signOutText}>Sign out</Text>
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: { flex: 1, backgroundColor: "#faf8f3" },
   container: {
-    flex: 1,
     alignItems: "center",
-    justifyContent: "center",
     padding: 24,
-    backgroundColor: "#faf8f3",
+    paddingBottom: 40,
   },
   logoMark: {
     width: 64,
@@ -103,6 +110,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#0c8a3e",
     alignItems: "center",
     justifyContent: "center",
+    marginTop: 24,
   },
   logoGlyph: { color: "#ffffff", fontSize: 24, fontWeight: "800" },
   title: { fontSize: 28, fontWeight: "700", color: "#1d2530", marginTop: 12 },
