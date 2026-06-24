@@ -176,6 +176,21 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   createdAt: createdAt(),
 });
 
+/** Expo mobile push tokens — one row per (user, device). Created in sql/0011_push_tokens.sql. */
+export const pushTokens = pgTable(
+  "push_tokens",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    token: text("token").notNull(),
+    deviceId: text("device_id"),
+    createdAt: createdAt(),
+  },
+  (t) => ({ uq: uniqueIndex("push_tokens_user_token_uq").on(t.userId, t.token) }),
+);
+
 // ---------------------------------------------------------------------------
 // Shared household — opt-in shared shopping list (FEATURE_HOUSEHOLDS, default OFF).
 // Members (users whose `users.householdId` points here) share ONE active shopping list. Entirely

@@ -17,6 +17,7 @@ import {
   purchaseLineItems,
   purchases,
   pushSubscriptions,
+  pushTokens,
   recipeIngredients,
   recipes,
   reorderPolicies,
@@ -1591,4 +1592,32 @@ export async function setReorderAutopilot(
       target: [reorderPolicies.userId, reorderPolicies.canonicalItemId],
       set: { enabled, isStaple: enabled, updatedAt: new Date() },
     });
+}
+
+// ---------------------------------------------------------------------------
+// Mobile push tokens (sql/0011_push_tokens.sql)
+// ---------------------------------------------------------------------------
+
+/** Upsert an Expo push token for a user+device pair. */
+export async function registerMobilePushToken(
+  db: Querier,
+  a: { userId: string; token: string; deviceId?: string | null },
+) {
+  await db
+    .insert(pushTokens)
+    .values({ userId: a.userId, token: a.token, deviceId: a.deviceId ?? null })
+    .onConflictDoUpdate({
+      target: [pushTokens.userId, pushTokens.token],
+      set: { deviceId: a.deviceId ?? null },
+    });
+}
+
+/** Remove a specific Expo push token (call on sign-out or token rotation). */
+export async function deregisterMobilePushToken(
+  db: Querier,
+  a: { userId: string; token: string },
+) {
+  await db
+    .delete(pushTokens)
+    .where(and(eq(pushTokens.userId, a.userId), eq(pushTokens.token, a.token)));
 }
