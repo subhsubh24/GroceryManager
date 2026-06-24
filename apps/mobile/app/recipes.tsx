@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   },
   thumb: { width: 72, height: 72 },
   thumbPlaceholder: {
-    backgroundColor: "#f0ede7",
+    backgroundColor: "#ece7dd",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -151,13 +151,7 @@ const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40 },
   emptyTitle: { fontSize: 18, fontWeight: "700", color: "#1d2530" },
   emptyNote: { fontSize: 14, color: "#525d6a", marginTop: 6, textAlign: "center" },
-  errorText: { fontSize: 15, color: "#991b1b", textAlign: "center" },
-  retryButton: {
-    marginTop: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 24,
-    backgroundColor: "#0c8a3e",
-    borderRadius: 10,
-  },
+  errorText: { fontSize: 15, color: "#c0392b", textAlign: "center" },
+  retryButton: { marginTop: 16, paddingVertical: 10, paddingHorizontal: 24, backgroundColor: "#0c8a3e", borderRadius: 10 },
   retryText: { color: "#ffffff", fontWeight: "600" },
 });
