@@ -57,6 +57,9 @@ async function main() {
     console.log("→ Expo mobile push token table…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0011_push_tokens.sql"), "utf8"));
 
+    console.log("→ waitlist submissions table…");
+    await sql.unsafe(readFileSync(join(pkgRoot, "sql/0012_waitlist.sql"), "utf8"));
+
     console.log("✓ migrations complete");
   } finally {
     await sql.end();
