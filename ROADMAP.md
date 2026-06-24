@@ -229,22 +229,31 @@ issue while ANY box is unchecked, and do not add scope after Done.
       Review Guidelines + Google Play policies (fetch them via web research), record findings in
       `docs/store/ACCEPTANCE_AUDIT.md`, and resolve every issue you can control. High confidence both
       stores would accept.
-- [ ] **Revenue viability estimate** (`docs/REVENUE_MODEL.md`) — a HONEST, research-grounded
-      bottom-up model of whether ≥ $100K/yr is achievable. Pull real benchmarks via web research
-      (category install→trial→paid conversion rates, subscription churn, ARPU/price points for
-      comparable grocery/meal-planning apps) and show the funnel math: at our price, **how many paying
-      subscribers** = $100K/yr, and **what install + conversion volume** that implies — with
-      conservative / base / optimistic scenarios and the key assumptions + sources. State plainly
-      whether the target looks reachable, what it would take (e.g. installs/month, conversion %), and
-      the biggest risks. NEVER fake the numbers; if the honest model says the target is hard at the
-      current price/feature set, SAY SO and propose concrete, buildable levers (pricing, a stronger
-      premium tier, ASO, retention) — then build the ones in your control. This is monetization
-      realism, not a sales pitch.
+- [ ] **Business case** (`docs/BUSINESS_CASE.md`) — a LIVING, HONEST, research-grounded model of
+      whether ≥ $100K/yr is achievable. Keep it current as the product + analytics evolve. It MUST have:
+      - **Bottom-up model:** `paying_users × price × 12 − churn/refunds/fees`, with the FULL funnel
+        spelled out (traffic → signup% → free→paid%), not vibes.
+      - **Research-grounded inputs (cited, never invented):** pull category pricing, typical freemium
+        free→paid conversion (realistically a low single-digit %), retention/churn norms, and realistic
+        traffic assumptions via web research — every input has a source.
+      - **Unit economics:** per-user LLM/inference + infra cost → resulting **gross margin**. This is
+        why the cheap-first cost discipline matters — an unprofitable-per-user plan must be flagged and
+        fixed (cheaper cascade, caps, or price), not shipped.
+      - **Three scenarios:** conservative / base / optimistic, with the inputs behind each and which one
+        is the realistic base.
+      - **Honesty + levers:** if the base case does NOT reach $100K/yr, say so PLAINLY and name the
+        specific levers (higher tier, better paywall conversion, a growth channel, usage/add-on
+        revenue) — then go BUILD the ones in your control.
+      - **Living, not a launch-day guess:** the marketing analytics (Track E) feed real funnel numbers
+        back in over time, so the estimate tightens as actual conversion data arrives.
+      Done requires the business case to show a **credible ≥ $100K/yr path**, folded into the final
+      confidence statement. NEVER fake the numbers — this is monetization realism, not a sales pitch.
 - [ ] **Self-run pre-submission checklist passes** — no broken flows, no leaked secrets, full gate +
       evals green, no debug surfaces, every owner-required step captured in PENDING_OPS / handoff.
 - [ ] **Confidence statement** — you can honestly write, in the handoff doc: *the product is complete
-      and store-acceptable with high confidence, and everything buildable to maximize the ≥ $100K/yr
-      odds is done.* If you cannot write that truthfully, you are NOT done — keep building.
+      and store-acceptable with high confidence; the business case shows a credible ≥ $100K/yr path at
+      a healthy per-user margin; and everything buildable to maximize those odds is done.* If you
+      cannot write that truthfully, you are NOT done — keep building (or building the revenue levers).
 - [ ] **LAUNCH HANDOFF doc exists + current** (`docs/LAUNCH.md`, see below).
 
 ## LAUNCH HANDOFF — `docs/LAUNCH.md` (the deliverable at 100%)
@@ -256,8 +265,8 @@ required for Done. It MUST contain, in this order:
    and the full marketing engine — with where each lives in the repo.
 3. **Store-acceptance summary** — the result of the `ACCEPTANCE_AUDIT.md` self-audit (what was checked
    against Apple/Google guidelines, and that it passes).
-4. **Revenue outlook** — the headline of `REVENUE_MODEL.md`: the honest $100K/yr verdict + what it
-   takes (installs/month, conversion %, paying subscribers) + the key assumptions and risks.
+4. **Revenue outlook** — the headline of `BUSINESS_CASE.md`: the honest $100K/yr verdict + what it
+   takes (installs/month, conversion %, paying subscribers), the per-user gross margin, and the risks.
 5. **REMAINING STEPS FOR YOU (the owner) — IN ORDER.** A numbered, sequential checklist of ONLY the
    things the factory physically/legally cannot do (Human Core): each step = what to do, where (exact
    portal/URL), what value/secret to set and where it goes, and how to verify it worked. Ordered so the
