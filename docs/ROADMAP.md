@@ -134,13 +134,31 @@ supplements.
   **DoD:** all buildable items ✓. Remaining Human Core: rendered store screenshots (iPhone 15 Pro,
   5 required — see `docs/store/store-assets-spec.md`) + Google Play feature graphic.
 
+- **Track F — World-class quality (DONE, 2026-06-25):** Five sub-tracks closing the quality gap:
+  - **F1 — ESLint:** Flat config (ESLint 9, `@typescript-eslint`, `react-hooks`, `@next/next`) wired to
+    `apps/web/app/`, `--max-warnings=0` enforcement. Renamed `sig` → `_sig` (only existing lint hit).
+    PR #122.
+  - **F2 — Coverage floor:** `@vitest/coverage-v8` + thresholds (lines ≥70%, branches ≥84%, functions
+    ≥76%, statements ≥70%) derived from measured baseline. `test` script now runs `--coverage` so CI
+    enforces the floor automatically. PR #123.
+  - **F3 — Eval runner:** `scripts/run-evals.sh` — gated LLM eval suite with `GEMINI_API_KEY`
+    validation, `EVAL_STAGE` allowlist (prevents path injection), dated header. PR #124.
+  - **F4 — Playwright E2E smoke tests:** `apps/web/playwright.config.ts` + `apps/web/e2e/smoke.spec.ts`
+    covering all 7 public routes, 3 landing A/B variants, and share-route graceful-404. Uses
+    pre-installed Chromium (`/opt/pw-browsers/chromium`). `BASE_URL` env override for staging/prod.
+    PR #125.
+  - **F5 — Deep audit (2026-06-25 run):** DEEP AUDIT surfaced 3 critical bugs all merged to `main`:
+    (1) Stripe webhook fail-open → fail-closed in all envs (PR #119); (2) Google sign-in uid-less
+    session token → `return null` to deny session (PR #120); (3) non-null assertions on DB returns
+    in `logCook` → explicit guards (PR #121).
+
 ## Next up
-**The product factory is complete.** All five tracks (A: quality pass, B: native mobile, C: billing
-scaffold, D: store readiness, E: marketing engine) have reached their Definition of Done for
-everything buildable in a headless/keyless environment. The product is ready for human handoff.
-See `docs/LAUNCH.md` for the ordered checklist of owner-required steps (migrations, accounts, signing,
-screenshots, live keys, store submission). The hourly Actions loop has nothing left to build and can
-be retired or repurposed for future feature work.
+**The product factory is complete.** All six tracks (A: quality pass, B: native mobile, C: billing
+scaffold, D: store readiness, E: marketing engine, F: world-class quality) have reached their
+Definition of Done for everything buildable in a headless/keyless environment. The product is ready
+for human handoff. See `docs/LAUNCH.md` for the ordered checklist of owner-required steps
+(migrations, accounts, signing, screenshots, live keys, store submission). The hourly Actions loop
+has nothing left to build and can be retired or repurposed for future feature work.
 
 ## Deferred (not buildable in this keyless/headless runner — need keys, scale, or a human eye)
 - **Instacart production API** (one-tap prefilled cart + Impact affiliate) — needs Instacart key.
