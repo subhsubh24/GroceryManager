@@ -5,6 +5,37 @@ The autonomous loop appends here when a code change requires a manual step at de
 
 ---
 
+## 2026-06-25 — Wire lint + E2E as CI checks (Track F, PRs #122 + #125)
+
+Two new quality gates are ready but not yet in the CI workflow:
+
+1. **Add lint step to CI** (`pnpm --filter web lint`). Currently `apps/web/eslint.config.mjs`
+   enforces zero warnings locally, but CI only runs `typecheck + test + build`. A lint failure
+   won't block a PR. To activate: add `pnpm --filter web lint` to the `verify` job in
+   `.github/workflows/ci.yml` (after typecheck, before build).
+   > NOTE: `.github/workflows/` files cannot be edited by the autonomous loop (requires a human
+   > with `workflow` scope). See CHECKLIST.md §0 for auth setup.
+
+2. **Wire E2E tests as a non-blocking CI job**. `apps/web/e2e/smoke.spec.ts` + `playwright.config.ts`
+   are merged. Running them requires a live Next.js server + `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`.
+   Suggested CI job:
+   ```yaml
+   e2e:
+     needs: verify
+     runs-on: ubuntu-latest
+     continue-on-error: true  # non-blocking until stabilized
+     steps:
+       - uses: actions/checkout@v4
+       - run: pnpm install
+       - run: PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers BASE_URL=http://localhost:3000 pnpm --filter @gm/web e2e &
+       - run: NODE_ENV=production DATABASE_URL=... pnpm --filter web start &
+   ```
+   Requires: `DATABASE_URL` secret in GitHub Actions + server-start synchronization (use `wait-on`).
+
+**Status:** Code merged. Human Core required — editing `.github/workflows/ci.yml` needs `workflow` scope.
+
+---
+
 ## 2026-06-24 — Waitlist DB migration + admin email (Track E, PR #106)
 
 Migration 0012 creates the `waitlist_submissions` table. The waitlist form on the landing page

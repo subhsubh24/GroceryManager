@@ -4,6 +4,33 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-25 (run 12) — Track F world-class quality (F1–F5 complete)
+
+**DEEP AUDIT (3 critical bugs merged):**
+
+- **PR #119 — Stripe webhook fail-closed:** Webhook was fail-open when `STRIPE_WEBHOOK_SECRET` absent
+  — any client could forge entitlement writes. Fixed: fail 400 in ALL environments when secret absent;
+  `stripeVerificationWired: boolean = false` pattern preserves TypeScript narrowing downstream.
+- **PR #120 — Google auth uid-less session:** Cold sign-in failure produced a uid-less session token
+  that passed as a valid session. Fixed: `return null` from `jwt()` denies session in next-auth v5.
+- **PR #121 — Meal log non-null assertions:** `logCook` used `!` on Drizzle `.returning()` results —
+  a failed insert (constraint violation, connection error) would `undefined.id` → corrupt pantry ledger.
+  Fixed: explicit guards throw before data-corruption path.
+
+**Track F (quality) — all 5 sub-tracks merged:**
+
+- **F1 (PR #122):** ESLint flat config (v9) for `apps/web/app/`, `--max-warnings=0` enforcement.
+- **F2 (PR #123):** Coverage thresholds (lines ≥70%, branches ≥84%, functions ≥76%) in
+  `packages/core/vitest.config.ts`; `test` script runs `--coverage` so CI enforces the floor.
+- **F3 (PR #124):** `scripts/run-evals.sh` — gated LLM eval runner with path-injection prevention.
+- **F4 (PR #125):** Playwright E2E smoke suite — `playwright.config.ts` + `e2e/smoke.spec.ts`
+  covering all 7 public routes, 3 A/B landing variants, share graceful-404.
+- **F5 (this run):** DEEP AUDIT findings recorded; LOOP_MEMORY updated with 3 new lessons.
+
+**Gate:** typecheck ✓ · 450 core tests ✓ (incl. coverage thresholds) · `next build` ✓
+
+---
+
 ## 2026-06-25 (run 11) — Preflight gate + rendered store assets
 
 **PR #112 — preflight gate + icon PNGs + feature graphic (merged):**
