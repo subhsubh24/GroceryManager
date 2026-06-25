@@ -35,8 +35,7 @@
   "scripts": {
     "lint": "echo \"(lint) @gm/core\"",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "coverage": "vitest run --coverage",
+    "test": "vitest run --coverage",
     "eval": "RUN_EVALS=1 vitest run src/llm/evals"
   },
   "dependencies": {
