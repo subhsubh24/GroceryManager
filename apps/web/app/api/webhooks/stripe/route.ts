@@ -23,7 +23,7 @@ export const runtime = "nodejs"; // needs raw body for signature verification
 
 export async function POST(req: Request) {
   const env = loadEnv();
-  const sig = req.headers.get("stripe-signature");
+  const _sig = req.headers.get("stripe-signature");
   const rawBody = await req.text();
 
   // ---------------------------------------------------------------------------
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   //   const stripe = new Stripe(env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
   //   let event: Stripe.Event;
   //   try {
-  //     event = stripe.webhooks.constructEvent(rawBody, sig!, env.STRIPE_WEBHOOK_SECRET!);
+  //     event = stripe.webhooks.constructEvent(rawBody, _sig!, env.STRIPE_WEBHOOK_SECRET!);
   //   } catch (err) {
   //     return new Response(`Webhook signature verification failed: ${String(err)}`, { status: 400 });
   //   }
@@ -49,7 +49,6 @@ export async function POST(req: Request) {
   }
   // Secret is set but SDK not yet installed — see the commented constructEvent block above.
   // Set this to true after installing `stripe` and uncommenting constructEvent.
-  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   const stripeVerificationWired: boolean = false;
   if (!stripeVerificationWired) {
     return new Response("Webhook signature verification not yet wired — add Stripe SDK first.", { status: 400 });
