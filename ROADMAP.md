@@ -46,6 +46,24 @@ everything else yourself.
   lives in `apps/mobile` (excluded from the pnpm workspace). Gate = `pnpm -r run typecheck` ·
   `pnpm -r run test` · `NODE_ENV=production DATABASE_URL=… pnpm --filter @gm/web build`.
 
+## Progress format contract (CHECKBOXES ARE THE SINGLE SOURCE OF TRUTH)
+Progress is read by machines, not just humans. An external dashboard derives **build progress** from
+the **Track A–E checkboxes** and **readiness** from the **Definition-of-Done checkboxes** — so a box's
+state IS the status. Prose notes and PR references are invisible to it. Therefore:
+- **Every Track item and every Definition-of-Done item MUST be a markdown checkbox** (`- [ ]` / `- [x]`).
+  Never record progress only as prose. A PR-reference annotation (`_(PR #NN: …)_`) is ENCOURAGED but is
+  an ADDITION to the checkbox, never a replacement for it.
+- **Tick `- [x]` only under the EVIDENCE-BASED DONE guard** (artifacts present on the default branch +
+  gate green this run) — never on self-assessment. **Un-tick** any box whose proof no longer holds.
+- **Keep checkboxes in sync EVERY bookkeeping run** so the dashboard never lies. The checkbox is the
+  source of truth; the prose explains it.
+
+> **ONE-TIME RECONCILE (do this on the NEXT run, in the bookkeeping PR):** convert any Track item that
+> is still prose into a checkbox; `- [x]` every Track + DoD item whose artifacts are verifiably present
+> on the default branch with a green gate (per EVIDENCE-BASED DONE / `scripts/preflight.sh`); and
+> `- [ ]` un-tick any box not actually satisfied. After this, the checkbox state must exactly match
+> reality. Then maintain it every run.
+
 ## Product decisions (LOCKED — owner, 2026-06-24)
 These are settled; build to them, do not re-litigate.
 1. **Revenue model: SUBSCRIPTION ONLY.** No affiliate/Instacart/Amazon ordering revenue in v1 —
