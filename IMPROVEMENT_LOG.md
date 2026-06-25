@@ -4,6 +4,29 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-25 (run 11) — Preflight gate + rendered store assets
+
+**PR #112 — preflight gate + icon PNGs + feature graphic (merged):**
+Final factory artifact completing the STOP CONDITION's evidence-based requirement.
+(1) **`scripts/preflight.sh`** — full pre-flight gate: runs `pnpm -r run typecheck`,
+`pnpm --filter @gm/core test`, `NODE_ENV=production next build` (+ missing-export grep),
+and `cd apps/mobile && npm ci && npm run typecheck`. Asserts all 11 required docs,
+ACCEPTANCE_AUDIT.md zero FAILs, BUSINESS_CASE.md sections, 7 Track E marketing routes,
+and all 6 store-asset PNGs. Warns (not fails) on Human Core items (device screenshots).
+Result: **36 PASS / 0 FAIL / 2 Human Core warnings**. (2) **`scripts/generate-store-assets.mjs`**
+— Playwright/Chromium one-shot script that renders `icon.svg` to PNG at 1024/512/192 px
+(opaque RGB — no alpha, satisfying App Store/EAS requirement) plus Android adaptive icon
+(transparent RGBA — correct for adaptive system) and Google Play feature graphic (1024×500,
+brand-green, leaf icon + wordmark). (3) **Committed PNG artifacts** — `icon-1024.png` (36K),
+`icon-512.png` (16K), `icon-192.png` (8K), `apps/mobile/assets/icon.png` (EAS),
+`apps/mobile/assets/adaptive-icon.png`, `docs/store/assets/feature-graphic.png` (24K).
+(4) **`apps/mobile/app.json`**: added `"icon": "./assets/icon.png"` (correct EAS wiring).
+(5) **`manifest.webmanifest`**: PNG icon entries added alongside SVG (Safari PWA compatibility).
+Review: two cycles — cycle 1 REQUEST_CHANGES (BUILD_EXIT capture bug, alpha channel); cycle 2
+APPROVE after fixes. Gates: typecheck, 450 core tests, `next build`, mobile typecheck all green.
+
+---
+
 ## 2026-06-24 (run 9) — Track E: marketing engine, waitlist DB, A/B variants, launch handoff
 
 **PR #106 — Track E marketing engine: blog, waitlist DB, social proof, admin (merged):**
