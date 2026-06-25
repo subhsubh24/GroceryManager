@@ -51,6 +51,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return token;
       }
       if (account?.provider === "google" && user?.email) {
+        const signedInUid = typeof token.uid === "string" ? token.uid : null;
         try {
           const key = process.env.TOKEN_ENC_KEY;
           const payload = {
@@ -63,7 +64,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             scopes: typeof account.scope === "string" ? account.scope.split(" ") : [],
             expiresAt: account.expires_at ? new Date(account.expires_at * 1000) : null,
           };
-          const signedInUid = typeof token.uid === "string" ? token.uid : null;
           if (signedInUid) {
             // "Connect Gmail" while already signed in (the only Google entry point in-app): attach to
             // THIS account so a username-first user keeps one identity — never spawn a 2nd user.
@@ -74,6 +74,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
         } catch (e) {
           console.error("persist google auth failed", e);
+          // On cold sign-in failure: deny the session rather than return a uid-less token.
+          // A token without uid bypasses RLS — every withTenant call would run as an anonymous
+          // user, potentially leaking or corrupting data across tenant boundaries.
+          // On Connect-Gmail failure: keep the existing session (token.uid already set).
+          if (!signedInUid) {
+            // next-auth v5: returning null from jwt() denies the session → signin error page
+            return null;
+          }
         }
       }
       return token;
