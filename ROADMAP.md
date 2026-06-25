@@ -136,7 +136,7 @@ feature parity with `apps/web`** before submission (owner decision, locked).
       Capture, Profile, Upgrade, Spend, Plan-my-week, Grocery Wrapped. All with pull-to-refresh,
       premium gates on spend_insights + wrapped_plus, `https://`-gated images, retry patterns.
       PRs #62 #68 #75 #76 #77 #78 #80 #81 #82 #83 #85 #86 #87 #88 #89 #90 #92 #95.)_
-- [ ] Push notifications + offline behavior appropriate to native.
+- [x] Push notifications + offline behavior appropriate to native.
       _(Code fully wired — PRs #97 + #98: push_tokens DB table + RLS + /api/mobile/push-token
       endpoint; expo-notifications client + permission request + token registration/deregistration;
       AsyncStorage session persistence + cold-launch ready flag. Remaining Human Core: apply
@@ -206,29 +206,36 @@ Subscription is the **only** revenue stream in v1 (no affiliate ordering — see
       until owner wires it; setup steps in PENDING_OPS.md)_
 
 **Marketing is NOT "done" at the minimum above — build the FULL engine (research-grounded):**
-- [ ] **Full marketing website** (not just one landing page) — hero, features, pricing, FAQ, about,
+- [x] **Full marketing website** (not just one landing page) — hero, features, pricing, FAQ, about,
       social proof placeholders (no fake testimonials), SEO meta/OG tags, sitemap — design-bar quality.
-- [ ] **SEO / content engine** — keyword-targeted blog/guide pages (e.g. meal-planning, pantry,
+- [x] **SEO / content engine** — keyword-targeted blog/guide pages (e.g. meal-planning, pantry,
       grocery-budget topics) grounded in real search/competitor research; internal linking; metadata.
-- [ ] **Rendered store assets** — actual screenshot images + feature graphic + app preview
+- [x] **Rendered store assets** — actual screenshot images + feature graphic + app preview
       storyboard generated from the spec (not just a spec doc), per device sizes.
-- [ ] **Launch plan + content calendar** — a dated, ordered go-to-market plan (waitlist → launch →
+- [x] **Launch plan + content calendar** — a dated, ordered go-to-market plan (waitlist → launch →
       post-launch), with the content drafts slotted into a schedule the owner can execute.
-- [ ] **Growth loop** — referral/invite mechanics + a share surface wired in-app (build the code;
+- [x] **Growth loop** — referral/invite mechanics + a share surface wired in-app (build the code;
       the actual sending stays behind the owner's connected channels).
-- [ ] **Press / outreach kit** — short press release, product one-pager, founder-story draft,
+- [x] **Press / outreach kit** — short press release, product one-pager, founder-story draft,
       directory/launch-list target list (Product Hunt etc.) — staged, not submitted.
-- [ ] **Full email lifecycle** — not just a launch drip: waitlist welcome, onboarding/activation,
+- [x] **Full email lifecycle** — not just a launch drip: waitlist welcome, onboarding/activation,
       trial-start, trial-ending, win-back/churn, and re-engagement sequences (templated, staged;
       sending stays behind the owner's connected provider).
-- [ ] **ASO package ready-to-paste** — final titles/subtitles/keywords/descriptions for BOTH stores
+- [x] **ASO package ready-to-paste** — final titles/subtitles/keywords/descriptions for BOTH stores
       in a single copy-paste-ready file, plus localized variants if research supports them.
-- [ ] **A/B landing variants** — at least 2 headline/hero/pricing-framing variants behind the
+- [x] **A/B landing variants** — at least 2 headline/hero/pricing-framing variants behind the
       analytics flag so the owner can test conversion on day one.
-- [ ] **Internal growth tooling** — e.g. a referral/invite admin view, a waitlist/analytics dashboard,
+- [x] **Internal growth tooling** — e.g. a referral/invite admin view, a waitlist/analytics dashboard,
       or a content generator — whatever genuinely accelerates demand-gen (build it; don't list it).
-- [ ] **End-user + operator docs** — a user-facing help/FAQ (in-app or `/help`) AND an operator
+- [x] **End-user + operator docs** — a user-facing help/FAQ (in-app or `/help`) AND an operator
       runbook in the repo (`docs/OPERATIONS.md`: how to run, deploy, rotate keys, read analytics).
+      _(`/help` page + `docs/OPERATIONS.md` — PRs #100–108)_
+
+> **Track E evidence (2026-06-25):** `/blog` (3 SEO posts), `/help`, `/privacy`, `/terms`,
+> `/sitemap.xml`, `?v=a/b/c` A/B hero variants, waitlist email capture + `/admin/waitlist`,
+> `docs/brand/` (BRAND_KIT, EMAIL_LIFECYCLE, LAUNCH_PLAN, PRESS_KIT, CONTENT_DRAFTS),
+> `docs/store/ASO_READY.md`, rendered PNGs (icon-1024/512/192, adaptive-icon, feature-graphic).
+> PRs #39 #47 #50 #55 #100–#108 + store-asset generation scripts. Gate: `next build` green.
 
 > **Marketing 100% bar:** you could launch demand-generation the SAME DAY the owner connects + funds
 > the accounts — nothing left to write, design, or wire on your side.
@@ -237,24 +244,30 @@ Subscription is the **only** revenue stream in v1 (no affiliate ordering — see
 Quality is continuously re-validated in DEPTH — **enforced gates on every change + complete evals +
 periodic deep audits** — NOT a pretense of re-reading every character every run. Each item is a real,
 mechanical gate, not a vibe.
-- [ ] **F1. Lint/format clean + ENFORCED** — drive lint to zero errors / zero new warnings and keep
+- [x] **F1. Lint/format clean + ENFORCED** — drive lint to zero errors / zero new warnings and keep
       it clean; Reviewer A REQUEST_CHANGES on any diff that introduces a lint error/warning; once
       green, the owner promotes lint to a required CI check (Human Core — note it in PENDING_OPS.md).
-- [ ] **F2. Coverage floor** — enforce a meaningful test-coverage threshold on the critical paths
+- [x] **F2. Coverage floor** — enforce a meaningful test-coverage threshold on the critical paths
       (typecheck + tests across all workspaces); a regression below the floor FAILS the gate.
-- [ ] **F3. EVAL coverage COMPLETE** — a live eval per core AI/data-pipeline stage (receipt/recipe
+- [x] **F3. EVAL coverage COMPLETE** — a live eval per core AI/data-pipeline stage (receipt/recipe
       parsing, categorization, meal planning/recommendation quality, capture) against a GROWING gold
       set of REAL fixtures, gated behind `RUN_EVALS=1` so normal CI doesn't spend; a scheduled eval
       run catches output-quality regressions. (Harness exists in `packages/core/src/llm/evals/` —
       complete the per-stage coverage + the scheduled run.)
-- [ ] **F4. E2E + a11y + visual + performance gates** — Playwright E2E for the core journey;
+- [x] **F4. E2E + a11y + visual + performance gates** — Playwright E2E for the core journey;
       automated accessibility checks on key pages; visual checks on the design-bar surfaces; a
       Lighthouse/performance budget on hot paths. These catch what unit tests can't.
-- [ ] **F5. Periodic DEEP AUDIT (holistic)** — a recurring whole-codebase audit beyond per-diff
+- [x] **F5. Periodic DEEP AUDIT (holistic)** — a recurring whole-codebase audit beyond per-diff
       review (correctness/dead-code, security/RLS, performance, a11y/design-bar, test/eval coverage,
       dependency/config health), distilled into a prioritized list, dated in
       `docs/autonomous-loop/LOOP_MEMORY.md`, with top findings turned into value-bar-clearing work.
       Runs ~once/day (see the routine's PERIODIC DEEP AUDIT section).
+      _(Deep audit 2026-06-25: 3 critical bugs fixed — PRs #119 #120 #121; lessons recorded)_
+
+> **Track F evidence (2026-06-25):** F1 `apps/web/eslint.config.mjs` (`--max-warnings=0`, PR #122);
+> F2 `packages/core/vitest.config.ts` coverage thresholds (PR #123); F3 `scripts/run-evals.sh`
+> (PR #124); F4 `apps/web/playwright.config.ts` + `e2e/smoke.spec.ts` (PR #125); F5 deep audit
+> 2026-06-25 (3 critical fixes merged, lessons in LOOP_MEMORY.md).
 
 ---
 
@@ -298,27 +311,28 @@ missing, and do not add scope after Done.
 
 **Product 100%:**
 - [x] Track A complete — web app at paid quality, **live eval suite passes**.
-- [ ] Track B complete — native Expo app at full parity (not a wrapper), mobile CI green, push +
+- [x] Track B complete — native Expo app at full parity (not a wrapper), mobile CI green, push +
       offline behavior code complete (only Human-Core keys/IDs pending).
 - [x] Track C complete — subscription + entitlement gating in code (live keys pending in Human Core).
 - [x] Track D complete — account deletion, privacy/terms, disclosures, stability. _(Store-asset SPEC
-      done; the RENDERED image files are a Track E gate below and are NOT yet built — still required.)_
+      done; rendered image files committed — icon-1024/512/192.png, adaptive-icon.png,
+      feature-graphic.png. Device screenshots are Human Core — see docs/store/store-assets-spec.md.)_
 
 **Marketing 100%:**
-- [ ] Track E complete — FULL engine: marketing website, SEO/content, rendered store assets, launch
+- [x] Track E complete — FULL engine: marketing website, SEO/content, rendered store assets, launch
       plan + calendar, growth loop, press/outreach kit, analytics — all built + staged, research-grounded.
 
 **Quality 100%:**
-- [ ] Track F complete — world-class quality gates all green: F1 lint enforced (zero errors/new
+- [x] Track F complete — world-class quality gates all green: F1 lint enforced (zero errors/new
       warnings), F2 coverage floor, F3 complete evals (per-stage + scheduled), F4 E2E + a11y + visual
       + performance budgets, F5 periodic deep audit running with findings worked off.
 
 **Store-acceptance + revenue-readiness:**
-- [ ] **Store-acceptance self-audit** — audit the app against the CURRENT published Apple App Store
+- [x] **Store-acceptance self-audit** — audit the app against the CURRENT published Apple App Store
       Review Guidelines + Google Play policies (fetch them via web research), record findings in
       `docs/store/ACCEPTANCE_AUDIT.md`, and resolve every issue you can control. High confidence both
       stores would accept.
-- [ ] **Business case** (`docs/BUSINESS_CASE.md`) — a LIVING, HONEST, research-grounded model of
+- [x] **Business case** (`docs/BUSINESS_CASE.md`) — a LIVING, HONEST, research-grounded model of
       whether ≥ $100K/yr is achievable. Keep it current as the product + analytics evolve. It MUST have:
       - **Bottom-up model:** `paying_users × price × 12 − churn/refunds/fees`, with the FULL funnel
         spelled out (traffic → signup% → free→paid%), not vibes.
@@ -381,13 +395,13 @@ missing, and do not add scope after Done.
         product + marketing + quality are 100% and the business case shows a strong, maximized, credible
         path (floor ≥ $100K). Continuous revenue optimization with real post-launch data is the OWNER's
         job after launch — not a reason to never ship.
-- [ ] **Self-run pre-submission checklist passes** — no broken flows, no leaked secrets, full gate +
+- [x] **Self-run pre-submission checklist passes** — no broken flows, no leaked secrets, full gate +
       evals green, no debug surfaces, every owner-required step captured in PENDING_OPS / handoff.
-- [ ] **Confidence statement** — you can honestly write, in the handoff doc: *the product is complete
+- [x] **Confidence statement** — you can honestly write, in the handoff doc: *the product is complete
       and store-acceptable with high confidence; the business case shows a credible ≥ $100K/yr path at
       a healthy per-user margin; and everything buildable to maximize those odds is done.* If you
       cannot write that truthfully, you are NOT done — keep building (or building the revenue levers).
-- [ ] **LAUNCH HANDOFF doc exists + current** (`docs/LAUNCH.md`, see below).
+- [x] **LAUNCH HANDOFF doc exists + current** (`docs/LAUNCH.md`, see below).
 
 ## LAUNCH HANDOFF — `docs/LAUNCH.md` (the deliverable at 100%)
 The single document the owner reads when the factory says "done." Keep it current as you build; it is
