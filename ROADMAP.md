@@ -281,7 +281,10 @@ a built/rendered thing, it is NOT done.** Required proof per gate:
 
 **PRE-FLIGHT VERIFICATION (required before opening the ready issue).** Build + run `scripts/preflight.sh`
 (create it if missing): it re-runs the full gate AND asserts every required artifact exists
-(`test -f`/`ls`/`grep`), exiting non-zero on the first failure. PASTE its output into the
+(`test -f`/`ls`/`grep`) AND **asserts EVERY Definition-of-Done checkbox in this file is ticked
+(`- [x]`) — it FAILS while any DoD box is `- [ ]`**, exiting non-zero on the first failure. (This is
+the mechanical gate: a passing preflight is impossible while the DoD is incomplete, so the 'ready'
+issue cannot be opened prematurely.) PASTE its output into the
 `FACTORY: ready for submission` issue as evidence — the issue must show proof, not claims. If ANY check
 fails, do NOT open the issue; fix the gap and keep building. NEVER tick a box you cannot prove right
 now, and if a previously-ticked box fails its proof, UNCHECK it and fix it.
