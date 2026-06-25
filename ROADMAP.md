@@ -45,6 +45,16 @@ everything else yourself.
   `app_current_user_id()` GUC (`packages/db/sql/0002_rls.sql`), NOT `auth.uid()`. The native app
   lives in `apps/mobile` (excluded from the pnpm workspace). Gate = `pnpm -r run typecheck` ·
   `pnpm -r run test` · `NODE_ENV=production DATABASE_URL=… pnpm --filter @gm/web build`.
+- **LIVING ARTIFACTS.** Every artifact the loop produces — README, ARCHITECTURE, `docs/BUSINESS_CASE.md`,
+  marketing copy, store-listing/ASO, privacy / Data-Safety docs, the pre-submission checklist,
+  `docs/autonomous-loop/LOOP_MEMORY.md`, `IMPROVEMENT_LOG.md`, `PENDING_OPS.md`, `ROADMAP.md`, `docs/LAUNCH.md`
+  — is **LIVING**. When the thing it describes changes (code, pricing, positioning, data flows,
+  architecture), UPDATE the artifact in the SAME work so it never contradicts the current product.
+  **A doc that contradicts reality is a BUG** (and a store/review/trust risk); fixing it CLEARS the
+  value bar. Avoid BOTH failure modes equally: **(a) STALE** — write-once docs that drift out of date;
+  **(b) CHURN** — rewriting things for their own sake. The rule is **CONSISTENCY WITH REALITY, not
+  constant rewriting.** Do NOT churn the **STABLE ANCHORS** (`VISION.md`, the cost/determinism + other
+  guard rules, the protected guard tests) just to look busy — those are intentionally stable ratchets.
 
 ## Progress format contract (CHECKBOXES ARE THE SINGLE SOURCE OF TRUTH)
 Progress is read by machines, not just humans. An external dashboard derives **build progress** from
