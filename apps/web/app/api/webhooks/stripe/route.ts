@@ -41,12 +41,17 @@ export async function POST(req: Request) {
   //     return new Response(`Webhook signature verification failed: ${String(err)}`, { status: 400 });
   //   }
   //
-  // Until then (no Stripe SDK installed), fail-closed when the secret is configured.
-  if (env.STRIPE_WEBHOOK_SECRET) {
-    // Fail-closed: when a webhook secret is configured, reject ALL requests until the Stripe SDK
-    // is installed and `constructEvent` is wired (see the commented block above). Prevents an
-    // accidental production deploy from accepting unauthenticated entitlement writes.
-    // To enable: install `stripe` in apps/web, then uncomment constructEvent above.
+  // Fail-closed: reject all requests until Stripe SDK verification is fully wired.
+  // Without STRIPE_WEBHOOK_SECRET there is no way to authenticate the caller — any client
+  // could forge a userId and grant themselves premium access.
+  if (!env.STRIPE_WEBHOOK_SECRET) {
+    return new Response("Stripe webhook secret not configured.", { status: 400 });
+  }
+  // Secret is set but SDK not yet installed — see the commented constructEvent block above.
+  // Set this to true after installing `stripe` and uncommenting constructEvent.
+  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
+  const stripeVerificationWired: boolean = false;
+  if (!stripeVerificationWired) {
     return new Response("Webhook signature verification not yet wired — add Stripe SDK first.", { status: 400 });
   }
 
