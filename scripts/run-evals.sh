@@ -29,6 +29,12 @@ echo ""
 cd "$REPO_ROOT"
 
 if [[ -n "${EVAL_STAGE:-}" ]]; then
+  # Validate EVAL_STAGE against an allowlist so it can't be used for path traversal
+  # or command injection (env vars are expanded inside double quotes in bash).
+  if [[ ! "$EVAL_STAGE" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+    echo "ERROR: EVAL_STAGE must match ^[a-zA-Z0-9_-]+\$ (got: '$EVAL_STAGE')" >&2
+    exit 1
+  fi
   # Run a single stage (pattern match against the eval file name).
   RUN_EVALS=1 pnpm --filter @gm/core exec vitest run "src/llm/evals/${EVAL_STAGE}.eval.test.ts"
 else
