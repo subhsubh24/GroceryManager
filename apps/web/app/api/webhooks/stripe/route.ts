@@ -49,6 +49,14 @@ export async function POST(req: Request) {
     // To enable: install `stripe` in apps/web, then uncomment constructEvent above.
     return new Response("Webhook signature verification not yet wired — add Stripe SDK first.", { status: 400 });
   }
+  // No webhook secret configured: only accept in non-production. In production without a
+  // signing secret set, any caller could inject arbitrary userId entitlement signals, which is
+  // a trust-the-client privilege escalation. Fail-closed rather than accept unauthenticated writes.
+  // (Pattern: env.SECRET ? checkSecret(...) : nodeEnv !== 'production')
+  if (process.env.NODE_ENV === "production") {
+    console.error("[stripe-webhook] STRIPE_WEBHOOK_SECRET not set in production — rejecting unauthenticated request");
+    return new Response("Webhook secret required in production", { status: 401 });
+  }
 
   // ---------------------------------------------------------------------------
   // Parse payload
