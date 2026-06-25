@@ -80,7 +80,8 @@ export async function logCook(
         cuisines: recipe.cuisine ? [recipe.cuisine.toLowerCase()] : [],
       })
       .returning({ id: recipes.id });
-    recipeId = row!.id;
+    if (!row) throw new Error(`logCook: recipe insert returned no row for externalId=${recipe.externalId}`);
+    recipeId = row.id;
   }
 
   // 2. Build an honest base-qty resolver from the pantry items' base units.
@@ -141,6 +142,10 @@ export async function logCook(
         : {}),
     })
     .returning({ id: mealLogs.id });
+  // Guard: an empty return means the insert silently failed (transactional error, constraint
+  // violation). Without a mealLogId the pantry decrements would reference a non-existent row,
+  // leaving the pantry in an inconsistent state. Throw here — callers already wrap logCook.
+  if (!meal) throw new Error(`logCook: mealLogs insert returned no row for userId=${userId} recipeId=${recipeId}`);
 
   // 5. Apply consume_recipe deltas, preserving each item's learned rate.
   const deltaIds = plan.deltas.map((d) => d.canonicalItemId);
@@ -161,7 +166,7 @@ export async function logCook(
       eventType: "consume_recipe",
       confidence: 0.7,
       refType: "meal_log",
-      refId: meal!.id,
+      refId: meal.id,
       occurredAt: now,
       ratePerDay: rateByItem.get(d.canonicalItemId) ?? null,
     });
