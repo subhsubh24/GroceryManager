@@ -322,6 +322,18 @@ missing, and do not add scope after Done.
         revenue) — then go BUILD the ones in your control.
       - **Living, not a launch-day guess:** the marketing analytics (Track E) feed real funnel numbers
         back in over time, so the estimate tightens as actual conversion data arrives.
+      - **KEEP IT LIVING — recompute, don't write-once.** The model must IMPROVE over time, not be
+        written once and left to rot. RE-COMPUTE it whenever any of these change: pricing/tiers, a
+        revenue lever ships (conversion, retention, expansion), per-user COGS, or new
+        evidence/benchmarks. Building more FEATURES does NOT change the number and is NOT a reason to
+        revise it — only levers, pricing, margin, reach, and real data move it; so "improving the
+        business case" means RECOMPUTING when those move, not when feature count grows. ANCHOR the
+        model to the ACTUAL paywall / billing config (Stripe / RevenueCat / StoreKit product IDs +
+        prices) — if the doc's prices ever diverge from the real product config, that drift is a BUG:
+        fix it and recompute. STAMP each revision with a 'last recomputed: <date>' line + a one-line
+        changelog of what moved and why. POST-LAUNCH (owner activity): re-ground every assumption on
+        the REAL conversion / retention / CPI data from the analytics you built — that's when it goes
+        from a researched projection to a data-backed forecast.
       - **MAXIMIZE revenue — $100K is the FLOOR, not the target.** Do NOT settle once the base case
         clears $100K. Build toward the OPTIMISTIC scenario by pushing these levers to their
         **defensible maximum**, each as first-class value-bar-clearing work — every number still
