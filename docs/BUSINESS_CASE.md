@@ -1,3 +1,17 @@
+```yaml
+# BUSINESS_CASE_SUMMARY (machine-readable; keep in sync with the analysis below)
+currency: USD
+arr_year1:
+  conservative: 6648
+  base: 121017
+  optimistic: 744900
+planning_case: base
+floor_usd: 100000
+floor_met_year1: true          # arr_year1.base (121017) >= floor_usd (100000)
+time_to_floor: "n/a — base steady-state run-rate clears the floor; ~21 mo to full steady state (see §5)"
+as_of: 2026-06-25
+```
+
 # GroceryManager — Business Case
 
 **Version:** 2026-06-24 (initial)

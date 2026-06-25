@@ -344,6 +344,17 @@ missing, and do not add scope after Done.
         changelog of what moved and why. POST-LAUNCH (owner activity): re-ground every assumption on
         the REAL conversion / retention / CPI data from the analytics you built — that's when it goes
         from a researched projection to a data-backed forecast.
+      - **MACHINE-READABLE SUMMARY (required, kept in sync).** `docs/BUSINESS_CASE.md` MUST begin with a
+        fenced `BUSINESS_CASE_SUMMARY` YAML block — the dashboard reads THIS structured block, not the
+        prose (scraping prose mis-grabs monthly figures or COGS/marketing dollar lines). Use the EXACT
+        cross-project shape (identical across AptDesignerAI / HighlightMagic / GroceryManager so values
+        are comparable): `currency`, `arr_year1: {conservative, base, optimistic}` (whole annual USD),
+        `planning_case`, `floor_usd: 100000`, `floor_met_year1` (true iff `arr_year1.base >= floor_usd`),
+        `time_to_floor` (only if not met), `as_of: <YYYY-MM-DD>`. **`arr_year1.base` MUST equal the
+        base-scenario annual ARR in the body** — update the block in the SAME change whenever the model
+        is recomputed; a block that disagrees with the body is a BUG. Real, researched numbers only
+        (anti-gaming). If the honest base case is below $100K, set `floor_met_year1: false` + a
+        `time_to_floor` note and BUILD the levers to lift it.
       - **MAXIMIZE revenue — $100K is the FLOOR, not the target.** Do NOT settle once the base case
         clears $100K. Build toward the OPTIMISTIC scenario by pushing these levers to their
         **defensible maximum**, each as first-class value-bar-clearing work — every number still
