@@ -9,9 +9,9 @@
 > [docs/autonomous-loop/LOOP_MEMORY.md](./docs/autonomous-loop/LOOP_MEMORY.md).
 
 ## Goal (one sentence)
-Ship GroceryManager as a **web app + native Expo mobile app**, **subscription-monetized**, that is
-**store-acceptable with high confidence** and primed to earn **reliable, consistent revenue — target
-≥ $100K/yr** — as a dependable side income.
+Ship GroceryManager as a **web app + native Expo mobile app**, **store-acceptable with high
+confidence**, with monetization **optimized to MAXIMIZE revenue** — **≥ $100K/yr is the FLOOR, not the
+target** — as a dependable, growing side income.
 
 ## THE 100% BAR (do NOT stop early — read every run)
 "Done" means **BOTH the PRODUCT and the MARKETING are genuinely 100% complete** — not one, not
@@ -322,8 +322,29 @@ missing, and do not add scope after Done.
         revenue) — then go BUILD the ones in your control.
       - **Living, not a launch-day guess:** the marketing analytics (Track E) feed real funnel numbers
         back in over time, so the estimate tightens as actual conversion data arrives.
-      Done requires the business case to show a **credible ≥ $100K/yr path**, folded into the final
-      confidence statement. NEVER fake the numbers — this is monetization realism, not a sales pitch.
+      - **MAXIMIZE revenue — $100K is the FLOOR, not the target.** Do NOT settle once the base case
+        clears $100K. Build toward the OPTIMISTIC scenario by pushing these levers to their
+        **defensible maximum**, each as first-class value-bar-clearing work — every number still
+        honest/researched (anti-gaming holds ABSOLUTELY: no gamed pricing, no invented users):
+        1. **PRICING & TIERS** — good-better-best; a higher Pro/Family tier; annual at a discount;
+           priced to real value + benchmarks (and matching the actual paywall/billing config).
+        2. **CONVERSION** — optimize the free→paid moment (paywall, onboarding, trial, time-to-first-value).
+        3. **RETENTION & LTV** — GroceryManager's STRONGEST lever: a naturally RECURRING, weekly-use
+           product — maximize habit/retention (reminders, weekly planning loops, re-engagement);
+           high retention compounds directly into LTV and ARR.
+        4. **EXPANSION REVENUE** — add-ons, household/family plans, referrals, usage-based upsell.
+        5. **MARGIN** — drive per-user COGS down so more of each dollar is profit and growth spend is affordable.
+        6. **REACH** — defensible acquisition channels (ASO/SEO, content, referrals).
+        Document each lever's upside in the business case and BUILD the best-return ones.
+      Done requires the business case to show a **credible, revenue-MAXIMIZED path** — the maximization
+      levers built + documented and the ceiling pushed toward the optimistic scenario, with the
+      conservative/median floor still **≥ $100K/yr**. NEVER fake the numbers — monetization realism, not
+      a sales pitch.
+      - **CONVERGENCE (critical):** "maximize" means building the BEST monetization + growth machine
+        WITHIN the submission-readiness goal — it does NOT mean running forever. STOP and hand off when
+        product + marketing + quality are 100% and the business case shows a strong, maximized, credible
+        path (floor ≥ $100K). Continuous revenue optimization with real post-launch data is the OWNER's
+        job after launch — not a reason to never ship.
 - [ ] **Self-run pre-submission checklist passes** — no broken flows, no leaked secrets, full gate +
       evals green, no debug surfaces, every owner-required step captured in PENDING_OPS / handoff.
 - [ ] **Confidence statement** — you can honestly write, in the handoff doc: *the product is complete
