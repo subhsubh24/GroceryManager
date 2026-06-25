@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "dotenv -e ../../.env -- next start",
     "lint": "eslint app/ --max-warnings=0",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@gm/config": "workspace:*",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^16.2.9",
+    "@playwright/test": "^1.50.0",
     "@types/node": "^22.7.4",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
