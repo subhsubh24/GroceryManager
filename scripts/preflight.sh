@@ -185,6 +185,17 @@ else
   fail "PENDING_OPS.md: missing or empty"
 fi
 
+# ── Definition-of-Done checkboxes all ticked (the source of truth) ──
+section "Definition of Done — every box ticked"
+DOD_SECTION="$(awk '/^## DEFINITION OF DONE/{f=1;next} /^## /{if(f)f=0} f' ROADMAP.md)"
+DOD_UNCHECKED="$(printf '%s\n' "$DOD_SECTION" | grep -cE '^- \[ \]' || true)"
+if [ "${DOD_UNCHECKED:-0}" -gt 0 ]; then
+  fail "Definition of Done: $DOD_UNCHECKED box(es) UNCHECKED in ROADMAP.md — NOT ready; do not open the 'ready' issue"
+  printf '%s\n' "$DOD_SECTION" | grep -E '^- \[ \]' | sed 's/^/        /'
+else
+  pass "Definition of Done: every box ticked"
+fi
+
 # ── Summary ───────────────────────────────────────────────
 echo ""
 echo "======================================================"
