@@ -223,6 +223,29 @@ Subscription is the **only** revenue stream in v1 (no affiliate ordering — see
 > **Marketing 100% bar:** you could launch demand-generation the SAME DAY the owner connects + funds
 > the accounts — nothing left to write, design, or wire on your side.
 
+## Track F — World-class quality, validation & evals
+Quality is continuously re-validated in DEPTH — **enforced gates on every change + complete evals +
+periodic deep audits** — NOT a pretense of re-reading every character every run. Each item is a real,
+mechanical gate, not a vibe.
+- [ ] **F1. Lint/format clean + ENFORCED** — drive lint to zero errors / zero new warnings and keep
+      it clean; Reviewer A REQUEST_CHANGES on any diff that introduces a lint error/warning; once
+      green, the owner promotes lint to a required CI check (Human Core — note it in PENDING_OPS.md).
+- [ ] **F2. Coverage floor** — enforce a meaningful test-coverage threshold on the critical paths
+      (typecheck + tests across all workspaces); a regression below the floor FAILS the gate.
+- [ ] **F3. EVAL coverage COMPLETE** — a live eval per core AI/data-pipeline stage (receipt/recipe
+      parsing, categorization, meal planning/recommendation quality, capture) against a GROWING gold
+      set of REAL fixtures, gated behind `RUN_EVALS=1` so normal CI doesn't spend; a scheduled eval
+      run catches output-quality regressions. (Harness exists in `packages/core/src/llm/evals/` —
+      complete the per-stage coverage + the scheduled run.)
+- [ ] **F4. E2E + a11y + visual + performance gates** — Playwright E2E for the core journey;
+      automated accessibility checks on key pages; visual checks on the design-bar surfaces; a
+      Lighthouse/performance budget on hot paths. These catch what unit tests can't.
+- [ ] **F5. Periodic DEEP AUDIT (holistic)** — a recurring whole-codebase audit beyond per-diff
+      review (correctness/dead-code, security/RLS, performance, a11y/design-bar, test/eval coverage,
+      dependency/config health), distilled into a prioritized list, dated in
+      `docs/autonomous-loop/LOOP_MEMORY.md`, with top findings turned into value-bar-clearing work.
+      Runs ~once/day (see the routine's PERIODIC DEEP AUDIT section).
+
 ---
 
 ## EVIDENCE-BASED DONE (no self-certification — read before ticking ANY box)
@@ -271,6 +294,11 @@ missing, and do not add scope after Done.
 **Marketing 100%:**
 - [ ] Track E complete — FULL engine: marketing website, SEO/content, rendered store assets, launch
       plan + calendar, growth loop, press/outreach kit, analytics — all built + staged, research-grounded.
+
+**Quality 100%:**
+- [ ] Track F complete — world-class quality gates all green: F1 lint enforced (zero errors/new
+      warnings), F2 coverage floor, F3 complete evals (per-stage + scheduled), F4 E2E + a11y + visual
+      + performance budgets, F5 periodic deep audit running with findings worked off.
 
 **Store-acceptance + revenue-readiness:**
 - [ ] **Store-acceptance self-audit** — audit the app against the CURRENT published Apple App Store
