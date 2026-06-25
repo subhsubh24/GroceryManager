@@ -188,7 +188,7 @@ export async function logCook(
 
   return {
     recipeId,
-    mealLogId: meal!.id,
+    mealLogId: meal.id,
     decremented: plan.deltas.length,
     usedUnmeasured: plan.usedUnmeasured.length,
     learnedCuisine: cuisine,
