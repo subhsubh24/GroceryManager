@@ -35,7 +35,7 @@
   "scripts": {
     "lint": "echo \"(lint) @gm/core\"",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "eval": "RUN_EVALS=1 vitest run src/llm/evals"
   },
   "dependencies": {
@@ -50,6 +50,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.7.4",
+    "@vitest/coverage-v8": "^2.1.9",
     "typescript": "^5.6.2",
     "vitest": "^2.1.2"
   }
