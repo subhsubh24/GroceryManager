@@ -399,7 +399,10 @@ missing, and do not add scope after Done.
         cross-project shape (identical across AptDesignerAI / HighlightMagic / GroceryManager so values
         are comparable): `currency`, `arr_year1: {conservative, base, optimistic}` (whole annual USD),
         `planning_case`, `floor_usd: 100000`, `floor_met_year1` (true iff `arr_year1.base >= floor_usd`),
-        `time_to_floor` (only if not met), `as_of: <YYYY-MM-DD>`. **`arr_year1.base` MUST equal the
+        `time_to_floor` (only if not met), `as_of: <YYYY-MM-DD>`. The block MUST be **VALID, PARSEABLE
+        YAML** — no invalid escapes (e.g. write `$100K`, never `\$100K`); a malformed block makes the
+        dashboard degrade to "unparseable → link" (never a fabricated number), so preflight FAILS on it.
+        **`arr_year1.base` MUST equal the
         base-scenario annual ARR in the body** — update the block in the SAME change whenever the model
         is recomputed; a block that disagrees with the body is a BUG. Real, researched numbers only
         (anti-gaming). If the honest base case is below $100K, set `floor_met_year1: false` + a

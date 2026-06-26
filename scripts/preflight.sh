@@ -128,6 +128,27 @@ if grep -qE '\$1[0-9][0-9],?[0-9]00|\$[0-9]+K.*(yr|year)|100.*(K|k).*yr' "$BC" 2
 else
   warn "BUSINESS_CASE.md: ≥\$100K/yr number not found — verify document"
 fi
+# The machine-readable BUSINESS_CASE_SUMMARY block MUST parse as valid YAML (the dashboard reads it).
+# A malformed block (e.g. a bad escape) → dashboard degrades to "unparseable → link", never a number.
+if python3 - "$BC" <<'PY'
+import sys, re, yaml
+txt = open(sys.argv[1]).read()
+m = re.search(r"```ya?ml\s*\n(.*?BUSINESS_CASE_SUMMARY.*?)\n```", txt, re.S)
+if not m:
+    print("no BUSINESS_CASE_SUMMARY fenced block found"); sys.exit(1)
+try:
+    d = yaml.safe_load(m.group(1))
+except Exception as e:
+    print("block is UNPARSEABLE YAML:", e); sys.exit(1)
+if not isinstance(d.get("arr_year1"), dict) or "base" not in d["arr_year1"]:
+    print("block missing arr_year1.base"); sys.exit(1)
+print("ok base =", d["arr_year1"]["base"])
+PY
+then
+  pass "BUSINESS_CASE_SUMMARY: valid, parseable YAML block (dashboard-readable)"
+else
+  fail "BUSINESS_CASE_SUMMARY: block is missing or UNPARSEABLE — dashboard can't read it (fix the YAML)"
+fi
 
 # ── 8. Track E: marketing routes in build ────────────────
 section "8. Track E — marketing routes"

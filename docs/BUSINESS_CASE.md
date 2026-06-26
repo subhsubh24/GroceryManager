@@ -8,7 +8,7 @@ arr_year1:
 planning_case: base
 floor_usd: 100000
 floor_met_year1: true   # median base WITH Family tier lever (10% adoption); without lever: ~$87K
-time_to_floor: "n/a — median base with Family tier lever clears >=\$100K (see §4)"
+time_to_floor: "n/a — median base with Family tier lever clears the $100K floor (see §4)"
 as_of: 2026-06-26
 ```
 
