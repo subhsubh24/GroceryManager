@@ -17,12 +17,14 @@ const TIER_LABELS: Record<SubscriptionTier, string> = {
   free: "Free",
   premium_monthly: "Premium Monthly",
   premium_annual: "Premium Annual",
+  premium_family: "Family",
 };
 
 const TIER_DESCRIPTIONS: Record<SubscriptionTier, string> = {
   free: "Core pantry, cook, list, capture, and recipe features — always free.",
   premium_monthly: "Full access — AI planner, unlimited Discover, recipe remix, and more.",
   premium_annual: "Full access at the best rate — everything Premium, save ~33% vs monthly.",
+  premium_family: "Up to 5 household members with shared pantry, list, and individual profiles.",
 };
 
 async function load() {
