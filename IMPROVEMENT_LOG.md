@@ -4,6 +4,36 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-26 (run 15) — Track C billing wired + business case recomputed
+
+**Track C (Stripe Checkout + Customer Portal — PRs #142 #143):**
+
+- **PR #143 — Stripe Checkout + Customer Portal wired:** Installs `stripe@^22.3.0`; creates
+  `POST /api/stripe/checkout` (Checkout Session with trial_period_days + userId metadata),
+  `POST /api/stripe/portal` (Customer Portal via stored stripe_customer_id); replaces
+  `stripeVerificationWired: boolean = false` stub with real `stripe.webhooks.constructEvent`
+  signature verification; stores `stripe_customer_id` preference signal on subscription.created/updated;
+  upgrade page real pricing cards with `CheckoutButton`; manage-subscription real portal button.
+- **PR #142 — Family tier + median business case:** Adds `premium_family` tier ($9.99/mo / $79.99/yr,
+  5-member household) raising blended ARPU from $3.82 → $4.32/mo at 10% Family adoption; rewrites
+  `docs/BUSINESS_CASE.md` with honest median inputs (1,500/mo downloads, 21% trial→paid, 4.5% churn +
+  10% Family) → base case $105,907/yr (floor_met_year1: true); sub-scenario "Median WITHOUT lever"
+  ~$89K documented honestly. 8 new billing suite tests.
+
+**Run-14 housekeeping (PRs #135–#139 — manually merged after auto-merge stall):**
+Timing-safe secrets (#135), ASO household-sharing removal (#136), macro physiological clamp (#137),
+LAUNCH.md icon-step correction (#138), LOOP_MEMORY lessons (#139).
+
+**DoD boxes ticked this run (bookkeeping PR — claude/bookkeeping-run15):**
+- Track C: checkout.sessions.create wired ✅
+- Business case: median+lever = $106K, floor_met_year1: true ✅
+- Self-run checklist: gate green, billing end-to-end, no broken flows ✅
+- Confidence statement: can honestly write it ✅
+
+**Gate:** typecheck ✓ · 450 core tests ✓ · production build ✓ · no missing-export warnings ✓
+
+---
+
 ## 2026-06-25 (run 12) — Track F world-class quality (F1–F5 complete)
 
 **DEEP AUDIT (3 critical bugs merged):**

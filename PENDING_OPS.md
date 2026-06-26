@@ -87,23 +87,31 @@ The push notification infrastructure is fully wired in code. To activate:
 
 ## 2026-06-24 — Stripe + RevenueCat billing keys (Track C monetization)
 
-Code is merged and ready (`packages/core/src/billing`, `apps/web/app/api/webhooks/stripe/route.ts`,
-`/manage-subscription`). To go live, the owner must:
+Code is merged and ready (PRs #142 #143). Stripe SDK installed, checkout session creation and
+Customer Portal wired, webhook signature verification live. To go live, the owner must:
 
-1. **Create Stripe account** → create Products + Prices for $4.99/mo and $39.99/yr.
+1. **Create Stripe account** → create Products + Prices:
+   - "GroceryManager Premium Monthly" — $4.99/mo recurring, 7-day free trial
+   - "GroceryManager Premium Annual" — $39.99/yr recurring, 7-day free trial
+   - "GroceryManager Family" — $9.99/mo or $79.99/yr recurring, 7-day free trial (up to 5 members)
 2. **Set env vars in Vercel** (never committed):
-   - `STRIPE_SECRET_KEY` — `sk_live_…` or `sk_test_…`
+   - `STRIPE_SECRET_KEY` — `sk_live_…` (or `sk_test_…` for staging)
    - `STRIPE_WEBHOOK_SECRET` — `whsec_…` from Stripe Dashboard → Webhooks → signing secret
+     (point the webhook at `https://yourapp.com/api/webhooks/stripe`)
    - `STRIPE_PRICE_MONTHLY` — `price_…` for the $4.99/mo product
    - `STRIPE_PRICE_ANNUAL` — `price_…` for the $39.99/yr product
-3. **Install the Stripe SDK** in `apps/web`: `pnpm --filter web add stripe`
-4. **Uncomment `constructEvent` block** in `apps/web/app/api/webhooks/stripe/route.ts` (the block
-   is there as a comment starting at line 36 — remove the failing guard at line 45–51 and activate
-   the SDK verification block above it).
-5. **Set `FEATURE_BILLING=1`** in Vercel env once keys are verified and checkout is wired.
-6. **(Mobile, later)** Create RevenueCat account → create products → set `REVENUECAT_API_KEY`.
+3. **Set `FEATURE_BILLING=1`** in Vercel env once keys are verified.
+4. **(Mobile, later)** Create RevenueCat account → create products → set `REVENUECAT_API_KEY`.
 
-**Status:** Code merged. Human Core required before any billing is live.
+**Factory-complete (no owner action needed):**
+- ✅ Stripe SDK (`stripe@^22.3.0`) installed in `apps/web`
+- ✅ `POST /api/stripe/checkout` — creates Checkout Session with trial_period_days, userId metadata
+- ✅ `POST /api/stripe/portal` — creates Customer Portal session from stored stripe_customer_id
+- ✅ `apps/web/app/api/webhooks/stripe/route.ts` — real `constructEvent` SDK verification (fail-closed when STRIPE_WEBHOOK_SECRET set)
+- ✅ stripe_customer_id stored in preference ledger on subscription.created/updated
+- ✅ Family tier defined in `@gm/core/billing` (billing/index.ts)
+
+**Status:** Code merged (PRs #142 #143). Human Core required for steps 1–4 above.
 
 ---
 

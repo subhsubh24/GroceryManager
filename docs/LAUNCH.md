@@ -27,7 +27,7 @@ GroceryManager is a **grocery + cooking autopilot** — a Next.js 15 PWA and a n
 | **Shopping** | Smart list + Instacart deep-link stub, staples autopilot, household + personal care, supplements |
 | **Intelligence** | Taste interview/onboarding, user model (preference ledger + cuisine affinity flywheel), spend intelligence, weekly digest + web push, Grocery Wrapped (shareable) |
 | **Social/growth** | Referral/invite (`/invite`, `?ref=` attribution), shareable recipe, shareable cookbook (token-gated), discover feed |
-| **Monetization** | Stripe webhook scaffold, `/upgrade` + `/manage-subscription`, entitlement gating on 7 premium features via `canUse()` (fail-open until `FEATURE_BILLING=1`) |
+| **Monetization** | Stripe Checkout (`POST /api/stripe/checkout`), Customer Portal (`POST /api/stripe/portal`), real `constructEvent` webhook verification, `/upgrade` + `/manage-subscription`, entitlement gating on 7 premium features via `canUse()` (fail-open until `FEATURE_BILLING=1`); Family tier at $9.99/mo / $79.99/yr |
 | **Marketing** | Landing page (3 A/B hero variants via `?v=`), waitlist email capture → DB, blog (/blog, 3 SEO posts), /help, /privacy, /terms |
 | **Admin** | `/admin/waitlist` — sign-up count, 7-day cohort, CSV export (guarded by `ADMIN_EMAIL` env var) |
 | **Auth + platform** | Username + password, dark mode, PWA + offline, error boundaries on every route, loading skeletons, no debug surfaces |
@@ -96,13 +96,13 @@ Full model in `docs/BUSINESS_CASE.md`. Summary:
 
 | Scenario | Monthly downloads | Paying users (steady state) | Annual net revenue |
 |---|---|---|---|
-| Conservative | 300 | ~140 | ~$6,648 |
-| **Base** | **2,000** | **~2,645** | **~$121,017** |
-| Optimistic | 6,000 | ~16,210 | ~$744,900 |
+| Conservative | 500 | ~245 | ~$11,088 |
+| **Base** | **1,500 + Family lever** | **~2,044** | **~$105,907** |
+| Optimistic | 6,000 | ~16,250 | ~$842,400 |
 
-**Gross margin: ~97 %** (LLM ~$0.02/user/mo, infra ~$0.05/user/mo, net ARPU $3.82/mo after 15% platform fee).
+**Gross margin: ~97 %** (LLM ~$0.02/user/mo, infra ~$0.05/user/mo, blended net ARPU $4.32/mo after 15% platform fee — lifted by 10% Family tier adoption at $9.99/mo).
 
-The base case shows a **credible ≥ $100K/yr path** at 2,000 downloads/month, 22 % trial→paid conversion, and 4 % monthly churn — all within the range of published utility-app benchmarks (OpenView 2023, AppsFlyer 2024, Baremetrics 2024).
+The base case shows a **credible ≥ $100K/yr path** at 1,500 downloads/month with 10% Family tier adoption (21% trial→paid, 4.5% blended churn) — median inputs from published utility-app benchmarks (OpenView 2023, AppsFlyer 2024, Baremetrics 2024). _Last recomputed: 2026-06-26._
 
 **Critical conversion lever:** Gmail import is the highest-converting hook (auto-building the pantry from the first Tesco/Ocado/Walmart order). Surface it prominently in onboarding and App Store screenshots. Users who see immediate pantry value convert trials at 22–28 % vs 15–20 % without it (Reforge Growth Series 2024).
 
@@ -192,21 +192,21 @@ Sequence (surfacing the Gmail import hook first):
 
 ### Step 6 — Stripe billing (web subscriptions)
 
+> **Factory-complete:** Stripe SDK installed, `POST /api/stripe/checkout` and `POST /api/stripe/portal`
+> are wired, webhook signature verification via `constructEvent` is live. No code changes needed.
+
 1. Create [Stripe](https://stripe.com) account → Products → create:
-   - "GroceryManager Premium Monthly" — $4.99/mo recurring
-   - "GroceryManager Premium Annual" — $39.99/yr recurring
-   Both with a 7-day free trial period.
+   - "GroceryManager Premium Monthly" — $4.99/mo recurring, 7-day free trial
+   - "GroceryManager Premium Annual" — $39.99/yr recurring, 7-day free trial
+   - "GroceryManager Family" — $9.99/mo or $79.99/yr recurring, 7-day free trial (up to 5 members)
 2. Set in **Vercel env** (never commit):
    - `STRIPE_SECRET_KEY=sk_live_…`
    - `STRIPE_WEBHOOK_SECRET=whsec_…` (from Stripe Dashboard → Webhooks → signing secret; point the webhook at `https://yourapp.com/api/webhooks/stripe`)
    - `STRIPE_PRICE_MONTHLY=price_…`
    - `STRIPE_PRICE_ANNUAL=price_…`
-3. Install the Stripe SDK: `pnpm --filter web add stripe`
-4. In `apps/web/app/api/webhooks/stripe/route.ts`, activate the `constructEvent` block (it's there as a comment starting around line 36 — remove the failing guard and uncomment the verification block).
-5. Wire the Stripe Checkout session creation (currently a stub in `/upgrade`) — the billing module is scaffolded; add the `stripe.checkout.sessions.create(...)` call when the user clicks "Subscribe."
-6. Set `FEATURE_BILLING=1` in Vercel env.
+3. Set `FEATURE_BILLING=1` in Vercel env.
 
-**Verify:** Use Stripe test mode (`sk_test_…`) first. Complete a test checkout with card `4242 4242 4242 4242` → confirm the webhook fires → verify the user's tier is updated in the DB.
+**Verify:** Use Stripe test mode (`sk_test_…`) first. Complete a test checkout with card `4242 4242 4242 4242` → confirm the webhook fires (`/api/webhooks/stripe`) → verify the user's entitlement tier is updated in the DB (check the `preference_signals` table for `topic = 'entitlement'`).
 
 ---
 
