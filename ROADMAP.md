@@ -313,7 +313,9 @@ missing, and do not add scope after Done.
 - [x] Track A complete — web app at paid quality, **live eval suite passes**.
 - [x] Track B complete — native Expo app at full parity (not a wrapper), mobile CI green, push +
       offline behavior code complete (only Human-Core keys/IDs pending).
-- [x] Track C complete — subscription + entitlement gating in code (live keys pending in Human Core).
+- [ ] Track C complete — subscription + entitlement gating in code (live keys pending in Human Core).
+      _(UN-TICKED 2026-06-26: Stripe Checkout is a STUB — `checkout.sessions.create` exists nowhere, so
+      the app cannot take payment. The CHARGE path is code the loop must build, not Human-Core. Not done.)_
 - [x] Track D complete — account deletion, privacy/terms, disclosures, stability. _(Store-asset SPEC
       done; rendered image files committed — icon-1024/512/192.png, adaptive-icon.png,
       feature-graphic.png. Device screenshots are Human Core — see docs/store/store-assets-spec.md.)_
@@ -332,8 +334,11 @@ missing, and do not add scope after Done.
       Review Guidelines + Google Play policies (fetch them via web research), record findings in
       `docs/store/ACCEPTANCE_AUDIT.md`, and resolve every issue you can control. High confidence both
       stores would accept.
-- [x] **Business case** (`docs/BUSINESS_CASE.md`) — a LIVING, HONEST, research-grounded model of
-      whether ≥ $100K/yr is achievable. Keep it current as the product + analytics evolve. It MUST have:
+- [ ] **Business case** (`docs/BUSINESS_CASE.md`) — a LIVING, HONEST, research-grounded model of
+      whether ≥ $100K/yr is achievable. Keep it current as the product + analytics evolve. _(UN-TICKED
+      2026-06-26: never recomputed to MEDIAN inputs — still the optimistic $121K base with
+      floor_met_year1: true; honest median is ~$85–98K, borderline. Re-anchor to median + build levers.)_
+      It MUST have:
       - **Bottom-up model:** `paying_users × price × 12 − churn/refunds/fees`, with the FULL funnel
         spelled out (traffic → signup% → free→paid%), not vibes.
       - **Research-grounded inputs (cited, never invented):** pull category pricing, typical freemium
@@ -395,9 +400,11 @@ missing, and do not add scope after Done.
         product + marketing + quality are 100% and the business case shows a strong, maximized, credible
         path (floor ≥ $100K). Continuous revenue optimization with real post-launch data is the OWNER's
         job after launch — not a reason to never ship.
-- [x] **Self-run pre-submission checklist passes** — no broken flows, no leaked secrets, full gate +
+- [ ] **Self-run pre-submission checklist passes** — no broken flows, no leaked secrets, full gate +
       evals green, no debug surfaces, every owner-required step captured in PENDING_OPS / handoff.
-- [x] **Confidence statement** — you can honestly write, in the handoff doc: *the product is complete
+      _(UN-TICKED 2026-06-26: billing path is broken — Checkout stub means the core "subscribe" flow
+      does not work end-to-end.)_
+- [ ] **Confidence statement** — you can honestly write, in the handoff doc: *the product is complete
       and store-acceptable with high confidence; the business case shows a credible ≥ $100K/yr path at
       a healthy per-user margin; and everything buildable to maximize those odds is done.* If you
       cannot write that truthfully, you are NOT done — keep building (or building the revenue levers).
