@@ -10,7 +10,7 @@
 // Subscription tiers
 // ---------------------------------------------------------------------------
 
-export type SubscriptionTier = "free" | "premium_monthly" | "premium_annual";
+export type SubscriptionTier = "free" | "premium_monthly" | "premium_annual" | "premium_family";
 
 export interface SubscriptionPlan {
   tier: SubscriptionTier;
@@ -58,6 +58,20 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     features: [
       "Everything in Premium Monthly",
       "save ~33% vs monthly",
+    ],
+  },
+  {
+    tier: "premium_family",
+    label: "Family",
+    priceMonthCents: 999,
+    priceAnnualCents: 7999,
+    trialDays: 7,
+    features: [
+      "Everything in Premium",
+      "Up to 5 household members",
+      "Shared pantry & shopping list",
+      "Separate profiles per member",
+      "Best rate for families",
     ],
   },
 ];
@@ -134,6 +148,7 @@ export function getCurrentSubscriptionTier(
   signals: { topic: string; value: string | null }[],
 ): SubscriptionTier {
   const tierSignal = signals.find((s) => s.topic === "subscription_tier");
+  if (tierSignal?.value === "premium_family") return "premium_family";
   if (tierSignal?.value === "premium_annual") return "premium_annual";
   if (tierSignal?.value === "premium_monthly") return "premium_monthly";
   // Fall back to the coarser `entitlement` signal (legacy / trial)
