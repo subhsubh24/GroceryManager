@@ -31,11 +31,11 @@ export async function POST(req: Request) {
   }
 
   // Parse request body
-  let plan: "monthly" | "annual";
+  let plan: "monthly" | "annual" | "family";
   try {
     const body = (await req.json()) as { plan?: unknown };
-    if (body.plan !== "monthly" && body.plan !== "annual") {
-      return Response.json({ error: "plan must be 'monthly' or 'annual'" }, { status: 400 });
+    if (body.plan !== "monthly" && body.plan !== "annual" && body.plan !== "family") {
+      return Response.json({ error: "plan must be 'monthly', 'annual', or 'family'" }, { status: 400 });
     }
     plan = body.plan;
   } catch {
@@ -46,11 +46,14 @@ export async function POST(req: Request) {
   const priceId =
     plan === "annual"
       ? process.env.STRIPE_PRICE_ANNUAL
-      : process.env.STRIPE_PRICE_MONTHLY;
+      : plan === "family"
+        ? process.env.STRIPE_PRICE_FAMILY
+        : process.env.STRIPE_PRICE_MONTHLY;
 
   if (!priceId) {
+    const envKey = plan === "annual" ? "STRIPE_PRICE_ANNUAL" : plan === "family" ? "STRIPE_PRICE_FAMILY" : "STRIPE_PRICE_MONTHLY";
     return Response.json(
-      { error: `No price configured for plan "${plan}" — set STRIPE_PRICE_${plan.toUpperCase()}` },
+      { error: `No price configured for plan "${plan}" — set ${envKey}` },
       { status: 503 },
     );
   }

@@ -9,6 +9,7 @@
  *   2. STRIPE_WEBHOOK_SECRET  — whsec_… from Stripe Dashboard → Webhooks → signing secret
  *   3. STRIPE_PRICE_MONTHLY   — price_… for the $4.99/mo product
  *   4. STRIPE_PRICE_ANNUAL    — price_… for the $39.99/yr product
+ *   5. STRIPE_PRICE_FAMILY    — price_… for the $9.99/mo Family plan (up to 5 members)
  *   5. On the Checkout Session, include metadata: { userId: "<db user id>" }
  *      so this handler can map Stripe events back to app users.
  *
@@ -80,11 +81,13 @@ export async function POST(req: Request) {
       ) {
         const isActive = sub.status === "active" || sub.status === "trialing";
 
-        // Determine annual vs monthly from the price ID on the first subscription item
+        // Determine tier from the price ID on the first subscription item
         const priceId = sub.items?.data?.[0]?.price?.id;
-        let tier: "premium_annual" | "premium_monthly" | null = null;
+        let tier: "premium_annual" | "premium_monthly" | "premium_family" | null = null;
         if (isActive) {
-          if (env.STRIPE_PRICE_ANNUAL && priceId === env.STRIPE_PRICE_ANNUAL) {
+          if (env.STRIPE_PRICE_FAMILY && priceId === env.STRIPE_PRICE_FAMILY) {
+            tier = "premium_family";
+          } else if (env.STRIPE_PRICE_ANNUAL && priceId === env.STRIPE_PRICE_ANNUAL) {
             tier = "premium_annual";
           } else {
             tier = "premium_monthly";

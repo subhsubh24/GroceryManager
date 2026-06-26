@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export function CheckoutButton({ plan, label }: { plan: "monthly" | "annual"; label: string }) {
+export function CheckoutButton({ plan, label }: { plan: "monthly" | "annual" | "family"; label: string }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
