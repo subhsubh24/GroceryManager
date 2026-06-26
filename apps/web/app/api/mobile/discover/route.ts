@@ -42,7 +42,7 @@ export async function GET(req: Request) {
 
     const billingOn = process.env.FEATURE_BILLING === "1";
     if (!canUse("discover", isPremium(signals), billingOn)) {
-      return Response.json({ error: "Premium required for Discover" }, { status: 403 });
+      return Response.json({ upgradeRequired: true });
     }
 
     const inStock = pantry.filter(
