@@ -28,6 +28,13 @@ OWNER_ACTIONS:
       why: The Growth Agent stays in honest "prepare only" mode until you connect your own authorized channels (social API token, email provider, analytics). No execution happens without this.
       how: Connect your own accounts/keys to the deployed app's growth settings (server-side). The agent's daily report lists the exact keys it needs. NEVER hands the agent live secrets — the deployed app sends.
       blocks: growth-execution
+    - id: rotate-envl-secrets
+      title: Confirm .envl secrets are safe (GitHub push protection blocked a commit containing them)
+      priority: high
+      status: open
+      why: A local .envl held a real GCP API key + Google OAuth client id/secret and was almost committed; GitHub push protection blocked it so it was NOT published. It is now gitignored. Rotate as a precaution if it was ever pushed/shared elsewhere.
+      how: Keep .envl local-only (now in .gitignore). If in any doubt, rotate the GCP key + Google OAuth secret and update Vercel env. Verify no secret ever landed on origin.
+      blocks: launch-safety
     - id: ci-workflow-scope
       title: Add lint + E2E steps to CI (requires `workflow` scope — human only)
       priority: normal
