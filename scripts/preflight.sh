@@ -185,6 +185,14 @@ else
   fail "PENDING_OPS.md: missing or empty"
 fi
 
+# ── Billing actually wired (subscription must be able to charge) ──
+section "Billing — Stripe Checkout wired (not a stub)"
+if grep -rq "checkout\.sessions\.create" "$ROOT/apps/web" "$ROOT/packages/core" 2>/dev/null; then
+  pass "billing: Stripe Checkout session creation is wired"
+else
+  fail "billing: Stripe Checkout is a STUB — checkout.sessions.create not found; the app cannot charge anyone (Track C not done)"
+fi
+
 # ── Definition-of-Done checkboxes all ticked (the source of truth) ──
 section "Definition of Done — every box ticked"
 DOD_SECTION="$(awk '/^## DEFINITION OF DONE/{f=1;next} /^## /{if(f)f=0} f' ROADMAP.md)"
