@@ -24,6 +24,19 @@ import { signalFromCooked } from "../personalization/user-model.js";
 import { UnitConverter, type Dimension } from "../units/index.js";
 import { planConsumption, type BaseQtyResolver, type ConsumeIngredient } from "./consume.js";
 
+/** Maximum plausible values for a single meal — guards against LLM hallucinations. */
+const MACRO_MAX = { kcal: 10_000, macroG: 500 } as const;
+
+export function clampMacros(m: import("../nutrition/types.js").MealMacros): import("../nutrition/types.js").MealMacros {
+  return {
+    ...m,
+    kcal: Math.max(0, Math.min(m.kcal, MACRO_MAX.kcal)),
+    proteinG: Math.max(0, Math.min(m.proteinG, MACRO_MAX.macroG)),
+    carbsG: Math.max(0, Math.min(m.carbsG, MACRO_MAX.macroG)),
+    fatG: Math.max(0, Math.min(m.fatG, MACRO_MAX.macroG)),
+  };
+}
+
 export interface CookRecipeInput {
   /** Pre-resolved recipe row id (persisted/imported recipes) — skips the provider upsert. */
   recipeId?: string;
@@ -122,7 +135,9 @@ export async function logCook(
   const plan = planConsumption(recipe.ingredients, pantry, { servingsScale: servings, resolveBaseQty });
 
   // 4. MealLog. Store macros when the caller computed them (best-effort); else leave the columns null.
-  const macros = opts.macros;
+  // Clamp to physiologically plausible bounds before persisting — an LLM hallucination returning
+  // 99999 kcal or negative protein would corrupt Wrapped + macro analytics.
+  const macros = opts.macros ? clampMacros(opts.macros) : undefined;
   const [meal] = await db
     .insert(mealLogs)
     .values({
