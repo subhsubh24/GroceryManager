@@ -158,21 +158,18 @@ pnpm --filter @gm/db db:migrate
 
 ---
 
-### Step 4 — Export icon PNG
+### Step 4 — Icon PNG ✅ DONE — no owner action needed
 
-1. Open `apps/web/public/icons/icon.svg` in Figma (File → Import) or any SVG editor.
-2. Export:
-   - `icon-1024.png` (1024×1024, no alpha, RGB) → App Store Connect + EAS
-   - `icon-512.png` (512×512) → Google Play
-   - `icon-192.png` (192×192) → PWA
-3. Save `apps/mobile/assets/icon.png` as a copy of `icon-1024.png`.
-4. Update `apps/mobile/app.json`:
-   ```json
-   "icon": "./assets/icon.png"
-   ```
-5. Add PNG entries to `apps/web/public/manifest.webmanifest` alongside the existing SVG entry.
+Icon PNGs were generated and committed in PR #112 (2026-06-25) via `scripts/generate-store-assets.mjs`:
 
-**Verify:** `eas build` picks up the icon. App Store Connect icon upload accepts the PNG.
+- `apps/web/public/icons/icon-1024.png` (1024×1024, opaque RGB) — App Store Connect + EAS
+- `apps/web/public/icons/icon-512.png` (512×512) — Google Play
+- `apps/web/public/icons/icon-192.png` (192×192) — PWA
+- `apps/mobile/assets/icon.png` (copy of icon-1024.png) — EAS build input
+- `apps/mobile/assets/adaptive-icon.png` — Android adaptive foreground layer
+- `apps/mobile/app.json` already has `"icon": "./assets/icon.png"` wired
+
+**Verify:** `ls -lh apps/web/public/icons/icon-*.png apps/mobile/assets/icon.png` — all present.
 
 ---
 
