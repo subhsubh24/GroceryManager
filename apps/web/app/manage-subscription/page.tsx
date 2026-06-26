@@ -9,6 +9,7 @@ import {
 import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
 import { Star, Check, ChevronRight } from "@/app/components/icons";
+import { PortalButton } from "./portal-button";
 
 export const dynamic = "force-dynamic";
 
@@ -132,19 +133,27 @@ export default async function ManageSubscriptionPage() {
             Update payment method, download invoices, or cancel your plan through the Stripe
             customer portal.
           </p>
-          <button
-            type="button"
-            disabled
-            title="Stripe customer portal — wire up STRIPE_SECRET_KEY to enable"
-            className="btn-secondary mt-4 w-full cursor-not-allowed opacity-60"
-          >
-            Open billing portal
-          </button>
-          <p className="field-hint mt-2">
-            The portal opens once{" "}
-            <code className="rounded bg-ink-100 px-1 py-0.5 text-xs">STRIPE_SECRET_KEY</code> is
-            configured.
-          </p>
+          {billingOn ? (
+            <div className="mt-4">
+              <PortalButton />
+            </div>
+          ) : (
+            <>
+              <button
+                type="button"
+                disabled
+                title="Stripe customer portal — wire up STRIPE_SECRET_KEY to enable"
+                className="btn-secondary mt-4 w-full cursor-not-allowed opacity-60"
+              >
+                Open billing portal
+              </button>
+              <p className="field-hint mt-2">
+                The portal opens once{" "}
+                <code className="rounded bg-ink-100 px-1 py-0.5 text-xs">STRIPE_SECRET_KEY</code>{" "}
+                is configured.
+              </p>
+            </>
+          )}
         </section>
       )}
 

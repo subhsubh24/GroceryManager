@@ -4,10 +4,15 @@ import { currentUserId } from "@/app/lib/tenant";
 import { PageHeader } from "@/app/components/page-header";
 import { Check, Star } from "@/app/components/icons";
 import { PreviewButton } from "./preview-button";
+import { CheckoutButton } from "./checkout-button";
 
 export const dynamic = "force-dynamic";
 
-export default async function UpgradePage() {
+export default async function UpgradePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ success?: string; canceled?: string }>;
+}) {
   // FEATURE_BILLING is an optional flag (default off). Off → premium is "in preview" and free.
   const billingOn = process.env.FEATURE_BILLING === "1";
 
@@ -22,6 +27,10 @@ export default async function UpgradePage() {
     premium = false;
   }
 
+  const params = await searchParams;
+  const success = params.success === "1";
+  const canceled = params.canceled === "1";
+
   return (
     <main className="page">
       <PageHeader
@@ -32,13 +41,25 @@ export default async function UpgradePage() {
         subtitle="Unlock the AI planner, unlimited Discover, and recipe remix — and support the app."
       />
 
-      {!billingOn && (
+      {success && (
+        <p className="notice-ok mt-6 flex items-center gap-1.5">
+          <Check className="h-4 w-4 shrink-0" strokeWidth={2} /> Welcome to Premium! Your
+          subscription is active — full access is unlocked.
+        </p>
+      )}
+      {canceled && !success && (
+        <p className="notice-info mt-6">
+          Checkout canceled — no charge was made. You can upgrade whenever you&apos;re ready.
+        </p>
+      )}
+
+      {!billingOn && !success && (
         <p className="notice-info mt-6">
           Premium is in preview — everything is currently free. Billing turns on once Stripe is
           connected.
         </p>
       )}
-      {premium && (
+      {premium && !success && (
         <p className="notice-ok mt-6 flex items-center gap-1.5">
           <Check className="h-4 w-4 shrink-0" strokeWidth={2} /> You&apos;re Premium — thanks for the
           support. You have full access.
@@ -55,22 +76,62 @@ export default async function UpgradePage() {
       </div>
 
       {!premium && (
-        <section className="card-pad mt-6">
-          <button
-            type="button"
-            disabled
-            title="Billing isn't wired yet — connect Stripe to enable"
-            className="btn-primary cursor-not-allowed opacity-60"
-          >
-            Upgrade — connect Stripe to enable
-          </button>
-          <p className="field-hint mt-2">
-            Payments aren&apos;t wired up yet (no Stripe keys). For testing the gated experience, use
-            the developer preview below.
-          </p>
-          <div className="mt-3">
-            <PreviewButton />
+        <section className="mt-6">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Monthly card */}
+            <div className="card-pad">
+              <p className="font-semibold">Premium Monthly</p>
+              <p className="mt-1 text-2xl font-bold tracking-tight">
+                $4.99
+                <span className="text-sm font-normal text-ink-500"> / month</span>
+              </p>
+              <p className="mt-0.5 text-sm text-ink-400">7-day free trial</p>
+              {billingOn ? (
+                <div className="mt-4">
+                  <CheckoutButton plan="monthly" label="Start free trial" />
+                </div>
+              ) : (
+                <button
+                  disabled
+                  className="btn-primary mt-4 w-full cursor-not-allowed opacity-60"
+                >
+                  Coming soon
+                </button>
+              )}
+            </div>
+            {/* Annual card */}
+            <div className="card-pad">
+              <div className="flex items-start justify-between">
+                <p className="font-semibold">Premium Annual</p>
+                <span className="rounded-full bg-ok/10 px-2 py-0.5 text-xs font-medium text-ok">
+                  Save ~33%
+                </span>
+              </div>
+              <p className="mt-1 text-2xl font-bold tracking-tight">
+                $39.99
+                <span className="text-sm font-normal text-ink-500"> / year</span>
+              </p>
+              <p className="mt-0.5 text-sm text-ink-400">7-day free trial</p>
+              {billingOn ? (
+                <div className="mt-4">
+                  <CheckoutButton plan="annual" label="Start free trial" />
+                </div>
+              ) : (
+                <button
+                  disabled
+                  className="btn-primary mt-4 w-full cursor-not-allowed opacity-60"
+                >
+                  Coming soon
+                </button>
+              )}
+            </div>
           </div>
+          {!billingOn && (
+            <div className="mt-4">
+              <p className="field-hint">For testing the premium experience:</p>
+              <PreviewButton />
+            </div>
+          )}
         </section>
       )}
     </main>
