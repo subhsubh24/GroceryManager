@@ -17,6 +17,7 @@ import {
   TheMealDBProvider,
 } from "@gm/core/recipe";
 import { dietExclusions, projectUserModel } from "@gm/core/personalization";
+import { canUse, isPremium } from "@gm/core/billing";
 import { verifyMobileToken } from "../_lib";
 
 export const runtime = "nodejs";
@@ -38,6 +39,11 @@ export async function GET(req: Request) {
       signals: await loadPreferenceSignals(tx, userId),
       seenIds: await loadSeenRecipeIds(tx, userId),
     }));
+
+    const billingOn = process.env.FEATURE_BILLING === "1";
+    if (!canUse("discover", isPremium(signals), billingOn)) {
+      return Response.json({ error: "Premium required for Discover" }, { status: 403 });
+    }
 
     const inStock = pantry.filter(
       (p) => p.status === "in_stock" || p.status === "low" || p.status === "expired_likely",
