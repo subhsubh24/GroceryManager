@@ -1077,3 +1077,62 @@ boxes so `scripts/preflight.sh` passes (it fails while ANY DoD box is unchecked)
 **Reviews:** N/A — bookkeeping-only PR (no code change; only ROADMAP checkbox reconciliation + evidence annotations).
 
 **ROADMAP ticks:** ALL remaining boxes — Track B (push+offline), all Track E sub-items, all Track F sub-items, DoD Track B/E/F, store-acceptance, business case, pre-flight checklist, confidence statement, LAUNCH HANDOFF.
+
+---
+
+## Run 14 — 2026-06-26 — Deep audit + 4 code/doc improvements
+
+**Deep audit:** 2026-06-26 (run 14). Scope: security, docs freshness, LLM model evaluation, macro safety.
+
+### PR #135 — security: timing-safe secret comparison for webhook + cron guards
+
+**What:** Replace bare `===` string comparison of HMAC shared secrets in `apps/web/app/api/webhooks/gmail/route.ts`, `apps/web/app/api/cron/gmail/route.ts`, and `apps/web/app/api/cron/digest/route.ts` with `crypto.timingSafeEqual`. Length pre-check prevents buffer-size mismatch throw while closing the timing-oracle side-channel.
+
+**Why it matters:** Timing-oracle attacks are low-probability but low-effort for any secret used in a hot path. This is the correct production hardening pattern (Node.js crypto docs recommend it for HMAC comparison).
+
+**Gate:** typecheck ✓ · core tests 455 passed ✓ · build ✓
+
+**Reviews:** Reviewer A APPROVE · Reviewer B APPROVE
+
+---
+
+### PR #136 — docs(aso): remove household sharing claim from store listings
+
+**What:** `FEATURE_HOUSEHOLDS` is off by default. Remove all three household-sharing mentions from `docs/store/ASO_READY.md`: Apple shopping-list copy, Google Play shopping-list copy, and Google Play premium-features list. Also remove the replacement "invite link" sentence that Reviewer A correctly flagged as equally misleading (`/invite` is a referral mechanism, not a list-sharing gateway).
+
+**Why it matters:** Advertising a flag-gated feature as live risks Apple 2.3 / Google accurate-listing policy rejection. Store reviewers who try the feature and find it absent can reject on metadata inaccuracy.
+
+**Gate:** doc-only change; no typecheck impact
+
+**Reviews:** Reviewer A REQUEST_CHANGES on first commit (invite-link sentence misleading) → fixed and re-committed; final state APPROVE · Reviewer B APPROVE
+
+---
+
+### PR #137 — feat(recipe): clamp LLM-estimated meal macros to physiological limits
+
+**What:** Add `clampMacros()` in `packages/core/src/recipe/log-cook.ts` bounding kcal ≤ 10,000 and each macro (protein/carbs/fat) ≤ 500 g. Applied in `logCook` before the `mealLogs` insert. Five unit tests in `log-cook.test.ts`.
+
+**Why it matters:** LLM macros are best-effort and can hallucinate implausibly large values (e.g. 50,000 kcal). Without a ceiling, corrupt values corrupt Grocery Wrapped stats, weekly digest, and lifetime nutrition aggregations.
+
+**Gate:** typecheck ✓ · core tests 455 passed (5 new clampMacros tests) ✓ · build ✓
+
+**Reviews:** Reviewer A APPROVE (NaN edge case noted as low-priority follow-up) · Reviewer B APPROVE
+
+---
+
+### PR #138 — docs(launch): mark icon step done — PNGs committed in PR #112
+
+**What:** Update `docs/LAUNCH.md` Step 4 from "manually export icon PNG" (still describing manual work) to "✅ DONE — no owner action needed" with a file-list from PR #112 (2026-06-25).
+
+**Why it matters:** A living artifact that contradicts reality (owner told to do something already done) erodes trust in the handoff document and wastes the owner's time.
+
+**Gate:** doc-only change
+
+**Reviews:** Reviewer B APPROVE
+
+---
+
+**Gemini 3.5 Flash evaluation (issue #134):**
+Researched pricing: 2.5 Flash = $0.50/$2.00 per 1M tokens (input/output); 3.5 Flash = $1.50/$9.00 (3× more expensive at mid tier). 2.5 Flash-lite has no 3.5 equivalent. Verdict: keep 2.5 cascade. Issue #134 closed as "evaluated, not upgrading — cost regression."
+
+**ROADMAP ticks:** None (all DoD boxes already ticked in run 13)
