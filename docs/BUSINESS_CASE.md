@@ -7,7 +7,7 @@ arr_year1:
   optimistic: 842400
 planning_case: base
 floor_usd: 100000
-floor_met_year1: true   # median base WITH Family tier lever (10% adoption); without lever: ~$87K
+floor_met_year1: true   # median base WITH Family tier lever (10% adoption); without lever: ~$89K
 time_to_floor: "n/a — median base with Family tier lever clears the $100K floor (see §4)"
 as_of: 2026-06-26
 ```
@@ -19,7 +19,7 @@ as_of: 2026-06-26
 
 > Stamp: last recomputed 2026-06-26 — inputs anchored to median industry benchmarks; Family tier
 > added; base scenario uses median WITH the built Family-tier lever (10% adoption → $106K/yr).
-> Median WITHOUT the lever documented as a sub-scenario (~$87K/yr, below floor).
+> Median WITHOUT the lever documented as a sub-scenario (~$89K/yr, below floor).
 
 > This is a bottom-up financial model against the goal of ≥ $100 K/yr net revenue. All inputs are
 > cited or derived from first-principles code inspection; none are invented. The model is honest
