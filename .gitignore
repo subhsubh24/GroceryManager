@@ -35,3 +35,7 @@ coverage/
 
 # claude code agent worktrees (transient, harness-managed)
 .claude/worktrees/
+
+# local-only secrets / config (never commit)
+.envl
+.mcp.json

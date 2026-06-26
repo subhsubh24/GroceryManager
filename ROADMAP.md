@@ -448,6 +448,16 @@ missing, and do not add scope after Done.
         is recomputed; a block that disagrees with the body is a BUG. Real, researched numbers only
         (anti-gaming). If the honest base case is below $100K, set `floor_met_year1: false` + a
         `time_to_floor` note and BUILD the levers to lift it.
+      - **DASHBOARD FEEDS (three sibling machine-readable blocks, all kept in sync + parseable).** The
+        owner's factory dashboard reads three fenced YAML blocks — keep all three valid (preflight fails
+        on any malformed one) and honest (real data / null only): (1) `BUSINESS_CASE_SUMMARY` in
+        `docs/BUSINESS_CASE.md` (revenue projection); (2) `GROWTH_STATUS` in `docs/growth/GROWTH_STATUS.md`
+        (growth/marketing telemetry — funnel, leads, experiments, learnings; **owned + updated every run by
+        the Growth Agent**, phase-aware pre_launch→launching→post_launch); (3) `OWNER_ACTIONS` in
+        `PENDING_OPS.md` (the dashboard-readable owner to-do list). All three use the SAME cross-project
+        shape across AptDesignerAI / HighlightMagic / GroceryManager so the dashboard compares them
+        side-by-side. Post-launch, `GROWTH_STATUS` is where real conversion/retention/CAC data lands and
+        compounds into better strategy — keep its `learnings` + `experiments` richest there.
       - **MAXIMIZE revenue — $100K is the FLOOR, not the target.** Do NOT settle once the base case
         clears $100K. Build toward the OPTIMISTIC scenario by pushing these levers to their
         **defensible maximum**, each as first-class value-bar-clearing work — every number still

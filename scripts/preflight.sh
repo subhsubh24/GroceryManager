@@ -150,6 +150,59 @@ else
   fail "BUSINESS_CASE_SUMMARY: block is missing or UNPARSEABLE — dashboard can't read it (fix the YAML)"
 fi
 
+# The GROWTH_STATUS block (Growth Agent's growth/marketing telemetry) MUST parse — same dashboard contract.
+GS="$ROOT/docs/growth/GROWTH_STATUS.md"
+if python3 - "$GS" <<'PY'
+import sys, re, yaml
+try:
+    txt = open(sys.argv[1]).read()
+except OSError:
+    print("docs/growth/GROWTH_STATUS.md missing"); sys.exit(1)
+m = re.search(r"```ya?ml\s*\n(.*?GROWTH_STATUS.*?)\n```", txt, re.S)
+if not m:
+    print("no GROWTH_STATUS fenced block found"); sys.exit(1)
+try:
+    d = yaml.safe_load(m.group(1)).get("GROWTH_STATUS") or {}
+except Exception as e:
+    print("block is UNPARSEABLE YAML:", e); sys.exit(1)
+if d.get("phase") not in ("pre_launch", "launching", "post_launch"):
+    print("phase must be pre_launch|launching|post_launch"); sys.exit(1)
+if not isinstance(d.get("funnel"), dict):
+    print("missing funnel"); sys.exit(1)
+print("ok phase =", d["phase"])
+PY
+then
+  pass "GROWTH_STATUS: valid, parseable YAML block (dashboard-readable)"
+else
+  fail "GROWTH_STATUS: block is missing or UNPARSEABLE — dashboard can't read growth progress (fix the YAML)"
+fi
+
+# The OWNER_ACTIONS block (dashboard-readable owner to-do list) MUST parse.
+if python3 - "$ROOT/PENDING_OPS.md" <<'PY'
+import sys, re, yaml
+txt = open(sys.argv[1]).read()
+m = re.search(r"```ya?ml\s*\n(.*?OWNER_ACTIONS.*?)\n```", txt, re.S)
+if not m:
+    print("no OWNER_ACTIONS fenced block found"); sys.exit(1)
+try:
+    d = yaml.safe_load(m.group(1)).get("OWNER_ACTIONS") or {}
+except Exception as e:
+    print("block is UNPARSEABLE YAML:", e); sys.exit(1)
+if not isinstance(d.get("items"), list):
+    print("OWNER_ACTIONS.items must be a list"); sys.exit(1)
+for it in d["items"]:
+    if it.get("status") not in ("open", "in_progress", "done"):
+        print("bad status on", it.get("id")); sys.exit(1)
+    if it.get("priority") not in ("urgent", "high", "normal"):
+        print("bad priority on", it.get("id")); sys.exit(1)
+print("ok", len(d["items"]), "owner actions")
+PY
+then
+  pass "OWNER_ACTIONS: valid, parseable YAML block (dashboard-readable)"
+else
+  fail "OWNER_ACTIONS: block is missing or UNPARSEABLE — dashboard can't read owner action items (fix the YAML)"
+fi
+
 # ── 8. Track E: marketing routes in build ────────────────
 section "8. Track E — marketing routes"
 for route in "/blog" "/help" "/privacy" "/terms" "/sitemap.xml" "/invite" "/discover"; do

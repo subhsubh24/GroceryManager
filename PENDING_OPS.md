@@ -3,6 +3,47 @@
 Migrations, env-var additions, or infra changes that need to be applied at deploy time.
 The autonomous loop appends here when a code change requires a manual step at deploy.
 
+The machine-readable `OWNER_ACTIONS` block below is the **dashboard-readable** list of things that
+need the human owner (the factory + Growth Agent keep it in sync; the prose entries further down are
+the detail). Same contract as `BUSINESS_CASE_SUMMARY` / `GROWTH_STATUS`: **valid, parseable YAML, real
+items only.** `status` is `open` | `in_progress` | `done`; `priority` is `urgent` | `high` | `normal`.
+The dashboard surfaces every `open` item, urgent first.
+
+```yaml
+OWNER_ACTIONS:
+  project: GroceryManager
+  as_of: 2026-06-26
+  items:
+    - id: spend-caps
+      title: Set HARD daily API spend caps + alerts in every provider dashboard
+      priority: urgent
+      status: open
+      why: If the app is live and calls any paid API, an abuse spike or runaway loop can run up cost. A spend cap is the only hard backstop (Track G7).
+      how: Google Cloud / Vertex Budgets; Twilio usage triggers; Stripe Radar; Anthropic Console spend limit. Regenerate any key that has been exposed.
+      blocks: launch-safety
+    - id: connect-channels
+      title: Connect + authorize marketing channels to switch the Growth Agent into execute mode
+      priority: high
+      status: open
+      why: The Growth Agent stays in honest "prepare only" mode until you connect your own authorized channels (social API token, email provider, analytics). No execution happens without this.
+      how: Connect your own accounts/keys to the deployed app's growth settings (server-side). The agent's daily report lists the exact keys it needs. NEVER hands the agent live secrets — the deployed app sends.
+      blocks: growth-execution
+    - id: ci-workflow-scope
+      title: Add lint + E2E steps to CI (requires `workflow` scope — human only)
+      priority: normal
+      status: open
+      why: The autonomous loop cannot edit .github/workflows/. Lint + E2E are merged but not wired into CI.
+      how: Add `pnpm --filter web lint` and the E2E job to .github/workflows/ci.yml (see prose entry below).
+      blocks: none
+    - id: waitlist-migration
+      title: Apply waitlist migration 0012 + set ADMIN_EMAIL
+      priority: normal
+      status: open
+      why: The in-app waitlist analytics (`/admin/waitlist`, the Growth Agent's real signup source) needs the table + admin email.
+      how: "Run `pnpm --filter @gm/db db:migrate`; set ADMIN_EMAIL in Vercel env (see prose entry below)."
+      blocks: growth-analytics
+```
+
 ---
 
 ## 2026-06-25 — Wire lint + E2E as CI checks (Track F, PRs #122 + #125)
