@@ -214,6 +214,34 @@ else
   fail "billing: Stripe Checkout is a STUB — checkout.sessions.create not found; the app cannot charge anyone (Track C not done)"
 fi
 
+# ── Track G: pre-launch security & abuse hardening (critical mechanisms present) ──
+section "Track G — security & abuse hardening (critical)"
+WEB="$ROOT/apps/web"
+# G1: rate limiting must exist somewhere (a limiter util / middleware / lib).
+if grep -rqiE "ratelimit|rate-limit|rate_limit|@upstash/ratelimit|tooManyRequests|429" "$WEB" "$ROOT/packages" 2>/dev/null; then
+  pass "G1: rate-limiting mechanism present"
+else
+  fail "G1: NO rate limiting found — paid-API/auth endpoints are a wallet-drain/abuse risk"
+fi
+# G5: bot protection on public forms (captcha / Turnstile / hCaptcha).
+if grep -rqiE "turnstile|hcaptcha|recaptcha|captcha" "$WEB" 2>/dev/null; then
+  pass "G5: captcha / bot-protection present"
+else
+  fail "G5: NO captcha/bot-protection on public forms (waitlist/signup) found"
+fi
+# G6: security headers + CORS (next.config headers() or middleware).
+if grep -rqiE "Content-Security-Policy|Strict-Transport-Security|X-Content-Type-Options|headers\(\)|X-Frame-Options" "$WEB/next.config".* "$WEB/middleware".* 2>/dev/null; then
+  pass "G6: security headers / CORS config present"
+else
+  fail "G6: NO security headers (CSP/HSTS/X-Content-Type-Options) / CORS lockdown found"
+fi
+# G7: per-user/day paid-API spend ceiling / circuit-breaker in code.
+if grep -rqiE "spend.?(cap|ceiling|limit)|usage.?(cap|limit)|circuit.?breaker|dailyLimit|quota" "$WEB" "$ROOT/packages" 2>/dev/null; then
+  pass "G7: API spend ceiling / circuit-breaker present"
+else
+  fail "G7: NO per-user/day API spend ceiling — a single abuser can run up the paid-API bill"
+fi
+
 # ── Definition-of-Done checkboxes all ticked (the source of truth) ──
 section "Definition of Done — every box ticked"
 DOD_SECTION="$(awk '/^## DEFINITION OF DONE/{f=1;next} /^## /{if(f)f=0} f' ROADMAP.md)"
