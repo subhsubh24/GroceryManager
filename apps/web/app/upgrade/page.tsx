@@ -77,7 +77,7 @@ export default async function UpgradePage({
 
       {!premium && (
         <section className="mt-6">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             {/* Monthly card */}
             <div className="card-pad">
               <p className="font-semibold">Premium Monthly</p>
@@ -115,6 +115,32 @@ export default async function UpgradePage({
               {billingOn ? (
                 <div className="mt-4">
                   <CheckoutButton plan="annual" label="Start free trial" />
+                </div>
+              ) : (
+                <button
+                  disabled
+                  className="btn-primary mt-4 w-full cursor-not-allowed opacity-60"
+                >
+                  Coming soon
+                </button>
+              )}
+            </div>
+            {/* Family card */}
+            <div className="card-pad">
+              <div className="flex items-start justify-between">
+                <p className="font-semibold">Family Plan</p>
+                <span className="rounded-full bg-ok/10 px-2 py-0.5 text-xs font-medium text-ok">
+                  Best for families
+                </span>
+              </div>
+              <p className="mt-1 text-2xl font-bold tracking-tight">
+                $9.99
+                <span className="text-sm font-normal text-ink-500"> / month</span>
+              </p>
+              <p className="mt-0.5 text-sm text-ink-400">or $79.99/yr · 7-day free trial · up to 5 members</p>
+              {billingOn ? (
+                <div className="mt-4">
+                  <CheckoutButton plan="family" label="Start free trial" />
                 </div>
               ) : (
                 <button
