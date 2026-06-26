@@ -279,6 +279,31 @@ mechanical gate, not a vibe.
 > (PR #124); F4 `apps/web/playwright.config.ts` + `e2e/smoke.spec.ts` (PR #125); F5 deep audit
 > 2026-06-25 (3 critical fixes merged, lessons in LOOP_MEMORY.md).
 
+## Track G — Pre-launch security & abuse hardening (STANDING standard)
+RLS (the `grocery_app` + `app_current_user_id()` GUC model) is **necessary but NOT sufficient.** A
+live app that calls PAID APIs and exposes PUBLIC forms is a **wallet-drain + abuse target.** This is a
+STANDING standard: **the deep-audit SECURITY lens re-checks it every cycle, Reviewer A REJECTS any
+regression, and preflight verifies the critical ones.** Build + enforce:
+- [ ] **G1. RATE LIMITING on EVERY paid-API / expensive / auth endpoint** (systemic, not case-by-case):
+      sane baseline (~100 req/min/IP unauth, ~1000/min authenticated), stricter on anything that hits a
+      paid API or auth. **Reviewer A REJECTS any new expensive/auth route without rate limiting.**
+- [ ] **G2. SERVER-SIDE VALIDATION on every write** — client-side validation is UX, not security.
+      Re-validate type/length/shape on the server; reject malformed/oversized input.
+- [ ] **G3. ERROR-MESSAGE HYGIENE** — generic user-facing errors; full context logged SERVER-SIDE only;
+      never leak schema/table/column names, stack traces, or query logic; no enumeration via error diffs.
+- [ ] **G4. AUTH FAILURE-CASE hardening + a test per case** — lockout/backoff on repeated wrong
+      passwords; password-reset does NOT reveal whether an email exists; email-verification link
+      idempotent (double-click safe); signup with an existing email does NOT leak that it's registered.
+- [ ] **G5. CAPTCHA / bot protection on public forms** (waitlist, signup, any unauth POST) — e.g.
+      Cloudflare Turnstile (keys Human-Core; the widget + server verification are loop code).
+- [ ] **G6. CORS locked down** (allowlist prod + localhost, block the rest) + **sane security headers**
+      (CSP / HSTS / X-Content-Type-Options / Referrer-Policy / X-Frame-Options) — align to OWASP basics.
+- [ ] **G7. API SPEND CEILING** — a code-level per-user/day usage cap / circuit-breaker on any paid-API
+      calls, AND a `PENDING_OPS.md` entry for the human-only step: set HARD daily caps + 50%-of-cap
+      alerts in each provider dashboard (Gemini/Vertex, Twilio, Stripe, etc.) — the loop CANNOT set those.
+> **Secrets stay server-side** (read from env, never committed). If exposure is ever suspected, record
+> a `PENDING_OPS.md` handoff to **regenerate the key immediately** (owner action).
+
 ---
 
 ## EVIDENCE-BASED DONE (no self-certification — read before ticking ANY box)
@@ -364,6 +389,12 @@ missing, and do not add scope after Done.
 - [x] Track F complete — world-class quality gates all green: F1 lint enforced (zero errors/new
       warnings), F2 coverage floor, F3 complete evals (per-stage + scheduled), F4 E2E + a11y + visual
       + performance budgets, F5 periodic deep audit running with findings worked off.
+
+**Security & abuse 100%:**
+- [ ] Track G complete — pre-launch security & abuse hardening: G1 rate limiting on every paid/expensive/
+      auth endpoint, G2 server-side validation on every write, G3 error-message hygiene, G4 auth
+      failure-case hardening (+ a test per case), G5 captcha on public forms, G6 CORS + security headers
+      (OWASP basics), G7 per-user/day API spend ceiling in code + the provider-cap handoff in PENDING_OPS.
 
 **Store-acceptance + revenue-readiness:**
 - [x] **Store-acceptance self-audit** — audit the app against the CURRENT published Apple App Store
