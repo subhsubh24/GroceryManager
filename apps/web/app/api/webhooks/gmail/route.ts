@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { loadEnv } from "@gm/config/env";
 import { getAdminDb, getDb, getUserIdByEmail } from "@gm/db";
@@ -19,7 +20,10 @@ export async function POST(req: Request) {
   const isAuthorized = (() => {
     if (!env.GMAIL_WEBHOOK_SECRET) return process.env.NODE_ENV !== "production";
     const token = new URL(req.url).searchParams.get("token");
-    return token === env.GMAIL_WEBHOOK_SECRET;
+    if (!token) return false;
+    const a = Buffer.from(token, "utf8");
+    const b = Buffer.from(env.GMAIL_WEBHOOK_SECRET, "utf8");
+    return a.length === b.length && timingSafeEqual(a, b);
   })();
   if (!isAuthorized) return new NextResponse("forbidden", { status: 403 });
 
