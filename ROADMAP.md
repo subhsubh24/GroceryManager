@@ -302,6 +302,30 @@ issue cannot be opened prematurely.) PASTE its output into the
 fails, do NOT open the issue; fix the gap and keep building. NEVER tick a box you cannot prove right
 now, and if a previously-ticked box fails its proof, UNCHECK it and fix it.
 
+**READINESS AUDIT GATE (mandatory — the loop CANNOT reach 'ready' without passing this).** Preflight is
+mechanical but shallow; the box-ticker must NOT also be the sole certifier. So when you believe the DoD
+is complete, BEFORE opening the ready issue you MUST run a **READINESS AUDIT**: spawn **≥3 fresh,
+independent auditor subagents** (Sonnet; none of them did the building — maker ≠ checker), each told:
+*"The loop claims GroceryManager is submission-ready. Your job is to PROVE IT IS NOT. Default to
+NOT-READY unless you genuinely cannot find a single real gap. Be adversarial."* Divide coverage so every
+DoD gate + readiness claim is independently re-verified, including at minimum:
+- **Functional reality** — actually exercise the critical journeys (signup → paywall → Stripe Checkout →
+  entitlement unlock; receipt → pantry; cook flow). Any **stub / TODO / placeholder / dead path** on a
+  critical path = NOT ready. "Code exists" is not "it works."
+- **Business case honesty** — are the median inputs sourced + defensible? Is ANY lever's adoption % (e.g.
+  Family-tier %) chosen merely to clear $100K rather than researched? Does the `BUSINESS_CASE_SUMMARY`
+  block match the body AND the real billing config?
+- **Artifact reality** — for EVERY ticked DoD box, the artifact genuinely exists AND functions (rendered
+  images are real images; every doc matches the current code; no contradiction).
+- **Store acceptance** — re-audit against the CURRENT Apple/Google guidelines; security/RLS; quality
+  gates (lint/coverage/evals/E2E); marketing completeness.
+A box may stay `- [x]` ONLY if an independent auditor CONFIRMS it. If ANY auditor finds a real gap →
+**UN-TICK that box, queue the fix, and do NOT open the ready issue this run.** Open `FACTORY: ready for
+submission` ONLY when **preflight passes AND all auditors independently agree there is no real gap** —
+and paste BOTH the preflight output AND the readiness-audit findings (who verified what) as evidence.
+(This gate is distinct from the daily discovery deep-audit: that one finds work; THIS one gates the
+DECLARATION. Multiple thorough audits must clear before 'ready' is even possible.)
+
 ## DEFINITION OF DONE (the 100% bar — strict)
 Done requires **ALL** of the gates below genuinely true, **each with the EVIDENCE-BASED DONE proof
 above** and the pre-flight verification passing. Only then: produce/refresh the **LAUNCH HANDOFF** doc,
