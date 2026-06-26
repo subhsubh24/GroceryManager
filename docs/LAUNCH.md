@@ -204,6 +204,7 @@ Sequence (surfacing the Gmail import hook first):
    - `STRIPE_WEBHOOK_SECRET=whsec_…` (from Stripe Dashboard → Webhooks → signing secret; point the webhook at `https://yourapp.com/api/webhooks/stripe`)
    - `STRIPE_PRICE_MONTHLY=price_…`
    - `STRIPE_PRICE_ANNUAL=price_…`
+   - `STRIPE_PRICE_FAMILY=price_…` (for the $9.99/mo Family plan, up to 5 members)
 3. Set `FEATURE_BILLING=1` in Vercel env.
 
 **Verify:** Use Stripe test mode (`sk_test_…`) first. Complete a test checkout with card `4242 4242 4242 4242` → confirm the webhook fires (`/api/webhooks/stripe`) → verify the user's entitlement tier is updated in the DB (check the `preference_signals` table for `topic = 'entitlement'`).

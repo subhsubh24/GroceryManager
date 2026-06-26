@@ -100,6 +100,7 @@ Customer Portal wired, webhook signature verification live. To go live, the owne
      (point the webhook at `https://yourapp.com/api/webhooks/stripe`)
    - `STRIPE_PRICE_MONTHLY` — `price_…` for the $4.99/mo product
    - `STRIPE_PRICE_ANNUAL` — `price_…` for the $39.99/yr product
+   - `STRIPE_PRICE_FAMILY` — `price_…` for the $9.99/mo Family plan (up to 5 members)
 3. **Set `FEATURE_BILLING=1`** in Vercel env once keys are verified.
 4. **(Mobile, later)** Create RevenueCat account → create products → set `REVENUECAT_API_KEY`.
 
