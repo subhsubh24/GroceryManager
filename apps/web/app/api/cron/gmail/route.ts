@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { loadEnv } from "@gm/config/env";
 import { getAdminDb, getDb, listGoogleUserIds, withTenant } from "@gm/db";
@@ -17,7 +18,12 @@ export async function GET(req: Request) {
     if (!env.CRON_SECRET) return process.env.NODE_ENV !== "production";
     const key = new URL(req.url).searchParams.get("key");
     const auth = req.headers.get("authorization");
-    return key === env.CRON_SECRET || auth === `Bearer ${env.CRON_SECRET}`;
+    const secretEq = (a: string | null, b: string) => {
+      if (!a) return false;
+      const ab = Buffer.from(a, "utf8"), bb = Buffer.from(b, "utf8");
+      return ab.length === bb.length && timingSafeEqual(ab, bb);
+    };
+    return secretEq(key, env.CRON_SECRET) || secretEq(auth, `Bearer ${env.CRON_SECRET}`);
   })();
   if (!isAuthorized) return new NextResponse("forbidden", { status: 403 });
 
