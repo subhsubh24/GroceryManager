@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { loadEnv } from "@gm/config/env";
 import { NORMALIZE } from "@gm/config/constants";
-import { getDb, clearPantry, getRawStockSum, removePantryItem, withTenant } from "@gm/db";
+import { getDb, clearPantry, getRawStockSum, loadPreferenceSignals, removePantryItem, withTenant } from "@gm/db";
 import {
   backfillGmailForUser,
   createDbNormalizationPorts,
@@ -12,6 +12,7 @@ import {
   type GmailSyncSummary,
 } from "@gm/core/ingestion";
 import { appendLedgerAndReproject } from "@gm/core/pantry";
+import { canUse, isPremium } from "@gm/core/billing";
 import { signIn } from "@/auth";
 import { currentUserId } from "@/app/lib/tenant";
 
@@ -52,6 +53,13 @@ export async function syncGmailAction() {
   const userId = await currentUserId();
   if (!userId) redirect("/pantry?error=" + encodeURIComponent("Not signed in"));
 
+  if (process.env.FEATURE_BILLING === "1") {
+    const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+    if (!canUse("gmail_import", isPremium(signals), true)) {
+      redirect("/upgrade?feature=gmail_import");
+    }
+  }
+
   let query: string;
   try {
     query = summaryQuery(await syncGmailForUser(getDb(), loadEnv(), userId, { maxMessages: 10 }));
@@ -68,6 +76,13 @@ export async function syncGmailAction() {
 export async function backfillGmailAction() {
   const userId = await currentUserId();
   if (!userId) redirect("/pantry?error=" + encodeURIComponent("Not signed in"));
+
+  if (process.env.FEATURE_BILLING === "1") {
+    const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+    if (!canUse("gmail_import", isPremium(signals), true)) {
+      redirect("/upgrade?feature=gmail_import");
+    }
+  }
 
   let query: string;
   try {

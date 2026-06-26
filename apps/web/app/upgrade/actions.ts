@@ -9,6 +9,10 @@ import { currentUserId } from "@/app/lib/tenant";
  * Replace with a Stripe checkout + webhook when billing is wired for real.
  */
 export async function grantPremiumPreviewAction(): Promise<{ ok: boolean }> {
+  // Only allow in non-billing mode; once FEATURE_BILLING=1 this path is disabled server-side
+  if (process.env.FEATURE_BILLING === "1") {
+    return { ok: false };
+  }
   try {
     const userId = await currentUserId();
     if (!userId) return { ok: false };
