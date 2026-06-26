@@ -304,6 +304,34 @@ regression, and preflight verifies the critical ones.** Build + enforce:
 > **Secrets stay server-side** (read from env, never committed). If exposure is ever suspected, record
 > a `PENDING_OPS.md` handoff to **regenerate the key immediately** (owner action).
 
+## Track H — Growth & demand-gen EXECUTION engine (build it; a separate Growth Agent runs it)
+Track E *builds + stages* the marketing. Track H makes it **executable**: the build factory builds the
+tooling so that **the moment the owner connects authorized channels, a separate Growth Agent can
+publish, email, and pull in waitlist leads — autonomously, through the owner's own accounts, within
+each platform's ToS.** This is how the app gets *tailored for success* with real signal.
+- [ ] **H1. Publishing/scheduling engine** — a content scheduler + `scripts/` that publish the staged
+      content calendar to the owner's connected channels via **authorized APIs** (e.g. the owner's own
+      X/social API token, Buffer/Typefully), reading credentials from env. Dormant + safe no-op until keys present.
+- [ ] **H2. Email lifecycle runner** — wire the staged sequences (`docs/brand/EMAIL_LIFECYCLE.md`) to the
+      owner's connected email provider (Resend/Postmark/etc.) via env keys; double-opt-in; unsubscribe; no bulk send until connected.
+- [ ] **H3. Waitlist → leads dashboard + UTM attribution** — an internal admin view of signups over
+      time, source/UTM attribution, conversion to paid; so we can SEE leads arriving and what works.
+- [ ] **H4. Landing A/B + growth loops live** — A/B variants wired to analytics; referral/share loop
+      active so existing signups recruit more.
+- [ ] **H5. GROWTH-AGENT GUARDRAILS (hard)** — execution happens ONLY through channels the owner has
+      connected + authorized; **ToS-compliant + disclosed** (FTC); **NEVER auto-create accounts, never
+      auto-post to communities/forums (spam/astroturf), never fake engagement/reviews, never spend ad
+      money** without the owner's funded account, never post under the owner's identity without an
+      authorized connected channel. The org-level marketing-autonomy boundary (below) is absolute.
+- [ ] **H6. Human-Core CONNECT handoff** — `PENDING_OPS.md` + `docs/LAUNCH.md` list the exact one-time
+      owner steps to ACTIVATE execution: deploy the site, connect the email provider, connect the
+      social API token(s), wire analytics, (optional) fund an ad account — each with portal/URL + the
+      env var to set. Until connected, the Growth Agent reports "awaiting connect," it does not fake it.
+> **Note:** Track H is the EXECUTION ENGINE (loop-buildable code). Actually *running* it + *getting
+> leads* is post-launch and needs the owner CONNECT step + the separate Growth Agent — leads flowing is
+> NOT a store-submission gate (the app can submit without it), but the engine being built + ready-to-run
+> IS the bar here.
+
 ---
 
 ## EVIDENCE-BASED DONE (no self-certification — read before ticking ANY box)
@@ -395,6 +423,12 @@ missing, and do not add scope after Done.
       auth endpoint, G2 server-side validation on every write, G3 error-message hygiene, G4 auth
       failure-case hardening (+ a test per case), G5 captcha on public forms, G6 CORS + security headers
       (OWASP basics), G7 per-user/day API spend ceiling in code + the provider-cap handoff in PENDING_OPS.
+
+**Growth-execution engine 100%:**
+- [ ] Track H complete — the demand-gen EXECUTION engine is BUILT + ready-to-run-on-connect: H1 publishing/
+      scheduler, H2 email lifecycle runner, H3 waitlist→leads + UTM dashboard, H4 landing A/B + growth
+      loops live, H5 growth-agent guardrails enforced, H6 owner CONNECT handoff documented. (Live execution
+      + leads are post-launch — owner connect + the separate Growth Agent — and are NOT a submission gate.)
 
 **Store-acceptance + revenue-readiness:**
 - [x] **Store-acceptance self-audit** — audit the app against the CURRENT published Apple App Store
