@@ -2,7 +2,8 @@
 
 > Read this every run alongside **[VISION.md](./VISION.md)**. This is the **convergence anchor** for
 > the autonomous product factory: advance the **lowest-numbered incomplete track**, with the
-> highest-value, **file-disjoint** changes that clear the value bar — coherence over volume — until
+> highest-value, **file-disjoint** changes that clear the value bar — coherence over churn, value bar
+> as the only volume limiter — until
 > the **Definition of Done** is genuinely met and CI-verified, then **STOP** and hand off for
 > submission. Historical per-iteration build notes live in [docs/ROADMAP.md](./docs/ROADMAP.md)
 > (legacy loop memory); durable lessons live in
@@ -36,11 +37,16 @@ require the owner — store accounts, live billing keys, app signing, funding pa
 everything else yourself.
 
 ## Operating model
-- **Milestone/phase-driven, coherence over volume.** A store-acceptable app is one cohesive product,
-  not a pile of disconnected PRs. Advance the lowest incomplete track first.
-- **Cheapest viable model.** Architecture + review on Sonnet; high-volume scouting on Haiku.
-- **Tick a box only when it is genuinely done** (CI-verified) — and only in the **bookkeeping PR**,
-  never inside a code branch.
+- **Milestone/phase-driven; coherence over CHURN (NOT "fewer for its own sake").** A store-acceptable
+  app is one cohesive product, not a pile of disconnected PRs — but the **VALUE BAR is the ONLY limiter
+  on how many changes ship in a run**: ship ALL changes that genuinely clear it (maximize scope per
+  run) and ZERO that don't. Never pad a run to hit a count; never artificially stop at 1–2 when more
+  genuinely-valuable, file-disjoint work exists. Avoid BOTH failure modes equally — padding (churn) and
+  artificial scarcity. Many changes is GOOD when each is real. Advance the lowest incomplete track first.
+- **Cheapest viable model.** Architecture + review + readiness auditors on Sonnet; high-volume scouting
+  + discovery audit on Haiku — never downgrade the reviewers or readiness auditors.
+- **Tick a box only with EVIDENCE-BASED DONE proof** (artifacts present on the default branch + gate
+  green this run — see below), and only in the **bookkeeping PR**, never inside a code branch.
 - **Adapt to this repo, never copy another's specifics:** RLS uses the `grocery_app` role +
   `app_current_user_id()` GUC (`packages/db/sql/0002_rls.sql`), NOT `auth.uid()`. The native app
   lives in `apps/mobile` (excluded from the pnpm workspace). Gate = `pnpm -r run typecheck` ·
@@ -468,7 +474,7 @@ required for Done. It MUST contain, in this order:
 - **Apply pending DB migrations** listed in `PENDING_OPS.md`.
 - Connect + **fund** marketing / ad / social / analytics accounts.
 - Final store submission + responding to review.
-- **Set the Anthropic Console spend cap** — the only true ceiling on this hourly factory.
+- **Set the Anthropic Console spend cap** — the only true ceiling on the scheduled factory.
 
 ## MARKETING AUTONOMY BOUNDARY
 The loop may **build and stage** everything in Track E. It may **NOT** publish publicly, send bulk
