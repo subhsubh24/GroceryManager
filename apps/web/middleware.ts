@@ -18,6 +18,8 @@ const PUBLIC = [
   /^\/help(\/|$)/,
   /^\/privacy(\/|$)/,
   /^\/terms(\/|$)/,
+  /^\/sitemap\.xml$/,
+  /^\/robots\.txt$/,
   /^\/api\/auth(\/|$)/,
   /^\/api\/webhooks(\/|$)/,
   /^\/api\/cron(\/|$)/,
