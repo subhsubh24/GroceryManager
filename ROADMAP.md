@@ -104,9 +104,13 @@ These are settled; build to them, do not re-litigate.
 The web PWA is feature-rich already (receipts→pantry, scan, cook/plan, cookbook, discover, spend,
 Wrapped, dark mode). Get it to **"people happily pay monthly"** quality.
 - [x] **Design bar held everywhere** — no vibe-coded screens; design system only (globals.css +
-      tailwind.config.ts). Audit every route for cohesion. _(Run-3 full-route audit: 0 design-system
-      violations. Error boundaries on 30+ routes (PRs #30 #40 #46 #54 #56 #61); loading skeletons on
-      27+ routes (PRs #24 #41 #46 #54 #56 #61); all components use globals.css + tailwind tokens only.)_
+      tailwind.config.ts). Audit every route for cohesion. **Enforce the VISION.md DESIGN BAR as a
+      STANDING standard: THE DESIGNER QUESTION ("would an experienced product designer intentionally
+      make this decision?" — Reviewer B rejects any UI diff that can't answer yes), the avoid-by-default
+      AI-slop list, and the recurring taste audit (the deep-audit design lens hunts generated-looking
+      surfaces + ranks fixes by design impact). Standard: simplicity without blandness; functionality
+      without visual clutter.** _(Run-3 full-route audit: 0 design-system violations. Error boundaries on
+      30+ routes; loading skeletons on 27+ routes; all components use globals.css + tailwind tokens only.)_
 - [x] **Reliability** — no broken flows; graceful empty/error states; LLM/keyless paths degrade.
       _(PRs #30 #40 #46 #54 #56 #61: error boundaries + skeletons on all major routes; PR #69:
       Vertex/keyless guards on scan/import/add-receipt; PR #72: guards extended to ask/plan/remix/
