@@ -4,6 +4,40 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-26 (run 16) — Readiness audit gaps closed (PRs #150–#154)
+
+**Context:** Mandatory readiness audit run (≥3 adversarial independent auditors) preceding
+the submission issues (#145, #147). Six real gaps found; all fixable ones shipped this run.
+
+**PR #150 — SEO: sitemap.xml + robots.txt unblocked from auth middleware (merged)**
+- Added `/^\/sitemap\.xml$/` and `/^\/robots\.txt$/` to the `PUBLIC` regex list in `middleware.ts`
+- Added `apps/web/app/robots.ts` — `MetadataRoute.Robots` generator, properly points crawlers to sitemap
+- Without this fix, every crawler hitting `/robots.txt` or `/sitemap.xml` got a 302→/signin redirect
+
+**PR #151 — Business case $87K→$89K inconsistency fixed (merged)**
+- YAML comment and intro stamp both showed `~$87K` while the actual calculation at lines 216/270 was $89,232. Corrected to `~$89K`.
+
+**PR #152 (billing gates) + PR #153 (discover gate shape fix, merged)**
+- `apps/web/app/api/mobile/discover/route.ts`: changed billing gate from `{ error: "..." }` HTTP 403
+  → `{ upgradeRequired: true }` HTTP 200, matching every other mobile billing gate
+- `apps/web/app/pantry/actions.ts`: added `canUse("gmail_import", ...)` gate to `syncGmailAction` and `backfillGmailAction`
+- `apps/web/app/upgrade/actions.ts`: server-side guard on `grantPremiumPreviewAction` when `FEATURE_BILLING=1`
+
+**PR #154 — Family tier fully wired end-to-end (merged)**
+- `packages/config/src/env.ts`: `STRIPE_PRICE_FAMILY: z.string().optional()` added to Zod EnvSchema
+- `apps/web/app/upgrade/page.tsx`: 3-column grid with Family Plan card ($9.99/mo, $79.99/yr, 5 members)
+- `apps/web/app/upgrade/checkout-button.tsx`: `plan` prop extended to `"monthly" | "annual" | "family"`
+- `apps/web/app/api/stripe/checkout/route.ts`: accepts `"family"` plan, resolves `STRIPE_PRICE_FAMILY`
+- `apps/web/app/api/webhooks/stripe/route.ts`: detects `premium_family` tier from `STRIPE_PRICE_FAMILY`
+
+**Human Core (not fixable by autonomous loop):**
+- Device screenshots for App Store submission (need physical iPhone + Android device)
+- RevenueCat mobile paywall (needs live SDK keys + App Store product setup)
+
+**Gate post-merge:** typecheck ✅ 464/486 tests pass ✅ production build ✅ no missing-export warnings ✅
+
+---
+
 ## 2026-06-26 (run 15) — Track C billing wired + business case recomputed
 
 **Track C (Stripe Checkout + Customer Portal — PRs #142 #143):**
