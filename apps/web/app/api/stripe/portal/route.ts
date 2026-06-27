@@ -10,6 +10,7 @@
 import Stripe from "stripe";
 import { getDb, loadPreferenceSignals, withTenant } from "@gm/db";
 import { currentUserId } from "@/app/lib/tenant";
+import { rateLimit, tooManyRequests } from "../_lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -23,6 +24,9 @@ export async function POST(req: Request) {
   } catch {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const rl = rateLimit(`stripe-portal:${userId}`, 5, 60_000);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   // Require Stripe secret key
   const secretKey = process.env.STRIPE_SECRET_KEY;

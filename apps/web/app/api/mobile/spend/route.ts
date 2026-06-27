@@ -2,6 +2,7 @@ import { getDb, getUserBudgetCents, loadLineItemsForSpend, loadPreferenceSignals
 import { budgetVsActual, spendByPeriod, topItemsBySpend } from "@gm/core/spend";
 import { canUse, isPremium } from "@gm/core/billing";
 import { verifyMobileToken } from "../_lib";
+import { rateLimit, tooManyRequests } from "../_lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -11,6 +12,9 @@ export async function GET(req: Request) {
   if (!token) return Response.json({ error: "Authorization header required" }, { status: 401 });
   const userId = verifyMobileToken(token);
   if (!userId) return Response.json({ error: "Invalid or expired token" }, { status: 401 });
+
+  const rl = rateLimit(`spend:${userId}`, 20, 60_000);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   try {
     const [signals, purchases, lines, budgetCents] = await withTenant(getDb(), userId, (tx) =>
