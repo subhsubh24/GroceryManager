@@ -7,6 +7,10 @@ the owner sees pre-launch / launch / post-launch growth progress in one place.
 
 ## Contract (read before editing)
 
+- **Method:** the Growth Agent produces the numbers + learnings below by following
+  [`docs/growth/ANALYSIS_PLAYBOOK.md`](./ANALYSIS_PLAYBOOK.md) — an applied growth data scientist
+  (privacy-safe AGGREGATES only, significance/CI before any claim, "insufficient data" when N is small,
+  never fabricate, correlation ≠ causation; it RECOMMENDS the highest-ROI lever, the factory builds it).
 - **The Growth Agent updates the block below every run**, in the SAME run it does growth work.
 - **Real data only — never invent numbers** (VISION's honesty bar applies here absolutely). A metric
   that no connected analytics source has reported yet stays `0` or `null`. A non-null number must be

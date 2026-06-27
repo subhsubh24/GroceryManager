@@ -391,6 +391,17 @@ each platform's ToS.** This is how the app gets *tailored for success* with real
       `apps/web/app/api/_lib/rate-limit.ts`), CAPTCHA (Cloudflare Turnstile, per Track G G5), and
       **double-opt-in confirmation**, so visitors→signups reports honestly AND the public surface is
       abuse-safe. Live keys/OAuth stay HUMAN-APPLIED (record in `PENDING_OPS.md`); never commit `.env`.
+- [ ] **H9. Analytics SURFACE (privacy-safe, server-computed aggregates).** Extend the H7 read-API with
+      server-side AGGREGATE analytics the Growth Agent consumes as a data scientist (per
+      `docs/growth/ANALYSIS_PLAYBOOK.md`): funnel-step counts/rates (visit→signup→activation→trial→paid),
+      cohort retention curves, time-series, and segment breakdowns. **Aggregates ONLY — no raw PII / no raw
+      per-user event logs leave the server**; admin/cron-gated; honest 0/null per source until connected.
+      This is what lets the agent diagnose the binding constraint on real data instead of a single snapshot.
+- [ ] **H10. Experiment ENGINE (variant assignment + lift measurement).** Server-side deterministic variant
+      assignment (stable per-user bucketing) + exposure logging + per-variant conversion + **lift with a
+      significance test** feeding `GROWTH_STATUS.experiments`. The Growth Agent designs falsifiable
+      hypotheses (min sample size, guardrails); the engine assigns + measures; "insufficient data" is a
+      valid result. Dormant/no-op until there's traffic + a connected channel; never fabricates a lift.
 > **Note:** Track H is the EXECUTION ENGINE (loop-buildable code). Actually *running* it + *getting
 > leads* is post-launch and needs the owner CONNECT step + the separate Growth Agent — leads flowing is
 > NOT a store-submission gate (the app can submit without it), but the engine being built + ready-to-run
