@@ -23,6 +23,11 @@ const PUBLIC = [
   /^\/api\/auth(\/|$)/,
   /^\/api\/webhooks(\/|$)/,
   /^\/api\/cron(\/|$)/,
+  // Public waitlist double-opt-in confirm link (verifies its own HMAC token).
+  /^\/api\/waitlist(\/|$)/,
+  // Growth snapshot read-API (self-authz: admin session OR CRON_SECRET bearer — the
+  // headless Growth Agent has no session cookie, so it must bypass the sign-in redirect).
+  /^\/api\/growth\/snapshot(\/|$)/,
 ];
 
 export default auth((req) => {

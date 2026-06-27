@@ -142,3 +142,103 @@ export async function markContentSkipped(
         WHERE id = ${id}`,
   );
 }
+
+// ---------------------------------------------------------------------------
+// Waitlist double-opt-in (migration 0015) — H8
+// ---------------------------------------------------------------------------
+
+/**
+ * Mark a waitlist signup as confirmed (double-opt-in). Idempotent: only sets
+ * confirmed_at if not already set, so a double-clicked confirmation link is safe.
+ * No-ops if the email isn't on the list. Returns false if the column doesn't
+ * exist yet (pre-migration 0015 — safe on first deploy).
+ */
+export async function setWaitlistConfirmed(db: Querier, email: string): Promise<boolean> {
+  try {
+    await db.execute(
+      sql`UPDATE waitlist_submissions
+          SET confirmed_at = COALESCE(confirmed_at, now())
+          WHERE lower(email) = lower(${email})`,
+    );
+    return true;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("confirmed_at") || (msg.includes("waitlist_submissions") && msg.includes("does not exist"))) {
+      return false;
+    }
+    throw err;
+  }
+}
+
+/**
+ * Count confirmed (double-opt-in) waitlist signups. Returns 0 if the table/column
+ * doesn't exist yet (pre-migration). Used by the growth snapshot for email list size.
+ */
+export async function getWaitlistConfirmedCount(db: Querier): Promise<number> {
+  try {
+    const rows = (await db.execute(
+      sql`SELECT count(*)::text AS n
+          FROM waitlist_submissions
+          WHERE confirmed_at IS NOT NULL`,
+    )) as unknown as Array<{ n: string }>;
+    return parseInt(rows[0]?.n ?? "0", 10);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("confirmed_at") || (msg.includes("waitlist_submissions") && msg.includes("does not exist"))) {
+      return 0;
+    }
+    throw err;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Active subscriber stats (preference_signals ledger) — H7 snapshot
+// ---------------------------------------------------------------------------
+
+export interface ActiveSubscriberStats {
+  /** Distinct users whose LATEST entitlement signal is premium. */
+  active: number;
+  /** Active-tier breakdown (latest subscription_tier per active user). */
+  monthly: number;
+  annual: number;
+  family: number;
+}
+
+/**
+ * Count active subscribers from the preference-signal ledger: a user is active iff their
+ * most-recent `entitlement` signal value is `premium`. The tier mix uses each active
+ * user's most-recent `subscription_tier` (defaulting to monthly when unrecorded).
+ *
+ * Reads via the admin DB (RLS-bypassing) — only ever called from an admin/cron-gated route.
+ */
+export async function getActiveSubscriberStats(db: Querier): Promise<ActiveSubscriberStats> {
+  const rows = (await db.execute(
+    sql`WITH latest_ent AS (
+          SELECT DISTINCT ON (user_id) user_id, value
+          FROM preference_signals
+          WHERE topic = 'entitlement'
+          ORDER BY user_id, occurred_at DESC
+        ),
+        latest_tier AS (
+          SELECT DISTINCT ON (user_id) user_id, value
+          FROM preference_signals
+          WHERE topic = 'subscription_tier'
+          ORDER BY user_id, occurred_at DESC
+        )
+        SELECT COALESCE(lt.value, 'premium_monthly') AS tier, count(*)::text AS n
+        FROM latest_ent le
+        LEFT JOIN latest_tier lt ON lt.user_id = le.user_id
+        WHERE le.value = 'premium'
+        GROUP BY COALESCE(lt.value, 'premium_monthly')`,
+  )) as unknown as Array<{ tier: string; n: string }>;
+
+  const stats: ActiveSubscriberStats = { active: 0, monthly: 0, annual: 0, family: 0 };
+  for (const r of rows) {
+    const n = parseInt(r.n ?? "0", 10);
+    stats.active += n;
+    if (r.tier === "premium_family") stats.family += n;
+    else if (r.tier === "premium_annual") stats.annual += n;
+    else stats.monthly += n;
+  }
+  return stats;
+}
