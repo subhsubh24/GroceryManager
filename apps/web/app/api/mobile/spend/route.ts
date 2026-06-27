@@ -2,7 +2,7 @@ import { getDb, getUserBudgetCents, loadLineItemsForSpend, loadPreferenceSignals
 import { budgetVsActual, spendByPeriod, topItemsBySpend } from "@gm/core/spend";
 import { canUse, isPremium } from "@gm/core/billing";
 import { verifyMobileToken } from "../_lib";
-import { rateLimit, tooManyRequests } from "../_lib/rate-limit";
+import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
 
 export const runtime = "nodejs";
 
