@@ -72,6 +72,9 @@ async function main() {
     console.log("→ RLS on admin growth tables (waitlist, content schedule)…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0016_rls_waitlist_content.sql"), "utf8"));
 
+    console.log("→ A/B experiment tables (exposures + conversions)…");
+    await sql.unsafe(readFileSync(join(pkgRoot, "sql/0017_experiments.sql"), "utf8"));
+
     console.log("✓ migrations complete");
   } finally {
     await sql.end();

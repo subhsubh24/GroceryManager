@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check } from "@/app/components/icons";
 import { submitWaitlistEmail } from "./waitlist-action";
+import { trackConversion } from "./experiment-action";
 import { trackEvent } from "@/app/lib/plausible";
 
 /**
@@ -22,7 +23,9 @@ export function WaitlistForm() {
     }
     setError("");
     await submitWaitlistEmail(email);
+    // Track in Plausible (existing) + experiment engine (additive, best-effort).
     trackEvent("waitlist_signup");
+    void trackConversion("landing_hero", "waitlist_signup");
     setDone(true);
   }
 

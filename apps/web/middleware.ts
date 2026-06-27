@@ -26,9 +26,11 @@ const PUBLIC = [
   // Public waitlist double-opt-in confirm link (verifies its own HMAC token).
   // Scoped to /confirm only — never blanket-expose future /api/waitlist/* routes.
   /^\/api\/waitlist\/confirm(\/|$)/,
-  // Growth snapshot read-API (self-authz: admin session OR CRON_SECRET bearer — the
-  // headless Growth Agent has no session cookie, so it must bypass the sign-in redirect).
+  // Growth read-APIs (self-authz: admin session OR CRON_SECRET bearer — the headless Growth
+  // Agent has no session cookie, so it must bypass the sign-in redirect). Scoped to the exact
+  // paths — never blanket-expose /api/growth/*.
   /^\/api\/growth\/snapshot(\/|$)/,
+  /^\/api\/growth\/analytics(\/|$)/,
 ];
 
 export default auth((req) => {

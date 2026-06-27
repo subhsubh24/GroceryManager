@@ -4,8 +4,10 @@ import {
   getWaitlistSubmissions,
   getWaitlistConfirmedCount,
   getActiveSubscriberStats,
+  getExperimentStats,
 } from "@gm/db";
-import { buildGrowthSnapshot, computeMrrUsd } from "@gm/core/growth/snapshot";
+import { buildGrowthSnapshot, computeMrrUsd, type ExperimentSummary } from "@gm/core/growth/snapshot";
+import { EXPERIMENTS, computeExperimentResult } from "@gm/core/growth/experiments";
 import { auth } from "@/auth";
 import { serverError } from "../../_lib/guard";
 import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
@@ -57,6 +59,7 @@ export async function GET(req: Request) {
 
   try {
     const db = getAdminDb();
+    const asOf = new Date().toISOString().slice(0, 10);
 
     // --- Waitlist (in-app datastore — always available once migrated) ---
     const wl = await getWaitlistSubmissions(db);
@@ -91,7 +94,27 @@ export async function GET(req: Request) {
       !!process.env["SENDGRID_API_KEY"] ||
       !!process.env["POSTMARK_API_KEY"];
 
-    const asOf = new Date().toISOString().slice(0, 10);
+    // --- Experiment results (H10) — best-effort; empty on pre-migration DB ---
+    const experiments: ExperimentSummary[] = [];
+    for (const exp of EXPERIMENTS) {
+      try {
+        const stats = await getExperimentStats(db, exp.id, exp.primaryEvent);
+        const result = computeExperimentResult(exp, stats);
+        experiments.push({
+          id: result.id,
+          hypothesis: result.hypothesis,
+          status: result.status,
+          result: result.result,
+          lift_pct: result.lift_pct,
+          ci_lower: result.ci_lower,
+          ci_upper: result.ci_upper,
+          started: null, // no start-date tracking yet — honest null
+          decided: result.status === "decided" ? asOf : null,
+        });
+      } catch {
+        // Swallow — experiment stats are best-effort. The snapshot still serves without them.
+      }
+    }
     const snapshot = buildGrowthSnapshot({
       asOf,
       engineBuilt: true, // the Track H growth-execution engine is live in code
@@ -104,6 +127,7 @@ export async function GET(req: Request) {
       activeSubscribers,
       mrrUsd,
       emailConnected,
+      experiments,
     });
 
     return Response.json(snapshot, {
