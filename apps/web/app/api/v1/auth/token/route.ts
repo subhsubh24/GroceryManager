@@ -3,7 +3,7 @@ import { SignJWT } from "jose";
 import { getUserByUsername, getAdminDb } from "@gm/db";
 import { verifyPassword } from "@gm/core/crypto";
 import { normalizeUsername } from "@gm/core/personalization";
-import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
+import { rateLimit, tooManyRequests } from "../../../_lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
