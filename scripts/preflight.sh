@@ -150,6 +150,26 @@ else
   fail "BUSINESS_CASE_SUMMARY: block is missing or UNPARSEABLE — dashboard can't read it (fix the YAML)"
 fi
 
+# ── Business case STRENGTH: the honest median floor MUST be met (WEAK-CASE LOOP-BACK gate) ──
+# Honesty isn't sufficient. A below-floor honest case must NOT reach 'ready' — it re-opens building the
+# revenue levers. This mechanically blocks readiness while the median base ARR is under the floor.
+if python3 - "$BC" <<'PY'
+import sys, re, yaml
+d = yaml.safe_load(re.search(r"```ya?ml\s*\n(.*?BUSINESS_CASE_SUMMARY.*?)\n```", open(sys.argv[1]).read(), re.S).group(1))
+floor = d.get("floor_usd", 100000)
+base = (d.get("arr_year1") or {}).get("base")
+if base is None:
+    print("no arr_year1.base"); sys.exit(1)
+if not d.get("floor_met_year1") or base < floor:
+    print(f"median base ARR {base} does NOT meet the {floor} floor (floor_met_year1={d.get('floor_met_year1')})"); sys.exit(1)
+print(f"floor met: base {base} >= {floor}")
+PY
+then
+  pass "Business case STRENGTH: honest median base ARR meets the \$100K floor"
+else
+  fail "Business case STRENGTH: median base ARR is BELOW the \$100K floor — readiness BLOCKED. Re-open building the revenue levers (WEAK-CASE LOOP-BACK: pricing/tiers, free→paid conversion, retention/referral, margin, reach); do NOT FYI-and-stop while buildable levers remain"
+fi
+
 # The GROWTH_STATUS block (Growth Agent's growth/marketing telemetry) MUST parse — same dashboard contract.
 GS="$ROOT/docs/growth/GROWTH_STATUS.md"
 if python3 - "$GS" <<'PY'
