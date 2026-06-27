@@ -259,6 +259,55 @@ else
   fail "OWNER_ACTIONS: block is missing or UNPARSEABLE — dashboard can't read owner action items (fix the YAML)"
 fi
 
+# ── INDEPENDENT QUALITY GRADE — consume the separate Quality Auditor's scorecard (maker ≠ checker) ──
+# The loop never grades itself; the Quality Auditor routine OWNS docs/quality/QUALITY_SCORECARD.md. This guard
+# only CONSUMES it: the block must parse, all grades ∈ {A+,A,B,C,D,F,null}, every ship-critical dim is A/A+,
+# and every other dim ≥ B. A missing/empty/malformed scorecard or a sub-A ship-critical dim = NOT ready.
+if python3 - "$ROOT/docs/quality/QUALITY_SCORECARD.md" <<'PY'
+import sys, re, yaml, os
+p = sys.argv[1]
+if not os.path.isfile(p):
+    print("docs/quality/QUALITY_SCORECARD.md missing — the independent Quality Auditor has not graded this product yet"); sys.exit(1)
+m = re.search(r"```ya?ml\s*\n(.*?QUALITY_SCORECARD.*?)\n```", open(p).read(), re.S)
+if not m:
+    print("no QUALITY_SCORECARD fenced YAML block found"); sys.exit(1)
+try:
+    d = (yaml.safe_load(m.group(1)) or {}).get("QUALITY_SCORECARD") or {}
+except Exception as e:
+    print("block is UNPARSEABLE YAML:", e); sys.exit(1)
+VALID = {"A+", "A", "B", "C", "D", "F", None}
+SHIP_OK = {"A+", "A"}
+BELOW_B = {"C", "D", "F"}
+# Tolerant of the grader's exact shape: dimensions as a list of {name/dimension, grade, ship_critical} OR a
+# map name -> {grade, ship_critical} OR name -> grade.
+items = []  # (name, grade, ship_critical)
+dims = d.get("dimensions")
+if isinstance(dims, list):
+    for x in dims:
+        items.append((x.get("name") or x.get("dimension") or "?", x.get("grade"), bool(x.get("ship_critical"))))
+elif isinstance(dims, dict):
+    for k, v in dims.items():
+        items.append((k, v.get("grade"), bool(v.get("ship_critical"))) if isinstance(v, dict) else (k, v, False))
+overall = d.get("overall") if d.get("overall") is not None else d.get("grade")
+bad = [(n, g) for n, g, _ in items if g not in VALID] + ([("overall", overall)] if overall not in VALID else [])
+if bad:
+    print("invalid grade(s) (must be A+/A/B/C/D/F/null):", bad); sys.exit(1)
+if not items and overall is None:
+    print("scorecard carries no grades yet — not a real grade"); sys.exit(1)
+fails = []
+for n, g, sc in items:
+    if sc and g not in SHIP_OK: fails.append(f"ship-critical '{n}'={g} (must be A/A+)")
+    if not sc and g in BELOW_B: fails.append(f"'{n}'={g} (must be >= B)")
+if fails:
+    print("readiness blocked by independent quality grade:", "; ".join(fails)); sys.exit(1)
+print("ok: quality scorecard valid; ship-critical A/A+, others >= B")
+PY
+then
+  pass "QUALITY_SCORECARD: valid; ship-critical dims A/A+, others ≥ B (independent grade, consumed not self-assigned)"
+else
+  fail "QUALITY_SCORECARD: missing / malformed / a ship-critical dim below A — NOT ready. Drive the scorecard top_gaps to A/A+ (the Quality Auditor owns the file; the loop consumes the grade)"
+fi
+
 # ── 8. Track E: marketing routes in build ────────────────
 section "8. Track E — marketing routes"
 for route in "/blog" "/help" "/privacy" "/terms" "/sitemap.xml" "/invite" "/discover"; do
