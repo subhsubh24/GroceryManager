@@ -78,12 +78,19 @@ OWNER_ACTIONS:
       how: Add `pnpm --filter web lint` and the E2E job to .github/workflows/ci.yml (see prose entry below).
       blocks: none
     - id: waitlist-migration
-      title: Apply waitlist/growth migrations 0012–0016 + set ADMIN_EMAIL
+      title: Apply waitlist/growth migrations 0012–0017 + set ADMIN_EMAIL
       priority: high
       status: open
-      why: The in-app waitlist analytics (`/admin/waitlist`, the Growth Agent's real signup source) needs the table + UTM + content-schedule + double-opt-in columns, plus the admin email for `/admin/*` + `GET /api/growth/snapshot`. Migration 0016 enables RLS on `waitlist_submissions` + `content_schedule` — without it, on a Supabase/PostgREST deployment the anon key could read every waitlist email (PII). Apply before the public waitlist goes live.
-      how: "Run `pnpm --filter @gm/db db:migrate` (idempotent; applies 0012 waitlist, 0013 UTM, 0014 content_schedule, 0015 confirmed_at, 0016 RLS on the two admin growth tables); set ADMIN_EMAIL in Vercel env (see prose entry below)."
+      why: The in-app waitlist analytics (`/admin/waitlist`, the Growth Agent's real signup source) needs the table + UTM + content-schedule + double-opt-in columns, plus the admin email for `/admin/*` + `GET /api/growth/snapshot`. Migration 0016 enables RLS on `waitlist_submissions` + `content_schedule` — without it, on a Supabase/PostgREST deployment the anon key could read every waitlist email (PII). Migration 0017 adds the H10 experiment tables (`experiment_exposures` + `experiment_conversions`, RLS tenant-isolation + GRANTs) — without it the experiment engine logs nothing (it degrades gracefully: `getExperimentStats` catches "does not exist"). Apply before the public waitlist + experiments go live.
+      how: "Run `pnpm --filter @gm/db db:migrate` (idempotent; applies 0012 waitlist, 0013 UTM, 0014 content_schedule, 0015 confirmed_at, 0016 RLS on the two admin growth tables, 0017 experiment exposure/conversion tables); set ADMIN_EMAIL in Vercel env (see prose entry below)."
       blocks: growth-analytics
+    - id: experiment-secret
+      title: (Optional) set EXPERIMENT_SECRET for A/B variant bucketing
+      priority: low
+      status: open
+      why: The H10 experiment engine keys its deterministic HMAC variant bucketing off `EXPERIMENT_SECRET` if set, else falls back to `WAITLIST_OPTIN_SECRET` / `EMAIL_UNSUBSCRIBE_SECRET` / `AUTH_SECRET` (one of which is always present in any real deploy). Bucketing is a UI-variant boundary, NOT an auth boundary, so this is OPTIONAL — set a dedicated secret only if you want experiment assignment isolated from the other secrets' rotation. No hardcoded constant is used.
+      how: "Optionally set EXPERIMENT_SECRET (any long random string) in Vercel env. If unset, bucketing works off AUTH_SECRET automatically — no action needed."
+      blocks: none
     - id: turnstile-keys
       title: Create Cloudflare Turnstile site + set CLOUDFLARE_TURNSTILE_SECRET_KEY + NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY
       priority: high

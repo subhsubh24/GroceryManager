@@ -250,6 +250,13 @@ optimistic trajectory.
    owner connects channels (Track H). $100 K lives at ~4,000+ dl/mo.
 2. **CONVERSION — signup→paid.** Moving base 4 % toward the optimistic 6 % is a 50 % revenue lift.
    Surface the Gmail-import payoff as the first premium moment; tighten the `/upgrade` decision surface.
+   _(Built 2026-06-27, run 20: the Gmail-import first-premium-moment teaser on `/pantry` — PR #197 — plus
+   the H9/H10 analytics + experiment engine — PR #198 — which lets the Growth Agent EMPIRICALLY measure and
+   tune signup→paid lift post-launch. The median here is unchanged: the base 4 % already assumes the Gmail
+   hook, and the experiment engine measures real lift only once there is traffic. More buildable conversion/
+   retention levers remain for subsequent runs — month-3 annual nudge, expiry/reorder push, referral perks,
+   win-back — to be shipped through the normal gate until the honest median clears the floor or only reach
+   remains.)_
 3. **RETENTION / LTV.** Lower churn both raises steady state *and* shortens the ramp. Re-engagement
    (push, weekly cook-tonight digest, annual-plan nudge) is built; the recurring weekly-use loop is the
    structural advantage.

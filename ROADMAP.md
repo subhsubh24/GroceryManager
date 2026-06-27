@@ -391,17 +391,39 @@ each platform's ToS.** This is how the app gets *tailored for success* with real
       `apps/web/app/api/_lib/rate-limit.ts`), CAPTCHA (Cloudflare Turnstile, per Track G G5), and
       **double-opt-in confirmation**, so visitors→signups reports honestly AND the public surface is
       abuse-safe. Live keys/OAuth stay HUMAN-APPLIED (record in `PENDING_OPS.md`); never commit `.env`.
-- [ ] **H9. Analytics SURFACE (privacy-safe, server-computed aggregates).** Extend the H7 read-API with
+- [x] **H9. Analytics SURFACE (privacy-safe, server-computed aggregates).** Extend the H7 read-API with
       server-side AGGREGATE analytics the Growth Agent consumes as a data scientist (per
       `docs/growth/ANALYSIS_PLAYBOOK.md`): funnel-step counts/rates (visit→signup→activation→trial→paid),
       cohort retention curves, time-series, and segment breakdowns. **Aggregates ONLY — no raw PII / no raw
       per-user event logs leave the server**; admin/cron-gated; honest 0/null per source until connected.
       This is what lets the agent diagnose the binding constraint on real data instead of a single snapshot.
-- [ ] **H10. Experiment ENGINE (variant assignment + lift measurement).** Server-side deterministic variant
+      _Done PR #198 (2026-06-27, run 20): `GET /api/growth/analytics` (admin-session OR CRON_SECRET bearer,
+      rate-limited, scoped in middleware) returns the `AnalyticsSurface` from the pure
+      `@gm/core/growth/analytics` builders — funnel aggregates, time-series, and UTM segment breakdown from
+      real waitlist/billing data; cohort-retention builder shipped + unit-tested (+20 assertions) but returns
+      honest-null pending a live data source (see **H11**). Aggregates only (counts/rates), no PII; rates null
+      (not 0) on disconnected/zero-denominator; low-sample (<20) cohorts suppress fractions. Gate green
+      (typecheck + 589 tests + production build + `migrations (fresh db)`)._
+- [x] **H10. Experiment ENGINE (variant assignment + lift measurement).** Server-side deterministic variant
       assignment (stable per-user bucketing) + exposure logging + per-variant conversion + **lift with a
       significance test** feeding `GROWTH_STATUS.experiments`. The Growth Agent designs falsifiable
       hypotheses (min sample size, guardrails); the engine assigns + measures; "insufficient data" is a
       valid result. Dormant/no-op until there's traffic + a connected channel; never fabricates a lift.
+      _Done PR #198 (2026-06-27, run 20): pure `@gm/core/growth/experiments` — HMAC-SHA256 stable bucketing,
+      two-proportion z-test + Wilson CI + min-sample-size, code-defined registry (`landing_hero` a/b/c), and
+      `computeExperimentResult` that declares "decided" ONLY when both arms ≥ minSamplePerArm AND p<0.05 (else
+      "running" + null lift — never fabricated). Migration `0017_experiments.sql` (`experiment_exposures` +
+      `experiment_conversions`, RLS tenant-isolation + GRANTs, idempotent) wired into `migrate.ts`; best-effort
+      `logExposure`/`logConversion` (`apps/web/app/lib/experiments.ts`) never block the user; results feed
+      `GrowthSnapshot.experiments` via the snapshot route. Wired live (dormant) on the landing hero + waitlist
+      signup. +25 test assertions._
+- [ ] **H11. Cohort-retention DATA SOURCE (feeds the H9 cohort builder).** The H9 cohort-retention *builder*
+      ships + is unit-tested, but there is no live per-user activity datastore to feed it, so the surface
+      returns honest-null today. Build the privacy-safe aggregate source: a lightweight per-user activity/
+      last-active signal (or login/cook event) bucketed by signup-week cohort → weekly retention fractions,
+      computed server-side as AGGREGATES ONLY (no raw per-user event logs leave the server), admin/cron-gated,
+      honest-null until present. Then the H9 `cohort_retention` block reports real curves and the Growth Agent
+      can diagnose retention as the binding constraint on real data.
 > **Note:** Track H is the EXECUTION ENGINE (loop-buildable code). Actually *running* it + *getting
 > leads* is post-launch and needs the owner CONNECT step + the separate Growth Agent — leads flowing is
 > NOT a store-submission gate (the app can submit without it), but the engine being built + ready-to-run
@@ -566,6 +588,12 @@ missing, and do not add scope after Done.
       _(PRs #167–#171 H1–H6; PRs #175 #176 (2026-06-27) H7+H8 — analytics PULL snapshot read-API +
       CONNECT runbook + waitlist double-opt-in hardening + owner-configurable email sender. All H1–H8
       shipped; gate green (typecheck + 541 tests + production build).)_
+      _Extended PR #198 (2026-06-27, run 20): **H9** analytics SURFACE (funnel/time-series/segment aggregates
+      + cohort builder) and **H10** experiment ENGINE (deterministic bucketing + lift/significance) shipped —
+      the data layer the Growth Agent consumes as a data scientist. One tracked, non-blocking follow-up
+      remains: **H11** (a live cohort-retention data source; the cohort builder is shipped but returns
+      honest-null until fed). The execution engine + analytics surface + experiment engine are built +
+      ready-to-run-on-connect; H11 is an enhancement, not a submission gate. Gate green (589 tests)._
 
 **Store-acceptance + revenue-readiness:**
 - [x] **Store-acceptance self-audit** — audit the app against the CURRENT published Apple App Store
