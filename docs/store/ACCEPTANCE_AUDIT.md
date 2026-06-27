@@ -20,12 +20,15 @@ Google Play Store, with the following pre-submission actions required (all are O
 | # | Action required | Priority | Who |
 |---|---|---|---|
 | 1 | Configure Stripe (web) + RevenueCat (mobile) IAP for in-app subscription | Critical | Owner |
-| 2 | Set `EXPO_PUBLIC_PROJECT_ID` (EAS) + apply migration 0011 | Critical | Owner |
-| 3 | Export app icon as 1024×1024 PNG (no alpha) | Critical | Owner |
-| 4 | Take 5 required screenshots on iPhone 15 Pro | Critical | Owner |
-| 5 | Fill in App Store Connect + Play Console metadata | Critical | Owner |
-| 6 | Verify privacy policy URL (`/privacy`) is live before submission | Critical | Owner |
-| 7 | Add product email for Play Store developer contact (not personal email) | High | Owner |
+| 2 | Set `EXPO_PUBLIC_PROJECT_ID` (EAS) + apply pending DB migrations (see PENDING_OPS.md) | Critical | Owner |
+| 3 | Take the required device screenshots (App Store + Play) on a real device/simulator | Critical | Owner |
+| 4 | Fill in App Store Connect + Play Console metadata | Critical | Owner |
+| 5 | Verify privacy policy URL (`/privacy`) is live before submission | Critical | Owner |
+| 6 | Add product email for Play Store developer contact (not personal email) | High | Owner |
+
+> _App icons (1024/512/192) and the Play feature graphic are already rendered as committed PNGs
+> (`apps/web/public/icons/`, `apps/mobile/assets/`, `docs/store/assets/feature-graphic.png`) — no
+> owner export step needed. Only on-device **screenshots** remain Human Core (#3)._
 
 All compliance issues the factory can control have been addressed. See item-by-item analysis below.
 
@@ -298,12 +301,13 @@ These are the only blockers. All buildable compliance work is done.
    the upgrade flow to call RevenueCat purchase APIs (not Stripe) inside the native app.
    See `PENDING_OPS.md` → "Stripe + RevenueCat billing keys".
 
-2. **EAS build setup:** Apply migration 0011, set `EXPO_PUBLIC_PROJECT_ID`, export icon PNG,
-   configure signing credentials in `eas.json`. See `PENDING_OPS.md` → "Push notification
-   migration + EAS project ID".
+2. **EAS build setup:** Apply migration 0011, set `EXPO_PUBLIC_PROJECT_ID`, configure signing
+   credentials in `eas.json`. (App icons are already rendered PNGs — no export step.) See
+   `PENDING_OPS.md` → "Push notification migration + EAS project ID".
 
 3. **App Store screenshots:** Take 5 screens on iPhone 15 Pro (1320×2868 px) per the spec
-   in `docs/store/store-assets-spec.md`. Feature graphic needed for Play Store (1024×500 px).
+   in `docs/store/store-assets-spec.md`. (The Play feature graphic is already a committed PNG —
+   `docs/store/assets/feature-graphic.png`.)
 
 4. **App Store Connect metadata:** Fill in all fields using `docs/store/ASO_READY.md`. Fill
    the App Privacy questionnaire using `docs/store/privacy-disclosures.md`.
