@@ -75,11 +75,11 @@ async function sendConfirmationEmail(email: string): Promise<void> {
     to: email,
     subject: "Confirm your spot on the GroceryManager waitlist",
     html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;color:#1a1f24">
-  <h1 style="font-size:20px;margin:0 0 12px">You're almost in 🥗</h1>
-  <p style="font-size:15px;line-height:1.5;margin:0 0 20px">Tap the button below to confirm your spot on the GroceryManager waitlist. We'll let you know the moment we launch.</p>
+  <h1 style="font-size:20px;margin:0 0 12px">Confirm your GroceryManager waitlist spot</h1>
+  <p style="font-size:15px;line-height:1.5;margin:0 0 20px">Tap the button below to confirm your spot on the waitlist. We'll let you know the moment we launch — and you won't hear from us until then.</p>
   <p style="margin:0 0 24px"><a href="${link}" style="display:inline-block;background:#0c8a3e;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;font-size:15px;font-weight:600">Confirm my email</a></p>
   <p style="font-size:13px;line-height:1.5;color:#525d6a;margin:0">If you didn't sign up, you can safely ignore this email — no further messages will be sent.</p>
 </div>`,
-    text: `You're almost in! Confirm your spot on the GroceryManager waitlist:\n\n${link}\n\nIf you didn't sign up, ignore this email — no further messages will be sent.`,
+    text: `Confirm your spot on the GroceryManager waitlist:\n\n${link}\n\nIf you didn't sign up, ignore this email — no further messages will be sent.`,
   });
 }

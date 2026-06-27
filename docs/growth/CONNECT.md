@@ -72,7 +72,7 @@ Connect **only** channels you own. The scheduler publishes the staged content ca
 | `X_API_TOKEN` (your own X/Twitter app's bearer/OAuth token) | [developer.x.com](https://developer.x.com) → your app |
 | _or_ `BUFFER_ACCESS_TOKEN` | [buffer.com](https://buffer.com) → developers |
 | _or_ `TYPEFULLY_API_KEY` | Typefully → settings → API |
-| `CRON_SECRET` | a long random string — gates `GET /api/cron/publish` |
+| `CRON_SECRET` | a long random string — gates **both** `GET /api/cron/publish` (this step) **and** the Growth Agent's headless `GET /api/growth/snapshot` pull (step 6). Set it once. |
 | Schedule the cron | host scheduler (e.g. Vercel cron) → `GET /api/cron/publish` with `Authorization: Bearer $CRON_SECRET`, e.g. every 15 min |
 | **Verify** | a due `content_schedule` row flips to `published`; `/admin/content` shows it |
 
@@ -116,8 +116,9 @@ Fail-open in dev: with no key, the captcha check passes so local testing isn't b
 | `ADMIN_EMAIL` | the account email allowed to view `/admin/*` + call `GET /api/growth/snapshot` from a logged-in session |
 | **Verify** | sign in as that user → `/admin/growth`, `/admin/waitlist`, `/admin/content` load; `GET /api/growth/snapshot` returns JSON (not 403) |
 
-The Growth Agent calls the snapshot **headlessly** with the `CRON_SECRET` bearer token (step 3) —
-it never needs a session and never holds any of these keys.
+The Growth Agent calls the snapshot **headlessly** with the `CRON_SECRET` bearer token — the **same
+value** set in step 3 (one secret gates both the publish cron and the snapshot pull). It never needs
+a session and never holds any of these keys.
 
 ---
 

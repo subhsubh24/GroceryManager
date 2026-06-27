@@ -40,8 +40,24 @@ describe("buildGrowthSnapshot", () => {
     const s = buildGrowthSnapshot({ ...base, waitlistTotal: 42, waitlist7d: 7, waitlistConfirmed: 30 });
     expect(s.funnel.waitlist_signups_total).toBe(42);
     expect(s.funnel.waitlist_signups_7d).toBe(7);
-    expect(s.email.list_size).toBe(30);
+    // Confirmed count is always honest from our own datastore...
+    expect(s.funnel.waitlist_confirmed).toBe(30);
+    // ...but email.list_size is 0 until an email PROVIDER is connected (no provider ⇒ no list).
+    expect(s.email.list_size).toBe(0);
     expect(s.email.double_opt_in).toBe(true);
+  });
+
+  it("reports email.list_size only when an email provider is connected", () => {
+    const s = buildGrowthSnapshot({
+      ...base,
+      waitlistTotal: 42,
+      waitlistConfirmed: 30,
+      emailConnected: true,
+    });
+    expect(s.email.list_size).toBe(30);
+    expect(s.funnel.waitlist_confirmed).toBe(30);
+    expect(s.sources.email).toBe("connected");
+    expect(s.channels_connected).toContain("email");
   });
 
   it("computes visitor→waitlist rate only when analytics connected", () => {
@@ -105,7 +121,7 @@ describe("buildGrowthSnapshot", () => {
 
 describe("computeMrrUsd", () => {
   it("sums tier prices to whole USD", () => {
-    // 2×4.99 + 1×3.3325 + 1×9.99 = 9.98 + 3.33 + 9.99 = 23.30 → 23
+    // 2×499 + 1×333 (annual amortized: round(3999/12)) + 1×999 = 2330 cents → $23
     expect(computeMrrUsd({ monthly: 2, annual: 1, family: 1 })).toBe(23);
   });
   it("is 0 with no subscribers", () => {

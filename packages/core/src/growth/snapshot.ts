@@ -20,7 +20,12 @@ export type SourceStatus = "connected" | "awaiting_connect";
 export interface GrowthSnapshotInputs {
   /** YYYY-MM-DD stamp for this snapshot. */
   asOf: string;
-  /** Is the Track H growth-execution engine live in code? (true once H1–H8 ship.) */
+  /**
+   * Is the Track H growth-execution engine's CODE deployed? This is a static deployed-code
+   * flag (the deployed app passes `true` because the engine code is running), NOT a per-channel
+   * runtime health signal — that's what `sources` is for. A consumer wanting "is anything
+   * actually connected?" reads `awaiting_connect` / `sources`, not this.
+   */
   engineBuilt: boolean;
 
   // --- Waitlist (the in-app datastore — always "connected" once migrated) ---
@@ -65,6 +70,8 @@ export interface GrowthSnapshot {
     visitors_7d: number;
     waitlist_signups_total: number;
     waitlist_signups_7d: number;
+    /** Confirmed (double-opt-in) signups — our own datastore, always honest. */
+    waitlist_confirmed: number;
     visitor_to_waitlist_rate: number | null;
     trial_starts_total: number;
     paid_conversions_total: number;
@@ -141,6 +148,7 @@ export function buildGrowthSnapshot(input: GrowthSnapshotInputs): GrowthSnapshot
       visitors_7d: visitors7d,
       waitlist_signups_total: waitlistTotal,
       waitlist_signups_7d: waitlistMigrated ? Math.max(0, input.waitlist7d) : 0,
+      waitlist_confirmed: waitlistMigrated ? Math.max(0, input.waitlistConfirmed) : 0,
       visitor_to_waitlist_rate: visitorToWaitlist,
       trial_starts_total: 0, // not yet instrumented — honest 0, not invented
       paid_conversions_total: activeSubscribers,
@@ -150,9 +158,11 @@ export function buildGrowthSnapshot(input: GrowthSnapshotInputs): GrowthSnapshot
       churn_rate_30d: null,
     },
     email: {
-      // Confirmed double-opt-in list size from our own datastore (real); provider stats
-      // (open/click) stay null until the email provider is connected.
-      list_size: Math.max(0, input.waitlistConfirmed),
+      // Size of the opted-in list available to the CONNECTED email provider. Stays 0 until a
+      // provider is connected (no provider ⇒ no mailing list yet) — the raw confirmed-signup
+      // count lives in funnel.waitlist_confirmed regardless. Provider open/click stats stay
+      // null until the provider reports them.
+      list_size: input.emailConnected ? Math.max(0, input.waitlistConfirmed) : 0,
       double_opt_in: true,
       last_stage_sent: null,
       open_rate: null,
