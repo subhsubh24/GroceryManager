@@ -69,6 +69,9 @@ async function main() {
     console.log("→ waitlist double-opt-in confirmation…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0015_waitlist_confirm.sql"), "utf8"));
 
+    console.log("→ RLS on admin growth tables (waitlist, content schedule)…");
+    await sql.unsafe(readFileSync(join(pkgRoot, "sql/0016_rls_waitlist_content.sql"), "utf8"));
+
     console.log("✓ migrations complete");
   } finally {
     await sql.end();
