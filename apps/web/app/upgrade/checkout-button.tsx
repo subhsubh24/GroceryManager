@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { trackEvent } from "@/app/lib/plausible";
 
 export function CheckoutButton({ plan, label }: { plan: "monthly" | "annual" | "family"; label: string }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleClick() {
+    trackEvent("upgrade_click", { plan });
     setPending(true);
     setError(null);
     try {

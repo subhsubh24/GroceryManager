@@ -5,6 +5,7 @@ import { PageHeader } from "@/app/components/page-header";
 import { Check, Star } from "@/app/components/icons";
 import { PreviewButton } from "./preview-button";
 import { CheckoutButton } from "./checkout-button";
+import { PlausiblePageview } from "@/app/components/PlausiblePageview";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,8 @@ export default async function UpgradePage({
 
   return (
     <main className="page">
+      {/* Track upgrade page views for conversion funnel analytics. */}
+      <PlausiblePageview event="upgrade_view" />
       <PageHeader
         accent="grape"
         icon={Star}
