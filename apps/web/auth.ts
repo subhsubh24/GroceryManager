@@ -9,12 +9,31 @@ import { authConfig } from "./auth.config";
 const loginAttempts = new Map<string, { count: number; lockedUntil: number }>();
 const MAX_ATTEMPTS = 10;
 const LOCKOUT_MS = 15 * 60 * 1_000;
+// Cap the map so attacker-supplied usernames (recordFail fires for unknown names too) can't grow
+// it without bound. When the cap is hit, drop entries whose lockout has already elapsed; if none
+// have, evict the oldest-inserted key (Map preserves insertion order).
+const MAX_TRACKED = 10_000;
+
+function pruneAttempts(): void {
+  if (loginAttempts.size < MAX_TRACKED) return;
+  const now = Date.now();
+  for (const [k, v] of loginAttempts) {
+    if (!v.lockedUntil || now >= v.lockedUntil) loginAttempts.delete(k);
+  }
+  // Still over the cap (everything actively locked) → evict oldest insertions until under it.
+  while (loginAttempts.size >= MAX_TRACKED) {
+    const oldest = loginAttempts.keys().next().value;
+    if (oldest === undefined) break;
+    loginAttempts.delete(oldest);
+  }
+}
 
 function isLockedOut(u: string): boolean {
   const e = loginAttempts.get(u);
   return !!e?.lockedUntil && Date.now() < e.lockedUntil;
 }
 function recordFail(u: string): void {
+  if (!loginAttempts.has(u)) pruneAttempts();
   const e = loginAttempts.get(u) ?? { count: 0, lockedUntil: 0 };
   e.count++;
   if (e.count >= MAX_ATTEMPTS) { e.lockedUntil = Date.now() + LOCKOUT_MS; e.count = 0; }
