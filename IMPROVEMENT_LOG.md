@@ -4,6 +4,37 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-27 (run 20) — Track H analytics+experiment engine (H9/H10) + Track-G/conversion levers
+
+Three file-disjoint PRs (each 2 Sonnet reviewers, CI auto-merge), advancing the lowest incomplete ROADMAP
+items + the WEAK-CASE LOOP-BACK's named buildable levers (conversion + experiment optimization infra). The
+'FACTORY: ready for submission' issue was **NOT opened** — the Confidence box stays `[ ]` because the honest
+business-case median (~$33K/yr) is still below the $100K floor (reach-gated; not a code gap this run closes).
+
+- **#198 — Growth Data Engine (H9 + H10):** H9 analytics SURFACE — `GET /api/growth/analytics` (admin/cron
+  auth, rate-limited, middleware-scoped) returns the pure `@gm/core/growth/analytics` `AnalyticsSurface`
+  (funnel/time-series/UTM-segment aggregates from real waitlist+billing data; cohort builder shipped +
+  tested but honest-null pending a data source → new **H11**). H10 experiment ENGINE — pure
+  `@gm/core/growth/experiments` (HMAC bucketing, two-proportion z-test + Wilson CI + min-sample-size, code
+  registry, `computeExperimentResult` that NEVER fabricates a lift — "decided" only at N≥min AND p<0.05),
+  migration `0017_experiments.sql` (RLS tenant-isolation + GRANTs, idempotent), best-effort exposure/
+  conversion logging, results feed `GrowthSnapshot.experiments`. +45 test assertions (408→589). A review
+  follow-up removed the hardcoded bucketing-secret fallback (now keys off a per-deploy secret).
+- **#197 — Conversion lever:** dismissible Gmail-import premium teaser on `/pantry` (the business case's
+  named "first premium moment"). Shown only to non-premium, non-Gmail-connected users; honest copy naming
+  the real retailers the sync targets (Amazon/Whole Foods/Instacart); `gmail_import` is genuinely premium-
+  gated so "See Premium" is truthful.
+- **#196 — Security/G1:** rate-limit the public signup server action (5/hr/IP, before CAPTCHA) + the mobile
+  account-DELETE (3/day/user) + a server-side password length cap (hash-DoS). Review follow-up: x-real-ip
+  fallback + accurate rate-limit copy.
+
+**ROADMAP ticks:** H9 `[x]`, H10 `[x]` (PR #198, evidence-based, gate green incl. `migrations (fresh db)`);
+added **H11** `[ ]` (cohort-retention data source — honest follow-up flagged by Reviewer B, maker≠certifier).
+Confidence box remains `[ ]`. DEEP AUDIT: folded into this run's adversarial scout sweep (RLS/abuse/conversion/
+retention lenses); last standalone audit 2026-06-27 run 19 (<24h). Human Core: apply migration 0017.
+
+---
+
 ## 2026-06-27 (run 19) — readiness audit found real gaps; 'ready' issue NOT opened
 
 A ≥3-auditor adversarial readiness audit (Opus) + a deep-audit scout found 8 real gaps; all fixed this run

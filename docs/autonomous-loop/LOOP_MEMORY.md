@@ -244,3 +244,48 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   variant assignment + lift measurement with a significance test). GROWTH_STATUS's contract now points at
   the playbook; the Growth Agent routine reads it each run. Role split holds: agent measures + recommends,
   factory builds the levers, human integrates.
+- **2026-06-27 (run 20) — built H9 (analytics surface) + H10 (experiment engine), the last incomplete
+  ROADMAP build items; added H11 (cohort data source) rather than overclaiming H9.** Three file-disjoint PRs
+  (#196 signup/account rate-limit, #197 Gmail conversion teaser, #198 the growth data engine) through the
+  normal 2-reviewer + CI gate. Lessons:
+  - **`x-forwarded-for[0]` (leftmost) is CORRECT for this repo, not a bug — it's a platform-dependent call.**
+    A Sonnet reviewer flagged taking the leftmost XFF entry as a "complete rate-limit bypass" and demanded the
+    rightmost. That's WRONG here: GroceryManager deploys behind a trusted edge (Vercel/Cloudflare) that
+    overwrites client-supplied XFF, so the LEFTMOST entry is the verified client IP; taking the rightmost
+    would yield the edge's own internal IP and collapse all clients into one bucket (a self-inflicted DoS).
+    Four existing production routes already use `(xff).split(",")[0]` with a documented "trusted reverse
+    proxy" assumption. The fix was to KEEP the convention (add an x-real-ip fallback) and override the
+    reviewer with the platform/codebase justification — another instance of the "reviewer knowledge-cutoff /
+    platform false-positive" class. When a reviewer flags an IP/edge/version concern, check the deployment
+    model + existing convention before "fixing."
+  - **maker≠certifier caught an honesty gap the maker would have over-ticked.** The H9 builder ships all four
+    aggregate shapes incl. cohort retention, but there's no live per-user activity datastore feeding cohort,
+    so it returns honest-null. Reviewer B flagged "shape-complete, data-source pending — don't tick H9 as
+    fully done." Rather than silently tick H9 or bury the gap, the honest resolution was to tick H9 (the
+    surface + 3 live shapes + tested cohort builder genuinely shipped) AND add a NEW tracked ROADMAP item
+    **H11** for the cohort data source. Lesson: when a spec lists N sub-capabilities and you ship the
+    machinery for all N but lack a DATA SOURCE for one, don't claim it via the "honest-null until connected"
+    clause if the missing source is something the LOOP builds (not the owner connects) — split it into a
+    tracked follow-up item so the dashboard reflects reality.
+  - **The `migrations (fresh db)` CI job validates a new migration before merge.** PR #198's migration 0017
+    showed `migrations (fresh db): success` in the PR checks — the full chain (0001→0017) ran on a throwaway
+    pgvector DB. Trust that check as proof a new idempotent migration applies cleanly; it caught nothing this
+    run because 0017 followed the 0002/0011 RLS pattern exactly (ENABLE RLS + tenant_isolation TO grocery_app
+    + GRANTs, idempotent).
+  - **Experiment bucketing is a UI-variant boundary, not an auth boundary — but still key it off a per-deploy
+    secret, never a hardcoded literal.** A reviewer rightly objected to a `"...-do-not-use-in-prod"` fallback
+    constant in the HMAC bucketing key: a known constant lets an outsider predict variant assignment. Fixed by
+    falling back through configured secrets to `AUTH_SECRET`/`NEXTAUTH_SECRET` (always present in any real
+    deploy) with no literal. Generalizes: any deterministic-hash secret a model might hardcode should key off
+    an env secret; reserve the "non-security boundary" argument for the IMPACT assessment, not for shipping a
+    known constant.
+  - **DEEP AUDIT: folded into this run's adversarial scout sweep** (RLS/abuse, conversion, retention/pricing,
+    correctness lenses); last standalone deep+readiness audit was 2026-06-27 run 19 (<24h), so not separately
+    due. The security scout confirmed all post-0010 tables (incl. the new 0017 tables) have RLS; no new
+    critical findings beyond the signup rate-limit gap (fixed #196).
+  - **Business case unchanged this run (honest):** H9/H10 + the Gmail teaser are conversion-OPTIMIZATION infra
+    + one conversion surface; the honest median (~$33K, base 4% already assumed) does not move pre-launch with
+    zero traffic. The experiment engine lets the owner/Growth Agent EMPIRICALLY raise conversion post-launch.
+    Per the bounded WEAK-CASE LOOP-BACK, more buildable levers remain for future runs (the retention scout
+    named: month-3 annual nudge, expiry/reorder push, referral perks, win-back) — build them through the gate
+    in subsequent runs; converge only when the honest median clears the floor OR only reach remains.
