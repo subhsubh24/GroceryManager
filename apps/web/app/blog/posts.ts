@@ -215,6 +215,103 @@ export const BLOG_POSTS: BlogPost[] = [
     ctaBody:
       "GroceryManager imports your grocery receipts automatically — from photos or your Gmail inbox — and shows you where your food budget actually goes. Category breakdowns, weekly trends, and a year-end summary of your kitchen life. No spreadsheet required.",
   },
+  {
+    slug: "pantry-tracker-apps",
+    title: "Pantry tracker apps: what actually works in 2026",
+    description:
+      "An honest look at the best pantry tracker apps in 2026 — Grocy, KitchenPal, Foodat, AnyList, and more — to help you pick the right one for your kitchen.",
+    publishedAt: "2026-06-27",
+    readMinutes: 7,
+    keywords: [
+      "pantry tracker app",
+      "best pantry tracker app 2026",
+      "grocery tracking app",
+      "pantry management app",
+      "food inventory app",
+      "meal planning app",
+    ],
+    sections: [
+      {
+        heading: "The problem every pantry app is trying to solve",
+        body: [
+          "Most household food waste happens in the gap between what you bought and what you remember you bought. You pick up a second jar of cumin because you could not picture the spice rack. You throw out wilted spinach that never made it into a meal. You hit the store without a list and come home with three things you already had. A pantry tracker app is supposed to close that gap.",
+          "The category has matured a lot since 2022. Apps no longer compete just on the size of their barcode database. The better ones now do receipt scanning, expiry prediction, and meal suggestions tied to what you actually have on hand. The weaker ones are glorified shopping lists with a pantry tab bolted on.",
+          "This guide covers the apps worth considering in 2026, what each one does well, where each one falls short, and who should pick which. The goal is to help you find the right fit — not to promote any one app.",
+        ],
+      },
+      {
+        heading: "What separates a real pantry tracker from a shopping list with extras",
+        body: [
+          "A shopping list app tracks what you need to buy. A pantry tracker app tracks what you have, how fast you use it, and when you will run out. Those are different problems, and most apps lean heavily toward one or the other.",
+          "The features that matter in a genuine pantry tracker are: a way to get items in without typing every entry by hand, a model of how fast each item depletes, expiry tracking or shelf-life estimation, and some connection between what is in your pantry and what you cook. Apps that skip any of those four tend to fall apart after the first few weeks when manual-entry fatigue sets in.",
+          "Receipt scanning and barcode entry solve the ingestion problem. Consumption modeling solves the depletion problem. Expiry alerts solve the waste problem. Pantry-aware meal suggestions close the loop. If an app has all four, it is worth your time. If it has two or fewer, it is probably a list app in disguise.",
+        ],
+      },
+      {
+        heading: "Grocy: the best option if you are willing to host it yourself",
+        body: [
+          "Grocy is open-source, self-hosted, and free. It has barcode scanning via Open Food Facts, recipe planning, stock tracking, and a task system for things like cleaning schedules. For a certain kind of user — someone comfortable running a server or a Raspberry Pi — it is the most powerful pantry system available. There is no subscription fee and no vendor lock-in.",
+          "The trade-off is the setup. You need to provision and maintain a server, keep it updated, and handle your own backups. There is no mobile-native experience out of the box, though community apps like Grocy for Android fill some of that gap. Receipt scanning is not available. If your household is not technically inclined, the barrier to entry is real.",
+          "Grocy is the right call for self-hosters, privacy absolutists, and people who want to customize every field and workflow. It is not the right call if you want to be up and running in five minutes on your phone.",
+        ],
+      },
+      {
+        heading: "KitchenPal and OurGroceries: solid free options for families",
+        body: [
+          "KitchenPal is free with ads and, according to the developer, has a barcode database of over 4 million products, expiry detection, and ingredient-based recipe matching. Family sharing is built in. For a household that wants a no-cost pantry tracker and is willing to live with ads, it covers the basics well. There is no receipt scanning and no Gmail import, so every item still needs to be added manually or by barcode.",
+          "OurGroceries takes a different angle. It is primarily a shared shopping list app, and it does that job cleanly. The free tier is functional; removing ads costs around $6 per year. Pantry tracking is present but shallow — it is better thought of as a list-sync tool with some pantry vocabulary than as a true inventory system. If your household's main pain point is getting everyone on the same shopping list in real time, OurGroceries is hard to beat at that price.",
+          "Neither app will predict when you are about to run out of something or suggest tonight's dinner based on what is aging in your fridge. If those features matter to you, both apps will feel like a half-measure within a few weeks.",
+        ],
+      },
+      {
+        heading: "AnyList and BigOven: recipe-first, pantry-second",
+        body: [
+          "AnyList is built around recipe collection and meal planning. You import recipes from the web, schedule them on a calendar, and it generates a shopping list. The pantry side is limited — it tracks items but does not model consumption or predict run-outs. Individual plans start at $9.99 per year, household plans at $14.99. For someone whose main goal is organizing recipes and planning a weekly menu, it is a clean, well-designed app.",
+          "BigOven leans even further into recipes, with a database of over one million. Its Pro plan is $24.99 per year and integrates a grocery list with that recipe library. Pantry tracking is minimal. If you are primarily a recipe collector who wants a grocery list attached, BigOven works. If you want your app to understand that you bought carrots two weeks ago and they are about to go bad, it will disappoint you.",
+          "Both apps are worth mentioning because many people search for pantry trackers when what they actually want is a recipe and meal-planning tool. If that describes you, either of these will serve you better than a dedicated inventory system.",
+        ],
+      },
+      {
+        heading: "Foodat: the strongest receipt-scanning competitor",
+        body: [
+          "Foodat is notable because it centers receipt scanning as a first-class feature, not an afterthought. You photograph a receipt and it parses the items automatically. Expiry tracking and automation are strong. It is priced at $3.99 per month or $14.99 per year, which makes it the most affordable paid option in this comparison. The app takes a privacy-first stance, which some users will find reassuring.",
+          "The narrower feature set is the trade-off. There is no Gmail import for automated receipt ingestion, no AI meal generation, and no discovery feed. The pantry model does not do the kind of consumption-rate learning that predicts run-outs before you notice them yourself. For a user who primarily wants receipt scanning to eliminate manual entry and get expiry alerts, Foodat delivers that at a fair price.",
+          "If receipt scanning is your single biggest need and budget is tight, Foodat is an honest recommendation. If you also want the app to tell you what to cook tonight based on what is depleting fastest, you will need to look elsewhere.",
+        ],
+      },
+      {
+        heading: "GroceryManager: built around the full loop",
+        body: [
+          "GroceryManager approaches the pantry problem differently. The core idea is that your pantry should be self-maintaining: receipts come in automatically from Gmail or a photo, the app builds a consumption model to learn how fast each household goes through each item, and it surfaces run-out predictions before you hit zero. Fridge vision scan and barcode add cover the items that do not come with a receipt.",
+          "The meal side is tightly integrated with the pantry. Cook Tonight ranks recipes by what needs to be used soonest. Meal planning uses AI to generate a week based on your pantry state, preferences, and nutrition targets. Recipe Remix takes a dish you like and rewrites it around what you have. Grocery Wrapped generates a year-in-food summary of your spending and cooking patterns.",
+          "Where GroceryManager is weaker: it is less customizable than Grocy, more expensive than Foodat, and not free like KitchenPal. If you are a self-hoster who wants full control, Grocy wins. If receipt scanning is your only need and price is the constraint, Foodat is cheaper. GroceryManager makes the most sense for households who cook regularly and want the full loop — ingestion, depletion, prediction, and meal suggestions — without managing infrastructure.",
+        ],
+      },
+      {
+        heading: "How to pick the right app for your household",
+        body: [
+          "Start with your biggest friction point. If your household loses track of items and wastes food because nothing ever gets entered, you need frictionless ingestion — that means receipt scanning or barcode entry, not manual text fields. If your problem is coordinating a shared shopping list, OurGroceries or AnyList will solve that without overcomplicating things. If you run a homelab and want total control, Grocy is the clear answer.",
+          "Consider how much you actually cook. Apps with meal planning features are only useful if you are cooking regularly from a plan. If you eat out most nights and just want to stop buying duplicates at the store, a simpler inventory app is enough. If you cook four or five nights a week and want the app to tell you what to make based on what is aging, that narrows the field to apps that integrate pantry state with recipe suggestions.",
+          "Price matters, but so does dropout rate. The most expensive app is the one you stop using after two weeks because entering items was too tedious. A free app with manual-only entry will be abandoned faster than a $5 app that fills itself in from your receipts. Think about your actual behavior, not your ideal behavior, when you decide.",
+        ],
+      },
+      {
+        heading: "A quick comparison at a glance",
+        body: [
+          "Grocy: free, self-hosted, most customizable, no receipt scanning, technical setup required. Best for power users and self-hosters.",
+          "KitchenPal: free with ads, large barcode database, family sharing, no receipt scanning. Best for families who want free and simple.",
+          "OurGroceries: free base, ~$6/yr to remove ads, excellent shared list sync, shallow pantry tracking. Best for households that primarily need a shared shopping list.",
+          "AnyList: $9.99/yr individual, strong recipe import and meal calendar, limited pantry depth. Best for recipe collectors.",
+          "Foodat: $3.99/mo or $14.99/yr, strong receipt scanning, privacy-first, narrower feature set. Best for receipt-scanning focused users on a budget.",
+          "BigOven: $24.99/yr Pro, 1M+ recipes, recipe-first not pantry-first. Best for recipe enthusiasts.",
+          "GroceryManager: free core (pantry tracking, cook logging, shopping list), $4.99/mo or $39.99/yr Premium (Gmail import, AI meal planning, recipe remix). Best for households that cook regularly and want automation end to end.",
+        ],
+      },
+    ],
+    ctaHeading: "Ready to close the loop?",
+    ctaBody:
+      "If the combination of receipt scanning, run-out prediction, and meal planning is what you are after, GroceryManager is built for exactly that. The free tier covers pantry tracking, cook logging, and your shopping list — no credit card needed. A 7-day trial of Premium unlocks Gmail import, AI meal planning, and recipe remix.",
+  },
 ];
 
 export function getPost(slug: string): BlogPost | undefined {

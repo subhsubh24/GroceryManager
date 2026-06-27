@@ -88,6 +88,7 @@ export default async function BlogPostPage({ params }: Props) {
         </div>
 
         <footer className="mt-8 text-xs text-ink-400">
+          <p className="mb-2">Written by the GroceryManager team.</p>
           <a href="/privacy" className="link">Privacy</a>
           {" · "}
           <a href="/terms" className="link">Terms</a>

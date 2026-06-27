@@ -26,7 +26,7 @@ the owner sees pre-launch / launch / post-launch growth progress in one place.
 ```yaml
 GROWTH_STATUS:
   project: GroceryManager
-  as_of: 2026-06-26
+  as_of: 2026-06-27
   phase: pre_launch              # pre_launch | launching | post_launch
   engine_built: true             # Track H growth-execution engine (H1–H8) is live in code (PRs #167–#176)
   channels_connected: []         # owner-authorized channels actually wired (e.g. [x, instagram, email])
@@ -62,15 +62,29 @@ GROWTH_STATUS:
     open_rate: null
     click_rate: null
   content:
-    published_7d: 0
+    published_7d: 1              # 4th SEO blog post added: /blog/pantry-tracker-apps
     scheduled_next_7d: 0
     organic_sessions_7d: 0
-  learnings: []                  # short, data-grounded bullets: what's working / what's not
-  next_actions: []               # what the agent will do next run
-  owner_blockers: []             # things needing the owner before the agent can execute externally
+  learnings:
+    - "All channels still awaiting_connect — zero external signal available. Engine is built; owner activation is the only path to real data."
+    - "4th SEO blog post added (pantry tracker comparison, target keyword: pantry tracker app). Bottom-of-funnel content targeting high-intent searchers close to downloading."
+    - "Competitive research: Foodat ($3.99/mo) is the closest receipt-scanning rival but lacks Gmail import and AI meal gen. KitchenPal is free but manual-entry-only. Grocy is free/self-hosted but technical. GroceryManager differentiator is the full loop — ingestion + depletion + prediction + meal suggestions."
+  next_actions:
+    - "Run 2: once owner connects Plausible (NEXT_PUBLIC_PLAUSIBLE_DOMAIN + PLAUSIBLE_API_KEY), pull real visitor and waitlist funnel numbers. Until then, stay in prepare mode."
+    - "Run 2: if blog traffic data is available, check whether pantry-tracker-apps post is ranking. If not ranking after 60d, reassess keyword strategy."
+    - "Sharpen Product Hunt first-comment copy — the single highest-leverage owned channel for launch-day downloads (top-10 PH = 2,000–10,000 page visits)."
+    - "Consider adding a 5th SEO post: 'How to scan grocery receipts and track spending automatically' (target: scan grocery receipts — bottom-funnel, product-specific)."
+  owner_blockers:
+    - "CIRCUIT BREAKER (run 1): No channels connected. Zero real funnel data. Agent cannot execute externally until at least one channel is wired. See docs/growth/CONNECT.md for the 20-minute activation checklist."
+    - "Deploy app to Vercel and set DATABASE_URL — prerequisite for all channel activation."
+    - "Connect Plausible (NEXT_PUBLIC_PLAUSIBLE_DOMAIN + PLAUSIBLE_API_KEY) — unlocks visitor + waitlist funnel data."
+    - "Connect email provider (RESEND_API_KEY or SENDGRID_API_KEY + EMAIL_FROM + WAITLIST_OPTIN_SECRET) — enables double-opt-in confirmation emails and lifecycle drips."
+    - "Set CRON_SECRET — gates both the content publish cron and the growth snapshot API the agent reads each run."
+    - "Optional but high-value: connect X/Buffer/Typefully token to enable content scheduler for social posts."
   links:
     in_app_analytics: /admin/waitlist
     owner_doc: docs/growth/GROWTH_STATUS.md
+    connect_runbook: docs/growth/CONNECT.md
 ```
 
 ## How to read it (owner)
