@@ -58,8 +58,12 @@ ARPU = 0.65 × $4.24 + 0.25 × ($33.99 / 12) + 0.10 × $8.49
 
 The Family tier raises blended ARPU by ~13 % ($3.82 → $4.32) once 10 % of paying users adopt it.
 Household/family apps typically see 8–15 % of paying users on family plans once the tier is visible
-in the paywall. **The base scenario below uses this lever — it is built and surfaced in
-`SUBSCRIPTION_PLANS`; activation requires wiring it into the paywall UI.**
+in the paywall. **The base scenario below uses this lever — it is fully built AND surfaced in the
+paywall: the Family card renders on `/upgrade` with a `CheckoutButton plan="family"` (PR #154), and
+the Stripe webhook maps the Family price ID to `premium_family`. Like every paid tier, charging it
+requires the owner to create the Stripe/RevenueCat product + price ID (Human Core — see PENDING_OPS).
+The 10 % adoption assumption sits at the LOW end of the cited 8–15 % range (conservative, not chosen
+to clear the floor).**
 
 ---
 
@@ -214,8 +218,9 @@ base case: honest median funnel, realistic lever adoption.*
 > tiers only ($3.82 ARPU, 20 % trial→paid):
 > 1,500 × 0.40 × 0.60 × 0.20 = 72/mo new paid; steady-state = 72 / 0.037 = 1,946 users;
 > 1,946 × $3.82 × 12 = **$89,232/yr — below the $100 K floor.**
-> This is what the floor looks like without the Family tier being adopted. The lever is built;
-> activation requires surfacing it in the paywall.
+> This is what the floor looks like if the Family tier (built AND surfaced in `/upgrade`) is not
+> adopted by paying users. The base case does NOT depend on building anything more — only on the
+> conservative 10 % low-end adoption of an already-shipped, already-visible tier.
 
 **Key assumptions to hold:**
 1. 1,500 downloads/mo sustained — requires ASO + one launch event (Product Hunt / HN) + ongoing
@@ -260,9 +265,10 @@ sharing channels and seed the referral program (see `docs/brand/LAUNCH_PLAN.md` 
 ## 5. The $100 K/yr verdict
 
 **Median base WITH the built Family tier lever clears $100 K/yr at $106 K/yr steady-state.**
-Without the lever, the same median funnel yields ~$89 K/yr — below the floor. The lever is built
-and costs no additional engineering; it requires the owner to surface the Family tier prominently
-in the paywall and set up the RevenueCat product ID.
+Without the lever, the same median funnel yields ~$89 K/yr — below the floor. The lever is fully
+built AND surfaced in the paywall today (the Family card on `/upgrade`, PR #154) at no additional
+engineering cost; the only remaining step is Human Core — the owner creating the Stripe/RevenueCat
+Family product + price ID so it can actually charge (the same step every paid tier needs).
 
 | Scenario | Annual Revenue | Floor met? | What it requires |
 |---|---|---|---|
