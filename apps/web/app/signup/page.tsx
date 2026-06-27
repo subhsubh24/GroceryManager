@@ -1,4 +1,5 @@
 import { AuthError } from "next-auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   createUserWithPassword,
@@ -12,6 +13,7 @@ import { isValidReferralCode, isValidUsername, normalizeUsername } from "@gm/cor
 import { signIn } from "@/auth";
 import { Leaf } from "@/app/components/icons";
 import { verifyTurnstile } from "@/app/api/_lib/captcha";
+import { rateLimit } from "@/app/api/_lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +29,14 @@ async function registerAction(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const ref = String(formData.get("ref") ?? "").trim();
 
+  // G1: Rate-limit account creation per IP — 5 attempts / hour.
+  // Applied BEFORE CAPTCHA so floods are shed cheaply (account creation is expensive + abuse-prone).
+  // x-forwarded-for is the codebase-wide IP convention; on a trusted edge (Vercel/Cloudflare) the
+  // leftmost entry is the verified client IP. Fall back to x-real-ip, then a shared "unknown" bucket.
+  const hdrs = await headers();
+  const ip = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ?? hdrs.get("x-real-ip") ?? "unknown";
+  if (!rateLimit(`signup:${ip}`, 5, 60 * 60_000).allowed) redirect("/signup?error=rate");
+
   // G5: Bot protection on signup
   const captchaToken = String(formData.get("cf-turnstile-response") ?? "").trim() || null;
   const captcha = await verifyTurnstile(captchaToken);
@@ -35,6 +45,8 @@ async function registerAction(formData: FormData) {
   if (!username || !password) redirect("/signup?error=missing");
   if (!isValidUsername(username)) redirect("/signup?error=invalid");
   if (password.length < 8) redirect("/signup?error=weak");
+  // G2: Server-side upper bound prevents hash-DoS from megabyte passwords.
+  if (password.length > 200) redirect("/signup?error=weak");
 
   const existing = await getUserByUsername(getAdminDb(), username);
   if (existing) redirect("/signup?error=exists");
@@ -84,6 +96,7 @@ export default async function SignUpPage({
     weak: "Password must be at least 8 characters.",
     exists: "That username is taken. Try another, or sign in.",
     captcha: "Security check failed. Please try again.",
+    rate: "Too many attempts. Please try again later.",
   };
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-5 py-12">
@@ -129,6 +142,7 @@ export default async function SignUpPage({
                 type="password"
                 autoComplete="new-password"
                 minLength={8}
+                maxLength={200}
                 required
                 className="input"
               />
