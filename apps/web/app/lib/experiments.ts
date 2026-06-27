@@ -14,11 +14,19 @@ import { getExperiment } from "@gm/core/growth/experiments";
 
 /** Reads the HMAC secret for experiment bucketing (reuses the optin secret pattern). */
 function getExperimentSecret(): string {
+  // Prefer a dedicated EXPERIMENT_SECRET; fall back through other configured secrets and finally to
+  // AUTH_SECRET/NEXTAUTH_SECRET, which are ALWAYS present in any real deployment (next-auth requires
+  // one). No hardcoded literal: bucketing is a UI-variant boundary (not auth), but a known constant
+  // would let an outsider predict assignments, so we key off a per-deploy secret instead. If none is
+  // set (only possible in a bare local run), the empty string degrades gracefully — assignVariant is
+  // wrapped in try/catch by the caller and falls back to the ?v= / "a" control.
   return (
     process.env["EXPERIMENT_SECRET"] ??
     process.env["WAITLIST_OPTIN_SECRET"] ??
     process.env["EMAIL_UNSUBSCRIBE_SECRET"] ??
-    "gm-experiment-fallback-secret-do-not-use-in-prod"
+    process.env["AUTH_SECRET"] ??
+    process.env["NEXTAUTH_SECRET"] ??
+    ""
   );
 }
 
