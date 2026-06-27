@@ -30,7 +30,10 @@
     "./agent": "./src/agent/index.ts",
     "./vision": "./src/vision/index.ts",
     "./billing": "./src/billing/index.ts",
-    "./chat": "./src/chat/index.ts"
+    "./chat": "./src/chat/index.ts",
+    "./email": "./src/email/index.ts",
+    "./content/scheduler": "./src/content/scheduler.ts",
+    "./growth/guardrails": "./src/growth/guardrails.ts"
   },
   "scripts": {
     "lint": "echo \"(lint) @gm/core\"",
