@@ -152,13 +152,28 @@ supplements.
     session token → `return null` to deny session (PR #120); (3) non-null assertions on DB returns
     in `logCook` → explicit guards (PR #121).
 
+- **Track G — Pre-launch security & abuse hardening (DONE, 2026-06-27):** 4 PRs (#161–164) closed all
+  G1–G7 gaps in one run:
+  - **G1 Rate limiting** (PR #164): `_lib/rate-limit.ts` in-memory sliding-window limiter; 429 + Retry-After
+    on every paid-API/expensive/auth endpoint (mobile auth, discover, plan, cook-tonight, wrapped, spend,
+    Stripe checkout, Stripe portal).
+  - **G2 Server-side validation** (PR #162): `_lib/guard.ts` — `parseJsonBody<T>()` (32 KB cap + JSON guard),
+    `requireString()` for field validation. Applied to capture (+2 000 char cap), onboarding POST, account DELETE.
+  - **G3 Error hygiene** (PR #162): `serverError(context, err)` helper logs full context server-side, returns
+    generic 500 to callers. Stripe webhook no longer leaks SDK internals.
+  - **G4 Auth lockout** (PR #164): 10 bad Credentials attempts → 15-min username lockout in `auth.ts`;
+    IP-rate-limit (10/15min) on mobile auth route.
+  - **G5 Captcha** (PR #163): `_lib/captcha.ts` — `verifyTurnstile()` with fail-open for dev/staging;
+    wired to `submitWaitlistEmail` + `registerAction` (reads `cf-turnstile-response`).
+  - **G6 Security headers** (PR #161): `next.config.mjs` `async headers()` — CSP, HSTS (1yr), X-Frame-Options
+    DENY, X-Content-Type-Options, Referrer-Policy, CORS on /api/*.
+  - **G7 LLM spend ceiling** (PR #164): `_lib/llm-quota.ts` — per-user daily quota (10 free/100 premium,
+    UTC midnight reset; env overrides). Applied to discover, plan, cook-tonight.
+  - Gates: typecheck ✅ (no new errors), 464 core tests ✅, `next build` ✅, no broken re-exports ✅.
+
 ## Next up
-**The product factory is complete.** All six tracks (A: quality pass, B: native mobile, C: billing
-scaffold, D: store readiness, E: marketing engine, F: world-class quality) have reached their
-Definition of Done for everything buildable in a headless/keyless environment. The product is ready
-for human handoff. See `docs/LAUNCH.md` for the ordered checklist of owner-required steps
-(migrations, accounts, signing, screenshots, live keys, store submission). The hourly Actions loop
-has nothing left to build and can be retired or repurposed for future feature work.
+**Track G complete.** Track H (growth/demand-gen execution engine, H1–H6) is the next lowest incomplete
+track — implementation in progress this run. See ROADMAP.md DoD checkboxes for H1–H6 status.
 
 ## Deferred (not buildable in this keyless/headless runner — need keys, scale, or a human eye)
 - **Instacart production API** (one-tap prefilled cart + Impact affiliate) — needs Instacart key.

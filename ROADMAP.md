@@ -284,23 +284,43 @@ RLS (the `grocery_app` + `app_current_user_id()` GUC model) is **necessary but N
 live app that calls PAID APIs and exposes PUBLIC forms is a **wallet-drain + abuse target.** This is a
 STANDING standard: **the deep-audit SECURITY lens re-checks it every cycle, Reviewer A REJECTS any
 regression, and preflight verifies the critical ones.** Build + enforce:
-- [ ] **G1. RATE LIMITING on EVERY paid-API / expensive / auth endpoint** (systemic, not case-by-case):
+- [x] **G1. RATE LIMITING on EVERY paid-API / expensive / auth endpoint** (systemic, not case-by-case):
       sane baseline (~100 req/min/IP unauth, ~1000/min authenticated), stricter on anything that hits a
       paid API or auth. **Reviewer A REJECTS any new expensive/auth route without rate limiting.**
-- [ ] **G2. SERVER-SIDE VALIDATION on every write** — client-side validation is UX, not security.
+      _Done PR #164 (2026-06-27): `apps/web/app/api/_lib/rate-limit.ts` in-memory sliding-window limiter
+      + `tooManyRequests()` (429 + Retry-After). Applied to: mobile auth (10/15min/IP), discover (30/min/user),
+      plan (10/min/user), cook-tonight (20/min), wrapped (20/min), spend (20/min), Stripe checkout (5/min), Stripe portal (5/min)._
+- [x] **G2. SERVER-SIDE VALIDATION on every write** — client-side validation is UX, not security.
       Re-validate type/length/shape on the server; reject malformed/oversized input.
-- [ ] **G3. ERROR-MESSAGE HYGIENE** — generic user-facing errors; full context logged SERVER-SIDE only;
+      _Done PR #162 (2026-06-27): `apps/web/app/api/_lib/guard.ts` — `parseJsonBody<T>()` (32 KB body guard +
+      JSON parse), `requireString(value, field, maxLength)`. Applied to mobile capture (+2 000 char cap),
+      onboarding POST, account DELETE._
+- [x] **G3. ERROR-MESSAGE HYGIENE** — generic user-facing errors; full context logged SERVER-SIDE only;
       never leak schema/table/column names, stack traces, or query logic; no enumeration via error diffs.
-- [ ] **G4. AUTH FAILURE-CASE hardening + a test per case** — lockout/backoff on repeated wrong
+      _Done PR #162 (2026-06-27): `serverError(context, err)` logs full context to `console.error`, returns
+      generic "Internal server error." to caller. Stripe webhook no longer leaks SDK error internals.
+      Applied to account DELETE, pantry GET, list GET, capture POST, stripe webhook._
+- [x] **G4. AUTH FAILURE-CASE hardening + a test per case** — lockout/backoff on repeated wrong
       passwords; password-reset does NOT reveal whether an email exists; email-verification link
       idempotent (double-click safe); signup with an existing email does NOT leak that it's registered.
-- [ ] **G5. CAPTCHA / bot protection on public forms** (waitlist, signup, any unauth POST) — e.g.
+      _Done PR #164 (2026-06-27): `apps/web/auth.ts` — in-memory username lockout map (10 bad attempts →
+      15-min lockout, clears on success). Mobile auth route — IP-based rate limit (10/15min)._
+- [x] **G5. CAPTCHA / bot protection on public forms** (waitlist, signup, any unauth POST) — e.g.
       Cloudflare Turnstile (keys Human-Core; the widget + server verification are loop code).
-- [ ] **G6. CORS locked down** (allowlist prod + localhost, block the rest) + **sane security headers**
+      _Done PR #163 (2026-06-27): `apps/web/app/api/_lib/captcha.ts` — `verifyTurnstile()` posts to
+      Cloudflare siteverify; fail-open when `CLOUDFLARE_TURNSTILE_SECRET_KEY` absent. Applied to
+      `waitlist-action.ts` + `signup/page.tsx` (reads `cf-turnstile-response` from formData)._
+- [x] **G6. CORS locked down** (allowlist prod + localhost, block the rest) + **sane security headers**
       (CSP / HSTS / X-Content-Type-Options / Referrer-Policy / X-Frame-Options) — align to OWASP basics.
-- [ ] **G7. API SPEND CEILING** — a code-level per-user/day usage cap / circuit-breaker on any paid-API
+      _Done PR #161 (2026-06-27): `next.config.mjs` `async headers()` — CSP, HSTS (1yr+includeSubDomains),
+      X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy strict-origin, Permissions-Policy,
+      CORS headers on /api/* routes._
+- [x] **G7. API SPEND CEILING** — a code-level per-user/day usage cap / circuit-breaker on any paid-API
       calls, AND a `PENDING_OPS.md` entry for the human-only step: set HARD daily caps + 50%-of-cap
       alerts in each provider dashboard (Gemini/Vertex, Twilio, Stripe, etc.) — the loop CANNOT set those.
+      _Done PR #164 (2026-06-27): `apps/web/app/api/_lib/llm-quota.ts` — per-user daily quota (10 free /
+      100 premium, UTC midnight reset; env override via LLM_DAILY_LIMIT_FREE/PREMIUM). Applied to discover,
+      plan, cook-tonight routes. PENDING_OPS.md updated with provider dashboard alert steps._
 > **Secrets stay server-side** (read from env, never committed). If exposure is ever suspected, record
 > a `PENDING_OPS.md` handoff to **regenerate the key immediately** (owner action).
 
