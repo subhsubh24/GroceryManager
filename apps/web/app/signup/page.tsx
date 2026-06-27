@@ -11,6 +11,7 @@ import { hashPassword } from "@gm/core/crypto";
 import { isValidReferralCode, isValidUsername, normalizeUsername } from "@gm/core/personalization";
 import { signIn } from "@/auth";
 import { Leaf } from "@/app/components/icons";
+import { verifyTurnstile } from "@/app/api/_lib/captcha";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,11 @@ async function registerAction(formData: FormData) {
   const username = normalizeUsername(String(formData.get("username") ?? ""));
   const password = String(formData.get("password") ?? "");
   const ref = String(formData.get("ref") ?? "").trim();
+
+  // G5: Bot protection on signup
+  const captchaToken = String(formData.get("cf-turnstile-response") ?? "").trim() || null;
+  const captcha = await verifyTurnstile(captchaToken);
+  if (!captcha.success) redirect("/signup?error=captcha");
 
   if (!username || !password) redirect("/signup?error=missing");
   if (!isValidUsername(username)) redirect("/signup?error=invalid");
@@ -77,6 +83,7 @@ export default async function SignUpPage({
     invalid: "Username must be 3–20 characters: letters, numbers, dots or underscores.",
     weak: "Password must be at least 8 characters.",
     exists: "That username is taken. Try another, or sign in.",
+    captcha: "Security check failed. Please try again.",
   };
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-5 py-12">
