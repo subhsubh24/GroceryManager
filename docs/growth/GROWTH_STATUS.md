@@ -28,7 +28,7 @@ GROWTH_STATUS:
   project: GroceryManager
   as_of: 2026-06-26
   phase: pre_launch              # pre_launch | launching | post_launch
-  engine_built: false            # is the Track H growth-execution engine live in code?
+  engine_built: true             # Track H growth-execution engine (H1–H8) is live in code (PRs #167–#176)
   channels_connected: []         # owner-authorized channels actually wired (e.g. [x, instagram, email])
   awaiting_connect: true         # true => agent only prepares creative; takes NO external action
   sources:                       # per-source pull status (H7 snapshot): connected | awaiting_connect

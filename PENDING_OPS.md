@@ -20,15 +20,20 @@ OWNER_ACTIONS:
       status: open
       why: The publishing engine, email runner, and cron endpoint are all dormant until credentials are set. Without them the Growth Agent cannot publish or email.
       how: |
-        Set these in Vercel env (never committed):
-          CRON_SECRET=<random 32+ char secret>  (protects GET /api/cron/publish from unauthorized calls)
+        Apply migration 0015 (waitlist confirmed_at) via `pnpm --filter @gm/db db:migrate`, then
+        set these in Vercel env (never committed):
+          CRON_SECRET=<random 32+ char secret>  (gates BOTH GET /api/cron/publish AND GET /api/growth/snapshot)
           RESEND_API_KEY=re_...  (or SENDGRID_API_KEY / POSTMARK_API_KEY — first key found wins)
-          FROM_EMAIL=hello@yourdomain.com  (sender address for lifecycle emails)
+          EMAIL_FROM=hello@yourdomain.com  (sender address; defaults to noreply@grocerymanager.app)
+          EMAIL_FROM_NAME=GroceryManager  (optional sender display name)
           EMAIL_UNSUBSCRIBE_SECRET=<random 32+ char secret>  (HMAC for unsubscribe tokens)
+          WAITLIST_OPTIN_SECRET=<random 32+ char secret>  (HMAC for waitlist double-opt-in confirm links)
+          PLAUSIBLE_API_KEY=<Plausible Stats API key>  (lets GET /api/growth/snapshot pull real visitors)
           X_API_KEY=<X/Twitter Bearer token>  (for publishItem to X — optional, skip if not using X)
           BUFFER_ACCESS_TOKEN=<token>  (for Buffer scheduling — optional)
           TYPEFULLY_API_KEY=<key>  (for Typefully scheduling — optional)
         Wire /api/cron/publish as a Vercel Cron Job (vercel.json crons field, hourly) with Authorization: Bearer $CRON_SECRET.
+        Full step-by-step: docs/growth/CONNECT.md (the ~20-min owner activation runbook).
       blocks: growth-execution
     - id: spend-caps
       title: Set HARD daily API spend caps + alerts in every provider dashboard
@@ -59,11 +64,11 @@ OWNER_ACTIONS:
       how: Add `pnpm --filter web lint` and the E2E job to .github/workflows/ci.yml (see prose entry below).
       blocks: none
     - id: waitlist-migration
-      title: Apply waitlist migration 0012 + set ADMIN_EMAIL
+      title: Apply waitlist migrations 0012–0015 + set ADMIN_EMAIL
       priority: normal
       status: open
-      why: The in-app waitlist analytics (`/admin/waitlist`, the Growth Agent's real signup source) needs the table + admin email.
-      how: "Run `pnpm --filter @gm/db db:migrate`; set ADMIN_EMAIL in Vercel env (see prose entry below)."
+      why: The in-app waitlist analytics (`/admin/waitlist`, the Growth Agent's real signup source) needs the table + UTM + content-schedule + double-opt-in columns, plus the admin email for `/admin/*` + `GET /api/growth/snapshot`.
+      how: "Run `pnpm --filter @gm/db db:migrate` (idempotent; applies 0012 waitlist, 0013 UTM, 0014 content_schedule, 0015 confirmed_at); set ADMIN_EMAIL in Vercel env (see prose entry below)."
       blocks: growth-analytics
     - id: turnstile-keys
       title: Create Cloudflare Turnstile site + set CLOUDFLARE_TURNSTILE_SECRET_KEY + NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY

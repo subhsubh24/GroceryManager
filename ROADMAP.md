@@ -369,7 +369,7 @@ each platform's ToS.** This is how the app gets *tailored for success* with real
       env var to set. Until connected, the Growth Agent reports "awaiting connect," it does not fake it.
       _(2026-06-27 bookkeeping: PENDING_OPS.md updated with Track H activation steps — CRON_SECRET,
       email provider key, social API tokens (X/Buffer/Typefully), EMAIL_UNSUBSCRIBE_SECRET.)_
-- [ ] **H7. Analytics PULL read-API (machine-readable, agent-callable)** — an internal, admin/cron-gated
+- [x] **H7. Analytics PULL read-API (machine-readable, agent-callable)** — an internal, admin/cron-gated
       read endpoint (e.g. `GET /api/growth/snapshot`) that aggregates REAL funnel/conversion/retention from
       the connected sources — web analytics (Plausible), billing/subscription (Stripe), the email provider,
       and the waitlist datastore — into the `GROWTH_STATUS` shape, so the separate Growth Agent populates
@@ -378,7 +378,7 @@ each platform's ToS.** This is how the app gets *tailored for success* with real
       backend/auth/datastore (`getWaitlistWithUtm()`, the Stripe + email layers) — do NOT add a new
       framework; the deployed app reads the keys (owner-supplied via env), never the agent. This is what
       makes `engine_built` honest instead of all-null.
-- [ ] **H8. Owner CONNECT runbook + public-signup hardening** — (a) `docs/growth/CONNECT.md`: the
+- [x] **H8. Owner CONNECT runbook + public-signup hardening** — (a) `docs/growth/CONNECT.md`: the
       consolidated **~20-minute owner setup runbook** — exactly which env vars / OAuth connections to set
       per channel (web analytics, email provider, social token(s), billing), IN ORDER, each with its
       portal/URL, the env var name, how to verify, and the dry-run→live flip; until a channel's creds are
@@ -391,6 +391,15 @@ each platform's ToS.** This is how the app gets *tailored for success* with real
 > leads* is post-launch and needs the owner CONNECT step + the separate Growth Agent — leads flowing is
 > NOT a store-submission gate (the app can submit without it), but the engine being built + ready-to-run
 > IS the bar here.
+>
+> **H7+H8 evidence (2026-06-27, PRs #175 #176):** `GET /api/growth/snapshot` (admin-session OR
+> `CRON_SECRET`-bearer, rate-limited) pulls real waitlist + Stripe + Plausible(Stats API) + email-provider
+> state into the `GROWTH_STATUS` shape via the pure `@gm/core/growth/snapshot` builder (per-source
+> `awaiting_connect`; honest 0/null when disconnected; +12 tests). `docs/growth/CONNECT.md` is the
+> in-order ~20-min owner activation runbook. Public waitlist hardened: per-IP rate limit + double-opt-in
+> (`@gm/core/growth/optin` HMAC, +5 tests) + `GET /api/waitlist/confirm` + captcha (already wired).
+> Migration `0015_waitlist_confirm.sql` adds `confirmed_at`. Email sender made owner-configurable
+> (`EMAIL_FROM`). Gate green: typecheck + 541 tests + production build.
 
 ---
 
@@ -486,15 +495,16 @@ missing, and do not add scope after Done.
       _(PRs #161–#164 + #166 build-fix, 2026-06-27: all G1–G7 done; typecheck + 464 tests + build green.)_
 
 **Growth-execution engine 100%:**
-- [ ] Track H complete — the demand-gen EXECUTION engine is BUILT + ready-to-run-on-connect: H1 publishing/
+- [x] Track H complete — the demand-gen EXECUTION engine is BUILT + ready-to-run-on-connect: H1 publishing/
       scheduler, H2 email lifecycle runner, H3 waitlist→leads + UTM dashboard, H4 landing A/B + growth
       loops live, H5 growth-agent guardrails enforced, H6 owner CONNECT handoff documented — PLUS H7 the
       machine-readable analytics PULL read-API that lets the Growth Agent populate GROWTH_STATUS with REAL
       numbers, and H8 the `docs/growth/CONNECT.md` owner runbook + public-signup hardening (rate-limit +
       CAPTCHA + double-opt-in). (Live execution + leads are post-launch — owner connect + the separate
       Growth Agent — NOT a submission gate; the engine being BUILT + ready-to-run-on-connect IS the bar.)
-      _(PRs #167–#171, 2026-06-27: H1–H6 done; H7–H8 OPEN — added 2026-06-27 so the engine reports REAL
-      signal, not just stages content. Un-ticked until H7+H8 ship + an auditor confirms.)_
+      _(PRs #167–#171 H1–H6; PRs #175 #176 (2026-06-27) H7+H8 — analytics PULL snapshot read-API +
+      CONNECT runbook + waitlist double-opt-in hardening + owner-configurable email sender. All H1–H8
+      shipped; gate green (typecheck + 541 tests + production build).)_
 
 **Store-acceptance + revenue-readiness:**
 - [x] **Store-acceptance self-audit** — audit the app against the CURRENT published Apple App Store
