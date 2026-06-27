@@ -95,7 +95,7 @@ MEAL PLANNING
 Plan the week in a few taps. The app checks your pantry, fills gaps intelligently, and builds a shopping list of only what you need — nothing extra, nothing forgotten.
 
 SHOPPING LIST
-A living list that knows your pantry. Recurring items appear automatically when you're running low. Add anything manually. Household sharing is available for households using the shared list feature.
+A living list that knows your pantry. Recurring items appear automatically when you're running low. Add anything manually.
 
 COOKBOOK & RECIPE REMIX
 Save recipes from anywhere. The app adapts them to what you have — swapping ingredients, scaling portions, and flagging what to buy. Your cookbook gets smarter the more you cook.

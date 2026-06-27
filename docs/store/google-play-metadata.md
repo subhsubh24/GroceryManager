@@ -66,7 +66,7 @@ Plan your meals for the week in a few taps. GroceryManager checks your pantry, i
 
 ━━━ SHOPPING LIST ━━━
 
-A smart shopping list that knows your pantry. Items appear automatically when you're running low. Add anything manually. Household sharing lets partners and housemates stay in sync.
+A smart shopping list that knows your pantry. Items appear automatically when you're running low. Add anything manually.
 
 ━━━ RECIPES & COOKBOOK ━━━
 
@@ -88,7 +88,7 @@ GroceryManager does not sell your data or use it to serve ads. Gmail access is r
 
 ━━━ SUBSCRIPTION ━━━
 
-GroceryManager is free to download. The core pantry, cook, and shopping-list features are free forever. A subscription unlocks power features: automatic Gmail receipt import, AI weekly meal planning, unlimited recipe remix, household sharing, and Grocery Wrapped+.
+GroceryManager is free to download. The core pantry, cook, and shopping-list features are free forever. A subscription unlocks power features: automatic Gmail receipt import, AI weekly meal planning, unlimited recipe remix, advanced spend insights, and Grocery Wrapped+.
 
 Monthly plan: $4.99 per month
 Annual plan: $39.99 per year (save 33%)
