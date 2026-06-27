@@ -1,7 +1,9 @@
 "use server";
 import { redirect } from "next/navigation";
 import { loadEnv } from "@gm/config/env";
-import { getDb, getPantryView, withTenant } from "@gm/db";
+import { getDb, getPantryView, loadPreferenceSignals, withTenant } from "@gm/db";
+import { isPremium } from "@gm/core/billing";
+import { checkLlmQuota } from "@/app/api/_lib/llm-quota";
 import {
   applyVisionScan,
   DEFAULT_SCAN_TIER,
@@ -53,6 +55,12 @@ export async function analyzeScan(_prev: AnalyzeState, formData: FormData): Prom
 
     const userId = await currentUserId();
     if (!userId) return { status: "error", message: "No user context." };
+
+    const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+    const quota = checkLlmQuota(userId, isPremium(signals));
+    if (!quota.allowed) {
+      return { status: "error", message: "Daily AI limit reached — upgrade for more." };
+    }
 
     // The vision call is the slow part; the pantry read is independent of it, so run them together.
     const [detections, pantry] = await Promise.all([

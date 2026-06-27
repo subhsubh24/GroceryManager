@@ -2,10 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { loadEnv } from "@gm/config/env";
-import { getDb, getPantryView, saveImportedRecipe, withTenant } from "@gm/db";
+import { getDb, getPantryView, loadPreferenceSignals, saveImportedRecipe, withTenant } from "@gm/db";
 import { buildPantryIndex, splitSteps } from "@gm/core/recipe";
 import { cleanIngredientName, importRecipe } from "@gm/core/recipe/import-llm";
+import { isPremium } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
+import { checkLlmQuota } from "@/app/api/_lib/llm-quota";
 import type { ImportState } from "./import-recipe";
 
 /**
@@ -41,6 +43,17 @@ export async function importRecipeAction(_prev: ImportState, formData: FormData)
         return { status: "error", message: "Importing recipes from text requires Gemini or Google Vertex AI configured." };
       }
       input = { text };
+    }
+
+    if (hasLLM) {
+      const uid = await currentUserId();
+      if (uid) {
+        const signals = await withTenant(getDb(), uid, (tx) => loadPreferenceSignals(tx, uid));
+        const quota = checkLlmQuota(uid, isPremium(signals));
+        if (!quota.allowed) {
+          return { status: "error", message: "Daily AI limit reached — upgrade for more." };
+        }
+      }
     }
 
     const { recipe, method } = await importRecipe(input);

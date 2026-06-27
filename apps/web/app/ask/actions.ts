@@ -14,7 +14,9 @@ import {
 import { loadEnv } from "@gm/config/env";
 import { getGeminiClient } from "@gm/core/llm";
 import { answerKitchenChat, buildKitchenBrief, type ChatMessage } from "@gm/core/chat";
+import { isPremium } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
+import { checkLlmQuota } from "@/app/api/_lib/llm-quota";
 
 // Bound the conversation we forward to the model (keeps tokens in check on long threads).
 const MAX_MESSAGES = 12;
@@ -46,7 +48,17 @@ export async function askAction(messages: ChatMessage[]): Promise<{ reply: strin
     }
 
     const env = loadEnv();
-    const client = (env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT) ? getGeminiClient() : undefined;
+    const hasLlm = !!(env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT);
+
+    if (hasLlm) {
+      const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+      const quota = checkLlmQuota(userId, isPremium(signals));
+      if (!quota.allowed) {
+        return { reply: "Daily AI limit reached — upgrade for more." };
+      }
+    }
+
+    const client = hasLlm ? getGeminiClient() : undefined;
 
     // Build the bounded brief in one RLS round-trip. The agent fetches its own data through scoped
     // tools, but the brief is still the deterministic fallback for BOTH the keyless path AND any

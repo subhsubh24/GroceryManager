@@ -1,6 +1,6 @@
 "use server";
 import { loadEnv } from "@gm/config/env";
-import { getDb, withTenant } from "@gm/db";
+import { getDb, loadPreferenceSignals, withTenant } from "@gm/db";
 import { GeminiClient, createGeminiEmbedder } from "@gm/core/llm";
 import { createLlmShelfLifeEstimator } from "@gm/core/pantry";
 import {
@@ -9,7 +9,9 @@ import {
   extractReceiptImage,
   ingestReceipt,
 } from "@gm/core/ingestion";
+import { isPremium } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
+import { checkLlmQuota } from "@/app/api/_lib/llm-quota";
 
 /**
  * Snap-a-receipt flow (PART of §5.5, but from an IMAGE rather than a Gmail email) — for shopping
@@ -55,6 +57,12 @@ export async function analyzeAndIngestReceipt(
 
   const userId = await currentUserId();
   if (!userId) return { status: "error", message: "You're signed out — sign in again, then retry." };
+
+  const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+  const quota = checkLlmQuota(userId, isPremium(signals));
+  if (!quota.allowed) {
+    return { status: "error", message: "Daily AI limit reached — upgrade for more." };
+  }
 
   try {
     const images = await Promise.all(
