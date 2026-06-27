@@ -153,9 +153,10 @@ fi
 # The GROWTH_STATUS block (Growth Agent's growth/marketing telemetry) MUST parse — same dashboard contract.
 GS="$ROOT/docs/growth/GROWTH_STATUS.md"
 if python3 - "$GS" <<'PY'
-import sys, re, yaml
+import sys, re, yaml, os
+gs = sys.argv[1]
 try:
-    txt = open(sys.argv[1]).read()
+    txt = open(gs).read()
 except OSError:
     print("docs/growth/GROWTH_STATUS.md missing"); sys.exit(1)
 m = re.search(r"```ya?ml\s*\n(.*?GROWTH_STATUS.*?)\n```", txt, re.S)
@@ -169,10 +170,45 @@ if d.get("phase") not in ("pre_launch", "launching", "post_launch"):
     print("phase must be pre_launch|launching|post_launch"); sys.exit(1)
 if not isinstance(d.get("funnel"), dict):
     print("missing funnel"); sys.exit(1)
-print("ok phase =", d["phase"])
+
+# ── ANTI-DRIFT: engine_built / engine_pct are PINNED to real code, never a vibe. ──
+# Each growth-execution-engine piece maps to ONE anchor file; engine_pct is DERIVED from which
+# files physically exist, and engine_built MUST equal (engine_pct == 100). This stops the loop from
+# flipping engine_built true ahead of the code (lesson: a sister product flipped it ~6h early by
+# conflating staged marketing content with the live execution engine — a hollow true misleads the
+# dashboard + the Growth Agent into thinking they can move to execute mode).
+ROOT = os.path.abspath(os.path.join(os.path.dirname(gs), "..", ".."))
+ANCHORS = [
+    ("waitlist double-opt-in confirm route", "apps/web/app/api/waitlist/confirm/route.ts"),
+    ("email-send provider abstraction",      "packages/core/src/email/index.ts"),
+    ("social publishing queue",              "packages/core/src/content/scheduler.ts"),
+    ("growth-metrics read API",              "apps/web/app/api/growth/snapshot/route.ts"),
+    ("owner connect runbook",                "docs/growth/CONNECT.md"),
+]
+present = [(n, p) for n, p in ANCHORS if os.path.isfile(os.path.join(ROOT, p))]
+missing = [(n, p) for n, p in ANCHORS if not os.path.isfile(os.path.join(ROOT, p))]
+computed_pct = round(len(present) / len(ANCHORS) * 100)
+
+ep = d.get("engine_pct")
+if isinstance(ep, bool) or not isinstance(ep, int):
+    print("engine_pct missing or not an integer (0-100)"); sys.exit(1)
+if ep != computed_pct:
+    print(f"engine_pct={ep} but anchor files on disk imply {computed_pct} ({len(present)}/{len(ANCHORS)})")
+    for n, p in missing:
+        print(f"  MISSING anchor: {p}  ({n})")
+    sys.exit(1)
+eb = d.get("engine_built")
+if not isinstance(eb, bool):
+    print("engine_built must be a boolean"); sys.exit(1)
+if eb != (computed_pct == 100):
+    print(f"engine_built={eb} but engine_pct={computed_pct} — engine_built MUST equal (engine_pct == 100)")
+    for n, p in missing:
+        print(f"  MISSING anchor: {p}  ({n})")
+    sys.exit(1)
+print(f"ok phase={d['phase']} engine_pct={ep} ({len(present)}/{len(ANCHORS)} anchors) engine_built={eb}")
 PY
 then
-  pass "GROWTH_STATUS: valid, parseable YAML block (dashboard-readable)"
+  pass "GROWTH_STATUS: valid YAML; engine_pct matches anchor files on disk (anti-drift), engine_built pinned to code"
 else
   fail "GROWTH_STATUS: block is missing or UNPARSEABLE — dashboard can't read growth progress (fix the YAML)"
 fi

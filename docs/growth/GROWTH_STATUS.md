@@ -17,6 +17,15 @@ the owner sees pre-launch / launch / post-launch growth progress in one place.
   degrade to "unparseable → link" instead of showing progress.
 - **Cross-project shape (identical across AptDesignerAI / HighlightMagic / GroceryManager)** so the
   owner's dashboard can compare all three side by side. Keep the keys identical; only the values differ.
+- **`engine_built` / `engine_pct` are PINNED TO REAL CODE — never hand-set.** `engine_pct` (integer 0–100)
+  is the percent of the growth-execution engine's **5 pieces** that physically exist on disk, each pinned to
+  ONE anchor file: (1) waitlist double-opt-in confirm route `apps/web/app/api/waitlist/confirm/route.ts`;
+  (2) email-send provider abstraction `packages/core/src/email/index.ts`; (3) social publishing queue
+  `packages/core/src/content/scheduler.ts`; (4) growth-metrics read API
+  `apps/web/app/api/growth/snapshot/route.ts`; (5) owner connect runbook `docs/growth/CONNECT.md`.
+  `scripts/preflight.sh` RECOMPUTES `engine_pct` from those files, FAILS if the declared value differs, and
+  ENFORCES `engine_built == (engine_pct == 100)`. So a hollow `engine_built: true` (staged marketing content
+  mistaken for the live engine) can never drift ahead of the code. Until all five exist, `engine_built` is `false`.
 - **`phase`** advances `pre_launch` → `launching` → `post_launch`. **Post-launch is the most important
   window** — that's when real conversion/retention/CAC data arrives and the agent compounds it into
   better growth strategy. Keep `learnings` and `experiments` richest here.
@@ -28,7 +37,8 @@ GROWTH_STATUS:
   project: GroceryManager
   as_of: 2026-06-26
   phase: pre_launch              # pre_launch | launching | post_launch
-  engine_built: true             # Track H growth-execution engine (H1–H8) is live in code (PRs #167–#176)
+  engine_built: true             # MUST equal (engine_pct == 100); preflight enforces it against real anchor files
+  engine_pct: 100                # % of growth-execution engine pieces shipped — DERIVED from anchor files by preflight; NEVER hand-set
   channels_connected: []         # owner-authorized channels actually wired (e.g. [x, instagram, email])
   awaiting_connect: true         # true => agent only prepares creative; takes NO external action
   sources:                       # per-source pull status (H7 snapshot): connected | awaiting_connect

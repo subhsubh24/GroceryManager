@@ -172,3 +172,16 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
     track-focused maker never looked at. 2 reviewers/change (Sonnet) + 3 readiness auditors (Opus) caught
     real defects in the maker's OWN run-19 PRs too (G7 fail-open placement, break-even unit error, stale
     icon prose) — all fixed before merge. The gate is not a rubber stamp.
+- **2026-06-27 — `engine_built` (and any "is it built?" flag) must be PINNED to real anchor files, not
+  hand-set.** On a sister product the loop flipped `GROWTH_STATUS.engine_built` false→true ~6h BEFORE the
+  growth-execution engine existed, by conflating staged marketing CONTENT with the live EXECUTION engine.
+  A hollow `true` misleads the dashboard and the Growth Agent into thinking they can move to execute mode.
+  Fix (mechanical, in `scripts/preflight.sh`'s GROWTH_STATUS check): define the engine as a FIXED set of
+  pieces, each pinned to ONE anchor file — here (1) `apps/web/app/api/waitlist/confirm/route.ts`,
+  (2) `packages/core/src/email/index.ts`, (3) `packages/core/src/content/scheduler.ts`,
+  (4) `apps/web/app/api/growth/snapshot/route.ts`, (5) `docs/growth/CONNECT.md` — then COMPUTE
+  `engine_pct = round(present/total*100)` from disk, REJECT if the YAML's declared `engine_pct` differs,
+  and ENFORCE `engine_built == (engine_pct == 100)`. The number is now derived from reality and can't run
+  ahead of the code. Lesson generalizes: any boolean "done/built/ready" flag a model can set should be
+  cross-checked against a physical artifact the flag claims exists, or it WILL drift optimistically. Keep
+  the `engine_pct` key name identical across products so the one shared dashboard parser reads it.
