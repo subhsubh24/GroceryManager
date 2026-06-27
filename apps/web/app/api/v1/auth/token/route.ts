@@ -3,7 +3,9 @@ import { SignJWT } from "jose";
 import { getUserByUsername, getAdminDb } from "@gm/db";
 import { verifyPassword } from "@gm/core/crypto";
 import { normalizeUsername } from "@gm/core/personalization";
+import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function getSecret() {
@@ -14,6 +16,12 @@ function getSecret() {
 
 export async function POST(req: Request) {
   try {
+    // Rate limit credential attempts per IP (Track G G1/G4) — parity with /api/mobile/auth:
+    // 10 attempts / 15 min, to blunt brute-force against this 30-day-token mint endpoint.
+    const ip = (req.headers.get("x-forwarded-for") ?? "unknown").split(",")[0]!.trim();
+    const rl = rateLimit(`v1-auth:${ip}`, 10, 15 * 60_000);
+    if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
+
     const body = (await req.json()) as {
       username?: string;
       password?: string;
