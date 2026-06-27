@@ -50,6 +50,23 @@ export function verifyUnsubscribeToken(email: string, token: string): boolean {
   }
 }
 
+// ─── Sender identity ─────────────────────────────────────────────────────────
+
+const DEFAULT_FROM_EMAIL = "noreply@grocerymanager.app";
+const DEFAULT_FROM_NAME = "GroceryManager";
+
+/** Sender address — owner-configurable via EMAIL_FROM, defaults to the brand no-reply. */
+export function getFromEmail(): string {
+  const v = process.env["EMAIL_FROM"]?.trim();
+  return v && v.length > 0 ? v : DEFAULT_FROM_EMAIL;
+}
+
+/** Sender display name — owner-configurable via EMAIL_FROM_NAME, defaults to the brand. */
+export function getFromName(): string {
+  const v = process.env["EMAIL_FROM_NAME"]?.trim();
+  return v && v.length > 0 ? v : DEFAULT_FROM_NAME;
+}
+
 // ─── Provider implementations ──────────────────────────────────────────────
 
 async function sendViaResend(
@@ -65,7 +82,7 @@ async function sendViaResend(
   }
 
   const body: Record<string, unknown> = {
-    from: "GroceryManager <noreply@grocerymanager.app>",
+    from: `${getFromName()} <${getFromEmail()}>`,
     to: [payload.to],
     subject: payload.subject,
     html: payload.html,
@@ -102,7 +119,7 @@ async function sendViaSendgrid(
 
   const body: Record<string, unknown> = {
     personalizations: [{ to: [{ email: payload.to }] }],
-    from: { email: "noreply@grocerymanager.app", name: "GroceryManager" },
+    from: { email: getFromEmail(), name: getFromName() },
     subject: payload.subject,
     content: [
       { type: "text/plain", value: payload.text },
@@ -141,7 +158,7 @@ async function sendViaPostmark(
   }
 
   const body: Record<string, unknown> = {
-    From: "noreply@grocerymanager.app",
+    From: getFromEmail(),
     To: payload.to,
     Subject: payload.subject,
     HtmlBody: payload.html,
@@ -169,6 +186,7 @@ async function sendViaPostmark(
 /**
  * Sends one email. Tries RESEND_API_KEY first, then SENDGRID_API_KEY, then POSTMARK_API_KEY.
  * If no provider key is set, returns { sent: false, skipped: true, reason: "no-provider" }.
+ * The sender identity is owner-configurable via EMAIL_FROM / EMAIL_FROM_NAME (see getFromEmail).
  * NEVER sends bulk unsolicited email. Only sends to explicitly opted-in addresses.
  */
 export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
