@@ -9,6 +9,13 @@
 > (legacy loop memory); durable lessons live in
 > [docs/autonomous-loop/LOOP_MEMORY.md](./docs/autonomous-loop/LOOP_MEMORY.md).
 
+> **Operating standard (read every run): [FACTORY_STANDARD.md](./FACTORY_STANDARD.md)** is the shared,
+> product-agnostic discipline EVERY factory follows identically — the loop, two-gate readiness, BUILDS≠WORKS,
+> the independent QUALITY_SCORECARD, the business-case strength loop-back, growth-data-as-signal, the model
+> split, the value bar, the disjoint rule, and the brakes. FOLLOW IT. This ROADMAP + VISION.md hold the
+> product-specific details (what to build, the security model, the ship target, the stack) and win on any
+> specific. Identical factories, different products.
+
 ## Goal (one sentence)
 Ship GroceryManager as a **web app + native Expo mobile app**, **store-acceptable with high
 confidence**, with monetization **optimized to MAXIMIZE revenue** — **≥ $100K/yr is the FLOOR, not the
@@ -60,8 +67,12 @@ everything else yourself.
   **A doc that contradicts reality is a BUG** (and a store/review/trust risk); fixing it CLEARS the
   value bar. Avoid BOTH failure modes equally: **(a) STALE** — write-once docs that drift out of date;
   **(b) CHURN** — rewriting things for their own sake. The rule is **CONSISTENCY WITH REALITY, not
-  constant rewriting.** Do NOT churn the **STABLE ANCHORS** (`VISION.md`, the cost/determinism + other
-  guard rules, the protected guard tests) just to look busy — those are intentionally stable ratchets.
+  constant rewriting.** Do NOT churn the **STABLE ANCHORS** (`VISION.md`, `FACTORY_STANDARD.md`, the
+  cost/determinism + other guard rules, the protected guard tests) just to look busy — those are
+  intentionally stable ratchets. **`FACTORY_STANDARD.md` is the shared cross-factory discipline,
+  byte-identical across every factory repo: NEVER edit or paraphrase it to fit this product
+  (product-specifics belong in ROADMAP/VISION); it changes ONLY by a deliberate canonical sync, never as
+  loop work.**
 
 ## Progress format contract (CHECKBOXES ARE THE SINGLE SOURCE OF TRUTH)
 Progress is read by machines, not just humans. An external dashboard derives **build progress** from
