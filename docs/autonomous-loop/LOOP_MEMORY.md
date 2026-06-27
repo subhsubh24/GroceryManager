@@ -231,3 +231,16 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   invent signal. Role split: the factory owns levers AS CODE, the Growth Agent owns channels/experiments/
   measurement, the business case is the shared scoreboard, the human is the integrator — neither agent
   commands the other. Added as a ROADMAP section + an orienting-read line in the factory routine prompt.
+- **2026-06-27 — formalize the Growth Agent as an applied DATA SCIENTIST: method in a versioned doc, pipes
+  as ROADMAP build items.** A measurer that eyeballs numbers drifts into vibes. Pinned the method in
+  `docs/growth/ANALYSIS_PLAYBOOK.md` (durable, versioned): pull privacy-safe AGGREGATES only (no raw
+  PII/events) → diagnose the SINGLE binding constraint (signup/activation, free→paid, churn, or a
+  list→cook→buy drop-off) → quantify with significance/CI and say "insufficient data" when N is small →
+  design falsifiable experiments (run via the engine when built, else record + flag the blocker, never
+  fabricate) → write data-grounded numbers + learnings to GROWTH_STATUS + GROWTH_MEMORY → RECOMMEND the
+  highest-ROI lever (analysis only — no new authority to act; correlation ≠ causation). The data PIPES are
+  ROADMAP build items the factory builds: **H9 analytics SURFACE** (server-computed funnel/cohort/
+  time-series/segment aggregates, no raw PII leaves the server) + **H10 experiment ENGINE** (deterministic
+  variant assignment + lift measurement with a significance test). GROWTH_STATUS's contract now points at
+  the playbook; the Growth Agent routine reads it each run. Role split holds: agent measures + recommends,
+  factory builds the levers, human integrates.
