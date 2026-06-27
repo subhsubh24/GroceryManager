@@ -1,6 +1,7 @@
 import { getDb, withTenant } from "@gm/db";
 import { captureToList, parseQuickCapture } from "@gm/core/capture";
 import { verifyMobileToken } from "../_lib";
+import { parseJsonBody, serverError } from "../../_lib/guard";
 
 export const runtime = "nodejs";
 
@@ -16,16 +17,16 @@ export async function POST(req: Request) {
     return Response.json({ error: "Invalid or expired token" }, { status: 401 });
   }
 
-  let body: { text?: string };
-  try {
-    body = (await req.json()) as { text?: string };
-  } catch {
-    return Response.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
+  const bodyOrErr = await parseJsonBody<{ text?: string }>(req);
+  if (bodyOrErr instanceof Response) return bodyOrErr;
+  const body = bodyOrErr;
 
   const text = typeof body.text === "string" ? body.text.trim() : "";
   if (!text) {
     return Response.json({ error: "text is required" }, { status: 400 });
+  }
+  if (text.length > 2_000) {
+    return Response.json({ error: "text is too long (max 2000 characters)" }, { status: 400 });
   }
 
   const items = parseQuickCapture(text);
@@ -33,6 +34,10 @@ export async function POST(req: Request) {
     return Response.json({ added: 0, listId: null });
   }
 
-  const result = await withTenant(getDb(), userId, (tx) => captureToList(tx, userId, items));
-  return Response.json(result);
+  try {
+    const result = await withTenant(getDb(), userId, (tx) => captureToList(tx, userId, items));
+    return Response.json(result);
+  } catch (err) {
+    return serverError("mobile/capture POST", err);
+  }
 }

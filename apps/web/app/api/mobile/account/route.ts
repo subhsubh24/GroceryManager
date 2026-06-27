@@ -1,5 +1,6 @@
 import { deleteUserAndAllData, getAdminDb } from "@gm/db";
 import { verifyMobileToken } from "../_lib";
+import { parseJsonBody, serverError } from "../../_lib/guard";
 
 export const runtime = "nodejs";
 
@@ -22,18 +23,19 @@ export async function DELETE(req: Request) {
     return Response.json({ error: "Invalid or expired token" }, { status: 401 });
   }
 
-  let body: { confirm?: string };
-  try {
-    body = (await req.json()) as { confirm?: string };
-  } catch {
-    return Response.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
+  const bodyOrErr = await parseJsonBody<{ confirm?: string }>(req);
+  if (bodyOrErr instanceof Response) return bodyOrErr;
+  const body = bodyOrErr;
 
   // Server-side confirmation check — never trust the client to skip this.
   if (typeof body.confirm !== "string" || body.confirm.trim().toLowerCase() !== "delete") {
     return Response.json({ error: "Confirmation required: send { confirm: \"delete\" }" }, { status: 422 });
   }
 
-  await deleteUserAndAllData(getAdminDb(), userId);
-  return Response.json({ deleted: true });
+  try {
+    await deleteUserAndAllData(getAdminDb(), userId);
+    return Response.json({ deleted: true });
+  } catch (err) {
+    return serverError("mobile/account DELETE", err);
+  }
 }

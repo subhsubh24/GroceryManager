@@ -15,6 +15,7 @@ import {
   type OnboardingAnswers,
 } from "@gm/core/personalization";
 import { verifyMobileToken } from "../_lib";
+import { parseJsonBody } from "../../_lib/guard";
 
 export const runtime = "nodejs";
 
@@ -41,12 +42,9 @@ export async function POST(req: Request) {
   if (guard instanceof Response) return guard;
   const { userId } = guard;
 
-  let body: Record<string, unknown>;
-  try {
-    body = (await req.json()) as Record<string, unknown>;
-  } catch {
-    return Response.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
+  const bodyOrErr = await parseJsonBody<Record<string, unknown>>(req);
+  if (bodyOrErr instanceof Response) return bodyOrErr;
+  const body = bodyOrErr;
 
   const action = typeof body.action === "string" ? body.action : null;
 

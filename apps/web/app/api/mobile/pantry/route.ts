@@ -1,5 +1,6 @@
 import { getDb, getPantryView, withTenant } from "@gm/db";
 import { verifyMobileToken } from "../_lib";
+import { serverError } from "../../_lib/guard";
 
 export const runtime = "nodejs";
 
@@ -15,6 +16,10 @@ export async function GET(req: Request) {
     return Response.json({ error: "Invalid or expired token" }, { status: 401 });
   }
 
-  const items = await withTenant(getDb(), userId, (tx) => getPantryView(tx, userId));
-  return Response.json({ items });
+  try {
+    const items = await withTenant(getDb(), userId, (tx) => getPantryView(tx, userId));
+    return Response.json({ items });
+  } catch (err) {
+    return serverError("mobile/pantry", err);
+  }
 }
