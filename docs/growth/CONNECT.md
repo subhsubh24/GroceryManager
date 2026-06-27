@@ -52,7 +52,8 @@ Pick **one** provider; the sender auto-detects in this order: Resend → SendGri
 |------|--------|
 | Create an account + verify your sending domain (SPF/DKIM) | [resend.com](https://resend.com) / [sendgrid.com](https://sendgrid.com) / [postmarkapp.com](https://postmarkapp.com) |
 | `RESEND_API_KEY` **or** `SENDGRID_API_KEY` **or** `POSTMARK_API_KEY` | provider dashboard → API keys |
-| `EMAIL_FROM` | your verified from-address (e.g. `hello@grocerymanager.app`) |
+| `EMAIL_FROM` | your verified from-address (e.g. `hello@grocerymanager.app`); defaults to `noreply@grocerymanager.app` |
+| `EMAIL_FROM_NAME` _(optional)_ | sender display name; defaults to `GroceryManager` |
 | `WAITLIST_OPTIN_SECRET` | a long random string (`openssl rand -hex 32`) — signs the double-opt-in link |
 | `EMAIL_UNSUBSCRIBE_SECRET` | a long random string — signs one-click unsubscribe links |
 | **Verify** | submit a test email on the landing page → you receive a "Confirm your spot" email → clicking it lands on `/?confirmed=1`; `GET /api/growth/snapshot` shows `sources.email: "connected"` and a non-zero `email.list_size` after confirmations |

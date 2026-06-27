@@ -4,7 +4,43 @@ import {
   verifyUnsubscribeToken,
   sendEmail,
   sendEmailBatch,
+  getFromEmail,
+  getFromName,
 } from "./index.js";
+
+// ─── Sender identity (EMAIL_FROM / EMAIL_FROM_NAME) ─────────────────────────
+
+describe("getFromEmail / getFromName", () => {
+  const origEmail = process.env["EMAIL_FROM"];
+  const origName = process.env["EMAIL_FROM_NAME"];
+  afterEach(() => {
+    if (origEmail === undefined) delete process.env["EMAIL_FROM"];
+    else process.env["EMAIL_FROM"] = origEmail;
+    if (origName === undefined) delete process.env["EMAIL_FROM_NAME"];
+    else process.env["EMAIL_FROM_NAME"] = origName;
+  });
+
+  it("defaults to the brand no-reply when unset", () => {
+    delete process.env["EMAIL_FROM"];
+    delete process.env["EMAIL_FROM_NAME"];
+    expect(getFromEmail()).toBe("noreply@grocerymanager.app");
+    expect(getFromName()).toBe("GroceryManager");
+  });
+
+  it("honors EMAIL_FROM / EMAIL_FROM_NAME overrides", () => {
+    process.env["EMAIL_FROM"] = "hello@acme.com";
+    process.env["EMAIL_FROM_NAME"] = "Acme";
+    expect(getFromEmail()).toBe("hello@acme.com");
+    expect(getFromName()).toBe("Acme");
+  });
+
+  it("falls back to defaults on blank/whitespace overrides", () => {
+    process.env["EMAIL_FROM"] = "   ";
+    process.env["EMAIL_FROM_NAME"] = "";
+    expect(getFromEmail()).toBe("noreply@grocerymanager.app");
+    expect(getFromName()).toBe("GroceryManager");
+  });
+});
 
 // ─── Unsubscribe token tests ───────────────────────────────────────────────
 
