@@ -438,6 +438,20 @@ issue cannot be opened prematurely.) PASTE its output into the
 fails, do NOT open the issue; fix the gap and keep building. NEVER tick a box you cannot prove right
 now, and if a previously-ticked box fails its proof, UNCHECK it and fix it.
 
+**BUILDS ≠ WORKS (standing guard — a green build is NOT a working app).** The gate proves the app
+COMPILES + unit-tests pass; it does NOT prove the app WORKS for a user. Every page and every user flow
+MUST be validated at RUNTIME, as a user, asserting the INTENDED OUTCOME — by an ACTUAL RUN against a
+running app + a seeded test environment, never by reading code or checking HTTP `<400`. A flow that builds
+but is functionally broken (dead end, error / "not available" screen, a button that does nothing, a wrong
+result) is a release-blocking **FAIL equal to a red test**. Enforced in three places: (1) the **real-browser
+functional suite** `apps/web/e2e/journeys.spec.ts` (outcome-asserting authed journeys, self-seeding via real
+signup) with `apps/web/e2e/ROUTE_INVENTORY.md` proving coverage is complete — wired into CI + preflight so a
+broken flow BLOCKS merge + readiness; (2) **"functional reality (an ACTUAL RUN)"** is a standing lens of
+every periodic DEEP AUDIT; (3) at the readiness gate, a build-but-broken flow OR any critical journey with
+no outcome-asserting runtime test = NOT ready. What genuinely can't run headlessly (real payment capture,
+email deliverability, device store purchases) goes on the **PENDING_OPS human checklist as "must be manually
+verified"** — never silently assumed working.
+
 **READINESS AUDIT GATE (mandatory — the loop CANNOT reach 'ready' without passing this).** Preflight is
 mechanical but shallow; the box-ticker must NOT also be the sole certifier. So when you believe the DoD
 is complete, BEFORE opening the ready issue you MUST run a **READINESS AUDIT**: spawn **≥3 fresh,
@@ -445,9 +459,15 @@ independent auditor subagents** (Opus — the readiness tier; none of them did t
 *"The loop claims GroceryManager is submission-ready. Your job is to PROVE IT IS NOT. Default to
 NOT-READY unless you genuinely cannot find a single real gap. Be adversarial."* Divide coverage so every
 DoD gate + readiness claim is independently re-verified, including at minimum:
-- **Functional reality** — actually exercise the critical journeys (signup → paywall → Stripe Checkout →
-  entitlement unlock; receipt → pantry; cook flow). Any **stub / TODO / placeholder / dead path** on a
-  critical path = NOT ready. "Code exists" is not "it works."
+- **Functional reality — an ACTUAL RUN, not a code read.** Exercise the critical journeys against a
+  RUNNING app + seeded DB, asserting the INTENDED OUTCOME (not just HTTP `<400` / that a handler is wired):
+  signup → a WORKING dashboard (never an error / "not available" screen); receipt → pantry; cook flow;
+  paywall → Stripe Checkout (test mode) → entitlement unlock; every nav target resolves; authed-vs-logged-out
+  behavior; real empty/loading/error states. A flow that BUILDS but is functionally broken (dead end,
+  error/"not available" screen, button that does nothing, wrong result) is a **release-blocking FAIL equal
+  to a red test.** Any **stub / TODO / placeholder / dead path** on a critical path, OR any critical journey
+  with **no outcome-asserting runtime test** (`apps/web/e2e/journeys.spec.ts` + `e2e/ROUTE_INVENTORY.md`),
+  = NOT ready. "It compiles / it passes" is NOT "it works."
 - **Business case honesty** — are the median inputs sourced + defensible? Is ANY lever's adoption % (e.g.
   Family-tier %) chosen merely to clear $100K rather than researched? Does the `BUSINESS_CASE_SUMMARY`
   block match the body AND the real billing config?
