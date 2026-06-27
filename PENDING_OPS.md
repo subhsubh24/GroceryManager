@@ -12,7 +12,7 @@ The dashboard surfaces every `open` item, urgent first.
 ```yaml
 OWNER_ACTIONS:
   project: GroceryManager
-  as_of: 2026-06-26
+  as_of: 2026-06-27
   items:
     - id: spend-caps
       title: Set HARD daily API spend caps + alerts in every provider dashboard
@@ -49,6 +49,20 @@ OWNER_ACTIONS:
       why: The in-app waitlist analytics (`/admin/waitlist`, the Growth Agent's real signup source) needs the table + admin email.
       how: "Run `pnpm --filter @gm/db db:migrate`; set ADMIN_EMAIL in Vercel env (see prose entry below)."
       blocks: growth-analytics
+    - id: turnstile-keys
+      title: Create Cloudflare Turnstile site + set CLOUDFLARE_TURNSTILE_SECRET_KEY + NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY
+      priority: high
+      status: open
+      why: The Turnstile captcha scaffold is wired server-side (waitlist + signup), but it fail-opens when the key is absent. Without the keys set, bot protection is not active in production.
+      how: "Create site at dash.cloudflare.com → Turnstile. Set both env vars in Vercel. Add the Turnstile widget <script> to the waitlist form and signup page (copy the client-side snippet from Cloudflare docs)."
+      blocks: launch-safety
+    - id: llm-quota-redis-upgrade
+      title: Upgrade in-memory rate limiter + LLM quota to Redis (Upstash) for multi-instance
+      priority: normal
+      status: open
+      why: Current rate limiter + LLM quota use Node.js in-memory Maps — correct per-instance but not shared across multiple Vercel regions/instances. For single-instance deployments this is sufficient; for global Vercel this needs Redis.
+      how: "Install @upstash/ratelimit + @upstash/redis; set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN in Vercel env. Replace the Map-based buckets in _lib/rate-limit.ts and _lib/llm-quota.ts with Upstash Ratelimit."
+      blocks: multi-instance-safety
 ```
 
 ---
