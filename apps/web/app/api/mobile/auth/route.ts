@@ -2,7 +2,7 @@ import { getAdminDb, getUserByUsername } from "@gm/db";
 import { verifyPassword } from "@gm/core/crypto";
 import { normalizeUsername } from "@gm/core/personalization";
 import { signMobileToken } from "../_lib";
-import { rateLimit, tooManyRequests } from "../_lib/rate-limit";
+import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
 
 export const runtime = "nodejs";
 

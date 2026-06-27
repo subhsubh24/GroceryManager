@@ -19,8 +19,8 @@ import {
 import { dietExclusions, projectUserModel } from "@gm/core/personalization";
 import { canUse, isPremium } from "@gm/core/billing";
 import { verifyMobileToken } from "../_lib";
-import { rateLimit, tooManyRequests } from "../_lib/rate-limit";
-import { checkLlmQuota } from "../_lib/llm-quota";
+import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
+import { checkLlmQuota } from "../../_lib/llm-quota";
 
 export const runtime = "nodejs";
 

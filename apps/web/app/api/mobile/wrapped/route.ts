@@ -2,7 +2,7 @@ import { getDb, loadPreferenceSignals, loadWrappedInputs, withTenant } from "@gm
 import { buildWrapped } from "@gm/core/spend";
 import { canUse, isPremium } from "@gm/core/billing";
 import { verifyMobileToken } from "../_lib";
-import { rateLimit, tooManyRequests } from "../_lib/rate-limit";
+import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
 
 export const runtime = "nodejs";
 

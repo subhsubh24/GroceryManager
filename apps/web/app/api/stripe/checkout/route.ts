@@ -10,7 +10,7 @@ import Stripe from "stripe";
 import { getDb, loadPreferenceSignals, withTenant } from "@gm/db";
 import { isTrialEligible } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
-import { rateLimit, tooManyRequests } from "../_lib/rate-limit";
+import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
 
 export const runtime = "nodejs";
 
