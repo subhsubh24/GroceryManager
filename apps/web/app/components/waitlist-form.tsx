@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check } from "@/app/components/icons";
 import { submitWaitlistEmail } from "./waitlist-action";
+import { trackEvent } from "@/app/lib/plausible";
 
 /**
  * Staged email capture for the landing page waitlist. Emails are sent server-side (logged to
@@ -21,6 +22,7 @@ export function WaitlistForm() {
     }
     setError("");
     await submitWaitlistEmail(email);
+    trackEvent("waitlist_signup");
     setDone(true);
   }
 

@@ -17,6 +17,7 @@ import { buildDigestForUser } from "@/app/lib/digest";
 import { WaitlistForm } from "@/app/components/waitlist-form";
 import { GettingStarted, type FirstRunState } from "@/app/components/getting-started";
 import { FeatureCard } from "@/app/components/feature-card";
+import { PlausiblePageview } from "@/app/components/PlausiblePageview";
 import { SECTIONS, type Section } from "@/app/lib/sections";
 import {
   ArrowRight,
@@ -442,6 +443,8 @@ export default async function HomePage({
 
       {!session && (
         <>
+          {/* Fire analytics event when a logged-out visitor lands on the marketing page. */}
+          <PlausiblePageview event="landing_view" />
           {/* Hero — clean, spacious, type-driven. Variant driven by ?v= param for A/B testing.
               Track conversions in Plausible via data-ab-variant on the section. */}
           <section
