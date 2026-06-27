@@ -14,6 +14,20 @@ OWNER_ACTIONS:
   project: GroceryManager
   as_of: 2026-06-27
   items:
+    - id: verify-signup-dashboard-prod
+      title: Apply ALL pending migrations to prod, then VERIFY signup → onboarding → dashboard on the DEPLOYED app
+      priority: urgent
+      status: open
+      why: "A reported break (signup lands on a 'dashboard not available' screen) did NOT reproduce on a fully-migrated DB — the full signup→onboarding→dashboard flow returned 200 and rendered a working dashboard in a real-browser run. The break is therefore environment-specific on the deployed app, most likely migration drift (a prod DB missing a recent migration) or a missing prod env var."
+      how: "Run `pnpm --filter @gm/db db:migrate` against prod (idempotent), confirm migrations 0012–0016 are applied, then sign up a throwaway account on the deployed URL and confirm it lands on a working dashboard — not the error screen. If it still breaks, capture the server error/stack from Vercel logs (the home subtree throws somewhere) and file it; the new e2e journey suite will pin it once pointed at that env (BASE_URL=<prod>)."
+      blocks: launch-functional
+    - id: wire-e2e-journeys-ci
+      title: Wire the runtime functional E2E journeys into CI (needs `workflow` scope — human only)
+      priority: high
+      status: open
+      why: "The loop validates that the app BUILDS, not that it WORKS. The new outcome-asserting suite (apps/web/e2e/journeys.spec.ts) catches build-but-broken flows, but the autonomous loop cannot edit .github/. Until it's a CI job, a broken user flow won't block a PR."
+      how: "Add a CI job that builds the web app, starts it against a migrated throwaway Postgres (pgvector image, like the `migrate` job), runs `BASE_URL=http://localhost:3000 pnpm --filter @gm/web e2e`, and fails the build on red. Captcha fails open without the Turnstile key, so signup works in CI."
+      blocks: none
     - id: track-h-activation
       title: Set Track H env vars to activate the growth-execution engine
       priority: high
@@ -85,6 +99,28 @@ OWNER_ACTIONS:
       how: "Install @upstash/ratelimit + @upstash/redis; set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN in Vercel env. Replace the Map-based buckets in _lib/rate-limit.ts and _lib/llm-quota.ts with Upstash Ratelimit."
       blocks: multi-instance-safety
 ```
+
+---
+
+## 2026-06-27 — BUILDS ≠ WORKS: runtime functional verification + manual-only checks
+
+The loop now has a real-browser functional journey suite (`apps/web/e2e/journeys.spec.ts`, outcome-
+asserting; `e2e/ROUTE_INVENTORY.md` for provable coverage). Two human steps:
+
+1. **Deployed signup→dashboard (urgent).** A reported "dashboard not available" after signup did NOT
+   reproduce on a fully-migrated DB (the real-browser flow rendered a working dashboard, 200). It's
+   environment-specific on prod — apply all migrations to prod and verify on the deployed URL (see the
+   `verify-signup-dashboard-prod` OWNER_ACTIONS item). Point the suite at prod to pin it: `BASE_URL=<prod>
+   pnpm --filter @gm/web e2e journeys`.
+2. **Wire the journey suite into CI** (`wire-e2e-journeys-ci` item) — the loop can't edit `.github/`.
+
+**Manual-only — CANNOT run headlessly; must be MANUALLY verified before launch (never assumed working):**
+- Real payment **capture**: a live (then test-mode) Stripe charge actually completes; refund works; the
+  webhook fires from Stripe's servers and flips entitlement.
+- Email **deliverability**: the connected provider actually sends and lands in an inbox (not just "no-op
+  when no key").
+- Native **store purchases**: StoreKit / Play Billing on a real device unlocks premium.
+- Push-notification delivery to a real device.
 
 ---
 

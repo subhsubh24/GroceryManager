@@ -201,3 +201,20 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   no value-bar-clearing revenue work remains, converge + hand off. "FYI → stop" is the LAST RESORT only (a
   genuine market-ceiling limit like reach/downloads the loop cannot build), never an excuse for unbuilt
   levers. Mirror the same two edits in the routine prompt's readiness/STOP section so loop ≡ ROADMAP.
+- **2026-06-27 — BUILDS ≠ WORKS: a green build + green unit tests does NOT prove the app works for a user.**
+  The gate proved the app COMPILES; it never RAN a user journey, so a build-but-broken flow could pass. The
+  fix is RUNTIME, outcome-asserting validation: `apps/web/e2e/journeys.spec.ts` signs up a real account in a
+  real browser and asserts the INTENDED OUTCOME (signup → a WORKING dashboard, never the "Couldn't load your
+  dashboard" error boundary; every nav target resolves; paywall shows a price; authed-vs-logged-out correct),
+  with `e2e/ROUTE_INVENTORY.md` making coverage provable. Wired into preflight (the suite must EXIST, be
+  outcome-asserting, and have ACTUALLY RUN green this attempt via `E2E_JOURNEYS_PASSED=1`) and named a
+  standing readiness + deep-audit lens. Two process traps found while doing this: (1) the Playwright config
+  HARDCODED the CI chromium path (`/opt/pw-browsers/chromium`), so the suite "built but didn't run" locally —
+  made it fall back to the managed browser. (2) A green build is cheap; faithfully RUNNING needs a seeded DB
+  (local Postgres + pgvector + the migration chain) — stand that up, don't assume. DIAGNOSTIC LESSON: when a
+  bug "obviously builds and passes", do NOT trust a static code read — RUN it. Here the reported signup→
+  dashboard break did NOT reproduce on a fully-migrated DB (the flow returned 200, real dashboard), which
+  itself localised the cause to environment/migration drift on the deployed app, not the code — recorded as
+  an urgent PENDING_OPS verify-on-prod item rather than a fabricated code "fix". What genuinely can't run
+  headlessly (payment capture, email deliverability, device purchases) goes on the human checklist, never
+  assumed. Mirror the functional-reality-is-an-ACTUAL-RUN requirement in the routine prompt.

@@ -351,6 +351,30 @@ else
   fail "G7: NO per-user/day API spend ceiling — a single abuser can run up the paid-API bill"
 fi
 
+# ── BUILDS ≠ WORKS: runtime functional journey suite (an ACTUAL RUN, not a code read) ──
+section "Functional E2E — runtime journeys (BUILDS ≠ WORKS)"
+JOURNEYS="$ROOT/apps/web/e2e/journeys.spec.ts"
+INVENTORY="$ROOT/apps/web/e2e/ROUTE_INVENTORY.md"
+# The suite must exist AND assert intended OUTCOMES (signup → working dashboard, never the error screen).
+if [ -f "$JOURNEYS" ] && grep -qiE "not available|Couldn" "$JOURNEYS" && grep -qiE "signup|signUp|sign up" "$JOURNEYS"; then
+  pass "functional suite present + outcome-asserting: apps/web/e2e/journeys.spec.ts"
+else
+  fail "functional suite MISSING/weak: apps/web/e2e/journeys.spec.ts must exercise the critical journeys at RUNTIME and assert intended OUTCOMES (signup → working dashboard, NOT the 'not available' error screen). BUILDS ≠ WORKS"
+fi
+if [ -f "$INVENTORY" ]; then
+  pass "route/flow inventory present (provable coverage): apps/web/e2e/ROUTE_INVENTORY.md"
+else
+  fail "route/flow inventory MISSING: apps/web/e2e/ROUTE_INVENTORY.md — coverage must be provably complete"
+fi
+# It must have ACTUALLY RUN green this readiness attempt. The runner (CI / the factory) stands up a
+# built app + a seeded DB, runs `pnpm --filter @gm/web e2e journeys`, and exports E2E_JOURNEYS_PASSED=1
+# on success. A green build is not a working app — readiness REQUIRES the real run.
+if [ "${E2E_JOURNEYS_PASSED:-}" = "1" ]; then
+  pass "functional journeys RAN GREEN this attempt (E2E_JOURNEYS_PASSED=1)"
+else
+  fail "functional journeys NOT run this attempt — start a built app against a seeded DB, run \`pnpm --filter @gm/web e2e journeys\`, and export E2E_JOURNEYS_PASSED=1. Readiness requires an ACTUAL green run, not just a green build"
+fi
+
 # ── Definition-of-Done checkboxes all ticked (the source of truth) ──
 section "Definition of Done — every box ticked"
 DOD_SECTION="$(awk '/^## DEFINITION OF DONE/{f=1;next} /^## /{if(f)f=0} f' ROADMAP.md)"
