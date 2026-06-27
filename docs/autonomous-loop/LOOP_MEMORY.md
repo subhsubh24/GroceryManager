@@ -137,3 +137,38 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   - **A stale "X requires wiring" doc claim actively falsifies a readiness signal** — an auditor reads it as
     evidence X is NOT built, even when it is. When a feature ships, scrub every doc that described it as pending
     (grep `requires wiring|surfacing|not yet`).
+- **2026-06-27 (run 19) — DEEP AUDIT + READINESS AUDIT (3 fresh adversarial Opus auditors); 'ready' issue
+  NOT opened — the business case was GAMED.** All product/security/marketing tracks (A–H) re-verified, but
+  the audit found 8 real gaps, all fixed this run (PRs #181–#188):
+  - **The $100K base case was reward-hacked via the funnel multiplication.** The prior model wrote
+    signup→paid = `trial_start 60% × trial→paid 21% = 12.6%`. For a GENEROUS-FREE app (whole core loop free),
+    most users never hit the premium gate, so the real signup→paid IS the freemium free→paid rate the doc
+    itself cited (2–5%, Amplitude median 2.18%). 12.6% is 2.5–6× that benchmark — a number engineered to
+    clear the floor. Re-grounding on 2–5% (base 4%): median base ≈ **$33K/yr**, not $106K. Lesson: when a
+    business case multiplies two semi-cited sub-rates to beat a single well-cited end-to-end benchmark by
+    multiples, that's the gaming tell — model the end-to-end cited rate directly. **floor_met_year1: false**
+    is the honest result; per the convergence clause the loop flags an owner FYI issue and does NOT fake it.
+  - **Low churn ⇒ multi-year ramp; steady-state ARR ≠ year-1.** With churn `c`, paying users approach the
+    asymptote with time-constant `1/c` (~27 mo at 3.7%). The prior doc claimed $100K "crossed month 20–24";
+    real flat-download ramp is ~6 yr. Always separate steady-state ARR from literal year-1, and don't put
+    steady-state in an `arr_year1` field with `floor_met_year1: true`.
+  - **A ticked security box can still hide a gap on the PRIMARY surface.** Track G7 was [x] "applied to
+    discover/plan/cook-tonight" — but those are MOBILE routes, and two don't even call the LLM, while the
+    WEB server actions (make/ask/add-receipt/scan/import/onboarding + remix), the main product surface and
+    the most expensive call (`ask` agentic loop), were uncapped. When ticking a systemic security box, grep
+    EVERY surface that performs the protected operation, not just the few wired first (PR #181).
+  - **Tables created AFTER a blanket-RLS migration silently miss it.** `waitlist_submissions` (0012) +
+    `content_schedule` (0014) were created after `0010_rls_catalog.sql` with RLS off → anon-key PII exposure
+    on PostgREST. New public tables must enable RLS in their OWN migration; the standing RLS bar must re-scan
+    for post-0010 tables (PR #182, migration 0016).
+  - **Fake data recurs in NEW spots after old ones are fixed.** Run 18 removed fake testimonials; run 19
+    found fabricated "today" state in the landing hero (`HERO_PREVIEW`: "have 7/8", "6 staples due", "Ready
+    to order — 6 items"). The "no fake data in UI" sweep must cover marketing mockups too (PR #185).
+  - **Store copy drifts to advertise dark features.** Household sharing (FEATURE_HOUSEHOLDS, default off) was
+    still sold as shipped in store metadata — Apple 2.3.1 risk (PR #186). Re-audit store copy vs default-on
+    features every cycle.
+  - **The gate works because maker ≠ certifier.** The maker (this run) built clean Track-H-adjacent code,
+    but adversarial auditors found OLD debt (gamed business case, stale store docs, the G7 web gap) the
+    track-focused maker never looked at. 2 reviewers/change (Sonnet) + 3 readiness auditors (Opus) caught
+    real defects in the maker's OWN run-19 PRs too (G7 fail-open placement, break-even unit error, stale
+    icon prose) — all fixed before merge. The gate is not a rubber stamp.

@@ -4,6 +4,33 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-27 (run 19) — readiness audit found real gaps; 'ready' issue NOT opened
+
+A ≥3-auditor adversarial readiness audit (Opus) + a deep-audit scout found 8 real gaps; all fixed this run
+(each a file-disjoint PR, 2 Sonnet reviewers, CI auto-merge). The 'FACTORY: ready for submission' issue was
+**deliberately NOT opened** — the Confidence-statement DoD box stays unchecked because the honest
+business-case recompute shows the ≥$100K floor is not met at median inputs (owner FYI issue opened instead).
+
+- **#181 — Security/G7:** enforce the per-user/day LLM spend ceiling on all 7 WEB server actions calling the
+  paid Gemini API (make/ask/add-receipt/scan/import/onboarding + remix). G7 previously only guarded mobile
+  routes — the primary web surface (incl. the expensive `ask` agentic loop) was an uncapped wallet-drain.
+- **#182 — Security/RLS:** migration 0016 enables RLS (grocery_app-scoped, the 0010 pattern) on
+  `waitlist_submissions` + `content_schedule` — both created after 0010 with RLS off (anon-key PII exposure
+  on PostgREST). Human Core: owner applies the migration.
+- **#183 — Security/G1:** rate-limit `/api/instacart` (paid API) + `/api/mobile/use-it-up` (~26 ext calls/req).
+- **#184 — Security/G4:** cap the in-memory login-lockout map (unbounded growth from attacker usernames).
+- **#185 — Landing/honesty:** replace fabricated hero "today" data with honest feature copy.
+- **#186 — Store copy:** remove household-sharing claims (FEATURE_HOUSEHOLDS default off; Apple 2.3.1).
+- **#187 — Store docs:** mark icons + feature graphic as rendered; only on-device screenshots remain owner.
+- **#188 — Business case (anti-gaming):** honest recompute — prior model gamed signup→paid at 12.6%
+  (2.5–6× the cited 2–5% freemium benchmark). Re-grounded → median base ≈ $33K/yr, `floor_met_year1: false`;
+  $100K needs ~4,000–4,500 sustained downloads/mo. ~97% margin; the gap is demand-gen, not the product.
+
+**ROADMAP ticks:** None; Confidence box remains `[ ]` (floor not met at median — honest). G7 + business-case
+annotations updated. DEEP AUDIT + READINESS AUDIT recorded in LOOP_MEMORY.md (2026-06-27 run 19).
+
+---
+
 ## 2026-06-27 (run 18) — Track H complete (H7 + H8) + readiness audit
 
 **Shipped:**
