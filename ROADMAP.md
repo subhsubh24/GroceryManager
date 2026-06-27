@@ -247,6 +247,11 @@ Subscription is the **only** revenue stream in v1 (no affiliate ordering — see
 > `docs/store/ASO_READY.md`, rendered PNGs (icon-1024/512/192, adaptive-icon, feature-graphic).
 > PRs #39 #47 #50 #55 #100–#108 + store-asset generation scripts. Gate: `next build` green.
 
+> **Execution (handoff to Track H):** Track E *stages* content; the LIVE server-side plumbing that turns it
+> into demand-gen — waitlist capture to a real datastore, email send, the publishing queue, and the
+> analytics PULL that reports REAL funnel numbers — is **Track H (H1–H8)**, built owner-credentials-pluggable
+> so it activates the moment the owner connects channels. Until then it stays dry-run / `awaiting_connect`.
+
 > **Marketing 100% bar:** you could launch demand-generation the SAME DAY the owner connects + funds
 > the accounts — nothing left to write, design, or wire on your side.
 
@@ -364,6 +369,24 @@ each platform's ToS.** This is how the app gets *tailored for success* with real
       env var to set. Until connected, the Growth Agent reports "awaiting connect," it does not fake it.
       _(2026-06-27 bookkeeping: PENDING_OPS.md updated with Track H activation steps — CRON_SECRET,
       email provider key, social API tokens (X/Buffer/Typefully), EMAIL_UNSUBSCRIBE_SECRET.)_
+- [ ] **H7. Analytics PULL read-API (machine-readable, agent-callable)** — an internal, admin/cron-gated
+      read endpoint (e.g. `GET /api/growth/snapshot`) that aggregates REAL funnel/conversion/retention from
+      the connected sources — web analytics (Plausible), billing/subscription (Stripe), the email provider,
+      and the waitlist datastore — into the `GROWTH_STATUS` shape, so the separate Growth Agent populates
+      `docs/growth/GROWTH_STATUS.md` with REAL numbers each run (never invented). Per-source it returns
+      0/null + `awaiting_connect` until that source's creds are present. Reuse the existing
+      backend/auth/datastore (`getWaitlistWithUtm()`, the Stripe + email layers) — do NOT add a new
+      framework; the deployed app reads the keys (owner-supplied via env), never the agent. This is what
+      makes `engine_built` honest instead of all-null.
+- [ ] **H8. Owner CONNECT runbook + public-signup hardening** — (a) `docs/growth/CONNECT.md`: the
+      consolidated **~20-minute owner setup runbook** — exactly which env vars / OAuth connections to set
+      per channel (web analytics, email provider, social token(s), billing), IN ORDER, each with its
+      portal/URL, the env var name, how to verify, and the dry-run→live flip; until a channel's creds are
+      present it stays dry-run and `GROWTH_STATUS` shows `awaiting_connect: true` (never faked). (b) Harden
+      the PUBLIC waitlist capture (`apps/web/app/components/waitlist-action.ts`) with rate-limiting (reuse
+      `apps/web/app/api/_lib/rate-limit.ts`), CAPTCHA (Cloudflare Turnstile, per Track G G5), and
+      **double-opt-in confirmation**, so visitors→signups reports honestly AND the public surface is
+      abuse-safe. Live keys/OAuth stay HUMAN-APPLIED (record in `PENDING_OPS.md`); never commit `.env`.
 > **Note:** Track H is the EXECUTION ENGINE (loop-buildable code). Actually *running* it + *getting
 > leads* is post-launch and needs the owner CONNECT step + the separate Growth Agent — leads flowing is
 > NOT a store-submission gate (the app can submit without it), but the engine being built + ready-to-run
@@ -463,11 +486,15 @@ missing, and do not add scope after Done.
       _(PRs #161–#164 + #166 build-fix, 2026-06-27: all G1–G7 done; typecheck + 464 tests + build green.)_
 
 **Growth-execution engine 100%:**
-- [x] Track H complete — the demand-gen EXECUTION engine is BUILT + ready-to-run-on-connect: H1 publishing/
+- [ ] Track H complete — the demand-gen EXECUTION engine is BUILT + ready-to-run-on-connect: H1 publishing/
       scheduler, H2 email lifecycle runner, H3 waitlist→leads + UTM dashboard, H4 landing A/B + growth
-      loops live, H5 growth-agent guardrails enforced, H6 owner CONNECT handoff documented. (Live execution
-      + leads are post-launch — owner connect + the separate Growth Agent — and are NOT a submission gate.)
-      _(PRs #167–#171, 2026-06-27: all H1–H6 done; typecheck + 502 core tests + build green.)_
+      loops live, H5 growth-agent guardrails enforced, H6 owner CONNECT handoff documented — PLUS H7 the
+      machine-readable analytics PULL read-API that lets the Growth Agent populate GROWTH_STATUS with REAL
+      numbers, and H8 the `docs/growth/CONNECT.md` owner runbook + public-signup hardening (rate-limit +
+      CAPTCHA + double-opt-in). (Live execution + leads are post-launch — owner connect + the separate
+      Growth Agent — NOT a submission gate; the engine being BUILT + ready-to-run-on-connect IS the bar.)
+      _(PRs #167–#171, 2026-06-27: H1–H6 done; H7–H8 OPEN — added 2026-06-27 so the engine reports REAL
+      signal, not just stages content. Un-ticked until H7+H8 ship + an auditor confirms.)_
 
 **Store-acceptance + revenue-readiness:**
 - [x] **Store-acceptance self-audit** — audit the app against the CURRENT published Apple App Store
@@ -559,12 +586,13 @@ missing, and do not add scope after Done.
       _(Run-15 2026-06-26: gate green (typecheck + 450 tests + production build, no missing-export
       warnings); Stripe Checkout end-to-end wired; no leaked secrets; PENDING_OPS + LAUNCH.md current;
       all premium gates verified; Family tier added.)_
-- [x] **Confidence statement** — you can honestly write, in the handoff doc: *the product is complete
+- [ ] **Confidence statement** — you can honestly write, in the handoff doc: *the product is complete
       and store-acceptable with high confidence; the business case shows a credible ≥ $100K/yr path at
       a healthy per-user margin; and everything buildable to maximize those odds is done.*
-      _(2026-06-26: can write this truthfully. Billing wired (checkout + portal + constructEvent),
-      gate green, 450 tests pass, ACCEPTANCE_AUDIT zero open FAILs, business case $106K/yr at
-      median+lever, ~97% gross margin. All tracks A–F complete.)_
+      _(2026-06-26 snapshot reflected tracks A–F only. Un-ticked 2026-06-27: Track H added H7 (analytics
+      PULL read-API so GROWTH_STATUS reports REAL signal) + H8 (`docs/growth/CONNECT.md` owner runbook +
+      public-signup rate-limit/CAPTCHA/double-opt-in) — buildable demand-gen plumbing that is NOT yet done,
+      so "everything buildable is done" is not yet truthful. Re-tick when H7+H8 ship and an auditor confirms.)_
 - [x] **LAUNCH HANDOFF doc exists + current** (`docs/LAUNCH.md`, see below).
 
 ## LAUNCH HANDOFF — `docs/LAUNCH.md` (the deliverable at 100%)

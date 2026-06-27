@@ -39,3 +39,6 @@ coverage/
 # local-only secrets / config (never commit)
 .envl
 .mcp.json
+
+# locally-installed agent skills (not committed)
+.agents/
