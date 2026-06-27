@@ -2,10 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { loadEnv } from "@gm/config/env";
-import { getDb, getPantryView, saveImportedRecipe, withTenant } from "@gm/db";
+import { getDb, getPantryView, loadPreferenceSignals, saveImportedRecipe, withTenant } from "@gm/db";
 import { buildPantryIndex, splitSteps } from "@gm/core/recipe";
 import { cleanIngredientName, importRecipe } from "@gm/core/recipe/import-llm";
+import { isPremium } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
+import { checkLlmQuota } from "@/app/api/_lib/llm-quota";
 import type { ImportState } from "./import-recipe";
 
 /**
@@ -19,6 +21,8 @@ export async function importRecipeAction(_prev: ImportState, formData: FormData)
   const imageFile = formData.get("image");
   const hasImage = imageFile instanceof File && imageFile.size > 0;
   if (!url && !text && !hasImage) return { status: "idle" };
+
+  const userId = await currentUserId();
 
   try {
     const env = loadEnv();
@@ -43,6 +47,14 @@ export async function importRecipeAction(_prev: ImportState, formData: FormData)
       input = { text };
     }
 
+    if (userId && hasLLM) {
+      const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+      const quota = checkLlmQuota(userId, isPremium(signals));
+      if (!quota.allowed) {
+        return { status: "error", message: "Daily AI limit reached — upgrade for more." };
+      }
+    }
+
     const { recipe, method } = await importRecipe(input);
     if (recipe.ingredients.length === 0 && !recipe.instructions) {
       return { status: "error", message: "Couldn't find a recipe there — try pasting the text instead." };
@@ -51,7 +63,6 @@ export async function importRecipeAction(_prev: ImportState, formData: FormData)
     // Match ingredients to in-stock pantry items (skip silently if there's no user/pantry/DB).
     let has: (name: string) => boolean = () => false;
     try {
-      const userId = await currentUserId();
       if (userId) {
         const pantry = await withTenant(getDb(), userId, (tx) => getPantryView(tx, userId));
         const inStock = pantry.filter((p) => p.status === "in_stock" || p.status === "low");

@@ -18,7 +18,9 @@ import {
   type OnboardingAnswers,
 } from "@gm/core/personalization";
 import { getGeminiClient } from "@gm/core/llm";
+import { isPremium } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
+import { checkLlmQuota } from "@/app/api/_lib/llm-quota";
 
 /** The chat message shape exchanged with the client (matches `nextOnboardingTurn`'s input). */
 export type OnboardingMessage = { role: "user" | "assistant"; content: string };
@@ -41,22 +43,28 @@ const MAX_MESSAGES = 16;
 export async function onboardingTurnAction(
   messages: OnboardingMessage[],
 ): Promise<{ reply: string; done: boolean; options: string[] }> {
+  const userId = await currentUserId();
+  if (!userId) {
+    return {
+      reply: "Please sign in so I can save what I learn about your taste.",
+      done: false,
+      options: [],
+    };
+  }
+
+  // Sanitize + cap the incoming conversation before doing any work.
+  const trimmed = (messages ?? [])
+    .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+    .map((m): OnboardingMessage => ({ role: m.role, content: m.content.slice(0, 2000) }))
+    .slice(-MAX_MESSAGES);
+
+  const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+  const quota = checkLlmQuota(userId, isPremium(signals));
+  if (!quota.allowed) {
+    return { reply: "Daily AI limit reached — upgrade for more.", done: false, options: [] };
+  }
+
   try {
-    const userId = await currentUserId();
-    if (!userId) {
-      return {
-        reply: "Please sign in so I can save what I learn about your taste.",
-        done: false,
-        options: [],
-      };
-    }
-
-    // Sanitize + cap the incoming conversation before doing any work.
-    const trimmed = (messages ?? [])
-      .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
-      .map((m): OnboardingMessage => ({ role: m.role, content: m.content.slice(0, 2000) }))
-      .slice(-MAX_MESSAGES);
-
     const turn = await nextOnboardingTurn(getGeminiClient(), trimmed);
 
     // Persist the extracted signals (already validated to the allowed UserModel topics by the core).

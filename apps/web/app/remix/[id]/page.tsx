@@ -7,6 +7,7 @@ import { canUse, isPremium } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
 import { loadRecipeAnySource } from "@/app/lib/recipe";
 import { addNamesToListAction } from "@/app/lib/list-actions";
+import { checkLlmQuota } from "@/app/api/_lib/llm-quota";
 import { PageHeader } from "@/app/components/page-header";
 import { ArrowLeft, ArrowRight, Wand2 } from "@/app/components/icons";
 
@@ -28,24 +29,37 @@ async function load(id: string, axis: RemixAxis) {
     if (userId) {
       const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
       if (!canUse("remix", isPremium(signals), billingOn)) {
-        return { recipe: null, remix: null as RemixResult | null, error: null as string | null, upgradeRequired: true as const };
+        return { recipe: null, remix: null as RemixResult | null, error: null as string | null, upgradeRequired: true as const, quotaExceeded: false as const };
       }
     }
   }
 
   try {
     const recipe = await loadRecipeAnySource(id);
-    if (!recipe) return { recipe: null, remix: null as RemixResult | null, error: null as string | null };
+    if (!recipe) return { recipe: null, remix: null as RemixResult | null, error: null as string | null, quotaExceeded: false as const };
     // Keyless-first: the LLM enriches only when a key is configured (mirrors cook/plan gating).
     const env = loadEnv();
-    const generate = (env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT) ? geminiRemix() : undefined;
+    const hasLlm = !!(env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT);
+
+    if (hasLlm) {
+      const userId = await currentUserId();
+      if (userId) {
+        const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+        const quota = checkLlmQuota(userId, isPremium(signals));
+        if (!quota.allowed) {
+          return { recipe, remix: null as RemixResult | null, error: null as string | null, quotaExceeded: true as const };
+        }
+      }
+    }
+
+    const generate = hasLlm ? geminiRemix() : undefined;
     const remix = await suggestRemix(
       { generate },
       { ingredients: recipe.ingredients.map((i) => i.name), axis, title: recipe.title },
     );
-    return { recipe, remix, error: null as string | null };
+    return { recipe, remix, error: null as string | null, quotaExceeded: false as const };
   } catch (e) {
-    return { recipe: null, remix: null as RemixResult | null, error: e instanceof Error ? e.message : String(e) };
+    return { recipe: null, remix: null as RemixResult | null, error: e instanceof Error ? e.message : String(e), quotaExceeded: false as const };
   }
 }
 
@@ -60,7 +74,7 @@ export default async function RemixPage({
   const axis = parseAxis((await searchParams).axis);
   const result = await load(id, axis);
   if (result.upgradeRequired) redirect("/upgrade");
-  const { recipe, remix, error } = result;
+  const { recipe, remix, error, quotaExceeded } = result;
 
   const replacements = remix?.swaps.map((s) => s.replacement) ?? [];
 
@@ -100,7 +114,15 @@ export default async function RemixPage({
             ))}
           </div>
 
-          {remix && remix.swaps.length === 0 ? (
+          {quotaExceeded ? (
+            <div className="empty-state mt-6">
+              <div className="empty-emoji">
+                <Wand2 className="h-6 w-6" strokeWidth={2} />
+              </div>
+              <p className="text-sm font-medium text-ink-700">Daily AI limit reached</p>
+              <p className="mt-1 max-w-xs text-sm text-ink-400">Upgrade for more AI remixes, or try again tomorrow.</p>
+            </div>
+          ) : remix && remix.swaps.length === 0 ? (
             <div className="empty-state mt-6">
               <div className="empty-emoji">
                 <Wand2 className="h-6 w-6" strokeWidth={2} />

@@ -5,7 +5,9 @@ import { getDb, getPantryView, loadPreferenceSignals, withTenant } from "@gm/db"
 import { GeminiClient } from "@gm/core/llm";
 import { dietExclusions, projectUserModel } from "@gm/core/personalization";
 import { generateMeals, type GeneratedMeal, type MealEnergy } from "@gm/core/recipe/generate-llm";
+import { isPremium } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
+import { checkLlmQuota } from "@/app/api/_lib/llm-quota";
 
 export type GenerateResult =
   | { ok: true; meals: GeneratedMeal[] }
@@ -41,6 +43,11 @@ export async function generateMealsAction(energy: MealEnergy): Promise<GenerateR
   const env = loadEnv();
   if (!env.GEMINI_API_KEY && !env.GOOGLE_VERTEX_PROJECT) {
     return { ok: false, error: "AI generation isn't configured." };
+  }
+
+  const quota = checkLlmQuota(userId, isPremium(signals));
+  if (!quota.allowed) {
+    return { ok: false, error: "Daily AI limit reached — upgrade for more." };
   }
 
   const model = projectUserModel(signals);

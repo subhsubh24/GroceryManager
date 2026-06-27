@@ -1,7 +1,9 @@
 "use server";
 import { redirect } from "next/navigation";
 import { loadEnv } from "@gm/config/env";
-import { getDb, getPantryView, withTenant } from "@gm/db";
+import { getDb, getPantryView, loadPreferenceSignals, withTenant } from "@gm/db";
+import { isPremium } from "@gm/core/billing";
+import { checkLlmQuota } from "@/app/api/_lib/llm-quota";
 import {
   applyVisionScan,
   DEFAULT_SCAN_TIER,
@@ -33,11 +35,21 @@ export type AnalyzeState =
 
 /** Detect items in the uploaded photo(s) and reconcile against the pantry — read-only (no writes). */
 export async function analyzeScan(_prev: AnalyzeState, formData: FormData): Promise<AnalyzeState> {
+  const env = loadEnv();
+  if (!env.GEMINI_API_KEY && !env.GOOGLE_VERTEX_PROJECT) {
+    return { status: "error", message: "Vision scan requires Gemini or Google Vertex AI configured." };
+  }
+
+  const userId = await currentUserId();
+  if (!userId) return { status: "error", message: "No user context." };
+
+  const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+  const quota = checkLlmQuota(userId, isPremium(signals));
+  if (!quota.allowed) {
+    return { status: "error", message: "Daily AI limit reached — upgrade for more." };
+  }
+
   try {
-    const env = loadEnv();
-    if (!env.GEMINI_API_KEY && !env.GOOGLE_VERTEX_PROJECT) {
-      return { status: "error", message: "Vision scan requires Gemini or Google Vertex AI configured." };
-    }
     const location = (String(formData.get("location") || "fridge")) as ScanLocation;
     const files = formData
       .getAll("photos")
@@ -50,9 +62,6 @@ export async function analyzeScan(_prev: AnalyzeState, formData: FormData): Prom
         dataBase64: Buffer.from(await f.arrayBuffer()).toString("base64"),
       })),
     );
-
-    const userId = await currentUserId();
-    if (!userId) return { status: "error", message: "No user context." };
 
     // The vision call is the slow part; the pantry read is independent of it, so run them together.
     const [detections, pantry] = await Promise.all([
