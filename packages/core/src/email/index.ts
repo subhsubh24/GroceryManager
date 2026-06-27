@@ -158,7 +158,7 @@ async function sendViaPostmark(
   }
 
   const body: Record<string, unknown> = {
-    From: getFromEmail(),
+    From: `${getFromName()} <${getFromEmail()}>`,
     To: payload.to,
     Subject: payload.subject,
     HtmlBody: payload.html,
