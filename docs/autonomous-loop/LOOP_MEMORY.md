@@ -316,3 +316,13 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   (the grade is a signal, not a treadmill). The grade is currently a readiness blocker until the auditor
   routine bootstraps the scorecard — that's correct (no independent grade = not ready). Same orienting-read
   line added to the factory routine prompt.
+- **2026-06-27 — adopted the shared FACTORY_STANDARD.md (stable anchor; read-only context every run).**
+  Created /FACTORY_STANDARD.md at the repo root, BYTE-IDENTICAL to the canonical cross-factory copy (the
+  product-agnostic "how the factory operates" contract: the loop, two-gate readiness, BUILDS≠WORKS, the
+  independent QUALITY_SCORECARD, business-case strength + weak-case loop-back, growth-data-as-signal, the
+  3-tier model split, the value bar, the disjoint rule, the brakes, research-as-data, convergence). Added the
+  "read every run" pointer under the ROADMAP intro and listed FACTORY_STANDARD.md in the STABLE ANCHORS /
+  do-not-churn set. RULE: this file is read-only context every run — NEVER edit, paraphrase, or adapt it to
+  GroceryManager (product-specifics live in ROADMAP.md / VISION.md, which win on any specific); it changes
+  ONLY by a deliberate canonical sync across all factory repos, never as loop work. Identical factories,
+  different products.
