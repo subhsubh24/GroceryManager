@@ -31,9 +31,10 @@ async function registerAction(formData: FormData) {
 
   // G1: Rate-limit account creation per IP — 5 attempts / hour.
   // Applied BEFORE CAPTCHA so floods are shed cheaply (account creation is expensive + abuse-prone).
-  // x-forwarded-for is the codebase-wide IP convention (trusted reverse proxy via Vercel/Cloudflare).
+  // x-forwarded-for is the codebase-wide IP convention; on a trusted edge (Vercel/Cloudflare) the
+  // leftmost entry is the verified client IP. Fall back to x-real-ip, then a shared "unknown" bucket.
   const hdrs = await headers();
-  const ip = (hdrs.get("x-forwarded-for") ?? "unknown").split(",")[0]!.trim();
+  const ip = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ?? hdrs.get("x-real-ip") ?? "unknown";
   if (!rateLimit(`signup:${ip}`, 5, 60 * 60_000).allowed) redirect("/signup?error=rate");
 
   // G5: Bot protection on signup
@@ -95,7 +96,7 @@ export default async function SignUpPage({
     weak: "Password must be at least 8 characters.",
     exists: "That username is taken. Try another, or sign in.",
     captcha: "Security check failed. Please try again.",
-    rate: "Too many attempts. Please wait a few minutes and try again.",
+    rate: "Too many attempts. Please try again later.",
   };
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-5 py-12">
