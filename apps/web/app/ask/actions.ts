@@ -50,9 +50,12 @@ export async function askAction(messages: ChatMessage[]): Promise<{ reply: strin
     const env = loadEnv();
     const hasLlm = !!(env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT);
 
+    // Load signals once on the LLM path — used for both the quota gate and the brief.
+    // On the keyless path buildBriefForFallback loads them inside its own transaction below.
+    let preloadedSignals: Awaited<ReturnType<typeof loadPreferenceSignals>> | undefined;
     if (hasLlm) {
-      const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
-      const quota = checkLlmQuota(userId, isPremium(signals));
+      preloadedSignals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+      const quota = checkLlmQuota(userId, isPremium(preloadedSignals));
       if (!quota.allowed) {
         return { reply: "Daily AI limit reached — upgrade for more." };
       }
@@ -64,7 +67,7 @@ export async function askAction(messages: ChatMessage[]): Promise<{ reply: strin
     // tools, but the brief is still the deterministic fallback for BOTH the keyless path AND any
     // agent failure / blank reply — so it must hold real data, not a placeholder, or a transient
     // Gemini outage would tell a data-rich user "I don't have much data on your kitchen yet".
-    const brief = await buildBriefForFallback(userId);
+    const brief = await buildBriefForFallback(userId, preloadedSignals);
 
     return await answerKitchenChat({ client, userId }, { messages: trimmed, brief });
   } catch {
@@ -72,8 +75,12 @@ export async function askAction(messages: ChatMessage[]): Promise<{ reply: strin
   }
 }
 
-/** Load + assemble the bounded brief used by the deterministic summary fallback (one tenant tx). */
-async function buildBriefForFallback(userId: string) {
+/** Load + assemble the bounded brief used by the deterministic summary fallback (one tenant tx).
+ *  Accepts pre-loaded signals so the LLM path avoids a redundant `loadPreferenceSignals` round-trip. */
+async function buildBriefForFallback(
+  userId: string,
+  cachedSignals?: Awaited<ReturnType<typeof loadPreferenceSignals>>,
+) {
   const data = await withTenant(getDb(), userId, async (tx) => ({
     pantry: await getPantryView(tx, userId),
     purchases: await loadPurchasesForSpend(tx, userId),
@@ -82,7 +89,7 @@ async function buildBriefForFallback(userId: string) {
     // Match loadCookedAt's default 120-day window so recent recipe titles cover the same horizon
     // the streak/total stats describe (avoids the brief claiming cooks it lists no titles for).
     wrapped: await loadWrappedInputs(tx, userId, 120),
-    signals: await loadPreferenceSignals(tx, userId),
+    signals: cachedSignals ?? await loadPreferenceSignals(tx, userId),
     budgetCents: await getUserBudgetCents(tx, userId),
   }));
 

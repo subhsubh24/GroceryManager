@@ -22,6 +22,8 @@ export async function importRecipeAction(_prev: ImportState, formData: FormData)
   const hasImage = imageFile instanceof File && imageFile.size > 0;
   if (!url && !text && !hasImage) return { status: "idle" };
 
+  const userId = await currentUserId();
+
   try {
     const env = loadEnv();
     const hasLLM = !!(env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT);
@@ -45,14 +47,11 @@ export async function importRecipeAction(_prev: ImportState, formData: FormData)
       input = { text };
     }
 
-    if (hasLLM) {
-      const uid = await currentUserId();
-      if (uid) {
-        const signals = await withTenant(getDb(), uid, (tx) => loadPreferenceSignals(tx, uid));
-        const quota = checkLlmQuota(uid, isPremium(signals));
-        if (!quota.allowed) {
-          return { status: "error", message: "Daily AI limit reached — upgrade for more." };
-        }
+    if (userId && hasLLM) {
+      const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+      const quota = checkLlmQuota(userId, isPremium(signals));
+      if (!quota.allowed) {
+        return { status: "error", message: "Daily AI limit reached — upgrade for more." };
       }
     }
 
@@ -64,7 +63,6 @@ export async function importRecipeAction(_prev: ImportState, formData: FormData)
     // Match ingredients to in-stock pantry items (skip silently if there's no user/pantry/DB).
     let has: (name: string) => boolean = () => false;
     try {
-      const userId = await currentUserId();
       if (userId) {
         const pantry = await withTenant(getDb(), userId, (tx) => getPantryView(tx, userId));
         const inStock = pantry.filter((p) => p.status === "in_stock" || p.status === "low");
