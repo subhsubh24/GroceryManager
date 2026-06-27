@@ -43,8 +43,9 @@ everything else yourself.
   run) and ZERO that don't. Never pad a run to hit a count; never artificially stop at 1–2 when more
   genuinely-valuable, file-disjoint work exists. Avoid BOTH failure modes equally — padding (churn) and
   artificial scarcity. Many changes is GOOD when each is real. Advance the lowest incomplete track first.
-- **Cheapest viable model.** Architecture + review + readiness auditors on Sonnet; high-volume scouting
-  + discovery audit on Haiku — never downgrade the reviewers or readiness auditors.
+- **3-tier model split.** Orchestrator + readiness auditors on **Opus** (judgment that compounds); the two
+  per-change reviewers on **Sonnet** (high-volume review); high-volume scouting + discovery audit on **Haiku**
+  — never downgrade the reviewers below Sonnet or the readiness auditors below Opus.
 - **Tick a box only with EVIDENCE-BASED DONE proof** (artifacts present on the default branch + gate
   green this run — see below), and only in the **bookkeeping PR**, never inside a code branch.
 - **Adapt to this repo, never copy another's specifics:** RLS uses the `grocery_app` role +
@@ -440,7 +441,7 @@ now, and if a previously-ticked box fails its proof, UNCHECK it and fix it.
 **READINESS AUDIT GATE (mandatory — the loop CANNOT reach 'ready' without passing this).** Preflight is
 mechanical but shallow; the box-ticker must NOT also be the sole certifier. So when you believe the DoD
 is complete, BEFORE opening the ready issue you MUST run a **READINESS AUDIT**: spawn **≥3 fresh,
-independent auditor subagents** (Sonnet; none of them did the building — maker ≠ checker), each told:
+independent auditor subagents** (Opus — the readiness tier; none of them did the building — maker ≠ checker), each told:
 *"The loop claims GroceryManager is submission-ready. Your job is to PROVE IT IS NOT. Default to
 NOT-READY unless you genuinely cannot find a single real gap. Be adversarial."* Divide coverage so every
 DoD gate + readiness claim is independently re-verified, including at minimum:
@@ -450,6 +451,15 @@ DoD gate + readiness claim is independently re-verified, including at minimum:
 - **Business case honesty** — are the median inputs sourced + defensible? Is ANY lever's adoption % (e.g.
   Family-tier %) chosen merely to clear $100K rather than researched? Does the `BUSINESS_CASE_SUMMARY`
   block match the body AND the real billing config?
+- **Business case STRENGTH & lever-completeness** — honesty is necessary but NOT sufficient. If the honest
+  median ARR is **below the $100K floor, readiness is REJECTED outright.** Even at/above the floor, if you
+  can name a **specific, buildable, value-bar-clearing** revenue lever / feature / architecture change that
+  is **not built yet** and would materially strengthen the case, that is a GAP that blocks "ready" and
+  **re-opens building**. Weight to this stack: PRICING & TIERS (a defensible paid tier, annual plan,
+  family/household plan); the FREE→PAID conversion moment (paywall timing, onboarding, time-to-value);
+  RETENTION & EXPANSION (the recurring-use loop a grocery app naturally has — lists, reorder, reminders —
+  plus referral); MARGIN/COGS; and REACH (ASO, content, SEO). "Ready" requires the HIGH-ROI levers actually
+  BUILT, not just listed.
 - **Artifact reality** — for EVERY ticked DoD box, the artifact genuinely exists AND functions (rendered
   images are real images; every doc matches the current code; no contradiction).
 - **Store acceptance** — re-audit against the CURRENT Apple/Google guidelines; security/RLS; quality
@@ -595,11 +605,21 @@ missing, and do not add scope after Done.
       levers built + documented and the ceiling pushed toward the optimistic scenario, with the
       conservative/median floor still **≥ $100K/yr**. NEVER fake the numbers — monetization realism, not
       a sales pitch.
-      - **CONVERGENCE (critical):** "maximize" means building the BEST monetization + growth machine
-        WITHIN the submission-readiness goal — it does NOT mean running forever. STOP and hand off when
-        product + marketing + quality are 100% and the business case shows a strong, maximized, credible
-        path (floor ≥ $100K). Continuous revenue optimization with real post-launch data is the OWNER's
-        job after launch — not a reason to never ship.
+      - **WEAK-CASE LOOP-BACK (a below-floor OR lever-incomplete honest case RE-OPENS building — it does
+        NOT "FYI-and-stop").** If the honest median is below the $100K floor, OR the readiness audit names a
+        specific buildable value-bar-clearing revenue lever that isn't built, that is BUILD WORK, not a
+        reason to stop: turn the strength findings into ROADMAP items, **RE-ENTER BUILD MODE**, ship them
+        through the normal review + gate path, then **RE-ATTEMPT readiness**. Each attempt comes back
+        STRONGER — never the same case re-submitted. Iterate until the honest median clears the floor WITH
+        the levers built.
+      - **CONVERGENCE + BOUND (no runaway):** "maximize" means building the BEST monetization + growth
+        machine WITHIN the submission goal — not running forever. The loop-back trigger is ALWAYS a
+        specific, buildable, value-bar-clearing item the audit can NAME — never "the number could always be
+        higher." Once the honest median floor is cleared **AND** no value-bar-clearing revenue work remains
+        to build, the loop CONVERGES: STOP and hand off. Further ceiling-squeezing with real post-launch
+        data is the OWNER's job. **"FYI issue → stop" is the genuine LAST RESORT only** — a real
+        market-ceiling limit (e.g. the only remaining lever is reach/downloads, which the loop cannot
+        build), NEVER an excuse to leave buildable revenue levers unbuilt.
 - [x] **Self-run pre-submission checklist passes** — no broken flows, no leaked secrets, full gate +
       evals green, no debug surfaces, every owner-required step captured in PENDING_OPS / handoff.
       _(Run-15 2026-06-26: gate green (typecheck + 450 tests + production build, no missing-export
@@ -615,8 +635,12 @@ missing, and do not add scope after Done.
       "the business case shows a credible ≥$100K/yr path at median" is NOT truthful, and this statement
       cannot be honestly written. The product, security (Track G incl. the web-LLM spend-ceiling gap closed
       in PR #181), and marketing engine are complete; the gap is purely demand-gen reach, flagged to the
-      owner in an FYI issue. Per the convergence clause, the loop does NOT fake the floor and does NOT open
-      the 'ready' issue — continuous post-launch reach/conversion optimization is the owner's job.)_
+      owner in an FYI issue. Per the **WEAK-CASE LOOP-BACK**, this below-floor honest case **RE-OPENS
+      building**: the buildable strength levers (free→paid conversion, pricing/tiers, retention/referral —
+      see issue #190's option list) become ROADMAP work and are built through the normal gates BEFORE
+      readiness is re-attempted; only the reach/downloads component is genuinely owner-driven. The loop does
+      NOT fake the floor, does NOT open the 'ready' issue, and does NOT stop while buildable revenue levers
+      remain — it iterates until the honest case clears the floor with the levers built.)_
 - [x] **LAUNCH HANDOFF doc exists + current** (`docs/LAUNCH.md`, see below).
 
 ## LAUNCH HANDOFF — `docs/LAUNCH.md` (the deliverable at 100%)

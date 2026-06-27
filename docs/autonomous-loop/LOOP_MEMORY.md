@@ -185,3 +185,19 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   ahead of the code. Lesson generalizes: any boolean "done/built/ready" flag a model can set should be
   cross-checked against a physical artifact the flag claims exists, or it WILL drift optimistically. Keep
   the `engine_pct` key name identical across products so the one shared dashboard parser reads it.
+- **2026-06-27 — a WEAK (not just dishonest) business case must RE-OPEN building, not slip to "ready" or
+  "FYI-and-stop".** The readiness gate caught a *gamed* case (run 19), but an *honest yet too-weak* case
+  could still slip through — and the old convergence clause let a below-floor honest case "open an FYI and
+  stop, reach is the owner's job." That's a loophole: reach may be owner-driven, but conversion, pricing/
+  tiers, retention, and referral are BUILDABLE levers that strengthen the case and lower the reach needed.
+  Fix, three parts kept in sync: (1) ROADMAP readiness-gate adds a **Business-case STRENGTH & lever-
+  completeness** auditor lens — honest median below the $100K floor = REJECTED; a named buildable
+  value-bar-clearing lever not yet built = a GAP that blocks ready. (2) The convergence clause becomes a
+  **WEAK-CASE LOOP-BACK**: a below-floor / lever-incomplete case turns strength findings into ROADMAP work,
+  RE-ENTERS build mode, and re-attempts readiness only once materially stronger — iterate until the floor
+  is honestly cleared WITH levers built. (3) `scripts/preflight.sh` mechanically FAILS when
+  `BUSINESS_CASE_SUMMARY.floor_met_year1` is false / `arr_year1.base < floor_usd`. BOUNDED: the trigger is
+  always a SPECIFIC buildable item the audit names (never "could be higher"); once the floor is cleared and
+  no value-bar-clearing revenue work remains, converge + hand off. "FYI → stop" is the LAST RESORT only (a
+  genuine market-ceiling limit like reach/downloads the loop cannot build), never an excuse for unbuilt
+  levers. Mirror the same two edits in the routine prompt's readiness/STOP section so loop ≡ ROADMAP.
