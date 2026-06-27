@@ -5,6 +5,23 @@ import { normalizeUsername } from "@gm/core/personalization";
 import { attachGoogleToUser, getAdminDb, getUserByUsername, upsertGoogleAuth } from "@gm/db";
 import { authConfig } from "./auth.config";
 
+// G4: In-memory login lockout (10 failures → 15 min lockout per username)
+const loginAttempts = new Map<string, { count: number; lockedUntil: number }>();
+const MAX_ATTEMPTS = 10;
+const LOCKOUT_MS = 15 * 60 * 1_000;
+
+function isLockedOut(u: string): boolean {
+  const e = loginAttempts.get(u);
+  return !!e?.lockedUntil && Date.now() < e.lockedUntil;
+}
+function recordFail(u: string): void {
+  const e = loginAttempts.get(u) ?? { count: 0, lockedUntil: 0 };
+  e.count++;
+  if (e.count >= MAX_ATTEMPTS) { e.lockedUntil = Date.now() + LOCKOUT_MS; e.count = 0; }
+  loginAttempts.set(u, e);
+}
+function clearLock(u: string): void { loginAttempts.delete(u); }
+
 /**
  * Full (Node-runtime) auth: the edge-safe base (`auth.config.ts`) + the DB-backed Credentials
  * provider and `jwt` callback. Used by the API route handler and server components; `middleware.ts`
@@ -33,9 +50,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           typeof credentials?.username === "string" ? normalizeUsername(credentials.username) : "";
         const password = typeof credentials?.password === "string" ? credentials.password : "";
         if (!username || !password) return null;
+        if (isLockedOut(username)) return null;
         const user = await getUserByUsername(getAdminDb(), username);
-        if (!user?.passwordHash) return null; // unknown username or a Google-only account
-        if (!verifyPassword(password, user.passwordHash)) return null;
+        if (!user?.passwordHash) { recordFail(username); return null; } // unknown username or a Google-only account
+        if (!verifyPassword(password, user.passwordHash)) { recordFail(username); return null; }
+        clearLock(username);
         return { id: user.id, email: user.email ?? undefined, name: user.name ?? undefined };
       },
     }),

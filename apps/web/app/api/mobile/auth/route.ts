@@ -2,6 +2,7 @@ import { getAdminDb, getUserByUsername } from "@gm/db";
 import { verifyPassword } from "@gm/core/crypto";
 import { normalizeUsername } from "@gm/core/personalization";
 import { signMobileToken } from "../_lib";
+import { rateLimit, tooManyRequests } from "../_lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -10,6 +11,11 @@ export async function POST(req: Request) {
   if (!secret) {
     return Response.json({ error: "Auth not configured" }, { status: 503 });
   }
+
+  // G1/G4: Rate limit auth attempts — 10 per 15 min per IP to prevent brute force
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "unknown";
+  const rl = rateLimit(`auth:${ip}`, 10, 15 * 60_000);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   let body: unknown;
   try {

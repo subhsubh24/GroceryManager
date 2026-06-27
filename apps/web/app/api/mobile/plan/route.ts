@@ -18,6 +18,8 @@ import { dietExclusions, projectUserModel } from "@gm/core/personalization";
 import { geminiPlanGenerator, planWeek } from "@gm/core/agent";
 import { canUse, isPremium } from "@gm/core/billing";
 import { verifyMobileToken } from "../_lib";
+import { rateLimit, tooManyRequests } from "../_lib/rate-limit";
+import { checkLlmQuota } from "../_lib/llm-quota";
 
 export const runtime = "nodejs";
 
@@ -30,6 +32,9 @@ export async function GET(req: Request) {
   const userId = verifyMobileToken(token);
   if (!userId) return Response.json({ error: "Invalid or expired token" }, { status: 401 });
 
+  const rl = rateLimit(`plan:${userId}`, 10, 60_000);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
+
   try {
     const { pantry, signals, budgetCents } = await withTenant(getDb(), userId, async (tx) => ({
       pantry: await getPantryView(tx, userId),
@@ -40,6 +45,14 @@ export async function GET(req: Request) {
     const billingOn = process.env.FEATURE_BILLING === "1";
     if (!canUse("plan_week", isPremium(signals), billingOn)) {
       return Response.json({ upgradeRequired: true });
+    }
+
+    const quota = checkLlmQuota(userId, isPremium(signals));
+    if (!quota.allowed) {
+      return Response.json(
+        { error: "Daily AI limit reached. Upgrade for more.", upgradeRequired: !isPremium(signals) },
+        { status: 429 },
+      );
     }
 
     const inStock = pantry.filter((p) => p.status === "in_stock" || p.status === "low");
