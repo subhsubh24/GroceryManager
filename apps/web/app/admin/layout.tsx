@@ -19,12 +19,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="page-narrow">
-      <nav className="mb-6 flex items-center gap-3 border-b border-line pb-4">
-        <a href="/" className="text-sm font-medium text-ink-600 hover:text-ink-900">
-          ← Home
-        </a>
-        <span className="text-ink-300">/</span>
-        <span className="text-sm font-medium text-ink-900">Admin</span>
+      <nav className="mb-6 border-b border-line pb-4">
+        <div className="flex items-center gap-3">
+          <a href="/" className="text-sm font-medium text-ink-600 hover:text-ink-900">
+            ← Home
+          </a>
+          <span className="text-ink-300">/</span>
+          <span className="text-sm font-medium text-ink-900">Admin</span>
+        </div>
+        <div className="mt-3 flex gap-4">
+          <a href="/admin/waitlist" className="text-sm text-ink-600 hover:text-ink-900">Waitlist</a>
+          <a href="/admin/content" className="text-sm text-ink-600 hover:text-ink-900">Content</a>
+          <a href="/admin/growth" className="text-sm text-ink-600 hover:text-ink-900">Growth</a>
+        </div>
       </nav>
       {children}
     </div>
