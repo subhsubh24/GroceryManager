@@ -154,9 +154,23 @@ feature parity with `apps/web`** before submission (owner decision, locked).
       migration 0011 + set EXPO_PUBLIC_PROJECT_ID (EAS project ID) — see PENDING_OPS.md.)_
 - [x] Mobile gate green in CI (the graceful-skip `mobile` job starts enforcing once initialized).
       _(`npm ci && npm run typecheck` exits 0; every merged mobile PR shows `mobile: success`.)_
-- [x] EAS build config staged (credentials are Human Core).
-      _(eas.json: development/preview/production profiles + submit config with OWNER_* placeholders
-      for Apple + Android. PNG icon export + EAS credential steps in PENDING_OPS.md.)_
+- [ ] EAS build config staged (credentials are Human Core).
+      _(Un-ticked 2026-06-27 (BUILDS ≠ WORKS / ticked-box-not-backed audit): eas.json + app.json exist, but
+      the loop-owned config is NOT validated and `extra.eas.projectId` is a hardcoded `OWNER_EAS_PROJECT_ID`
+      string rather than read from env — a "build-ready" box not backed by a buildable artifact. Re-ticks
+      under the REAL item below once env-driven + validated.)_
+- [ ] **Distribution/release config is REAL + validated (not a placeholder).** A checkbox-driven loop won't
+      fix a build/deploy gap whose parent box already reads done — so make the config real and gate it. Own
+      the BUILDABLE parts: app config reads `projectId` + `version` + iOS `buildNumber` / Android `versionCode`
+      from ENV (convert to `app.config.ts`; no hardcoded `OWNER_*` projectId in committed config); `eas.json`
+      has complete production BUILD + SUBMIT profiles; `app.json`/manifest carries the bundle id + version/build
+      + icon + splash + permission strings. VALIDATE the production build config WITHOUT a real cloud/signed
+      build (`cd apps/mobile && npx expo config --type public` resolves with NO unresolved loop-owned
+      placeholders; `eas.json` is schema-valid; production build+submit profiles present). `scripts/preflight.sh`
+      ENFORCES this — a "build-ready" box can never read done while the artifact is still a placeholder.
+      Human-only stays in PENDING_OPS: EAS project creation (`eas init` → the real projectId), Apple/Google
+      store + hosting accounts, signing/provisioning, and the actual `eas build` + submit/deploy step; the loop
+      never touches signing/secrets or `.github/`.
 
 ## Track C — Monetization (SUBSCRIPTION ONLY)
 Scaffold exists: `@gm/core/billing` + `/upgrade` behind `FEATURE_BILLING` (fail-open, no live keys).
@@ -550,8 +564,10 @@ missing, and do not add scope after Done.
 
 **Product 100%:**
 - [x] Track A complete — web app at paid quality, **live eval suite passes**.
-- [x] Track B complete — native Expo app at full parity (not a wrapper), mobile CI green, push +
-      offline behavior code complete (only Human-Core keys/IDs pending).
+- [ ] Track B complete — native Expo app at full parity (not a wrapper), mobile CI green, push +
+      offline behavior code complete (only Human-Core keys/IDs pending). _(Un-ticked 2026-06-27: the
+      distribution/release config is not yet REAL+validated — env-driven projectId + `npx expo config`
+      validation pending, enforced by preflight; re-ticks when that Track-B item lands.)_
 - [x] Track C complete — subscription + entitlement gating in code (live keys pending in Human Core).
       _(PRs #142 #143 2026-06-26: Stripe Checkout wired — `checkout.sessions.create` in POST /api/stripe/checkout;
       Customer Portal in POST /api/stripe/portal; real `constructEvent` webhook verification;

@@ -289,3 +289,17 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
     Per the bounded WEAK-CASE LOOP-BACK, more buildable levers remain for future runs (the retention scout
     named: month-3 annual nudge, expiry/reorder push, referral perks, win-back) — build them through the gate
     in subsequent runs; converge only when the honest median clears the floor OR only reach remains.
+- **2026-06-27 — a "build-ready"/distribution-config box must be backed by a BUILDABLE artifact, not just
+  staged files (ticked-box-not-backed / BUILDS ≠ WORKS for the release path).** The loop is checkbox-driven,
+  so a build/deploy-readiness gap whose parent box already reads done is a blind spot it won't fix. Found:
+  "EAS build config staged" was [x] but `apps/mobile/app.json` hardcoded `extra.eas.projectId:
+  "OWNER_EAS_PROJECT_ID"` (not env-driven, as PENDING_OPS expected) and nothing validated the config
+  resolved. Fix: un-ticked that box AND "Track B complete"; added an explicit unchecked ROADMAP item
+  "Distribution/release config is REAL + validated" (own the buildable parts: app.config.ts reads projectId +
+  version/build from ENV; eas.json prod build+submit profiles; bundle id/version/build/icon/splash/permission
+  strings; validate via `npx expo config` with no unresolved loop-owned placeholders); and a preflight guard
+  that FAILS on a committed `OWNER_*` projectId placeholder or missing prod build/submit profiles — so the box
+  can't read done while the artifact is a placeholder. Human-Core (EAS project creation, store/signing creds,
+  the real signed build+submit) stays in PENDING_OPS; the loop never touches signing/secrets or .github/.
+  Generalizes: for any "ready to ship/deploy" flag, the readiness gate must verify the actual build/deploy
+  artifact (web: build command + env contract + output), not the checkbox.

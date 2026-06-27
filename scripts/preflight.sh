@@ -306,6 +306,50 @@ done
 warn "HUMAN CORE: App Store screenshots (5 × iPhone 15 Pro at 1320×2868 px) not committed — must be taken on real device (see docs/store/store-assets-spec.md)"
 warn "HUMAN CORE: Google Play phone screenshots not committed — take after EAS build"
 
+# ── Distribution/release config is REAL (not a placeholder) — BUILDS ≠ WORKS for the build/submit path ──
+# A "build-ready" box must be backed by a buildable artifact: eas.json prod build+submit profiles, app config
+# with bundle id + version/build + icon + permission strings, and projectId READ FROM ENV (no committed
+# OWNER_* placeholder). Human-Core creds (Apple/Play submit, the real projectId value) stay in PENDING_OPS.
+section "Distribution/release config (EAS build+submit REAL, not placeholder)"
+MOBILE="$ROOT/apps/mobile"
+if python3 - "$MOBILE" <<'PY'
+import sys, os, json
+m = sys.argv[1]
+# eas.json: production build + submit profiles present
+eas_p = os.path.join(m, "eas.json")
+if not os.path.isfile(eas_p): print("apps/mobile/eas.json missing"); sys.exit(1)
+try: eas = json.load(open(eas_p))
+except Exception as e: print("eas.json invalid JSON:", e); sys.exit(1)
+if "production" not in (eas.get("build") or {}): print("eas.json: no build.production profile"); sys.exit(1)
+if "production" not in (eas.get("submit") or {}): print("eas.json: no submit.production profile"); sys.exit(1)
+# app config: prefer app.config.ts (env-driven) over a static app.json with a hardcoded projectId placeholder
+cfg_ts = os.path.exists(os.path.join(m, "app.config.ts")) or os.path.exists(os.path.join(m, "app.config.js"))
+appjson_p = os.path.join(m, "app.json")
+raw = open(appjson_p).read() if os.path.isfile(appjson_p) else ""
+# the loop-owned config must NOT ship a hardcoded EAS projectId placeholder — it must come from env
+if "OWNER_EAS_PROJECT_ID" in raw or "OWNER_EAS_PROJECT_ID" in (open(os.path.join(m,"app.config.ts")).read() if os.path.exists(os.path.join(m,"app.config.ts")) else ""):
+    print("EAS projectId is a hardcoded OWNER_* placeholder — make it env-driven (app.config.ts reading process.env)"); sys.exit(1)
+# loop-owned identity fields must be real (from app.json or app.config — check app.json when present)
+if raw:
+    try: exp = (json.loads(raw).get("expo") or {})
+    except Exception as e: print("app.json invalid JSON:", e); sys.exit(1)
+    ios, andr = exp.get("ios") or {}, exp.get("android") or {}
+    missing = [k for k,v in {
+        "version": exp.get("version"), "icon": exp.get("icon"),
+        "ios.bundleIdentifier": ios.get("bundleIdentifier"), "ios.buildNumber": ios.get("buildNumber"),
+        "android.package": andr.get("package"), "android.versionCode": andr.get("versionCode"),
+    }.items() if not v]
+    if missing: print("app.json missing loop-owned fields:", ", ".join(missing)); sys.exit(1)
+elif not cfg_ts:
+    print("no app.json or app.config.* found"); sys.exit(1)
+print("ok: eas prod build+submit present; identity fields real; projectId env-driven")
+PY
+then
+  pass "Distribution/release config: REAL (eas prod build+submit, identity fields backed, projectId env-driven)"
+else
+  fail "Distribution/release config NOT backed — un-tick any build-ready box (see ROADMAP 'Distribution/release config is REAL'); Human-Core creds stay in PENDING_OPS"
+fi
+
 # ── 10. PENDING_OPS: human steps documented ───────────────
 section "10. PENDING_OPS — human steps documented"
 if [ -f "$ROOT/PENDING_OPS.md" ] && [ -s "$ROOT/PENDING_OPS.md" ]; then

@@ -14,6 +14,13 @@ OWNER_ACTIONS:
   project: GroceryManager
   as_of: 2026-06-27
   items:
+    - id: eas-build-submit-go-live
+      title: EAS project + store/signing creds + the actual build & submit (Human-Core)
+      priority: high
+      status: open
+      why: "The loop builds + validates the release config (eas.json prod build+submit, app config, env-driven projectId) but cannot create the EAS project, hold signing creds, or run the real signed build/submit."
+      how: "Run `eas init` in apps/mobile; set EXPO_PUBLIC_PROJECT_ID (+ EAS secrets) to the real projectId; create Apple App Store Connect + Google Play accounts; fill eas.json submit creds (appleId/ascAppId/appleTeamId + google-play-key.json); then `eas build --profile production` + `eas submit`. The loop never touches signing/secrets."
+      blocks: launch
     - id: verify-signup-dashboard-prod
       title: Apply ALL pending migrations to prod, then VERIFY signup → onboarding → dashboard on the DEPLOYED app
       priority: urgent
@@ -81,7 +88,7 @@ OWNER_ACTIONS:
       title: Apply waitlist/growth migrations 0012–0017 + set ADMIN_EMAIL
       priority: high
       status: open
-      why: The in-app waitlist analytics (`/admin/waitlist`, the Growth Agent's real signup source) needs the table + UTM + content-schedule + double-opt-in columns, plus the admin email for `/admin/*` + `GET /api/growth/snapshot`. Migration 0016 enables RLS on `waitlist_submissions` + `content_schedule` — without it, on a Supabase/PostgREST deployment the anon key could read every waitlist email (PII). Migration 0017 adds the H10 experiment tables (`experiment_exposures` + `experiment_conversions`, RLS tenant-isolation + GRANTs) — without it the experiment engine logs nothing (it degrades gracefully: `getExperimentStats` catches "does not exist"). Apply before the public waitlist + experiments go live.
+      why: "The in-app waitlist analytics (`/admin/waitlist`, the Growth Agent's real signup source) needs the table + UTM + content-schedule + double-opt-in columns, plus the admin email for `/admin/*` + `GET /api/growth/snapshot`. Migration 0016 enables RLS on `waitlist_submissions` + `content_schedule` — without it, on a Supabase/PostgREST deployment the anon key could read every waitlist email (PII). Migration 0017 adds the H10 experiment tables (`experiment_exposures` + `experiment_conversions`, RLS tenant-isolation + GRANTs) — without it the experiment engine logs nothing (it degrades gracefully via `getExperimentStats`). Apply before the public waitlist + experiments go live."
       how: "Run `pnpm --filter @gm/db db:migrate` (idempotent; applies 0012 waitlist, 0013 UTM, 0014 content_schedule, 0015 confirmed_at, 0016 RLS on the two admin growth tables, 0017 experiment exposure/conversion tables); set ADMIN_EMAIL in Vercel env (see prose entry below)."
       blocks: growth-analytics
     - id: experiment-secret
