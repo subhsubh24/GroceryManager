@@ -326,3 +326,12 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   GroceryManager (product-specifics live in ROADMAP.md / VISION.md, which win on any specific); it changes
   ONLY by a deliberate canonical sync across all factory repos, never as loop work. Identical factories,
   different products.
+- **2026-06-27 — canonical sync: FACTORY_STANDARD.md gains VISUAL VERIFICATION (see what the user sees).**
+  Synced the shared, byte-identical FACTORY_STANDARD.md to the new canonical: §6 now requires the journey
+  suite to CAPTURE a screenshot of every page + key state (empty/loading/error, authed + logged-out) and
+  commit them, and a vision-capable model to VISUALLY JUDGE them against the VISION design bar (DOM-passing
+  but blank/broken/overlapping/unstyled/off-brand/"vibe-coded" = release-blocking FAIL); §7 Gate-2 functional-
+  reality lens + §10 deep-audit design/taste lens now both say to VISUALLY REVIEW those screenshots. BOUNDED:
+  capture in the suite, judge at the deep audit + readiness gate — not a vision pass on every micro-change.
+  FACTORY_STANDARD.md remains a STABLE ANCHOR — changes ONLY by canonical sync across all factory repos,
+  never as loop work; product-specifics stay in ROADMAP/VISION.
