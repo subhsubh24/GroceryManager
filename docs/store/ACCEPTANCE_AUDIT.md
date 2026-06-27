@@ -20,12 +20,15 @@ Google Play Store, with the following pre-submission actions required (all are O
 | # | Action required | Priority | Who |
 |---|---|---|---|
 | 1 | Configure Stripe (web) + RevenueCat (mobile) IAP for in-app subscription | Critical | Owner |
-| 2 | Set `EXPO_PUBLIC_PROJECT_ID` (EAS) + apply migration 0011 | Critical | Owner |
-| 3 | Export app icon as 1024×1024 PNG (no alpha) | Critical | Owner |
-| 4 | Take 5 required screenshots on iPhone 15 Pro | Critical | Owner |
-| 5 | Fill in App Store Connect + Play Console metadata | Critical | Owner |
-| 6 | Verify privacy policy URL (`/privacy`) is live before submission | Critical | Owner |
-| 7 | Add product email for Play Store developer contact (not personal email) | High | Owner |
+| 2 | Set `EXPO_PUBLIC_PROJECT_ID` (EAS) + apply pending DB migrations (see PENDING_OPS.md) | Critical | Owner |
+| 3 | Take the required device screenshots (App Store + Play) on a real device/simulator | Critical | Owner |
+| 4 | Fill in App Store Connect + Play Console metadata | Critical | Owner |
+| 5 | Verify privacy policy URL (`/privacy`) is live before submission | Critical | Owner |
+| 6 | Add product email for Play Store developer contact (not personal email) | High | Owner |
+
+> _App icons (1024/512/192) and the Play feature graphic are already rendered as committed PNGs
+> (`apps/web/public/icons/`, `apps/mobile/assets/`, `docs/store/assets/feature-graphic.png`) — no
+> owner export step needed. Only on-device **screenshots** remain Human Core (#3)._
 
 All compliance issues the factory can control have been addressed. See item-by-item analysis below.
 
