@@ -12,7 +12,7 @@ GroceryManager is a **grocery + cooking autopilot** — a Next.js 15 PWA and a n
 
 **Confidence statement:**
 
-> The product is complete and polished; it will be accepted into the Apple App Store AND Google Play with high confidence (self-audited against June 2026 Apple/Google guidelines — see `docs/store/ACCEPTANCE_AUDIT.md`). The business case shows a credible ≥ $100K/yr path at ~97 % gross margin. Everything within the factory's control to maximise those odds has been built and verified. The only remaining items are in Section 5 below: things that legally or physically require the owner (store accounts, live billing keys, app signing, physical screenshots, funding paid channels).
+> The product, security hardening, and marketing/growth engine are complete and polished, and it will be accepted into the Apple App Store AND Google Play with high confidence (self-audited against June 2026 Apple/Google guidelines — see `docs/store/ACCEPTANCE_AUDIT.md`), at ~97 % gross margin. **Honest revenue caveat (2026-06-27):** the bottom-up business case (`docs/BUSINESS_CASE.md`) shows the median base lands at ≈ **$33K/yr** steady state — the ≥ $100K/yr floor is **achievable but NOT met at median inputs**; it requires ~4,000–4,500 sustained downloads/mo (optimistic-leaning distribution). The gap is **demand generation, not product completeness or unit economics** — which is exactly what the built (owner-activated) marketing/growth engine targets. Everything buildable to maximize those odds has been built; reaching the floor depends on the owner's go-to-market execution. Remaining items are in Section 5 (store accounts, live billing keys, app signing, physical screenshots, funding/connecting growth channels).
 
 ---
 
@@ -94,15 +94,15 @@ Key passing items:
 
 Full model in `docs/BUSINESS_CASE.md`. Summary:
 
-| Scenario | Monthly downloads | Paying users (steady state) | Annual net revenue |
-|---|---|---|---|
-| Conservative | 500 | ~245 | ~$11,088 |
-| **Base** | **1,500 + Family lever** | **~2,044** | **~$105,907** |
-| Optimistic | 6,000 | ~16,250 | ~$842,400 |
+| Scenario | Monthly downloads | Paying users (steady state) | Annual net revenue (steady state) | Floor met? |
+|---|---|---|---|---|
+| Conservative | 500 | ~67 | ~$3,100 | No |
+| **Base (median)** | **1,500** | **~730** | **~$33,450** ($38K w/ Family upside) | **No** |
+| Optimistic | 6,000 | ~6,600 | ~$342,000 | Yes |
 
-**Gross margin: ~97 %** (LLM ~$0.02/user/mo, infra ~$0.05/user/mo, blended net ARPU $4.32/mo after 15% platform fee — lifted by 10% Family tier adoption at $9.99/mo).
+**Gross margin: ~97 %** (LLM ~$0.02/user/mo, infra ~$0.05/user/mo, net ARPU $3.82/mo individual after the 15% platform fee). Unit economics are excellent — the constraint is reach, not cost.
 
-The base case shows a **credible ≥ $100K/yr path** at 1,500 downloads/month with 10% Family tier adoption (21% trial→paid, 4.5% blended churn) — median inputs from published utility-app benchmarks (OpenView 2023, AppsFlyer 2024, Baremetrics 2024). _Last recomputed: 2026-06-26._
+**Honest verdict:** at median inputs (1,500 downloads/mo, 4 % freemium signup→paid, 3.7 % blended churn) the base lands at ≈ **$33K/yr steady state — below the $100K floor**. Year-1 is lower still (~$6–12K) because low churn means a multi-year ramp. The ≥ $100K floor needs **~4,000–4,500 sustained downloads/mo** (optimistic-leaning distribution) — achievable with the built marketing/growth engine once the owner connects + funds channels, but not a median-organic outcome. Inputs grounded in published benchmarks (OpenView 2023, Amplitude 2024, AppsFlyer 2024, Baremetrics 2024); the prior "$106K base" was a gaming artifact (it modelled signup→paid at 2.5–6× the freemium benchmark) corrected on 2026-06-27. _Last recomputed: 2026-06-27._
 
 **Critical conversion lever:** Gmail import is the highest-converting hook (auto-building the pantry from the first Tesco/Ocado/Walmart order). Surface it prominently in onboarding and App Store screenshots. Users who see immediate pantry value convert trials at 22–28 % vs 15–20 % without it (Reforge Growth Series 2024).
 

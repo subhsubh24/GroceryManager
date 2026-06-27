@@ -64,11 +64,11 @@ OWNER_ACTIONS:
       how: Add `pnpm --filter web lint` and the E2E job to .github/workflows/ci.yml (see prose entry below).
       blocks: none
     - id: waitlist-migration
-      title: Apply waitlist migrations 0012–0015 + set ADMIN_EMAIL
-      priority: normal
+      title: Apply waitlist/growth migrations 0012–0016 + set ADMIN_EMAIL
+      priority: high
       status: open
-      why: The in-app waitlist analytics (`/admin/waitlist`, the Growth Agent's real signup source) needs the table + UTM + content-schedule + double-opt-in columns, plus the admin email for `/admin/*` + `GET /api/growth/snapshot`.
-      how: "Run `pnpm --filter @gm/db db:migrate` (idempotent; applies 0012 waitlist, 0013 UTM, 0014 content_schedule, 0015 confirmed_at); set ADMIN_EMAIL in Vercel env (see prose entry below)."
+      why: The in-app waitlist analytics (`/admin/waitlist`, the Growth Agent's real signup source) needs the table + UTM + content-schedule + double-opt-in columns, plus the admin email for `/admin/*` + `GET /api/growth/snapshot`. Migration 0016 enables RLS on `waitlist_submissions` + `content_schedule` — without it, on a Supabase/PostgREST deployment the anon key could read every waitlist email (PII). Apply before the public waitlist goes live.
+      how: "Run `pnpm --filter @gm/db db:migrate` (idempotent; applies 0012 waitlist, 0013 UTM, 0014 content_schedule, 0015 confirmed_at, 0016 RLS on the two admin growth tables); set ADMIN_EMAIL in Vercel env (see prose entry below)."
       blocks: growth-analytics
     - id: turnstile-keys
       title: Create Cloudflare Turnstile site + set CLOUDFLARE_TURNSTILE_SECRET_KEY + NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY

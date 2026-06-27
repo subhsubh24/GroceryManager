@@ -326,6 +326,9 @@ regression, and preflight verifies the critical ones.** Build + enforce:
       _Done PR #164 (2026-06-27): `apps/web/app/api/_lib/llm-quota.ts` — per-user daily quota (10 free /
       100 premium, UTC midnight reset; env override via LLM_DAILY_LIMIT_FREE/PREMIUM). Applied to discover,
       plan, cook-tonight routes. PENDING_OPS.md updated with provider dashboard alert steps._
+      _Extended PR #181 (2026-06-27, run 19): a readiness audit found the WEB server actions that call the
+      paid LLM (make/ask/add-receipt/scan/import/onboarding + remix page) were uncapped — the primary
+      product surface. Quota now enforced on all 7 web LLM surfaces, closing the wallet-drain gap._
 > **Secrets stay server-side** (read from env, never committed). If exposure is ever suspected, record
 > a `PENDING_OPS.md` handoff to **regenerate the key immediately** (owner action).
 
@@ -513,9 +516,15 @@ missing, and do not add scope after Done.
       stores would accept.
 - [x] **Business case** (`docs/BUSINESS_CASE.md`) — a LIVING, HONEST, research-grounded model of
       whether ≥ $100K/yr is achievable. Keep it current as the product + analytics evolve.
-      _(PR #142 2026-06-26: recomputed to median inputs + Family tier lever; base case $105,907/yr
-      (floor_met_year1: true); sub-scenario "Median WITHOUT lever" ~$89K documented honestly;
-      ARPU lifted $3.82 → $4.32/mo at 10% Family adoption. Stamp: 2026-06-26.)_
+      _(PR #188 2026-06-27, run 19 — ANTI-GAMING honesty correction: a readiness audit found the prior
+      model gamed signup→paid as trial_start 60% × trial→paid 21% = 12.6%, which is 2.5–6× the cited
+      freemium benchmark (2–5%). For a generous-free app the real signup→paid is the freemium rate.
+      Re-grounded on the cited 2–5% (base 4%): median base steady-state ≈ $33K/yr (was $105,907),
+      conservative ≈ $3K, optimistic ≈ $342K. **floor_met_year1: false** — the floor is NOT met at median
+      inputs; $100K requires ~4,000–4,500 sustained downloads/mo (optimistic-leaning distribution). Family
+      tier demoted from a banked base assumption to a labeled upside (no clean public adoption benchmark).
+      The honest model EXISTS (this box = a living honest model), but it shows the floor is not met at median
+      — see the owner FYI issue. Stamp: 2026-06-27.)_
       It MUST have:
       - **Bottom-up model:** `paying_users × price × 12 − churn/refunds/fees`, with the FULL funnel
         spelled out (traffic → signup% → free→paid%), not vibes.
@@ -599,10 +608,15 @@ missing, and do not add scope after Done.
 - [ ] **Confidence statement** — you can honestly write, in the handoff doc: *the product is complete
       and store-acceptable with high confidence; the business case shows a credible ≥ $100K/yr path at
       a healthy per-user margin; and everything buildable to maximize those odds is done.*
-      _(2026-06-26 snapshot reflected tracks A–F only. Un-ticked 2026-06-27: Track H added H7 (analytics
-      PULL read-API so GROWTH_STATUS reports REAL signal) + H8 (`docs/growth/CONNECT.md` owner runbook +
-      public-signup rate-limit/CAPTCHA/double-opt-in) — buildable demand-gen plumbing that is NOT yet done,
-      so "everything buildable is done" is not yet truthful. Re-tick when H7+H8 ship and an auditor confirms.)_
+      _(Stays UNCHECKED. Run 19 (2026-06-27): H7+H8 shipped, and a ≥3-auditor readiness audit confirmed the
+      product/security tracks. BUT the same audit found the business case was gamed — the honest recompute
+      (PR #188) shows the median base ≈ $33K/yr with **floor_met_year1: false**: the ≥$100K/yr floor is NOT
+      met at median inputs (it needs ~4,000–4,500 sustained downloads/mo — owner-driven demand-gen). So
+      "the business case shows a credible ≥$100K/yr path at median" is NOT truthful, and this statement
+      cannot be honestly written. The product, security (Track G incl. the web-LLM spend-ceiling gap closed
+      in PR #181), and marketing engine are complete; the gap is purely demand-gen reach, flagged to the
+      owner in an FYI issue. Per the convergence clause, the loop does NOT fake the floor and does NOT open
+      the 'ready' issue — continuous post-launch reach/conversion optimization is the owner's job.)_
 - [x] **LAUNCH HANDOFF doc exists + current** (`docs/LAUNCH.md`, see below).
 
 ## LAUNCH HANDOFF — `docs/LAUNCH.md` (the deliverable at 100%)
