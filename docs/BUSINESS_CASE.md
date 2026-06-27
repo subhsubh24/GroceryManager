@@ -121,9 +121,11 @@ Gross margin:                ~97 %
 
 A ~97 % gross margin is characteristic of lean SaaS with a cheap-first LLM architecture. **This is the
 strongest part of the case: the unit economics are not the problem.** Every paying user is almost pure
-margin once fixed costs (domain, analytics, email, developer fees ~$150/yr total) are covered.
+margin once fixed costs (hosting, DB, analytics, email, domain ~$150/mo run-rate; plus ~$124/yr
+developer-account fees) are covered.
 
-**Break-even on fixed costs only:** ~41 paying users × $3.70 = $152/mo — covered at any meaningful scale.
+**Break-even on fixed costs only:** ~41 paying users × $3.70 = $152/mo covers the ~$150/mo run-rate —
+covered at any meaningful scale.
 
 ---
 
