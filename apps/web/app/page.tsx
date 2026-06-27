@@ -14,6 +14,7 @@ import { SUBSCRIPTION_PLANS } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
 import { titleCase } from "@/app/lib/format";
 import { buildDigestForUser } from "@/app/lib/digest";
+import { assignAndLogVariant } from "@/app/lib/experiments";
 import { WaitlistForm } from "@/app/components/waitlist-form";
 import { GettingStarted, type FirstRunState } from "@/app/components/getting-started";
 import { FeatureCard } from "@/app/components/feature-card";
@@ -222,7 +223,12 @@ export default async function HomePage({
   searchParams: Promise<{ v?: string }>;
 }) {
   const sp = await searchParams;
-  const heroVariant: HeroVariant = HERO_VARIANTS[sp.v ?? "a"] ?? HERO_VARIANTS.a;
+  // For signed-in users, resolve the hero variant deterministically via the experiment engine
+  // (exposure logged best-effort). Fall back to ?v= param / "a" for logged-out visitors or when
+  // the assignment returns null (no session, missing env, or any error).
+  const assignedVariant = await assignAndLogVariant("landing_hero");
+  const heroVariantKey = assignedVariant ?? sp.v ?? "a";
+  const heroVariant: HeroVariant = HERO_VARIANTS[heroVariantKey] ?? HERO_VARIANTS.a!;
   const session = await auth();
   const email = (session?.user as { email?: string } | undefined)?.email ?? null;
   // Only hit the DB for signed-in visitors; the logged-out landing path stays query-free.
@@ -446,7 +452,7 @@ export default async function HomePage({
               Track conversions in Plausible via data-ab-variant on the section. */}
           <section
             className="mx-auto max-w-6xl px-5 pb-14 pt-16 sm:px-8 sm:pt-24"
-            data-ab-variant={sp.v ?? "a"}
+            data-ab-variant={heroVariantKey}
           >
             <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="animate-fade-in-up">

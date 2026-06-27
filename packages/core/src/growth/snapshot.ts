@@ -17,6 +17,21 @@
 export type GrowthPhase = "pre_launch" | "launching" | "post_launch";
 export type SourceStatus = "connected" | "awaiting_connect";
 
+/** One experiment's status in the snapshot — maps to GROWTH_STATUS experiments[] shape. */
+export interface ExperimentSummary {
+  id: string;
+  hypothesis: string;
+  status: "running" | "decided";
+  result: string | null;
+  lift_pct: number | null;
+  ci_lower: number | null;
+  ci_upper: number | null;
+  /** ISO date the experiment started (first exposure recorded), or null when no exposures yet. */
+  started: string | null;
+  /** ISO date a result was decided, or null when still running. */
+  decided: string | null;
+}
+
 export interface GrowthSnapshotInputs {
   /** YYYY-MM-DD stamp for this snapshot. */
   asOf: string;
@@ -50,6 +65,9 @@ export interface GrowthSnapshotInputs {
 
   // --- Email provider (Resend/Sendgrid/Postmark) ---
   emailConnected: boolean;
+
+  // --- Experiments (H10) --- optional; defaults to [] ---
+  experiments?: ExperimentSummary[];
 }
 
 export interface GrowthSnapshot {
@@ -87,6 +105,11 @@ export interface GrowthSnapshot {
     open_rate: number | null;
     click_rate: number | null;
   };
+  /**
+   * Experiment results — shape matches GROWTH_STATUS experiments[] (see docs/growth/GROWTH_STATUS.md).
+   * Empty array when no experiments are registered or have sufficient data.
+   */
+  experiments: ExperimentSummary[];
   links: {
     in_app_analytics: string;
     owner_doc: string;
@@ -144,6 +167,7 @@ export function buildGrowthSnapshot(input: GrowthSnapshotInputs): GrowthSnapshot
     channels_connected,
     awaiting_connect,
     sources,
+    experiments: input.experiments ?? [],
     funnel: {
       visitors_7d: visitors7d,
       waitlist_signups_total: waitlistTotal,

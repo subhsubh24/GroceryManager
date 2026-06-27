@@ -35,7 +35,9 @@
     "./content/scheduler": "./src/content/scheduler.ts",
     "./growth/guardrails": "./src/growth/guardrails.ts",
     "./growth/snapshot": "./src/growth/snapshot.ts",
-    "./growth/optin": "./src/growth/optin.ts"
+    "./growth/optin": "./src/growth/optin.ts",
+    "./growth/experiments": "./src/growth/experiments/index.ts",
+    "./growth/analytics": "./src/growth/analytics.ts"
   },
   "scripts": {
     "lint": "echo \"(lint) @gm/core\"",

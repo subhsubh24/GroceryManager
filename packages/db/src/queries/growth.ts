@@ -242,3 +242,101 @@ export async function getActiveSubscriberStats(db: Querier): Promise<ActiveSubsc
   }
   return stats;
 }
+
+// ---------------------------------------------------------------------------
+// Analytics surface aggregate queries — H9
+// ---------------------------------------------------------------------------
+
+export interface WeeklyCountRow {
+  /** ISO week start (YYYY-MM-DD). */
+  week: string;
+  count: number;
+}
+
+/**
+ * Waitlist signups aggregated by ISO week (Monday-anchored), oldest first.
+ * Returns null if the table doesn't exist yet (pre-migration 0012).
+ * Admin/aggregate — only counts per week, no PII.
+ */
+export async function getWaitlistByWeek(db: Querier): Promise<WeeklyCountRow[] | null> {
+  try {
+    const rows = (await db.execute(
+      sql`SELECT to_char(date_trunc('week', created_at), 'YYYY-MM-DD') AS week,
+                 count(*)::text AS n
+          FROM waitlist_submissions
+          GROUP BY date_trunc('week', created_at)
+          ORDER BY date_trunc('week', created_at) ASC`,
+    )) as unknown as Array<{ week: string; n: string }>;
+    return rows.map((r) => ({ week: r.week, count: parseInt(r.n ?? "0", 10) }));
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("waitlist_submissions") && msg.includes("does not exist")) return null;
+    throw err;
+  }
+}
+
+/**
+ * New active subscribers aggregated by ISO week, oldest first.
+ * Counts the first `entitlement=premium` signal per user per week — NOT total active at that
+ * point-in-time, which would require a harder running-total query and isn't needed by the agent.
+ * Returns null if the preference_signals table is empty / no entitlement rows (safely returns []).
+ * Admin/aggregate — counts only.
+ */
+export async function getSubscribersByWeek(db: Querier): Promise<WeeklyCountRow[] | null> {
+  try {
+    const rows = (await db.execute(
+      sql`SELECT to_char(date_trunc('week', min_at), 'YYYY-MM-DD') AS week,
+                 count(*)::text AS n
+          FROM (
+            SELECT user_id, min(occurred_at) AS min_at
+            FROM preference_signals
+            WHERE topic = 'entitlement' AND value = 'premium'
+            GROUP BY user_id
+          ) first_premium
+          GROUP BY date_trunc('week', min_at)
+          ORDER BY date_trunc('week', min_at) ASC`,
+    )) as unknown as Array<{ week: string; n: string }>;
+    return rows.map((r) => ({ week: r.week, count: parseInt(r.n ?? "0", 10) }));
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (
+      (msg.includes("preference_signals") && msg.includes("does not exist")) ||
+      (msg.includes("preference_signals") && msg.includes("does not exist"))
+    ) {
+      return null;
+    }
+    throw err;
+  }
+}
+
+export interface SegmentCountRow {
+  /** The utm_source value, or null for direct/organic traffic. */
+  segment: string | null;
+  count: number;
+}
+
+/**
+ * Waitlist signup counts grouped by utm_source.
+ * Returns null if the table doesn't exist yet (pre-migration 0012/0013).
+ * Admin/aggregate — no PII (only the source label + count).
+ */
+export async function getWaitlistSegmentCounts(
+  db: Querier,
+): Promise<SegmentCountRow[] | null> {
+  try {
+    const rows = (await db.execute(
+      sql`SELECT utm_source AS segment, count(*)::text AS n
+          FROM waitlist_submissions
+          GROUP BY utm_source
+          ORDER BY count(*) DESC`,
+    )) as unknown as Array<{ segment: string | null; n: string }>;
+    return rows.map((r) => ({
+      segment: r.segment ?? null,
+      count: parseInt(r.n ?? "0", 10),
+    }));
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("waitlist_submissions") && msg.includes("does not exist")) return null;
+    throw err;
+  }
+}
