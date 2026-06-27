@@ -134,11 +134,13 @@ const HIGHLIGHTS: Section[] = HIGHLIGHT_KEYS.map((k) => SECTIONS.find((s) => s.k
   (s): s is Section => s != null,
 );
 
-// A few signature flows surfaced as a "menu" inside the hero visual (logged-out marketing only).
+// A few signature capabilities surfaced as a "menu" inside the hero visual (logged-out marketing
+// only). These describe what each feature DOES — no fabricated counts or fake "today" state, so the
+// card never reads as the visitor's real kitchen (the app shows real DB-derived values only).
 const HERO_PREVIEW: { icon: LucideIcon; title: string; meta: string }[] = [
-  { icon: ChefHat, title: "Tonight: Lemon herb chicken", meta: "have 7/8 · uses spinach" },
-  { icon: ShoppingCart, title: "Reorder ready", meta: "6 staples due · 1 tap to cart" },
-  { icon: Recycle, title: "Use it up", meta: "2 items expiring soon" },
+  { icon: ChefHat, title: "Cook tonight", meta: "Meals you can make from what's in stock" },
+  { icon: ShoppingCart, title: "Reorder ready", meta: "Staples flagged before you run out" },
+  { icon: Recycle, title: "Use it up", meta: "Recipes that prioritize what's expiring" },
 ];
 
 // A/B landing hero variants — select with ?v=a (default) or ?v=b or ?v=c.
@@ -500,7 +502,7 @@ export default async function HomePage({
                     ))}
                   </div>
                   <div className="mt-5 flex items-center justify-between rounded-xl bg-brand-solid px-4 py-3 text-white">
-                    <span className="text-sm font-semibold">Ready to order — 6 items</span>
+                    <span className="text-sm font-semibold">Pantry, list &amp; meals — in one place</span>
                     <ArrowRight aria-hidden className="h-5 w-5" strokeWidth={2} />
                   </div>
                 </div>
