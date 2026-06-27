@@ -18,6 +18,10 @@ export async function POST(req: Request) {
   try {
     // Rate limit credential attempts per IP (Track G G1/G4) — parity with /api/mobile/auth:
     // 10 attempts / 15 min, to blunt brute-force against this 30-day-token mint endpoint.
+    // IP source: x-forwarded-for, the codebase-wide convention. This assumes a TRUSTED reverse
+    // proxy (Vercel/Cloudflare) sets/overwrites the header — true for the deployment target.
+    // Hardening the IP source (platform header) + a shared Redis store across instances is tracked
+    // systemically in PENDING_OPS (llm-quota-redis-upgrade), not per-route.
     const ip = (req.headers.get("x-forwarded-for") ?? "unknown").split(",")[0]!.trim();
     const rl = rateLimit(`v1-auth:${ip}`, 10, 15 * 60_000);
     if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
