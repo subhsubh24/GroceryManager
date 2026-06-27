@@ -1,29 +1,38 @@
 ```yaml
 # BUSINESS_CASE_SUMMARY (machine-readable; keep in sync with the analysis below)
+# arr_year1 = planning-case ACHIEVABLE annual run-rate (steady state) per scenario, in whole USD.
+# Literal first-12-months revenue is LOWER than steady state because of the slow ramp (low churn =
+# long approach to the asymptote — see §4). floor_met_year1 reflects the honest base case vs the floor.
 currency: USD
 arr_year1:
-  conservative: 11088
-  base: 105907
-  optimistic: 842400
+  conservative: 3100
+  base: 33450
+  optimistic: 342000
 planning_case: base
 floor_usd: 100000
-floor_met_year1: true   # median base WITH Family tier lever (10% adoption); without lever: ~$89K
-time_to_floor: "n/a — median base with Family tier lever clears the $100K floor (see §4)"
-as_of: 2026-06-26
+floor_met_year1: false   # honest median base ≈ $33K/yr steady state — the floor is NOT met at median inputs
+time_to_floor: "Requires ~4,000–4,500 sustained downloads/mo at base conversion (optimistic-leaning distribution). Not reached at median organic; achievable in ~12–24 mo only with strong demand-gen — see §5."
+as_of: 2026-06-27
 ```
 
 # GroceryManager — Business Case
 
-**Version:** 2026-06-26 (recomputed — median inputs, Family tier lever)
+**Version:** 2026-06-27 (recomputed — honest freemium funnel; corrected ramp math; floor reassessed)
 **Status:** Living document — update as real analytics data arrive (see §7).
 
-> Stamp: last recomputed 2026-06-26 — inputs anchored to median industry benchmarks; Family tier
-> added; base scenario uses median WITH the built Family-tier lever (10% adoption → $106K/yr).
-> Median WITHOUT the lever documented as a sub-scenario (~$89K/yr, below floor).
+> Stamp: last recomputed 2026-06-27 — **major honesty correction.** The prior (2026-06-26) revision
+> modelled signup→paid as `trial_start 60% × trial→paid 21% = 12.6%`, which is 2.5–6× the cited
+> freemium free→paid benchmark (2–5%). For a **generous-free** app (the whole core loop is free), most
+> users never hit the premium gate, so the realistic signup→paid rate IS the freemium rate, not a
+> hard-paywall trial rate. Re-grounding on the cited 2–5% benchmark drops the median base from a gamed
+> ~$106K/yr to an honest **~$33K/yr steady state**. The prior doc also claimed the floor was crossed in
+> "month 20–24"; the correct ramp math (below) puts it many years out at flat median downloads. **The
+> honest conclusion: the floor is NOT met at median inputs — it requires optimistic-leaning
+> distribution.** Unit economics remain excellent (~97% margin); the entire gap is demand generation.
 
 > This is a bottom-up financial model against the goal of ≥ $100 K/yr net revenue. All inputs are
-> cited or derived from first-principles code inspection; none are invented. The model is honest
-> about uncertainty and names levers explicitly when a scenario falls short.
+> cited or derived from first-principles code inspection. The model is honest about uncertainty and
+> names levers explicitly; it does NOT pick any number to clear the floor.
 
 ---
 
@@ -37,10 +46,9 @@ as_of: 2026-06-26
 | Family | $9.99 / month or $79.99 / year | 7 days | $8.49 / month or $67.99 / year |
 
 Prices sourced from `packages/core/src/billing/index.ts` (`priceMonthCents: 499`,
-`priceAnnualCents: 3999`, `premium_family: priceMonthCents: 999`, `priceAnnualCents: 7999`).
-Apple and Google both charge 15 % for developers earning < $1 M/yr (Apple Small Business Programme;
-Google Play reduced service fee). These rates apply until the $1 M threshold is crossed — at which
-point 30 % applies — but that is a good problem to have and well above the $100 K/yr target.
+`priceAnnualCents: 3999`; `premium_family`: `priceMonthCents: 999`, `priceAnnualCents: 7999`) and the
+matching Stripe price-ID env vars in `packages/config/src/env.ts`. Apple and Google both charge 15 %
+for developers earning < $1 M/yr (Apple Small Business Programme; Google Play reduced service fee).
 
 **Blended ARPU — individual tiers only (mix: 70 % monthly / 30 % annual):**
 
@@ -48,7 +56,7 @@ point 30 % applies — but that is a good problem to have and well above the $10
 ARPU = 0.70 × $4.24 + 0.30 × ($33.99 / 12) = $2.97 + $0.85 = $3.82 / user / month (net of platform fee)
 ```
 
-**Blended ARPU — with Family tier lever (mix: 65 % monthly / 25 % annual / 10 % family monthly):**
+**Blended ARPU — with Family-tier adoption (mix: 65 % monthly / 25 % annual / 10 % family monthly):**
 
 ```
 ARPU = 0.65 × $4.24 + 0.25 × ($33.99 / 12) + 0.10 × $8.49
@@ -56,14 +64,14 @@ ARPU = 0.65 × $4.24 + 0.25 × ($33.99 / 12) + 0.10 × $8.49
      = $4.32 / user / month (net of platform fee)
 ```
 
-The Family tier raises blended ARPU by ~13 % ($3.82 → $4.32) once 10 % of paying users adopt it.
-Household/family apps typically see 8–15 % of paying users on family plans once the tier is visible
-in the paywall. **The base scenario below uses this lever — it is fully built AND surfaced in the
-paywall: the Family card renders on `/upgrade` with a `CheckoutButton plan="family"` (PR #154), and
-the Stripe webhook maps the Family price ID to `premium_family`. Like every paid tier, charging it
-requires the owner to create the Stripe/RevenueCat product + price ID (Human Core — see PENDING_OPS).
-The 10 % adoption assumption sits at the LOW end of the cited 8–15 % range (conservative, not chosen
-to clear the floor).**
+The Family tier raises blended ARPU by ~13 % ($3.82 → $4.32) IF ~10 % of paying users adopt it. **The
+base case below uses the individual-only $3.82 ARPU.** Family adoption is treated as an *upside lever*,
+not a base assumption, because there is **no clean public benchmark for the share of paying users who
+choose a family/multi-seat tier** (industry data confirms family plans lift *retention* ~52 % and that
+~37 % of consumers share subscriptions, but not a reliable adoption %). The Family card is built and
+surfaced in `/upgrade` (`CheckoutButton plan="family"`, PR #154) and the Stripe webhook maps its price
+ID to `premium_family`; charging it needs the owner to create the Stripe/RevenueCat product (Human
+Core). We do not bank the floor on an uncited adoption rate.
 
 ---
 
@@ -85,13 +93,13 @@ Gemini public pricing:
 | Capture / ask | 5 | 400 in + 200 out | Flash-lite | $0.001 |
 | **Total LLM** | | | | **~$0.018 / mo** |
 
-These are *active user* estimates. Light users cost less; the cascade suppresses escalation to Pro to
-< 2 % of calls in production. Error: ±100 % (actual usage patterns unknown pre-launch); even 10×
-actual cost = $0.18/mo, still < 5 % of net ARPU.
+These are *active paying user* estimates. The per-user/day spend ceiling (`llm-quota.ts`, applied to
+every web + mobile LLM surface — Track G7) caps the worst case. Error: ±100 %; even 10× actual cost =
+$0.18/mo, still < 5 % of net ARPU.
 
 ### 2b. Infrastructure
 
-| Component | Basis | Cost / user / mo (100 K MAU) |
+| Component | Basis | Cost / user / mo |
 |---|---|---|
 | Postgres (Neon / Vercel) | Row-level data, ~50 KB / user | ~$0.02 |
 | Vercel serverless compute | ~200 API calls / user / mo | ~$0.02 |
@@ -99,249 +107,184 @@ actual cost = $0.18/mo, still < 5 % of net ARPU.
 | CDN / bandwidth | Static assets, shared | ~$0.01 |
 | **Total infra** | | **~$0.05 / mo** |
 
-Infra cost is dominated by the DB at low user counts but stays < $0.10/user/mo well into the
-tens-of-thousands range. Serverless compute at Vercel scales to zero — no idle cost.
-
 ### 2c. Gross margin
 
 ```
-Net ARPU (with Family tier lever): $4.32 / mo
-LLM cost:                         -$0.02 / mo
-Infra cost:                       -$0.05 / mo
-Payment processing (Stripe web, ~5 % of web revenue): -$0.05 / mo blended
-────────────────────────────────────────────────────
-Gross profit:                      $4.20 / mo per paying user
-Gross margin:                      ~97 %
+Net ARPU (individual base):  $3.82 / mo
+LLM cost:                   -$0.02 / mo
+Infra cost:                 -$0.05 / mo
+Payment processing (web blended): -$0.05 / mo
+────────────────────────────────────────────
+Gross profit:                $3.70 / mo per paying user
+Gross margin:                ~97 %
 ```
 
-A 97 % gross margin is characteristic of lean SaaS with a cheap-first LLM architecture. This is the
-central economic argument for the subscription model: every additional dollar of revenue drops almost
-entirely to the bottom line once fixed costs (domain, analytics, email service, developer account
-fees ~$150/yr total) are covered.
+A ~97 % gross margin is characteristic of lean SaaS with a cheap-first LLM architecture. **This is the
+strongest part of the case: the unit economics are not the problem.** Every paying user is almost pure
+margin once fixed costs (hosting, DB, analytics, email, domain ~$150/mo run-rate; plus ~$124/yr
+developer-account fees) are covered.
 
-**Break-even on fixed costs only:** ~36 paying users/month × $4.20 = $151/mo — fixed costs covered
-at any meaningful user count.
+**Break-even on fixed costs only:** ~41 paying users × $3.70 = $152/mo covers the ~$150/mo run-rate —
+covered at any meaningful scale.
 
 ---
 
-## 3. Funnel model
+## 3. Funnel model (honest freemium)
 
 ```
-Downloads → Signups → Active free (trial started) → Paid → Retained
+Downloads → Signups → Paid (free→paid) → Retained
 ```
 
-### Inputs (research-grounded)
+GroceryManager is **generous-free**: pantry, cook, list, capture/scan, and plan are all free. Premium
+is an *upsell* (unlimited AI meal plans/remix, Gmail receipt import, advanced spend insights, Grocery
+Wrapped+). So the conversion that matters is the **freemium free→paid rate** — the observed share of
+*free signups* who ever become paid — NOT a hard-paywall trial-conversion rate. Modelling it as
+`trial_start% × trial→paid%` (as the prior revision did) overstates conversion by 2.5–6× for an app
+most people can use forever without paying.
 
-| Input | Value used | Source |
-|---|---|---|
-| Free-to-paid conversion (freemium) | 2–5 % of total signups | OpenView Partners SaaS Benchmarks 2023; Amplitude Product Report 2024 (median 2.18 %) |
-| Trial-to-paid conversion | 18–25 % | AppsFlyer Mobile App Trends 2024 (utility category, 7-day trial) |
-| Monthly churn (subscription) | 3.5–7 % | Baremetrics Subscription Benchmarks 2024 (consumer SaaS: 5.0 % median; utility/productivity: 4–6 %) |
-| Annual plan churn (annualised) | 15–25 % (net) | Industry: annual plans reduce monthly churn; equivalent to ~1.4–2.3 %/mo |
-| Signup rate from download | 35–50 % | Internal heuristic; mobile app registration rate for utility apps |
-| Trial start rate (of signups) | 50–65 % | Users who reach a premium feature gate; higher with Gmail-import onboarding hook |
+### Inputs (research-grounded; assumptions labelled)
 
-**Key driver:** Gmail import is gated at Premium. Users who connect Gmail during onboarding see an
-immediate, tangible payoff (pantry builds automatically). This is the strongest conversion hook and
-should be surfaced in the onboarding flow. Apps with a high-value, visible trial moment convert
-trials at 22–28 % vs 15–20 % for apps without (source: Reforge Growth Series, 2024).
+| Input | Conservative | Base | Optimistic | Source |
+|---|---|---|---|---|
+| Download → signup | 35 % | 45 % | 55 % | App requires an account to function; bounded by store-listing → install conversion for utilities (AppTweak 2024: 48.6 % App Store / 36.8 % Play *impression→install*). Labelled assumption — utility apps that require registration lose a meaningful share at signup. |
+| Signup → paid (freemium free→paid) | 2.5 % | 4 % | 6 % | OpenView SaaS Benchmarks 2023; Amplitude Product Report 2024 (freemium median **2.18 %**, range 2–5 %). Base 4 % = upper-mid, justified by the high-value Gmail-import trial moment (Reforge Growth Series 2024: visible first-value moments lift conversion). |
+| Monthly churn (blended) | 6.5 % | 3.7 % | 3.0 % | Baremetrics Subscription Benchmarks 2024 (consumer SaaS ~5 % median; utility/productivity 4–6 %). Base blends 72 % monthly @ 4.5 % + 28 % annual @ (20 %/12). |
+| Net ARPU | $3.82 | $3.82 | $4.32 | §1. Optimistic includes 10 % Family-tier adoption (upside lever). |
 
-### Steady-state calculation
-
-At equilibrium: `new_paid_monthly = retained_paid × monthly_churn`
-
-So: `steady_state_paying = new_paid_monthly / monthly_churn`
-
-Where: `new_paid_monthly = downloads × signup_rate × trial_start_rate × trial_to_paid`
-
-**Blended churn derivation (median base):**
+**Blended churn derivation (base):**
 
 ```
-Blended churn = annual_mix × (annual_churn / 12) + monthly_mix × monthly_churn
-              = 0.28 × (20% / 12)               + 0.72 × 4.5%
-              = 0.47%                            + 3.24%
-              = 3.71% ≈ 3.7%
+Blended churn = 0.28 × (20% / 12) + 0.72 × 4.5% = 0.47% + 3.24% = 3.71% ≈ 3.7%
 ```
+
+### Steady-state and ramp
+
+At equilibrium: `steady_state_paying = new_paid_monthly / monthly_churn`, where
+`new_paid_monthly = downloads × signup_rate × free_to_paid`.
+
+**Ramp matters and is slow.** Paying users approach the asymptote as `U(t) = U_ss·(1 − e^(−c·t))`, with
+`c = monthly churn`. At base churn 3.7 %, the time constant `1/c ≈ 27 months`: you reach ~63 % of
+steady-state ARR at ~27 mo and ~86 % at ~4 yr at a *flat* download rate. Low churn is great for LTV but
+means revenue compounds slowly unless downloads keep growing. So **steady-state ARR is an upper bound
+that takes years to reach at flat downloads**; literal year-1 revenue is much lower.
 
 ---
 
-## 4. Four scenarios
+## 4. Scenarios (steady-state annual run-rate)
 
-### Scenario A — Conservative
-
-*Organic only, no launch spike, no product virality.*
+### Scenario A — Conservative (organic only, no launch)
 
 | Input | Value |
 |---|---|
 | Monthly downloads | 500 |
-| Signup rate | 35 % |
-| Trial start | 50 % |
-| Trial → paid | 18 % |
-| Monthly new paid | 500 × 0.35 × 0.50 × 0.18 = **15.75/mo** |
+| Download → signup | 35 % |
+| Signup → paid | 2.5 % |
+| Monthly new paid | 500 × 0.35 × 0.025 = **4.4/mo** |
 | Monthly churn | 6.5 % |
-| Steady-state paying | 15.75 / 0.065 = **242 users** |
-| Monthly net revenue | 242 × $3.82 = $924 |
-| **Annual net revenue** | **$11,088** |
+| Steady-state paying | 4.4 / 0.065 = **67 users** |
+| Net ARPU | $3.82 |
+| **Annual net revenue (steady state)** | **≈ $3,100** |
 
-**Verdict: far below $100 K/yr.** Conservative organic reach alone is not enough. This scenario
-is what happens if the app gets no attention — zero ASO investment, no Product Hunt launch, no
-content marketing. It establishes the floor, not the likely outcome.
+The floor scenario: no ASO, no launch event, no content. Establishes the downside.
 
-**Levers needed to escape this scenario:** one strong launch event (Product Hunt / HN) OR
-consistent SEO-driven content traffic OR paid acquisition.
-
----
-
-### Scenario B — Median Base (WITH Family tier lever)
-
-*Median industry inputs plus the built Family tier lever at 10 % adoption. This is the planning
-base case: honest median funnel, realistic lever adoption.*
+### Scenario B — Base / Median (planning case)
 
 | Input | Value |
 |---|---|
-| Monthly downloads | 1,500 (achievable with good ASO + one launch event) |
-| Signup rate | 40 % |
-| Trial start | 60 % (Gmail-import hook surfaced in onboarding) |
-| Trial → paid | 21 % (lower-mid of 18–25 % industry range) |
-| Monthly new paid | 1,500 × 0.40 × 0.60 × 0.21 = **75.6/mo** |
-| Monthly churn | 4.5 % |
-| Annual plan mix | 28 % |
-| Blended churn | 0.72 × 4.5 % + 0.28 × (20 %/12) = 3.24 % + 0.47 % = **3.71 % ≈ 3.7 %** |
-| Steady-state paying | 75.6 / 0.037 = **2,043 users** |
-| Blended net ARPU (10 % Family tier) | $4.32 / mo |
-| Monthly net revenue | 2,043 × $4.32 = $8,826 |
-| **Annual net revenue** | **$105,907** |
+| Monthly downloads | 1,500 (good ASO + one launch event) |
+| Download → signup | 45 % |
+| Signup → paid | 4 % (freemium upper-mid, Gmail-import hook) |
+| Monthly new paid | 1,500 × 0.45 × 0.04 = **27/mo** |
+| Monthly churn | 3.7 % |
+| Steady-state paying | 27 / 0.037 = **730 users** |
+| Net ARPU | $3.82 (individual; Family upside not banked) |
+| **Annual net revenue (steady state)** | **≈ $33,450** |
 
-**Verdict: ✅ CLEARS $100 K/yr at median with the built lever.**
+> **Literal year-1 (base):** starting from zero at a flat 1,500 dl/mo, accrued first-12-month revenue
+> ≈ **$6,500**, with an end-of-year run-rate ≈ **$12K/yr**. Steady-state $33K is a multi-year asymptote.
+> **With the 10 % Family-tier upside**, steady-state rises to ≈ **$37,800/yr** — still well below floor.
 
-> **Sub-scenario — Median WITHOUT Family tier lever:** Using the same funnel inputs but individual
-> tiers only ($3.82 ARPU, 20 % trial→paid):
-> 1,500 × 0.40 × 0.60 × 0.20 = 72/mo new paid; steady-state = 72 / 0.037 = 1,946 users;
-> 1,946 × $3.82 × 12 = **$89,232/yr — below the $100 K floor.**
-> This is what the floor looks like if the Family tier (built AND surfaced in `/upgrade`) is not
-> adopted by paying users. The base case does NOT depend on building anything more — only on the
-> conservative 10 % low-end adoption of an already-shipped, already-visible tier.
+**Verdict: ❌ below the $100 K/yr floor at median inputs.**
 
-**Key assumptions to hold:**
-1. 1,500 downloads/mo sustained — requires ASO + one launch event (Product Hunt / HN) + ongoing
-   content marketing. This is a median achievable number, not a top-decile assumption.
-2. 21 % trial → paid — just above the lower-mid of the range; requires Gmail-import to be the
-   first premium moment in onboarding.
-3. 3.7 % blended churn — achievable for a daily-habit app (pantry depletion alerts, cook tonight
-   suggestions). If churn rises to 6.5 %, steady-state falls toward Scenario A territory.
-4. 10 % Family tier adoption — requires the Family tier to be clearly visible in the paywall UI
-   (built in `SUBSCRIPTION_PLANS`; owner wires into the upgrade screen).
-
-**Time to reach steady state:** At 3.7 % blended churn (avg tenure ~27 mo), full equilibrium
-takes ~81 months. But $100 K/yr revenue is crossed well before equilibrium — at ~1,929 paying
-users, which at 75.6/mo new adds (with churn offset) arrives in approximately month 20–24.
-Realistic first-year revenue (assuming 6-month ramp then half-rate): ~$35–50 K.
-
----
-
-### Scenario C — Optimistic
-
-*Viral loop active (share-a-recipe, household-invite), consistent content traffic, strong word-of-mouth.*
+### Scenario C — Optimistic (viral loop + content + strong launch)
 
 | Input | Value |
 |---|---|
 | Monthly downloads | 6,000 |
-| Signup rate | 50 % |
-| Trial start | 65 % |
-| Trial → paid | 25 % |
-| Monthly new paid | 6,000 × 0.50 × 0.65 × 0.25 = **487.5/mo** |
+| Download → signup | 55 % |
+| Signup → paid | 6 % |
+| Monthly new paid | 6,000 × 0.55 × 0.06 = **198/mo** |
 | Monthly churn | 3.0 % |
-| Steady-state paying | 487.5 / 0.030 = **16,250 users** |
-| Blended net ARPU (with 10 % Family tier) | $4.32 / mo |
-| Monthly net revenue | 16,250 × $4.32 = $70,200 |
-| **Annual net revenue** | **$842,400** |
+| Steady-state paying | 198 / 0.030 = **6,600 users** |
+| Net ARPU | $4.32 (10 % Family adoption) |
+| **Annual net revenue (steady state)** | **≈ $342,000** |
 
-**Verdict: upside scenario; requires viral distribution.** The referral/share loop in-app
-(recipe sharing, household invites) is built and staged; the owner needs to connect social
-sharing channels and seed the referral program (see `docs/brand/LAUNCH_PLAN.md` §Growth Loop).
+Requires viral distribution (the in-app referral/share loop, built; owner connects channels) + durable
+content/ASO traffic. Even here, the ramp means realized year-1 is a fraction of the asymptote.
 
 ---
 
-## 5. The $100 K/yr verdict
+## 5. The $100 K/yr verdict (honest)
 
-**Median base WITH the built Family tier lever clears $100 K/yr at $106 K/yr steady-state.**
-Without the lever, the same median funnel yields ~$89 K/yr — below the floor. The lever is fully
-built AND surfaced in the paywall today (the Family card on `/upgrade`, PR #154) at no additional
-engineering cost; the only remaining step is Human Core — the owner creating the Stripe/RevenueCat
-Family product + price ID so it can actually charge (the same step every paid tier needs).
+**At median inputs the business does NOT reach $100 K/yr — base steady state is ≈ $33 K/yr (≈ $38 K
+with Family upside), and literal year-1 is ≈ $6–12 K.** The floor is achievable, but only with
+**optimistic-leaning distribution**, because the model is entirely demand-gated:
 
-| Scenario | Annual Revenue | Floor met? | What it requires |
+| Scenario | Steady-state ARR | Floor met? | What it requires |
 |---|---|---|---|
-| A — Conservative | $11,088 | No | Organic only, no marketing |
-| B — Median (no lever) | ~$89,232 | No | Good launch, median funnel, individual tiers only |
-| B — Median (with lever) | **$105,907** | **Yes** | + Family tier at 10 % adoption |
-| C — Optimistic | $842,400 | Yes | Viral distribution |
+| A — Conservative | ≈ $3,100 | No | Organic only, no marketing |
+| B — Base / Median | ≈ $33,450 ($38K w/ Family) | No | Good launch + median funnel |
+| C — Optimistic | ≈ $342,000 | Yes | Viral distribution + content + ASO |
 
-**Why the Family tier is the marginal lever:**
-- It requires zero incremental engineering (tier is in `SUBSCRIPTION_PLANS` and `getCurrentSubscriptionTier`).
-- It raises blended ARPU by 13 % ($3.82 → $4.32), which at 2,043 users adds ~$1,015/mo ($12,180/yr).
-- 10 % adoption is conservative — household-use apps typically see 8–15 % once the tier is visible.
-- The lever does not require downloads to exceed 1,500/mo; it works on the existing median funnel.
+**What it takes to clear $100 K/yr (steady state):** ~1,929–2,182 paying users → at base conversion
+(download→paid ≈ 1.8 %) and 3.7 % churn, that is **~4,000–4,500 sustained downloads/mo** — between the
+base and optimistic scenarios. At that download level the $100 K *asymptote* is reached, but realized
+ARR is ~$63 K at year 2 and ~$86 K at year 4 at *flat* downloads; hitting $100 K/yr in actual revenue
+within ~12–24 months needs downloads to keep **growing** (which marketing compounds toward), i.e. the
+optimistic trajectory.
 
-**If the Family tier fails to reach 10 % adoption**, the base case falls to ~$89 K/yr. The recovery
-path is the downloads lever: at 1,700/mo downloads (not heroic), the median funnel without
-Family tier yields: 1,700 × 0.40 × 0.60 × 0.20 = 81.6/mo; 81.6 / 0.037 = 2,205 users;
-2,205 × $3.82 × 12 = **$101,124/yr** — marginally above the floor.
+**The levers, ranked by impact (all in our control to build; reach is owner-activated):**
+1. **REACH / downloads — by far the dominant lever.** Every additional sustained download flows
+   linearly to revenue. The built marketing engine (ASO package, SEO/content engine, Product Hunt
+   launch plan, referral/share loop, email lifecycle) exists to drive this; it activates the moment the
+   owner connects channels (Track H). $100 K lives at ~4,000+ dl/mo.
+2. **CONVERSION — signup→paid.** Moving base 4 % toward the optimistic 6 % is a 50 % revenue lift.
+   Surface the Gmail-import payoff as the first premium moment; tighten the `/upgrade` decision surface.
+3. **RETENTION / LTV.** Lower churn both raises steady state *and* shortens the ramp. Re-engagement
+   (push, weekly cook-tonight digest, annual-plan nudge) is built; the recurring weekly-use loop is the
+   structural advantage.
+4. **ARPU — Family + annual mix.** Family adoption (upside) and shifting mix toward annual lift ARPU
+   ~13 %; secondary to reach/conversion.
+5. **MARGIN.** Already ~97 %; not a constraint.
+
+**Bottom line:** the product can support a ≥ $100 K/yr business — the unit economics are excellent and
+the path is real — but it is **not a median-organic outcome**; it depends on demand generation reaching
+optimistic-leaning download volume. This gap is flagged honestly to the owner (see the FYI issue and
+`docs/LAUNCH.md`); closing it is post-launch growth execution (owner-activated channels + the separate
+Growth Agent), not a buildable code gap.
 
 ---
 
 ## 6. Key risks and levers
 
-### Risk: Family tier adoption stays below 5 %
+### Risk: downloads never reach ~4,000/mo (the floor-gating risk)
+Organic-only apps with no budget often plateau at 100–500/mo. **Levers (built, owner activates):**
+Product Hunt launch (a top-10 PH launch can drive 2,000–10,000 page visits in 24 h — see
+`docs/brand/LAUNCH_PLAN.md`); SEO content (3–6 mo lag, durable); ASO (keyword string in
+`docs/store/ASO_READY.md`; ratings drive ranking after 25+ reviews); referral/share loop (in-app;
+connect to email + deep links to push k-factor up).
 
-**Probability:** Low-moderate if the tier is surfaced clearly; high if it is buried or the paywall
-shows three tiers without hierarchy.
+### Risk: signup→paid stays at the 2–3 % low end
+**Levers:** surface Gmail import as the very first premium moment; day-7 nudge email
+(`docs/brand/CONTENT_DRAFTS.md` Email 3); single clear upgrade CTA.
 
-**Levers:**
-- Anchor pricing: show Family ($9.99/mo) alongside Premium Monthly ($4.99/mo) so two-person
-  households see obvious value at 2× price for 5× members.
-- Household-feature upsell: when a user accesses household sharing, prompt upgrade to Family tier.
-- The `household` feature is already a `PremiumFeature` in `PREMIUM_FEATURES` — the code gate
-  is live; connecting the upgrade prompt is a one-day UI task.
+### Risk: churn rises above 6 %
+This both lowers steady state and is the conservative-scenario trap. **Levers:** push re-engagement
+(built; Human Core: EAS project ID); weekly cook-tonight digest; annual-plan nudge at month 3.
 
-### Risk: Downloads never reach 1,500/mo
-
-**Probability:** Moderate. Organic-only apps with no marketing budget often plateau at 100–500/mo.
-Note: the base case uses 1,500/mo — an achievable number, not a top-decile assumption, but it
-still requires deliberate launch work.
-
-**Levers (all built, owner activates):**
-- Product Hunt launch — a top-10 PH launch generates 2,000–10,000 app page visits in 24 h
-  (spec in `docs/brand/LAUNCH_PLAN.md`).
-- SEO content (pantry-management, meal-planning guides) — 3–6 month lag but durable. The
-  content calendar is staged in `docs/brand/LAUNCH_PLAN.md`.
-- ASO optimization — keyword string is staged in `docs/store/ASO_READY.md`; ratings drive
-  ranking after 25+ reviews.
-- Referral loop — household-invite is in-app; connecting to email + deep links drives k-factor
-  above 1.0 (built, needs owner to connect channels).
-
-### Risk: Trial → paid conversion stays at 15 %
-
-**Levers:**
-- Surface Gmail import as the very first premium moment (before the trial starts, not buried).
-- Day-7 nudge email is staged in `docs/brand/CONTENT_DRAFTS.md` Email 3 — connects to activation.
-- Shorten the upgrade screen decision surface (one clear CTA, not three competing options).
-
-### Risk: Churn rises above 6 %
-
-**Levers:**
-- Push notification re-engagement (code built, Human Core: EAS project ID to activate).
-- Weekly "cook tonight" digest email (deliverable in email lifecycle, owner connects provider).
-- Annual plan nudge at month 3 (locks churn for 12 months; annual churns ~25 % vs 52 % annualised
-  monthly churn at 5 %/mo).
-
-### Risk: LLM costs spike with usage
-
-**Levers:**
-- The cheap-first cascade is already in production. Costs are currently estimated at $0.018/user/mo.
-- Even 10× actual usage = $0.18/user/mo = 4.2 % of net ARPU (Family tier blended) — still healthy.
-- If Gemini pricing increases, fallback: add per-feature daily limits (5 recipes/day on free,
-  20/day on premium) without touching the revenue model.
+### Risk: LLM costs spike
+The cheap-first cascade + per-user/day spend ceiling (Track G7) cap this. Even 10× usage = $0.18/user/mo
+= < 5 % of ARPU. Not a structural risk.
 
 ---
 
@@ -349,30 +292,30 @@ still requires deliberate launch work.
 
 When Plausible analytics and Stripe/RevenueCat data are live, replace modelled inputs with actuals:
 
-| Metric to measure | Where to find it | Which scenario input it replaces |
+| Metric to measure | Where to find it | Which input it replaces |
 |---|---|---|
 | Monthly installs | App Store Connect / Play Console | `downloads` |
-| Signup rate | Plausible: `/signup` page views / `/` views | `signup_rate` |
-| Trial start rate | RevenueCat: trials started / signups | `trial_start_rate` |
-| Trial → paid | RevenueCat: conversions / trials | `trial_to_paid` |
+| Signup rate | Plausible: `/signup` views / `/` views | `download→signup` |
+| Free→paid | RevenueCat / Stripe: paid / total signups | `signup→paid` |
 | Monthly churn | RevenueCat / Stripe: churned MRR / total MRR | `monthly_churn` |
-| ARPU | Stripe / RevenueCat: MRR / active subscribers | replaces `$4.32` |
-| Family tier adoption % | RevenueCat: `premium_family` subscriptions / total paid | `family_mix` in ARPU calc |
+| ARPU | Stripe / RevenueCat: MRR / active subscribers | `$3.82` |
+| Family adoption % | RevenueCat: `premium_family` / total paid | Family upside |
 
-**Update this document whenever real data changes the base case by ≥ 20 % in any input.**
-The first update should happen after 90 days of live data. If real conversion or churn departs
-significantly from the base case, re-evaluate the levers in §6 before concluding the business
-model is broken — execution gaps are fixable; structural unit economics problems are not.
+**Recompute whenever any input moves ≥ 20 %, or pricing/COGS change.** Building more *features* does NOT
+move the number — only reach, conversion, retention, ARPU, and margin do. First real-data update: after
+~90 days live. Anchor prices to the actual billing config; price drift vs code is a bug — fix + recompute.
 
 ---
 
 ## 8. Honest confidence statement
 
-> The median base case for GroceryManager — 1,500 downloads/mo, 21 % trial→paid, 4.5 % monthly
-> churn, and 10 % Family tier adoption — yields **~$106 K/yr at steady state, clearing the
-> $100 K/yr floor**. Without the Family tier lever, the same funnel yields ~$89 K/yr (below floor).
-> The lever is built; it requires the owner to wire the Family tier into the paywall UI. At 97 %
-> gross margin, the unit economics are sound; the risk is entirely in demand generation and lever
-> activation, not in cost structure. **The conservative scenario (~$11 K/yr) is the floor if no
-> launch effort is made.** Everything buildable to maximize demand and conversion has been staged;
-> the owner's execution determines which scenario materialises.
+> GroceryManager has **excellent unit economics (~97 % gross margin)** and a real path to a ≥ $100 K/yr
+> business, but **that path is not the median outcome.** At median inputs — 1,500 downloads/mo, 4 %
+> freemium conversion, 3.7 % churn — steady-state revenue is ≈ **$33 K/yr** (≈ $38 K with Family
+> adoption), and the $100 K/yr floor requires **~4,000–4,500 sustained downloads/mo** (optimistic-leaning
+> distribution) plus the slow-ramp dynamics to play out. The conservative organic case is ≈ $3 K/yr. The
+> entire gap to the floor is **demand generation**, not cost structure or product completeness — which is
+> why the marketing/growth engine (Track E + H) was built. **The floor is therefore NOT met at median
+> inputs today; it is a credible but execution-dependent target.** This is flagged to the owner as the
+> single most important pre-launch reality (see the FYI issue + `docs/LAUNCH.md`). Continuous
+> data-grounded optimization of reach and conversion is the owner's post-launch job.
