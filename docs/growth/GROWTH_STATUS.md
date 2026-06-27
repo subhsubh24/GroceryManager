@@ -31,10 +31,16 @@ GROWTH_STATUS:
   engine_built: false            # is the Track H growth-execution engine live in code?
   channels_connected: []         # owner-authorized channels actually wired (e.g. [x, instagram, email])
   awaiting_connect: true         # true => agent only prepares creative; takes NO external action
+  sources:                       # per-source pull status (H7 snapshot): connected | awaiting_connect
+    waitlist: awaiting_connect
+    analytics: awaiting_connect
+    billing: awaiting_connect
+    email: awaiting_connect
   funnel:                        # REAL numbers only; 0/null until a connected source reports them
     visitors_7d: 0
     waitlist_signups_total: 0
     waitlist_signups_7d: 0
+    waitlist_confirmed: 0          # double-opt-in confirmed signups (own datastore — always real)
     visitor_to_waitlist_rate: null
     trial_starts_total: 0
     paid_conversions_total: 0

@@ -66,6 +66,9 @@ async function main() {
     console.log("→ content schedule table…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0014_content_schedule.sql"), "utf8"));
 
+    console.log("→ waitlist double-opt-in confirmation…");
+    await sql.unsafe(readFileSync(join(pkgRoot, "sql/0015_waitlist_confirm.sql"), "utf8"));
+
     console.log("✓ migrations complete");
   } finally {
     await sql.end();
