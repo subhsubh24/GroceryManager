@@ -9,6 +9,7 @@ import {
 import { selectExpiringSoon } from "@gm/core/pantry";
 import { dietExclusions, projectUserModel } from "@gm/core/personalization";
 import { verifyMobileToken } from "../_lib";
+import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,10 @@ export async function GET(req: Request) {
   if (!token) return Response.json({ error: "Authorization header required" }, { status: 401 });
   const userId = verifyMobileToken(token);
   if (!userId) return Response.json({ error: "Invalid or expired token" }, { status: 401 });
+
+  // Each call fans out up to ~26 TheMealDB requests; throttle to prevent abuse/cost spikes.
+  const rl = rateLimit(`use-it-up:${userId}`, 20, 60_000);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   try {
     const { pantry, signals } = await withTenant(getDb(), userId, async (tx) => ({
