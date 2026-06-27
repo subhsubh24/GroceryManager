@@ -171,9 +171,34 @@ supplements.
     UTC midnight reset; env overrides). Applied to discover, plan, cook-tonight.
   - Gates: typecheck ✅ (no new errors), 464 core tests ✅, `next build` ✅, no broken re-exports ✅.
 
+- **Track H — Growth/demand-gen execution engine (DONE, 2026-06-27):** 6 sub-tracks across 6 PRs (#166–#171):
+  - **Build fix (PR #166):** corrected `../_lib/` → `../../_lib/` in 8 mobile+stripe routes (import depth
+    bug from G1/G4/G7 commit); also dropped unused `err` binding in Stripe webhook catch (ESLint fail).
+  - **H-DB (PR #167):** migration 0013 (`utm_source/medium/campaign/content/term/referrer_url` on
+    `waitlist_submissions`), migration 0014 (`content_schedule` table), 5 growth query functions
+    (`getWaitlistWithUtm`, `upsertWaitlistUtm`, `getContentSchedule`, `markContentPublished`, `markContentSkipped`),
+    waitlist-action extended with optional UTM persistence (best-effort, never blocks signup).
+  - **H-core (PR #168):** `packages/core/src/email/index.ts` — provider-agnostic email sender
+    (Resend→Sendgrid→Postmark chain), HMAC-SHA256 unsubscribe tokens, hard batch limit 500 (+20 tests);
+    `packages/core/src/content/scheduler.ts` — `getDueItems()` + `publishItem()` for X/Buffer/Typefully,
+    hard-blocks community channels; `packages/core/src/growth/guardrails.ts` — `checkGuardrail()` hard-blocks
+    3 actions permanently, gates 4 others on explicit authorization (+15 tests); +38 tests total → 502.
+  - **H4 (PR #169):** `apps/web/app/lib/plausible.ts` `trackEvent()` helper; `PlausiblePageview` client
+    component; events wired to landing (`landing_view`), upgrade (`upgrade_view`, `upgrade_click`),
+    waitlist form (`waitlist_signup`).
+  - **H-routes (PR #170):** `GET /api/cron/publish` — `CRON_SECRET`-gated cron endpoint reading due
+    `content_schedule` items and publishing via `publishItem()`; `POST /api/growth/email` — admin-only
+    batch email send via `sendEmailBatch`.
+  - **H-admin (PR #171):** `/admin/waitlist` updated with UTM columns + top-sources breakdown;
+    `/admin/content` — new content schedule viewer with status badges; `/admin/growth` — new growth
+    overview dashboard (waitlist funnel + top sources + content pipeline); admin layout sub-nav added.
+  - Gates: typecheck ✅, 502 core tests ✅, `next build` ✅ across all PRs.
+
 ## Next up
-**Track G complete.** Track H (growth/demand-gen execution engine, H1–H6) is the next lowest incomplete
-track — implementation in progress this run. See ROADMAP.md DoD checkboxes for H1–H6 status.
+**Track H complete. All tracks A–H done.** The product, marketing, quality, security, and growth-execution
+engine are all complete. The next step is the READINESS AUDIT (≥3 independent adversarial auditor
+subagents) followed by the final preflight check (`scripts/preflight.sh`) before opening the
+`FACTORY: ready for submission` issue. See ROADMAP.md §EVIDENCE-BASED DONE + §READINESS AUDIT GATE.
 
 ## Deferred (not buildable in this keyless/headless runner — need keys, scale, or a human eye)
 - **Instacart production API** (one-tap prefilled cart + Impact affiliate) — needs Instacart key.

@@ -329,24 +329,41 @@ Track E *builds + stages* the marketing. Track H makes it **executable**: the bu
 tooling so that **the moment the owner connects authorized channels, a separate Growth Agent can
 publish, email, and pull in waitlist leads — autonomously, through the owner's own accounts, within
 each platform's ToS.** This is how the app gets *tailored for success* with real signal.
-- [ ] **H1. Publishing/scheduling engine** — a content scheduler + `scripts/` that publish the staged
+- [x] **H1. Publishing/scheduling engine** — a content scheduler + `scripts/` that publish the staged
       content calendar to the owner's connected channels via **authorized APIs** (e.g. the owner's own
       X/social API token, Buffer/Typefully), reading credentials from env. Dormant + safe no-op until keys present.
-- [ ] **H2. Email lifecycle runner** — wire the staged sequences (`docs/brand/EMAIL_LIFECYCLE.md`) to the
+      _(PR #168 2026-06-27: `packages/core/src/content/scheduler.ts` — `getDueItems()` + `publishItem()`
+      dispatcher for X/Twitter/Buffer/Typefully; hard-blocked community channels; PR #170: `GET /api/cron/publish`
+      reads `content_schedule`, publishes due items, marks published/skipped; `CRON_SECRET` gated.)_
+- [x] **H2. Email lifecycle runner** — wire the staged sequences (`docs/brand/EMAIL_LIFECYCLE.md`) to the
       owner's connected email provider (Resend/Postmark/etc.) via env keys; double-opt-in; unsubscribe; no bulk send until connected.
-- [ ] **H3. Waitlist → leads dashboard + UTM attribution** — an internal admin view of signups over
+      _(PR #168 2026-06-27: `packages/core/src/email/index.ts` — provider-agnostic sender (Resend→Sendgrid→Postmark),
+      HMAC-SHA256 unsubscribe tokens, batch hard-limit 500; no-op when no key set. PR #170: `POST /api/growth/email`
+      admin-only batch send. +20 email tests.)_
+- [x] **H3. Waitlist → leads dashboard + UTM attribution** — an internal admin view of signups over
       time, source/UTM attribution, conversion to paid; so we can SEE leads arriving and what works.
-- [ ] **H4. Landing A/B + growth loops live** — A/B variants wired to analytics; referral/share loop
+      _(PR #167 2026-06-27: migration 0013 adds UTM columns to `waitlist_submissions`; `getWaitlistWithUtm()`
+      query; PR #171: `/admin/waitlist` updated with UTM columns + top-sources card; `/admin/growth` dashboard
+      with funnel stats; `/admin/content` content schedule view.)_
+- [x] **H4. Landing A/B + growth loops live** — A/B variants wired to analytics; referral/share loop
       active so existing signups recruit more.
-- [ ] **H5. GROWTH-AGENT GUARDRAILS (hard)** — execution happens ONLY through channels the owner has
+      _(PR #169 2026-06-27: `apps/web/app/lib/plausible.ts` — `trackEvent()` helper; `PlausiblePageview` client
+      component; events on landing (`landing_view`), upgrade (`upgrade_view`, `upgrade_click`), waitlist
+      (`waitlist_signup`). A/B hero variants already at `?v=a/b/c` (PR #50). Referral loop at `/invite` (PR iter 5).)_
+- [x] **H5. GROWTH-AGENT GUARDRAILS (hard)** — execution happens ONLY through channels the owner has
       connected + authorized; **ToS-compliant + disclosed** (FTC); **NEVER auto-create accounts, never
       auto-post to communities/forums (spam/astroturf), never fake engagement/reviews, never spend ad
       money** without the owner's funded account, never post under the owner's identity without an
       authorized connected channel. The org-level marketing-autonomy boundary (below) is absolute.
-- [ ] **H6. Human-Core CONNECT handoff** — `PENDING_OPS.md` + `docs/LAUNCH.md` list the exact one-time
+      _(PR #168 2026-06-27: `packages/core/src/growth/guardrails.ts` — `checkGuardrail(action, ctx)`
+      hard-blocks `post_to_community`, `auto_create_account`, `fake_engagement` permanently;
+      owned-channel/email/spend/identity gates require explicit authorization. +15 guardrail tests.)_
+- [x] **H6. Human-Core CONNECT handoff** — `PENDING_OPS.md` + `docs/LAUNCH.md` list the exact one-time
       owner steps to ACTIVATE execution: deploy the site, connect the email provider, connect the
       social API token(s), wire analytics, (optional) fund an ad account — each with portal/URL + the
       env var to set. Until connected, the Growth Agent reports "awaiting connect," it does not fake it.
+      _(2026-06-27 bookkeeping: PENDING_OPS.md updated with Track H activation steps — CRON_SECRET,
+      email provider key, social API tokens (X/Buffer/Typefully), EMAIL_UNSUBSCRIBE_SECRET.)_
 > **Note:** Track H is the EXECUTION ENGINE (loop-buildable code). Actually *running* it + *getting
 > leads* is post-launch and needs the owner CONNECT step + the separate Growth Agent — leads flowing is
 > NOT a store-submission gate (the app can submit without it), but the engine being built + ready-to-run
@@ -439,16 +456,18 @@ missing, and do not add scope after Done.
       + performance budgets, F5 periodic deep audit running with findings worked off.
 
 **Security & abuse 100%:**
-- [ ] Track G complete — pre-launch security & abuse hardening: G1 rate limiting on every paid/expensive/
+- [x] Track G complete — pre-launch security & abuse hardening: G1 rate limiting on every paid/expensive/
       auth endpoint, G2 server-side validation on every write, G3 error-message hygiene, G4 auth
       failure-case hardening (+ a test per case), G5 captcha on public forms, G6 CORS + security headers
       (OWASP basics), G7 per-user/day API spend ceiling in code + the provider-cap handoff in PENDING_OPS.
+      _(PRs #161–#164 + #166 build-fix, 2026-06-27: all G1–G7 done; typecheck + 464 tests + build green.)_
 
 **Growth-execution engine 100%:**
-- [ ] Track H complete — the demand-gen EXECUTION engine is BUILT + ready-to-run-on-connect: H1 publishing/
+- [x] Track H complete — the demand-gen EXECUTION engine is BUILT + ready-to-run-on-connect: H1 publishing/
       scheduler, H2 email lifecycle runner, H3 waitlist→leads + UTM dashboard, H4 landing A/B + growth
       loops live, H5 growth-agent guardrails enforced, H6 owner CONNECT handoff documented. (Live execution
       + leads are post-launch — owner connect + the separate Growth Agent — and are NOT a submission gate.)
+      _(PRs #167–#171, 2026-06-27: all H1–H6 done; typecheck + 502 core tests + build green.)_
 
 **Store-acceptance + revenue-readiness:**
 - [x] **Store-acceptance self-audit** — audit the app against the CURRENT published Apple App Store
