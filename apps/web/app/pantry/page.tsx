@@ -7,8 +7,10 @@ import {
   getPantryView,
   getReviewQueue,
   isOnboarded,
+  loadPreferenceSignals,
   withTenant,
 } from "@gm/db";
+import { isPremium } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
 import { humanize, sourceLabel, timeAgo, titleCase } from "@/app/lib/format";
 import {
@@ -24,6 +26,7 @@ import { SubmitButton } from "./sync-buttons";
 import { ClearPantryButton } from "./clear-button";
 import { PageHeader } from "@/app/components/page-header";
 import { OnboardingFinish } from "@/app/components/onboarding-finish";
+import { GmailUpgradeBanner } from "@/app/components/gmail-upgrade-banner";
 import { Check, Mail, Package, Trash2 } from "@/app/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -50,15 +53,16 @@ async function loadPantry() {
   try {
     const userId = await currentUserId();
     if (!userId)
-      return { rows: [], review: [], connected: false, onboarded: true, error: null as string | null };
+      return { rows: [], review: [], connected: false, onboarded: true, userIsPremium: false, error: null as string | null };
     const rows = await withTenant(getDb(), userId, (tx) => getPantryView(tx, userId));
     const ids = rows.map((r) => r.canonicalItemId);
-    const [cred, review, sources, acq, onboarded] = await Promise.all([
+    const [cred, review, sources, acq, onboarded, signals] = await Promise.all([
       withTenant(getDb(), userId, (tx) => getGoogleCredential(tx, userId)),
       withTenant(getDb(), userId, (tx) => getReviewQueue(tx, userId)),
       withTenant(getDb(), userId, (tx) => getLatestSourcesByCanonical(tx, userId, ids)),
       withTenant(getDb(), userId, (tx) => getLatestAcquisition(tx, userId, ids)),
       withTenant(getDb(), userId, (tx) => isOnboarded(tx, userId)),
+      withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId)),
     ]);
     // Source = where it most recently came FROM (latest acquisition wins): you typed it ("Added by
     // you"), a scan ("Scanned"), or a receipt (the retailer). userDriven items skip the confidence %
@@ -77,9 +81,9 @@ async function loadPantry() {
             : sourceLabel(s?.source, s?.retailer);
       return { ...r, source, userDriven };
     });
-    return { rows: enriched, review, connected: Boolean(cred), onboarded, error: null as string | null };
+    return { rows: enriched, review, connected: Boolean(cred), onboarded, userIsPremium: isPremium(signals), error: null as string | null };
   } catch (e) {
-    return { rows: [], review: [], connected: false, onboarded: true, error: e instanceof Error ? e.message : String(e) };
+    return { rows: [], review: [], connected: false, onboarded: true, userIsPremium: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
@@ -163,7 +167,7 @@ export default async function PantryPage({
     from?: string;
   }>;
 }) {
-  const { rows, review, connected, onboarded, error } = await loadPantry();
+  const { rows, review, connected, onboarded, userIsPremium, error } = await loadPantry();
   const sp = await searchParams;
   const env = loadEnv();
   const oauthConfigured = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
@@ -214,6 +218,10 @@ export default async function PantryPage({
       {/* Finish-onboarding affordance — only once the pantry actually has something AND the user hasn't
           finished onboarding yet (robust across the sync/backfill redirects that drop query params). */}
       {!onboarded && rows.length > 0 && <OnboardingFinish />}
+
+      {/* Premium conversion: Gmail import teaser — shown only to non-premium users who haven't
+          connected Gmail yet. Dismisses permanently via localStorage. */}
+      <GmailUpgradeBanner isPremium={userIsPremium} gmailConnected={connected} />
 
       {/* Receipts → pantry: connect Gmail once, then auto-fill from receipt emails. */}
       <section className="card-pad mt-6">
