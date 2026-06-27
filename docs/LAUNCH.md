@@ -125,6 +125,9 @@ pnpm --filter @gm/db db:migrate
 **What it creates:**
 - Migration 0011: `push_tokens` table + RLS policy (Expo push notifications)
 - Migration 0012: `waitlist_submissions` table + unique email index (waitlist admin dashboard)
+- Migration 0013: UTM attribution columns on `waitlist_submissions` (growth source tracking)
+- Migration 0014: `content_schedule` table (growth content scheduler / publish cron)
+- Migration 0015: `confirmed_at` column on `waitlist_submissions` (waitlist double-opt-in)
 
 **Verify:** Run `pnpm --filter @gm/db db:migrate` again — it should print all steps and exit 0 with no errors (idempotent).
 
@@ -266,7 +269,12 @@ Do the same for Google Play Console (separate metadata in ASO_READY.md).
 
 ### Step 11 — Go-to-market (day 1+)
 
-Follow `docs/brand/LAUNCH_PLAN.md` for the sequenced go-to-market calendar. Key actions:
+**First, activate the growth-execution engine:** follow `docs/growth/CONNECT.md` (the ~20-min owner
+runbook) to connect web analytics, the email provider, social token(s), and billing. Until each channel's
+creds are set it stays dry-run and `GET /api/growth/snapshot` reports `awaiting_connect` for it (never
+faked). Once connected, the snapshot pulls REAL funnel numbers into `docs/growth/GROWTH_STATUS.md`.
+
+Then follow `docs/brand/LAUNCH_PLAN.md` for the sequenced go-to-market calendar. Key actions:
 
 - **T-30 days:** Post to waitlist (email WL2 from `docs/brand/EMAIL_LIFECYCLE.md`); submit to Product Hunt upcoming.
 - **Launch day:** Fire all social posts from `docs/brand/CONTENT_DRAFTS.md`; Product Hunt ship; Hacker News "Show HN"; submit to relevant directories (listed in `docs/brand/PRESS_KIT.md`).

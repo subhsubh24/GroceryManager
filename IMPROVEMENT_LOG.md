@@ -4,6 +4,43 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-27 (run 18) — Track H complete (H7 + H8) + readiness audit
+
+**Shipped:**
+- **H7 — Analytics PULL read-API (PR #175).** `GET /api/growth/snapshot` (admin-session OR `CRON_SECRET`-bearer,
+  timing-safe; rate-limited) aggregates REAL signal — waitlist (own datastore), Stripe (latest-entitlement
+  ledger → active subscribers + MRR), Plausible (Stats API pull), email-provider connectivity — into the
+  `GROWTH_STATUS` shape via the pure, testable `@gm/core/growth/snapshot` builder. Per-source
+  `awaiting_connect`; never invents a number for a disconnected source. +12 tests.
+- **H8 — CONNECT runbook + public-signup hardening (PR #175).** `docs/growth/CONNECT.md` (in-order ~20-min
+  owner activation runbook). Waitlist capture hardened: per-IP rate limit + double-opt-in
+  (`@gm/core/growth/optin` HMAC token, +5 tests) + `GET /api/waitlist/confirm` (public, HMAC-verified,
+  idempotent, no enumeration) + captcha. Migration `0015_waitlist_confirm.sql` adds `confirmed_at` + index.
+- **Email sender owner-configurable (PR #176)** (`EMAIL_FROM` / `EMAIL_FROM_NAME`) across Resend/SendGrid/
+  Postmark — removes the hard-coded-domain constraint + fixes a CONNECT.md doc-vs-code lie. +3 tests.
+
+**READINESS AUDIT (3 fresh, independent, adversarial Opus auditors — maker ≠ checker):**
+- Auditor 1 (functional reality): **READY** — traced signup → paywall → `checkout.sessions.create` →
+  `constructEvent` webhook → server-side entitlement; receipt → ledger → pantry; cook → decrement; all H7/H8.
+- Auditor 2 (security/abuse/RLS/billing): **READY** — RLS on every per-user table, Track G primitives real,
+  new endpoints gated, billing server-side + fail-closed, no committed secrets.
+- Auditor 3 (artifacts/business-case/store/design): **NOT-READY** — 3 real gaps. Per the READINESS-AUDIT GATE
+  the 'ready' issue was **NOT** opened; the Confidence-statement DoD box stays **unticked**. Gaps fixed this run:
+  1. **Fabricated testimonials** on the live landing page (Apple 2.3.1 / "no fake data" violation) → **PR #177**.
+  2. **Business-case stale claim** that the Family tier "requires wiring into the paywall UI" — already wired +
+     surfaced (`/upgrade`, PR #154); corrected with no numbers changed → **PR #178**.
+  3. **`GROWTH_STATUS.md engine_built: false`** contradicted ROADMAP "Track H done" → set `true` (this PR).
+- Auditor 2 defense-in-depth note: `/api/v1/auth/token` lacked the rate limit its twin has → **PR #179**.
+
+**Gate (this run):** typecheck + 541 tests + production build (no missing-export warnings).
+
+**ROADMAP ticks:** H7, H8, "Track H complete" (DoD). All Tracks A–H built. **Confidence statement NOT ticked** —
+re-run the readiness audit next run (the 3 gaps are now fixed) to reach the 'ready' declaration.
+
+**PRs this run:** #175 (H7+H8) · #176 (EMAIL_FROM) · #177 (testimonials) · #178 (business-case) · #179 (v1 auth RL).
+
+---
+
 ## 2026-06-26 (run 16) — Readiness audit gaps closed (PRs #150–#154)
 
 **Context:** Mandatory readiness audit run (≥3 adversarial independent auditors) preceding

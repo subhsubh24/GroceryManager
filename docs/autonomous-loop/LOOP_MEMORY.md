@@ -100,3 +100,40 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 - **2026-06-26 (run 16) — `sitemap.xml` and `robots.txt` are crawled by search engines before any user session; they MUST be in the middleware PUBLIC allowlist.** Next.js App Router serves these as static routes (`/robots.txt`, `/sitemap.xml`) but `apps/web/middleware.ts` redirects every non-public path to `/signin`. Without adding them to `PUBLIC`, crawlers get a 302→/signin and Google cannot index the site. This is a silent SEO failure — the build passes, the app works, but no organic traffic ever lands.
 - **2026-06-26 (run 16) — READINESS AUDIT run completed.** Ran ≥3 adversarial independent auditors per ROADMAP DoD. Found 6 gaps: SEO crawl blocked (fixed #150), business case arithmetic inconsistency (fixed #151), mobile discover gate wrong shape (fixed #153), Family tier not wired (fixed #154), billing gate coverage (fixed #152), 2 Human Core items (device screenshots, RevenueCat). All fixable gaps shipped. Factory remains ready for submission.
 - **2026-06-26 — Prompt/ROADMAP reconciliation (volume rule + stale wording).** Harmonized the coherence-vs-maximize ambiguity: "coherence over volume / prefer fewer" was stale after the MAXIMIZE-EACH-RUN reframe and contradicted "ship many per run". ONE rule everywhere now: **coherence is over CHURN, not "fewer for its own sake"; the VALUE BAR is the ONLY limiter on how many changes ship per run — ship ALL that clear it, ZERO that don't; avoid BOTH padding (churn) and artificial scarcity.** Also fixed stale cadence wording ("hourly factory" -> "scheduled factory"; cron is `0 */6 * * *`), and aligned the operating-model tick-box rule with EVIDENCE-BASED DONE + the model-tier rule (reviewers + readiness auditors on Sonnet, never downgraded). Reconciled in BOTH ROADMAP.md and the routine prompt so they agree. Lesson: after layering a reframe, grep the whole prompt+ROADMAP for the OLD framing and delete/merge it.
+- **2026-06-27 (run 18) — Track H completed (H7+H8); all Tracks A–H now done.** Shipped the analytics
+  PULL read-API (`GET /api/growth/snapshot`) + the CONNECT runbook + waitlist double-opt-in hardening +
+  owner-configurable email sender (PRs #175 #176). Lessons:
+  - **A "roadmap: add Hx" commit only adds the SPEC, not the build.** Commit #174's message read
+    "roadmap(Track H): add H7 … + H8 …" but its diff touched only ROADMAP.md + .gitignore — the artifacts
+    (`/api/growth/snapshot`, `docs/growth/CONNECT.md`) did NOT exist. Always verify the artifact exists
+    (`ls`/grep) before assuming a checkbox-adjacent commit built the thing.
+  - **`preference_signals` timestamp column is `occurred_at`, NOT `created_at`.** Any latest-per-user
+    window/DISTINCT ON query over the entitlement ledger must `ORDER BY user_id, occurred_at DESC`. The
+    Stripe webhook writes `subscription_tier` with values `premium_monthly`/`premium_annual`/`premium_family`
+    — match those exact strings when mapping tiers to MRR.
+  - **Honesty bar for an aggregation read-API: gate each metric on its SOURCE's connectivity, separately.**
+    Don't report `email.list_size` from the DB-confirmed count when no email provider is connected (that
+    reads as "N on the provider list"). Expose the raw DB count under its own honest key
+    (`funnel.waitlist_confirmed`) and gate the provider-framed metric on `emailConnected`. Reviewer B caught
+    this. Per-source `awaiting_connect` + a `sources` map keeps `engine_built` honest instead of all-null.
+  - **New public API routes need the middleware PUBLIC allowlist — but scope it to the exact route.** A
+    headless agent calling `GET /api/growth/snapshot` with a bearer token has no session cookie, so the
+    route must bypass the sign-in redirect (self-authz inside). Scope the regex to the specific path
+    (`/api/waitlist/confirm`, not blanket `/api/waitlist`) so future sibling routes aren't silently exposed.
+  - **Doc-vs-code drift is a real bug to fix in the same breath.** CONNECT.md referenced `EMAIL_FROM` but
+    the email module hard-coded the sender — the env var was silently ignored. Fixing the code to honor it
+    (defaulting to the old value) made the living artifact truthful AND removed an owner constraint.
+  - **DEEP AUDIT: folded into the readiness audit this run** (last standalone deep audit 2026-06-26 run 14).
+  - **READINESS AUDIT (run 18): 2 READY / 1 NOT-READY → 'ready' issue NOT opened.** Three fresh adversarial
+    Opus auditors. Auditor 3 found 3 real gaps the maker missed: (1) fabricated testimonials still live on the
+    landing page (a clear Apple 2.3.1 / "no fake data" store blocker — the maker shipped Track H without
+    re-checking older marketing surfaces); (2) `BUSINESS_CASE.md` still claimed the Family lever "requires
+    wiring into the paywall UI" though PR #154 had wired it — a stale-doc honesty bug the auditor read as
+    floor-gaming; (3) `GROWTH_STATUS.md engine_built:false` vs ROADMAP "Track H done". All 3 fixed same run
+    (PRs #177/#178/#179), but the audit having found them means the Confidence box stays unticked — **the gate
+    works: maker ≠ certifier.** Lesson: a readiness audit is not a rubber stamp even when the current track's
+    code is clean — adversarial auditors find OLD debt (stale docs, pre-existing fake-data surfaces) the
+    track-focused maker never looked at. Next run: re-audit (gaps fixed) before declaring ready.
+  - **A stale "X requires wiring" doc claim actively falsifies a readiness signal** — an auditor reads it as
+    evidence X is NOT built, even when it is. When a feature ships, scrub every doc that described it as pending
+    (grep `requires wiring|surfacing|not yet`).
