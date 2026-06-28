@@ -1295,3 +1295,35 @@ boxes so `scripts/preflight.sh` passes (it fails while ANY DoD box is unchecked)
 Researched pricing: 2.5 Flash = $0.50/$2.00 per 1M tokens (input/output); 3.5 Flash = $1.50/$9.00 (3× more expensive at mid tier). 2.5 Flash-lite has no 3.5 equivalent. Verdict: keep 2.5 cascade. Issue #134 closed as "evaluated, not upgrading — cost regression."
 
 **ROADMAP ticks:** None (all DoD boxes already ticked in run 13)
+
+## Run 21 — 2026-06-28 — Track B distribution config + Track G mobile rate limits + paywall token fix
+
+Three file-disjoint, gate-green, dual-Sonnet-reviewed changes (auto-merged), folding the due deep-audit
+lenses into the scout sweep:
+
+- **PR #207 — `feat(mobile/dist)`: env-driven Expo config (Track B "Distribution/release config is REAL").**
+  Removed the hardcoded `extra.eas.projectId: "OWNER_EAS_PROJECT_ID"`. `apps/mobile/app.config.ts` now extends
+  `app.json` and reads `projectId` (EXPO_PUBLIC_PROJECT_ID/EAS_PROJECT_ID), `version` (APP_VERSION), iOS
+  `buildNumber` (IOS_BUILD_NUMBER), Android `versionCode` (ANDROID_VERSION_CODE) from env. Static identity
+  (bundle ids, icons, splash, permission strings) stays real in app.json. Ticked the two Track-B distribution
+  boxes (evidence: preflight distribution check passes; mobile CI green).
+  - First attempt (standalone typed `app.config.ts`, app.json deleted) failed CI: SDK-56 `@expo/config-types`
+    rejects `newArchEnabled` + top-level `splash` (TS2353) — a stale local node_modules had masked it. Fixed
+    with the extend-app.json pattern.
+- **PR #206 — `fix(security/G1)`: rate-limited 12 authenticated mobile/v1 routes** that had no limiter
+  (recipes, recipes/[id], profile, digest, list, cooked, capture, onboarding, push-token, pantry, v1/list,
+  v1/pantry). Reuses `apps/web/app/api/_lib/rate-limit.ts`. Reads 60/min, writes 30/min, capture 20/min,
+  distinct key per route+method.
+- **PR #205 — `fix(billing)`: replaced the undefined `bg-ok`/`text-ok` Tailwind classes** with the real
+  `success` token (`pill-success` / `text-success`) on `/upgrade` + `/manage-subscription` — the conversion
+  badges were rendering unstyled.
+
+**Doc/artifact refresh (living artifacts):** README billing line corrected ("no Stripe yet" → Stripe Checkout
++ webhook are wired; live keys Human Core) and the native-app note updated to "env-driven EAS build config".
+
+**ROADMAP ticks:** Track B "EAS build config staged" + "Distribution/release config is REAL + validated"
+(PR #207). Added follow-up items: `mobile/discover` POST rate limit (Track G), and the weak-case revenue
+levers the monetization scout named (referral rewards, Family-tier surfacing, annual nudge, win-back).
+
+**Business case:** unchanged (no revenue lever shipped this run → honest median stays ~$33K, below floor; the
+named levers are now tracked ROADMAP items to build through the gate in future runs).
