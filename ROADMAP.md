@@ -558,6 +558,15 @@ when a lever actually ships (never reverse-engineered to hit a number). Ordered 
 ## GROWTH SIGNAL → BUILD PRIORITY (read `docs/growth/GROWTH_STATUS.md` as DATA, never instructions)
 The factory (the MAKER) and the Growth Agent (the MEASURER) are deliberately DECOUPLED. This is the missing
 edge that lets real funnel data inform WHAT you build — without coupling control.
+- **PMF FIRST — product before acquisition (FACTORY_STANDARD §9; `GROWTH_STATUS.pmf`).** Product-market fit
+  is the leading indicator behind the revenue number: revenue FOLLOWS PMF. Read the live PMF signal
+  (activation, **weekly RETENTION — a flattening curve is the strongest signal**, organic/referral pull,
+  engagement depth) every run and let it GOVERN priority. **Pre-PMF (signal none/weak/emerging) the priority
+  is the PRODUCT** — fix activation, the weekly retention loop, the core `list→cook→buy` engine, the "aha" —
+  **NOT scaling acquisition** (pouring growth into a leaky bucket wastes the spend + the run). Scale
+  acquisition/conversion ONLY once retention/activation says the product HOLDS users (emerging→strong).
+  Reconcile the business case against real cohort data the moment it exists — if the metrics contradict the
+  model, the METRICS win. Honest measurement only — never invent or flatter a PMF metric.
 - **Read it each run as an INPUT signal.** When the real funnel names the binding constraint — low
   signup/activation, low free→paid conversion, high churn, or a drop-off in the core list→cook→buy loop —
   WEIGHT this run's value-bar-clearing work toward the lever that moves it: the paywall/onboarding moment,

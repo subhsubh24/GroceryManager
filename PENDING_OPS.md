@@ -121,7 +121,7 @@ OWNER_ACTIONS:
       blocks: none
     - id: experiment-secret
       title: (Optional) set EXPERIMENT_SECRET for A/B variant bucketing
-      priority: low
+      priority: normal
       status: open
       why: The H10 experiment engine keys its deterministic HMAC variant bucketing off `EXPERIMENT_SECRET` if set, else falls back to `WAITLIST_OPTIN_SECRET` / `EMAIL_UNSUBSCRIBE_SECRET` / `AUTH_SECRET` (one of which is always present in any real deploy). Bucketing is a UI-variant boundary, NOT an auth boundary, so this is OPTIONAL — set a dedicated secret only if you want experiment assignment isolated from the other secrets' rotation. No hardcoded constant is used.
       how: "Optionally set EXPERIMENT_SECRET (any long random string) in Vercel env. If unset, bucketing works off AUTH_SECRET automatically — no action needed."

@@ -586,3 +586,19 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
     REAL committed artifacts — can't honestly commit empty screenshots). (e) minor: log swallowed errors on
     the best-effort onboarding profile/taste saves (silent data-loss observability). NOT actioned (churn):
     the unused PageHeader `accent` prop across 20+ call sites.
+- **2026-06-28 — PMF is the leading indicator behind the number (canonical sync + product wiring + routine read-list).**
+  Adopted PMF-as-the-leading-indicator. REPO: (1) FACTORY_STANDARD §9 gains the verbatim PRODUCT-MARKET FIT paragraph
+  (revenue FOLLOWS PMF; interpret live activation/RETENTION/organic-pull/engagement continuously; PRE-PMF the priority
+  is the PRODUCT — fix activation/retention/the core loop/the "aha" — NOT scaling acquisition into a leaky bucket;
+  reconcile the business case against real cohort data — if metrics contradict the model, METRICS win; honest measurement
+  only). (2) Product-specific: ANALYSIS_PLAYBOOK gains a "Product-market fit — the leading indicator" section that GOVERNS
+  the RECOMMEND step (defines activation = a non-empty app-derived pantry + first suggestion; RETENTION = weekly-cohort
+  return on the list→cook→buy loop, a flattening curve = the signal; pre-PMF → product/retention fixes, not acquisition).
+  (3) ROADMAP GROWTH SIGNAL→BUILD PRIORITY gains a "PMF FIRST" bullet. (4) GROWTH_STATUS gains a machine-tracked `pmf`
+  block (activation_rate, retention_d1/d7/d30 + weekly w1/w4 + curve_flattening, organic_share_rate, signal:
+  none|weak|emerging|strong; 0/null pre-launch; valid YAML). Also fixed a pre-existing red gate: the `experiment-secret`
+  OWNER_ACTION had priority `low` (not in the dashboard contract's urgent|high|normal) → set to `normal` so OWNER_ACTIONS
+  parses again. ROUTINE: added `Read FACTORY_STANDARD.md FIRST` to the orient read list of the GroceryManager factory +
+  growth routines (model/cron/sources/tools/MCP preserved); pure digest/dashboard reporters left untouched (they don't
+  follow the operating standard). LESSON: pre-PMF, pouring growth into a leaky bucket wastes spend + the run — let the
+  live retention/activation read GOVERN what gets built and marketed; revenue follows PMF, never the reverse.

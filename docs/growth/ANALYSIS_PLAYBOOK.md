@@ -38,6 +38,36 @@ ANALYZES and RECOMMENDS; it has **no new authority to act externally**. The fact
 6. **RECOMMEND the lever.** State the single highest-ROI lever the **factory** should build next to move
    the diagnosed constraint (paywall/onboarding for activation/conversion; the reorder/referral
    recurring-use loop for retention; a pricing/tier change for ARPU). The factory reads this as DATA.
+   **The PMF read below GOVERNS this recommendation** — pre-PMF, the lever is a product/retention fix,
+   NOT scaling acquisition.
+
+## Product-market fit — the leading indicator (GOVERNS the recommendation)
+PMF is the leading indicator behind the revenue number (FACTORY_STANDARD §9): **revenue follows PMF, not
+the reverse.** Read it continuously from the live analytics and let it decide what to recommend.
+
+- **Activation / the "aha" — GroceryManager:** a new user reaches **first real value** = their pantry holds
+  REAL items they didn't hand-enter (a receipt parsed in, or a photo scan) **and** the app surfaces a true
+  signal off it (a cook suggestion from what's in stock, or a run-out/reorder flag). Measure: % of new users
+  who reach a non-empty, app-derived pantry + first suggestion within their first session/week.
+- **RETENTION (the strongest PMF signal) — GroceryManager:** this is a **weekly-cadence** product (the
+  grocery+cook loop), so the curve that matters is **Wn return** (did the user come back and *use the loop*
+  — log a cook, accept a reorder, re-scan — in week N?). **A flattening retention curve (it stops decaying to
+  zero and levels off on a committed cohort) is the PMF signal we are hunting.** D1/D7/D30 are tracked too,
+  but weekly-cohort retention is the headline here.
+- **Organic / referral pull:** is it spreading on its own? — `/invite` referral conversions + organic
+  (non-paid) share of signups. Rising organic share = real pull.
+- **Engagement depth/frequency:** cooks logged / reorders accepted / scans per active user per week.
+- **Monetization (lagging, not leading):** free→paid + churn — read it, but do NOT scale on it before
+  retention holds.
+
+**The rule that GOVERNS every recommendation:** classify the PMF `signal` (`none|weak|emerging|strong`).
+**Pre-PMF (none/weak/emerging) → recommend PRODUCT fixes** — activation, the weekly retention loop, the
+core `list → cook → buy` engine, the "aha" — **never "scale acquisition."** Pouring growth into a leaky
+bucket wastes spend + the run. **Only once the retention/activation signal says the product HOLDS users
+(emerging→strong, a flattening weekly curve)** does the lever become *scale acquisition / conversion*.
+Reconcile `docs/BUSINESS_CASE.md` against real cohort data the moment it exists — **if the metrics
+contradict the model, the METRICS win.** Honest measurement only: a PMF metric with no connected source
+stays `0`/`null`; never invent or flatter it (same anti-gaming rule as the number).
 
 ## Marketing maturity gate (phases)
 Market **autonomously, but never before the product is ready, and never expose a half-baked app.** The
