@@ -98,6 +98,16 @@ sets secrets. Phase advances on **EVIDENCE only**.
 - **Experiment ENGINE** (H10) — deterministic variant assignment + exposure logging + lift measurement.
 Until these exist, the agent works from the `GROWTH_STATUS` snapshot and flags the missing pipe as a blocker.
 
+## Strategic outreach (curated, human-reviewed drafts → [`OUTREACH.md`](./OUTREACH.md))
+A high-leverage channel the agent MAY run: a FEW deeply-personalized 1:1 outreach emails to genuinely
+strategic targets (press / partners / overlapping communities / newsletter curators), drafted as Gmail
+**DRAFTS for the OWNER to review + send** — the agent NEVER sends (its Gmail tool is `create_draft` only).
+Curation, NOT cold-email at scale: draft only if you can name the SPECIFIC recipient + why THEY'd care +
+the realistic reply; a few per run max (zero is a fine run); real PUBLISHED contacts via WebSearch only
+(never invent/scrape/harvest PII); honest + opt-out + CAN-SPAM/GDPR-clean; pre-launch links point to the
+PUBLIC waitlist; maker≠checker review each draft. Track in `GROWTH_STATUS.outreach` (replies owner-reported,
+never fabricated). Full rails: [`OUTREACH.md`](./OUTREACH.md).
+
 ## The boundary, in one line
 *Analyze aggregates, prove it with significance, never fabricate, recommend the lever — the factory builds
 it, the human decides.*

@@ -97,6 +97,12 @@ GROWTH_STATUS:
     published_7d: 0
     scheduled_next_7d: 0
     organic_sessions_7d: 0
+  outreach:                      # STRATEGIC OUTREACH — curated, human-reviewed Gmail DRAFTS (docs/growth/OUTREACH.md).
+                                 #   DRAFT-ONLY: the agent never sends; the OWNER reviews + sends. REAL numbers only.
+    drafted_7d: 0                # curated 1:1 outreach drafts the agent queued for the owner this window
+    owner_sent_7d: 0             # how many the OWNER actually sent (owner-reported)
+    replies_7d: 0                # replies received (OWNER-reported — NEVER fabricated)
+    signal: none                 # none | weak | emerging | strong  (0/none pre-launch)
   learnings: []                  # short, data-grounded bullets: what's working / what's not
   next_actions: []               # what the agent will do next run
   owner_blockers: []             # things needing the owner before the agent can execute externally
