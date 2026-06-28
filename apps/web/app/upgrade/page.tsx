@@ -106,7 +106,7 @@ export default async function UpgradePage({
             <div className="card-pad">
               <div className="flex items-start justify-between">
                 <p className="font-semibold">Premium Annual</p>
-                <span className="rounded-full bg-ok/10 px-2 py-0.5 text-xs font-medium text-ok">
+                <span className="pill-success">
                   Save ~33%
                 </span>
               </div>
@@ -132,7 +132,7 @@ export default async function UpgradePage({
             <div className="card-pad">
               <div className="flex items-start justify-between">
                 <p className="font-semibold">Family Plan</p>
-                <span className="rounded-full bg-ok/10 px-2 py-0.5 text-xs font-medium text-ok">
+                <span className="pill-success">
                   Best for families
                 </span>
               </div>

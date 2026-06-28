@@ -73,7 +73,7 @@ export default async function ManageSubscriptionPage() {
           <ul className="mt-4 space-y-1.5">
             {plan.features.map((f) => (
               <li key={f} className="flex items-center gap-2 text-sm text-ink-700">
-                <Check className="h-4 w-4 shrink-0 text-ok" strokeWidth={2.5} />
+                <Check className="h-4 w-4 shrink-0 text-success" strokeWidth={2.5} />
                 {f}
               </li>
             ))}
@@ -110,7 +110,7 @@ export default async function ManageSubscriptionPage() {
                 {p.priceAnnualCents && p.tier === "premium_annual" && (
                   <p className="mt-0.5 text-sm text-ink-500">
                     ${(p.priceAnnualCents / 100).toFixed(2)}&thinsp;/ year
-                    <span className="ml-1.5 text-xs text-ok">(save ~33%)</span>
+                    <span className="ml-1.5 text-xs text-success">(save ~33%)</span>
                   </p>
                 )}
                 {p.trialDays > 0 && (
