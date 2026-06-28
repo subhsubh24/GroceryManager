@@ -398,3 +398,14 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   middleware) + a machine-tracked precondition (`site_gate_up`) + the playbook + the routine — defense in depth, not
   just a doc. The code gates the app; the human applies the password; the data field unblocks the agent. LLM-Quant
   is exempt (no public marketing/waitlist).
+- **2026-06-27 — canonical sync: FACTORY_STANDARD.md gains §6b DESIGN TASTE (eliminate generic-AI frontend).**
+  Inserted the shared, byte-identical §6b verbatim between §6 (BUILDS ≠ WORKS) and §7 (Readiness). It sets a
+  product-agnostic design bar: before ANY UI decision run THE DESIGNER QUESTION ("would an experienced product
+  designer intentionally make this decision?") as a kill-switch; a list of generic-AI slop to AVOID (cookie-cutter
+  SaaS dashboards, default/unstyled Tailwind/shadcn, weak type, random spacing, decorative noise, emoji-as-icons,
+  3 competing accents, centered-everything hero) and what to GENERATE instead (strong hierarchy, exceptional type,
+  deliberate spacing, premium aesthetics, meaningful motion, cohesive system); audit lenses ranked first-impression-
+  first (onboarding/paywall/landing/core loop); ENFORCED via Reviewer B on every UI diff + the §10 deep-audit design
+  lens (hunts the live UI via §6 screenshots) + the §7 readiness visual review — a generated-looking/"vibe-coded"
+  surface is a release-blocking FAIL equal to a red test. Product brand/voice/tokens stay in VISION.md. FACTORY_STANDARD
+  remains a STABLE ANCHOR — changes ONLY by canonical sync across all factory repos, never as loop work.
