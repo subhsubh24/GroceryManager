@@ -72,6 +72,19 @@ GROWTH_STATUS:
     ltv_usd: null
     ltv_cac_ratio: null
     top_channel: null
+  pmf:                           # PRODUCT-MARKET FIT — the leading indicator (FACTORY_STANDARD §9). Pre-PMF
+                                 #   the recommendation is a PRODUCT/retention fix, NOT scaling acquisition.
+                                 #   REAL data only; 0/null until a connected analytics source reports.
+    activation_rate: null        # % of new users reaching first value: a non-empty app-derived pantry
+                                 #   (receipt/scan, not hand-entered) + a first suggestion, in session/week 1
+    retention_d1: null           # classic day-cohort returns
+    retention_d7: null
+    retention_d30: null
+    retention_w1: null           # WEEKLY-cohort returns (this is a weekly-cadence product — the headline)
+    retention_w4: null
+    retention_curve_flattening: null  # true once the weekly curve levels off on a committed cohort (the PMF signal)
+    organic_share_rate: null     # non-paid + referral share of signups (is it spreading on its own?)
+    signal: none                 # none | weak | emerging | strong  — GOVERNS the recommendation
   channels: []                   # [{name, status, reach_7d, clicks_7d, signups_7d, ctr, notes}]
   experiments: []                # [{id, hypothesis, status, result, lift_pct, started, decided}]
   email:
