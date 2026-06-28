@@ -23,13 +23,12 @@ This is the narrative companion to the machine-readable `GROWTH_STATUS` block in
 _None yet — the first runs will establish these. Promote a RUN LOG finding here once it's confirmed._
 
 ## RUN LOG (newest first)
-<!-- Append one dated entry per run, e.g.:
-### 2026-06-27 — pre_launch, awaiting_connect
-- Did: tightened the waitlist landing headline against 3 researched competitor angles; refreshed the
-  pre-launch email welcome copy. No external action (no channels connected).
-- Hypothesis: a benefit-led headline ("never run out, never overbuy") out-pulls the feature-led one.
-- Result: not measurable yet (no traffic source connected).
-- Decision: staged as the A variant for when channels connect; logged owner_blocker = connect channels.
-- Reviewer (maker≠checker): approved — on-brand, no invented metrics, genuinely sharper.
--->
-_No runs logged yet._
+
+### 2026-06-28 — pre_launch, awaiting_connect, site_gate_up: false
+- **State:** Engine 100% built. No channels connected. site_gate_up: false → PREPARE mode only. No external action taken or possible.
+- **Did:** Added the 4th SEO blog post ("Pantry tracker apps: what actually works in 2026", slug: best-pantry-tracker-apps) to `/blog`. This was the planned Week 4 content calendar item (target keyword: "pantry tracker app", competitor-comparison intent) that was missing. Written as educational first, promotional second — no fabricated competitor names, no invented metrics. Reviewed by independent subagent: APPROVED (one flag resolved: "Free to start" CTA verified against real free tier in billing module).
+- **Hypothesis:** A feature-comparison post targeting "pantry tracker app" (mid-to-bottom funnel, high purchase intent) will attract organic visitors actively evaluating options — GroceryManager's differentiators (receipt import, depletion modeling, cook-from-pantry) map directly to what this audience is looking for.
+- **Result:** Not measurable — no analytics source connected, no traffic. Plausible tracking script is scaffolded but PLAUSIBLE_API_KEY not set; organic_sessions_7d = 0.
+- **Decision:** Post staged (it's in the repo and will be live once deployed). Will measure organic sessions once Plausible is connected.
+- **Owner blockers identified this run:** (1) URGENT: DIRECT_DATABASE_URL missing → auth broken in prod. (2) URGENT: spend caps not set. (3) HIGH: SITE_GATE_PASSWORD not set → site_gate_up false → cannot enter execute mode. (4) HIGH: Track H env vars (email/cron/analytics) not set → growth engine fully dormant.
+- **Next run priority:** Check if site_gate_up has been flipped. If still false: sharpen WL1 waitlist welcome email subject line (current "You're on the list" is generic; test a benefit-led variant).

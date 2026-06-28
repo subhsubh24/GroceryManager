@@ -215,6 +215,74 @@ export const BLOG_POSTS: BlogPost[] = [
     ctaBody:
       "GroceryManager imports your grocery receipts automatically — from photos or your Gmail inbox — and shows you where your food budget actually goes. Category breakdowns, weekly trends, and a year-end summary of your kitchen life. No spreadsheet required.",
   },
+  {
+    slug: "best-pantry-tracker-apps",
+    title: "Pantry tracker apps: what actually works in 2026",
+    description:
+      "Most pantry tracker apps make you do the work. Here's what separates the ones that stick from the ones that get deleted after a week.",
+    publishedAt: "2026-06-28",
+    readMinutes: 6,
+    keywords: [
+      "pantry tracker app",
+      "best pantry tracker",
+      "pantry tracking app",
+      "grocery tracker app",
+      "food inventory app",
+    ],
+    sections: [
+      {
+        heading: "Why most pantry apps get abandoned",
+        body: [
+          "The pattern is familiar. You download a pantry tracker, spend 20 minutes entering everything in your fridge and cupboards, feel briefly organised, then forget about it entirely by next week.",
+          "The problem isn't the app. It's the input model. Any system that requires you to manually add, update, or remove items every time you shop, cook, or throw something away is asking you to do work that most people won't sustain. The app becomes stale, then useless, then uninstalled.",
+          "The pantry trackers that actually stick solve this problem differently: they get their data from sources that already exist — your receipts — rather than asking you to create new data from scratch.",
+        ],
+      },
+      {
+        heading: "The feature that matters most: automatic updates",
+        body: [
+          "The most important thing a pantry tracker can do is update itself without you thinking about it.",
+          "Receipt import — either by photographing a paper receipt or connecting your email inbox to pull digital receipts automatically — is the feature that makes this possible. When you buy groceries, the transaction generates a receipt. If the app reads that receipt, your pantry is updated automatically. You didn't do anything; the data just flows in.",
+          "The same principle applies in reverse: when you cook, logging a meal should subtract ingredients from your pantry in a single tap. When the maintenance burden drops low enough, people actually maintain it.",
+        ],
+      },
+      {
+        heading: "Static inventory vs. depletion awareness",
+        body: [
+          "Even apps that track purchases well often fail at the harder problem: knowing how much of something you have right now.",
+          "Buying 400g of pasta is a fact. But how much of it did you use on Wednesday? A static inventory tracker doesn't know. It still shows 400g. After a few months of cooking, the app's numbers and your actual cupboard have nothing to do with each other.",
+          "A better approach models depletion over time. If you typically use a 400g bag of pasta in two weeks, the app estimates you're down to about 200g after one week — without you manually updating it. Combined with real purchase data, this model stays accurate enough to be useful. It's the difference between knowing what you bought and knowing what you actually have.",
+        ],
+      },
+      {
+        heading: "Meal suggestions that start from your fridge",
+        body: [
+          "Recipe apps and pantry trackers are different things. A recipe app gives you meal ideas. A pantry-aware meal suggester tells you what you can cook tonight with what you already have — which is far more useful on a Tuesday evening.",
+          "The ranking matters here. Showing you every recipe you have at least one ingredient for isn't useful. What's useful is surfacing the two or three meals you can make right now without buying anything, with items that are about to expire prioritised at the top.",
+          "This feature — cook-from-pantry suggestions — is what turns a pantry tracker into a genuine kitchen tool rather than an inventory app you check occasionally.",
+        ],
+      },
+      {
+        heading: "What to look for",
+        body: [
+          "When evaluating a pantry tracker, the questions worth asking are practical: Does it update without manual entry? Does it model how fast items deplete? Does it connect the pantry to meal suggestions? Does it work when your phone is offline?",
+          "Some apps ask you to link your bank account to pull transaction data. This works in theory, but adds a permissions step many people are uncomfortable with. Receipt-based import achieves the same result without needing financial access.",
+          "The best pantry trackers also work across platforms — both as a web app you can access anywhere and as a native mobile app for daily habit. The daily check-in happens on your phone; the weekly planning session benefits from a larger screen.",
+        ],
+      },
+      {
+        heading: "The shopping list connection",
+        body: [
+          "A pantry tracker that doesn't connect to your shopping list is half the solution. The real value comes from the loop: you track what you have, the app notices what's running low, and it surfaces those items on a shopping list — before you run out.",
+          "The best implementations do this automatically. They watch depletion rates, estimate when you'll hit zero, and add the item to your list at the right time — not when you've already run out, and not so far in advance that the reminder is useless.",
+          "Combined with depletion modelling and receipt import, this loop means your shopping list builds itself: you buy, the app tracks, it runs low, it reorders. You're just the person who approves the list.",
+        ],
+      },
+    ],
+    ctaHeading: "A pantry tracker that updates itself",
+    ctaBody:
+      "GroceryManager tracks your pantry from receipts — photo or Gmail inbox — so you never have to enter items manually. It models depletion rates, suggests what to cook from what you have, and builds your shopping list automatically. Free to start.",
+  },
 ];
 
 export function getPost(slug: string): BlogPost | undefined {

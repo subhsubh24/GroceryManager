@@ -39,7 +39,7 @@ the owner sees pre-launch / launch / post-launch growth progress in one place.
 ```yaml
 GROWTH_STATUS:
   project: GroceryManager
-  as_of: 2026-06-26
+  as_of: 2026-06-28
   phase: pre_launch              # pre_launch | launching | post_launch
   engine_built: true             # MUST equal (engine_pct == 100); preflight enforces it against real anchor files
   engine_pct: 100                # % of growth-execution engine pieces shipped — DERIVED from anchor files by preflight; NEVER hand-set
@@ -81,12 +81,33 @@ GROWTH_STATUS:
     open_rate: null
     click_rate: null
   content:
-    published_7d: 0
+    published_7d: 1              # 4th SEO blog post added today (best-pantry-tracker-apps)
     scheduled_next_7d: 0
     organic_sessions_7d: 0
-  learnings: []                  # short, data-grounded bullets: what's working / what's not
-  next_actions: []               # what the agent will do next run
-  owner_blockers: []             # things needing the owner before the agent can execute externally
+  learnings:
+    - "All funnel metrics are 0/null — no channels connected, no analytics source reporting. Insufficient data for any conversion claim."
+    - "4 SEO blog posts now live in /blog (food waste, meal planning, grocery budget, pantry tracker apps). Content calendar Week 1-4 posts all staged."
+    - "Growth engine is 100% built but fully dormant — blocked on owner connecting env vars (email provider, cron secret, analytics key). Zero external action taken or possible until site_gate_up is true AND a channel is connected."
+  next_actions:
+    - "Check if site_gate_up has been flipped to true (owner sets SITE_GATE_PASSWORD in Vercel). If yes + channel connected, enter execute mode."
+    - "If still in prepare mode: sharpen WL1 waitlist welcome email subject line — current 'You're on the list' is honest but generic; test a benefit-led subject line variant."
+    - "Pull real funnel snapshot from /api/growth/snapshot once CRON_SECRET is set — until then all sources report awaiting_connect."
+  owner_blockers:
+    - id: set-direct-database-url-prod
+      priority: urgent
+      detail: "URGENT — signin and signup are BROKEN in production without DIRECT_DATABASE_URL set in Vercel. Set to the Supabase owner/postgres connection (port 5432). See PENDING_OPS.md."
+    - id: spend-caps
+      priority: urgent
+      detail: "URGENT — set hard daily API spend caps in Google Cloud, Twilio, and Anthropic Console before driving any traffic. A single abuse spike can run up real cost."
+    - id: site-gate-prelaunch
+      priority: high
+      detail: "Set SITE_GATE_PASSWORD=deepster in Vercel env to gate the app pre-launch, then set GROWTH_STATUS.site_gate_up: true. This is the HARD precondition for growth execute mode."
+    - id: track-h-activation
+      priority: high
+      detail: "Set CRON_SECRET + an email provider key (RESEND_API_KEY / SENDGRID_API_KEY / POSTMARK_API_KEY) + EMAIL_FROM + EMAIL_UNSUBSCRIBE_SECRET + WAITLIST_OPTIN_SECRET + PLAUSIBLE_API_KEY in Vercel. Full runbook: docs/growth/CONNECT.md."
+    - id: connect-channels
+      priority: high
+      detail: "Connect at least one authorized marketing channel (social API token or email provider) to allow the growth engine to act. Until then: prepare mode only, zero external traffic."
   links:
     in_app_analytics: /admin/waitlist
     owner_doc: docs/growth/GROWTH_STATUS.md
