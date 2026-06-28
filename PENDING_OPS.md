@@ -31,7 +31,7 @@ OWNER_ACTIONS:
     - id: enable-auto-migrate-secret
       title: "Add GitHub Actions secret PROD_DIRECT_DATABASE_URL → migrations then auto-apply on every deploy (one-time, kills schema drift)"
       priority: high
-      status: open
+      status: done
       why: "Schema drift (the loop adds a migration, a human forgets to run it against prod) was the ROOT cause of the signup/onboarding outage. The CI `migrate-prod` job auto-applies the full chain to prod on every push to main — but ONLY after the build + fresh-DB migration validation pass, forward-only, and only once it has the prod owner connection as a secret. Without the secret it warns + skips (never blocks). All migrations 0011–0019 are ALREADY applied to prod (via MCP); this makes every FUTURE migration apply itself. TRADEOFF (apply consciously): this removes the human schema checkpoint — enable enable-db-pitr-backups FIRST as the recoverability net."
       how: "1) Do enable-db-pitr-backups first. 2) GitHub repo → Settings → Secrets and variables → Actions → New repository secret: name PROD_DIRECT_DATABASE_URL, value = the Supabase OWNER/DIRECT connection (Connect → Session pooler, port 5432, role postgres — the SAME string you set as Vercel's DIRECT_DATABASE_URL). Never commit it. After that, migrations apply automatically on merge to main (idempotent; safe no-op when already applied). See docs/ci/PROPOSED_CI.md."
       blocks: none
