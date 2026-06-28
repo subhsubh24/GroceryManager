@@ -210,6 +210,24 @@ export const referralCredits = pgTable(
   (t) => ({ uq: uniqueIndex("referral_credits_user_reason_uq").on(t.userId, t.reason) }),
 );
 
+// Lifecycle email send ledger (H14 month-3 annual-nudge + H15 win-back) — sql/0019.
+// One row per (user, campaign): idempotency so a user is never re-emailed for the same campaign.
+// A row is written ONLY after the email truly leaves (provider sent=true), so a dry-run never marks
+// a user as sent. RLS tenant-isolation added in the migration (grocery_app + app_current_user_id()).
+export const lifecycleEmailSends = pgTable(
+  "lifecycle_email_sends",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    emailType: text("email_type").notNull(),
+    variant: text("variant"),
+    sentAt: ts("sent_at").defaultNow().notNull(),
+  },
+  (t) => ({ uq: uniqueIndex("lifecycle_email_sends_user_type_uq").on(t.userId, t.emailType) }),
+);
+
 // ---------------------------------------------------------------------------
 // Shared household — opt-in shared shopping list (FEATURE_HOUSEHOLDS, default OFF).
 // Members (users whose `users.householdId` points here) share ONE active shopping list. Entirely

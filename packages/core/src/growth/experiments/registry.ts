@@ -40,6 +40,28 @@ export const EXPERIMENTS: ExperimentDefinition[] = [
     // 5% baseline, +2pp MDE, α=0.05, power=0.80 → ~1192 per arm; floor at 100 for early signal.
     minSamplePerArm: Math.max(100, minSampleSizePerArm(0.05, 0.02)),
   },
+  {
+    id: "h14_annual_nudge",
+    hypothesis:
+      "For active monthly subscribers at month 3, leading the nudge with the dollar saving " +
+      "('savings') converts more monthly→annual switches than the routine framing ('control').",
+    variants: ["control", "savings"],
+    primaryEvent: "annual_switch",
+    // 8% baseline switch rate, +3pp MDE — exposures logged on send; conversion stays "running" /
+    // null until switches are logged (never fabricated). Floor at 100 for early signal.
+    minSamplePerArm: Math.max(100, minSampleSizePerArm(0.08, 0.03)),
+  },
+  {
+    id: "h15_winback",
+    hypothesis:
+      "For churned-but-active free users, leading win-back with what Premium adds ('value') " +
+      "reactivates more than the warm welcome framing ('control').",
+    variants: ["control", "value"],
+    primaryEvent: "reactivate",
+    // 5% baseline reactivation, +2pp MDE; conversion stays "running" / null until reactivations are
+    // logged (never fabricated). Floor at 100 for early signal.
+    minSamplePerArm: Math.max(100, minSampleSizePerArm(0.05, 0.02)),
+  },
 ];
 
 /**

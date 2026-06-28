@@ -78,6 +78,9 @@ async function main() {
     console.log("→ referral reward credits ledger…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0018_referral_credits.sql"), "utf8"));
 
+    console.log("→ lifecycle email send ledger…");
+    await sql.unsafe(readFileSync(join(pkgRoot, "sql/0019_lifecycle_email_sends.sql"), "utf8"));
+
     console.log("✓ migrations complete");
   } finally {
     await sql.end();
