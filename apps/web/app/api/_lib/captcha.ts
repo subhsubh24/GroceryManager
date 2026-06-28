@@ -38,6 +38,10 @@ export async function verifyTurnstile(token: string | null | undefined): Promise
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ secret: secretKey, response: token }),
+      // Bound the call so a slow (not failed) Cloudflare response can't hang the signup/waitlist
+      // serverless function until the platform deadline (a hung form, then a 504). On timeout the
+      // catch below fails-open, matching the existing network-error behavior.
+      signal: AbortSignal.timeout(3_000),
     });
     const data = (await res.json()) as { success?: boolean };
     return { success: data.success === true, skipped: false };

@@ -31,6 +31,9 @@ export async function sendSmsToUser(userId: string, body: string): Promise<SmsRe
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({ To: phone, From: env.TWILIO_FROM_NUMBER, Body: body }),
+        // Bound the call so a slow/unresponsive Twilio can't hang the digest cron until the
+        // serverless deadline kills it (every external call needs a timeout < the function budget).
+        signal: AbortSignal.timeout(5_000),
       },
     );
     if (!res.ok) {
