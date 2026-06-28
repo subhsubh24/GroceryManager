@@ -12,7 +12,7 @@ The dashboard surfaces every `open` item, urgent first.
 ```yaml
 OWNER_ACTIONS:
   project: GroceryManager
-  as_of: 2026-06-27
+  as_of: 2026-06-28
   items:
     - id: set-direct-database-url-prod
       title: "URGENT: set DIRECT_DATABASE_URL in Vercel (owner connection) — signin + signup are BROKEN without it"
@@ -111,6 +111,13 @@ OWNER_ACTIONS:
       status: open
       why: "H13 (referral-reward loop, PR #217) persists earned free months in `referral_credits` (RLS tenant-isolation, grocery_app + app_current_user_id() + explicit GRANT). Without the table, `/invite` + `/upgrade` reconcile/read fails closed (resilient catch → zeroed rewards shown) and the bonus-trial-days redemption at Stripe checkout is skipped — the lever is inert until applied. Apply before referral rewards go live."
       how: "Run `pnpm --filter @gm/db db:migrate` (idempotent; applies 0018_referral_credits.sql). No new env vars — the bonus rides the existing STRIPE_PRICE_* + checkout flow. Verify: `SELECT * FROM referral_credits LIMIT 1;` returns an empty result (table exists); after a milestone is reached a row appears keyed by (user_id, reason='milestone_N')."
+      blocks: none
+    - id: lifecycle-email-migration
+      title: Apply migration 0019 (lifecycle_email_sends) + schedule the H14/H15 lifecycle crons
+      priority: high
+      status: open
+      why: "H14 (month-3 annual nudge) + H15 (win-back), PR #221, persist one row per (user, campaign) in `lifecycle_email_sends` (RLS tenant-isolation, grocery_app + app_current_user_id() + explicit GRANT) so a user is never re-emailed for the same campaign. Without the table the cron INSERT fails (best-effort catch → the campaign would re-send each run once a provider is connected). The campaigns also stay DORMANT until an email provider key is set (sends dry-run-skip + are NOT recorded — no fake success) AND the two cron routes are scheduled. No adoption % is banked in the business case — these are dormant infra until you connect + schedule them."
+      how: "1) Run `pnpm --filter @gm/db db:migrate` (idempotent; applies 0019_lifecycle_email_sends.sql). Verify: `SELECT * FROM lifecycle_email_sends LIMIT 1;` returns empty (table exists). 2) Set an email provider key (RESEND_API_KEY / SENDGRID_API_KEY / POSTMARK_API_KEY — first found wins) + EMAIL_FROM / EMAIL_UNSUBSCRIBE_SECRET (see track-h-activation). 3) Schedule the two routes as Vercel Cron Jobs (weekly), passing the secret: `/api/cron/h14-annual-nudge?key=$CRON_SECRET` and `/api/cron/h15-winback?key=$CRON_SECRET` (e.g. Mon 09:00 + Tue 10:00; note Vercel Hobby allows daily-granularity crons — pick days the plan supports). Until both steps are done the routes return {sent:0, skipped:N} honestly."
       blocks: none
     - id: experiment-secret
       title: (Optional) set EXPERIMENT_SECRET for A/B variant bucketing
