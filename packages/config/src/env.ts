@@ -54,6 +54,11 @@ const EnvSchema = z.object({
   TWILIO_FROM_NUMBER: z.string().optional(), // the Twilio "from" number, e.g. +15550001234
   // Absolute base URL for links in SMS (push uses relative paths; texts need the full URL).
   APP_URL: z.string().url().optional(),
+  // Pre-launch SITE GATE password. When SET, the deployed app is password-protected (the public
+  // waitlist/landing + legal pages stay open) so a half-baked app is never exposed; UNSET it at
+  // launch to open the app. Human-applied (PENDING_OPS) — never commit the value. Read directly
+  // from process.env in apps/web/middleware.ts (edge runtime); listed here only as a known var.
+  SITE_GATE_PASSWORD: z.string().optional(),
 
   // Integrations
   INSTACART_API_KEY: z.string().optional(),

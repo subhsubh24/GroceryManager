@@ -383,3 +383,18 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
     POSITIVE (omitting ACAO is the secure default — browsers block cross-origin reads). The independent
     QUALITY_SCORECARD (docs/quality/) does not yet exist → quality-grade DoD box correctly stays a readiness
     blocker (no self-grade; that artifact is the separate Quality Auditor routine's to author).
+- **2026-06-27 — marketing maturity gate + pre-launch SITE GATE (market autonomously, never expose a half-baked app).**
+  Built a deployment-level guarantee that the Growth Agent markets but NEVER before the product is ready: (1)
+  ANALYSIS_PLAYBOOK gains a **marketing maturity gate** with phases (pre_launch → launching → post_launch) gated on
+  the SAME evidence the factory uses (independent QUALITY_SCORECARD + readiness, never eagerness); pre_launch is
+  WAITLIST-ONLY with a HARD BLOCK — execute-mode public outreach FORBIDDEN until BOTH a channel is connected AND
+  `GROWTH_STATUS.site_gate_up: true`. (2) GROWTH_STATUS adds machine-tracked `site_gate_up: false` near
+  `awaiting_connect`. (3) Factory builds the **pre-launch SITE GATE** — env-driven middleware (`SITE_GATE_PASSWORD`;
+  ON whenever set) that password-protects the deployed app but EXEMPTS the public marketing routes (waitlist/landing
+  + `/api/waitlist/confirm` + legal) so people can still join; pure logic in `@gm/core/security/site-gate` (33 tests),
+  wiring in `apps/web/middleware.ts`; password VALUE owner-applied (PENDING_OPS: set `=deepster` pre-launch, UNSET at
+  launch). ROADMAP H13 carries the BLOCKING note. (4) Growth routine reinforcement (belt-and-suspenders) added to the
+  EXECUTE-mode condition via /schedule. LESSON: a "don't expose it yet" rule needs a HARD enforcement surface (env
+  middleware) + a machine-tracked precondition (`site_gate_up`) + the playbook + the routine — defense in depth, not
+  just a doc. The code gates the app; the human applies the password; the data field unblocks the agent. LLM-Quant
+  is exempt (no public marketing/waitlist).

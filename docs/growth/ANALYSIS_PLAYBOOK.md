@@ -39,9 +39,29 @@ ANALYZES and RECOMMENDS; it has **no new authority to act externally**. The fact
    the diagnosed constraint (paywall/onboarding for activation/conversion; the reorder/referral
    recurring-use loop for retention; a pricing/tier change for ARPU). The factory reads this as DATA.
 
-## Pre-launch
-No-op. Until a connected source reports, the funnel is `0`/`null` — record "awaiting connect", list the
-blockers, and **never invent signal** from an empty funnel.
+## Marketing maturity gate (phases)
+Market **autonomously, but never before the product is ready, and never expose a half-baked app.** The
+phase is gated on the **same evidence the factory uses — the independent `QUALITY_SCORECARD` +
+readiness — never on eagerness.** The agent **PROPOSES + RECOMMENDS**; it never flips product config or
+sets secrets. Phase advances on **EVIDENCE only**.
+
+- **`pre_launch`** — *any* ship-critical `QUALITY_SCORECARD` dimension `< A`, **or** the store isn't live.
+  **WAITLIST-ONLY:** drive every click to the PUBLIC waitlist / "coming soon" landing (and the App Store
+  "coming soon" / TestFlight link if that's the channel) — **never to the unfinished app.** Headline
+  metric = **waitlist signups**.
+  - **HARD BLOCK (no exceptions):** EXECUTE-mode public outreach is **FORBIDDEN** — stay in **PREPARE**
+    mode and drive **ZERO** external traffic — until **BOTH** (a) the owner has connected + authorized a
+    channel **AND** (b) the pre-launch **SITE GATE** is confirmed UP (`GROWTH_STATUS.site_gate_up: true`).
+    Until then: **sharpen creative only** and record the `owner_blocker`. The site gate is the deployment-
+    level guarantee (env-driven middleware; waitlist/landing/legal exempt) that no one reaches the
+    half-baked app — see ROADMAP "pre-launch SITE GATE" + `PENDING_OPS`.
+- **`launching`** — **every** ship-critical dimension `A`/`A+` **and** readiness passed / store live.
+  Recommend **opening the gate** (owner UNSETs `SITE_GATE_PASSWORD`), **announce to the waitlist**,
+  convert waitlist → users, and **ramp public marketing**.
+- **`post_launch`** — **scale**: conversion / retention / referral experiments (the compounding window).
+
+**Pre-launch analytics is still a no-op for the funnel:** until a connected source reports, the funnel is
+`0`/`null` — record "awaiting connect", list the blockers, and **never invent signal** from an empty funnel.
 
 ## Where the data comes from (built by the factory, per ROADMAP Track H)
 - **Analytics SURFACE** (H9) — privacy-safe server-computed aggregates exposed to the agent.
