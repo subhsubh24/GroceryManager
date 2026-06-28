@@ -426,3 +426,18 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   reaches an RLS GUC cast to a typed column must be validated at the trust boundary — a malformed identity should fail
   closed (signed-out), never crash a page. (c) A green build hid a broken waitlist (missing table) — runtime/prod
   inspection caught what the build couldn't.
+- **2026-06-27 — prod follow-up: "Couldn't load your dashboard" was an UNCAUGHT `auth()` throw, not the DB.**
+  After fixing the migration drift + the non-UUID session, the error boundary STILL showed on the deployed app.
+  Live prod logs were decisive: NO postgres error and NO app→DB connection for the failing requests — so the throw
+  happened BEFORE the DB. Traced the home render (`apps/web/app/page.tsx`): `loadHomeData()` swallows all errors
+  (returns EMPTY), so it can't trip the boundary — but `const session = await auth()` (line 232) is UNCAUGHT, and
+  `auth()` THROWS (not just returns null) when a session cookie can't be decrypted — e.g. after an AUTH_SECRET
+  rotation, or a stale/corrupt cookie. That crashes the whole Server Component into the route error boundary, and a
+  cookie-less (incognito) request works because there's nothing to decrypt. FIX: added `currentSession()` in
+  `app/lib/tenant.ts` (wraps `auth()` in try/catch → null) and used it in `page.tsx` + `admin/layout.tsx`; a bad
+  cookie now degrades to the logged-out view instead of a 500. LESSONS: (a) `auth()`/`cookies()` reads in a Server
+  Component must be treated as throwable and wrapped — same as `currentUserId()` already does. (b) READ THE LOGS
+  FIRST: "no DB error + no DB connection" instantly ruled out the database and pointed upstream to auth. (c) A
+  remediation I suggested (rotate AUTH_SECRET) can itself trigger this class — invalidating cookies must pair with
+  code that fails OPEN to logged-out, never crashes. (d) Immediate user unblock for this class: incognito / clear
+  cookies (no cookie = no decryption = no throw).

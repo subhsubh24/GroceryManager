@@ -1,4 +1,4 @@
-import { auth, signOut } from "@/auth";
+import { signOut } from "@/auth";
 import {
   getActiveListView,
   getDb,
@@ -11,7 +11,7 @@ import { currentStreak } from "@gm/core/recipe";
 import { assessOrderReadiness } from "@gm/core/reorder";
 import { buildDigest, type DigestSummary } from "@gm/core/digest";
 import { SUBSCRIPTION_PLANS } from "@gm/core/billing";
-import { currentUserId } from "@/app/lib/tenant";
+import { currentSession, currentUserId } from "@/app/lib/tenant";
 import { titleCase } from "@/app/lib/format";
 import { buildDigestForUser } from "@/app/lib/digest";
 import { assignAndLogVariant } from "@/app/lib/experiments";
@@ -229,7 +229,10 @@ export default async function HomePage({
   const assignedVariant = await assignAndLogVariant("landing_hero");
   const heroVariantKey = assignedVariant ?? sp.v ?? "a";
   const heroVariant: HeroVariant = HERO_VARIANTS[heroVariantKey] ?? HERO_VARIANTS.a!;
-  const session = await auth();
+  // Safe session read — a stale/undecryptable cookie (e.g. after an AUTH_SECRET rotation) makes
+  // `auth()` THROW; that would crash this whole render into the error boundary ("Couldn't load your
+  // dashboard"). currentSession() degrades to null so the visitor just sees the logged-out landing.
+  const session = await currentSession();
   const email = (session?.user as { email?: string } | undefined)?.email ?? null;
   // Only hit the DB for signed-in visitors; the logged-out landing path stays query-free.
   const { streak, listCount, firstRun, digest, pantry } = session
