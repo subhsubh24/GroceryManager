@@ -36,6 +36,22 @@ let _adminDb: ReturnType<typeof createDb>["db"] | null = null;
 export function getAdminDb() {
   if (!_adminDb) {
     const env = loadEnv();
+    // getAdminDb MUST be the OWNER connection (bypasses RLS): it provisions users at signup and does
+    // the username lookup at signin, neither of which has a tenant session to satisfy the `users` RLS
+    // policy (`id = app_current_user_id()`). If DIRECT_DATABASE_URL is unset it silently falls back to
+    // the RLS-restricted DATABASE_URL (the grocery_app role) — which makes BOTH signin and signup fail
+    // (every users read/insert is denied) and no user row is ever created. That failure is invisible
+    // (it surfaces only as a generic route error boundary), so flag it LOUDLY here. Fix: set
+    // DIRECT_DATABASE_URL to the Supabase DIRECT/owner connection (port 5432, role `postgres`) — see
+    // .env.example. (In production it should ALWAYS be set; DATABASE_URL is the restricted role.)
+    if (!env.DIRECT_DATABASE_URL) {
+      console.error(
+        "[getAdminDb] DIRECT_DATABASE_URL is not set — admin/provisioning is falling back to the " +
+          "RLS-restricted DATABASE_URL. Signin + signup WILL FAIL (the users RLS policy blocks " +
+          "provisioning/lookup without a tenant session). Set DIRECT_DATABASE_URL to the owner " +
+          "(direct, port 5432, role postgres) connection. See .env.example.",
+      );
+    }
     _adminDb = createDb(env.DIRECT_DATABASE_URL ?? env.DATABASE_URL).db;
   }
   return _adminDb;
