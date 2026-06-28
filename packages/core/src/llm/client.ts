@@ -378,7 +378,11 @@ export class GeminiClient {
       steps++;
       let res: Awaited<ReturnType<typeof this.ai.models.generateContent>>;
       try {
-        res = await this.ai.models.generateContent({ model, contents, config: buildConfig(allowCodeExec) });
+        res = await withTimeout(
+          this.ai.models.generateContent({ model, contents, config: buildConfig(allowCodeExec) }),
+          this.callTimeoutMs,
+          `runChatWithTools ${model}`,
+        );
       } catch (e) {
         // SOME models reject combining functionDeclarations + codeExecution (400 INVALID_ARGUMENT). That
         // shows up on the FIRST call (the tool config is identical every round), so only retry-without-
@@ -387,7 +391,11 @@ export class GeminiClient {
         // and permanently drop code execution and start predicting numbers.
         if (allowCodeExec && steps === 1 && isToolCombineRejection(e)) {
           allowCodeExec = false;
-          res = await this.ai.models.generateContent({ model, contents, config: buildConfig(false) });
+          res = await withTimeout(
+            this.ai.models.generateContent({ model, contents, config: buildConfig(false) }),
+            this.callTimeoutMs,
+            `runChatWithTools ${model} (no code-exec)`,
+          );
         } else {
           throw e;
         }
@@ -427,11 +435,15 @@ export class GeminiClient {
     }
 
     // Hit the step cap — make ONE final call with no tools so the model summarizes what it has.
-    const finalRes = await this.ai.models.generateContent({
-      model,
-      contents,
-      ...(args.system ? { config: { systemInstruction: args.system } } : {}),
-    });
+    const finalRes = await withTimeout(
+      this.ai.models.generateContent({
+        model,
+        contents,
+        ...(args.system ? { config: { systemInstruction: args.system } } : {}),
+      }),
+      this.callTimeoutMs,
+      `runChatWithTools ${model} (final summary)`,
+    );
     return { text: finalRes.text ?? "", steps };
   }
 
@@ -441,11 +453,15 @@ export class GeminiClient {
    * (required before cosine comparison against the pgvector index).
    */
   async embed(text: string): Promise<number[]> {
-    const res = await this.ai.models.embedContent({
-      model: EMBEDDING_MODEL,
-      contents: text,
-      config: { outputDimensionality: EMBEDDING_DIM },
-    });
+    const res = await withTimeout(
+      this.ai.models.embedContent({
+        model: EMBEDDING_MODEL,
+        contents: text,
+        config: { outputDimensionality: EMBEDDING_DIM },
+      }),
+      this.callTimeoutMs,
+      `embed ${EMBEDDING_MODEL}`,
+    );
     const values = res.embeddings?.[0]?.values;
     if (!values || values.length === 0) throw new Error(`empty embedding from ${EMBEDDING_MODEL}`);
     return l2normalize(values);
