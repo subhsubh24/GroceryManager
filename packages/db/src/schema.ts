@@ -191,6 +191,25 @@ export const pushTokens = pgTable(
   (t) => ({ uq: uniqueIndex("push_tokens_user_token_uq").on(t.userId, t.token) }),
 );
 
+/**
+ * Referral reward credits (H13) — append-only ledger of free months a referrer EARNED at referral
+ * milestones. One row per (user, milestone reason); idempotent reconciliation via the unique index.
+ * Created in sql/0018_referral_credits.sql (RLS: per-user isolation, grocery_app role).
+ */
+export const referralCredits = pgTable(
+  "referral_credits",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    months: integer("months").notNull(),
+    reason: text("reason").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => ({ uq: uniqueIndex("referral_credits_user_reason_uq").on(t.userId, t.reason) }),
+);
+
 // ---------------------------------------------------------------------------
 // Shared household — opt-in shared shopping list (FEATURE_HOUSEHOLDS, default OFF).
 // Members (users whose `users.householdId` points here) share ONE active shopping list. Entirely

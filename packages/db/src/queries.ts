@@ -18,6 +18,7 @@ import {
   purchases,
   pushSubscriptions,
   pushTokens,
+  referralCredits,
   recipeIngredients,
   recipes,
   reorderPolicies,
@@ -375,6 +376,38 @@ export async function countReferralsJoined(db: Querier, userId: string): Promise
     .from(preferenceSignals)
     .where(and(eq(preferenceSignals.userId, userId), eq(preferenceSignals.topic, REFERRAL_JOINED_TOPIC)));
   return rows.length;
+}
+
+// ---- Referral reward credits (H13): earned free months persisted into the referral_credits ledger ----
+// The milestone ladder itself lives in @gm/core/referral/rewards — @gm/db MUST NOT import @gm/core (cycle),
+// so the CALLER computes which milestones are reached and passes the (months, reason) grants here. Each
+// grant is idempotent on (user_id, reason): re-running the reconciliation never double-credits. Call
+// inside withTenant so the INSERT satisfies the RLS WITH CHECK (user_id = app_current_user_id()).
+
+/**
+ * Idempotently persist earned referral reward credits. `grants` is the set of reached milestones (from
+ * `@gm/core/referral/rewards`); each row conflicts harmlessly on the (user_id, reason) unique index, so
+ * already-granted milestones are skipped. No-op on an empty list.
+ */
+export async function grantReferralCredits(
+  db: Querier,
+  userId: string,
+  grants: { months: number; reason: string }[],
+): Promise<void> {
+  if (grants.length === 0) return;
+  await db
+    .insert(referralCredits)
+    .values(grants.map((g) => ({ userId, months: g.months, reason: g.reason })))
+    .onConflictDoNothing({ target: [referralCredits.userId, referralCredits.reason] });
+}
+
+/** Total free months a user has earned through referrals (sum of their `referral_credits` rows). */
+export async function sumReferralCreditMonths(db: Querier, userId: string): Promise<number> {
+  const rows = await db
+    .select({ months: referralCredits.months })
+    .from(referralCredits)
+    .where(eq(referralCredits.userId, userId));
+  return rows.reduce((sum, r) => sum + (r.months ?? 0), 0);
 }
 
 /** Upsert the projected UserModel (cleanly-mappable fields). */
