@@ -13,22 +13,20 @@ export const maxDuration = 60;
  *   { "path": "/api/cron/publish", "schedule": "* * * * *" }
  */
 export async function GET(req: Request) {
-  // 1. Validate CRON_SECRET
+  // 1. Validate CRON_SECRET — fail CLOSED in production (matches the digest/gmail cron pattern).
+  // When CRON_SECRET is unset, only dev/staging may call it; production NEVER allows unauthenticated
+  // access (this endpoint publishes content to the owner's connected channels). Constant-time compare.
   const secret = process.env["CRON_SECRET"];
-  if (secret) {
+  const isAuthorized = (() => {
+    if (!secret) return process.env.NODE_ENV !== "production";
     const authHeader = req.headers.get("authorization");
-    const expected = `Bearer ${secret}`;
-    const isAuthorized = (() => {
-      if (!authHeader) return false;
-      const ab = Buffer.from(authHeader, "utf8");
-      const bb = Buffer.from(expected, "utf8");
-      return ab.length === bb.length && timingSafeEqual(ab, bb);
-    })();
-    if (!isAuthorized) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  } else {
-    console.warn("[cron/publish] CRON_SECRET is not set — allowing unauthenticated access");
+    if (!authHeader) return false;
+    const ab = Buffer.from(authHeader, "utf8");
+    const bb = Buffer.from(`Bearer ${secret}`, "utf8");
+    return ab.length === bb.length && timingSafeEqual(ab, bb);
+  })();
+  if (!isAuthorized) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   // 2. Get admin DB and fetch due content schedule items
