@@ -61,7 +61,8 @@ everything else yourself.
   `pnpm -r run test` · `NODE_ENV=production DATABASE_URL=… pnpm --filter @gm/web build`.
 - **LIVING ARTIFACTS.** Every artifact the loop produces — README, ARCHITECTURE, `docs/BUSINESS_CASE.md`,
   marketing copy, store-listing/ASO, privacy / Data-Safety docs, the pre-submission checklist,
-  `docs/autonomous-loop/LOOP_MEMORY.md`, `IMPROVEMENT_LOG.md`, `PENDING_OPS.md`, `ROADMAP.md`, `docs/LAUNCH.md`
+  `docs/autonomous-loop/LOOP_MEMORY.md`, `docs/autonomous-loop/LOOP_HEALTH.md`, `IMPROVEMENT_LOG.md`,
+  `PENDING_OPS.md`, `ROADMAP.md`, `docs/LAUNCH.md`
   — is **LIVING**. When the thing it describes changes (code, pricing, positioning, data flows,
   architecture), UPDATE the artifact in the SAME work so it never contradicts the current product.
   **A doc that contradicts reality is a BUG** (and a store/review/trust risk); fixing it CLEARS the
@@ -85,6 +86,15 @@ state IS the status. Prose notes and PR references are invisible to it. Therefor
   gate green this run) — never on self-assessment. **Un-tick** any box whose proof no longer holds.
 - **Keep checkboxes in sync EVERY bookkeeping run** so the dashboard never lies. The checkbox is the
   source of truth; the prose explains it.
+- **LOOP HEALTH (measure the loop, not just the product — FACTORY_STANDARD §10b).** Update
+  `docs/autonomous-loop/LOOP_HEALTH.md` with REAL counts EVERY bookkeeping run (changes shipped vs.
+  abandoned, verify/review failures, circuit-breaker trips, rolling reverts + readiness attempts/rejections,
+  recurring failures). **CLASSIFY every abandoned change** (`gate_tsc`/`gate_test`/`gate_build`/`gate_mobile`/
+  `review_value`/`circuit_breaker`/`dead_end`/`blocked_owner`/…) so the loop never re-attempts the same
+  dead-end. A **churning** (high abandon/revert vs. shipped) or **stuck** (recurring wall / no convergence)
+  signal MUST open ONE `loop: harness improvement proposal` issue — the only channel to improve the loop's
+  OWN rules (it can't edit its routine / `.claude/`); a recurring wall that never raises a proposal is a dead
+  signal. Honest counts only; observability, NOT a ship gate.
 
 > **ONE-TIME RECONCILE (do this on the NEXT run, in the bookkeeping PR):** convert any Track item that
 > is still prose into a checkbox; `- [x]` every Track + DoD item whose artifacts are verifiably present

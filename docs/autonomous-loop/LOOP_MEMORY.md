@@ -638,3 +638,19 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   guard: F6 [x] but <5 non-zero images in apps/web/e2e/__screenshots__/ → FAIL; no-op while [ ] (verified no-op now).
   BUILD ORDER: this harness is captured BY the functional journey suite, so it comes AFTER that suite is wired — harden the
   spec + gate now (this change), build the capture/vision code when F6 is reached; the guard keeps the tick honest.
+- **2026-06-28 — made "self-improving" MEASURABLE: LOOP_HEALTH metric + classify abandoned changes + META self-check.**
+  We measured product quality (QUALITY_SCORECARD) but not whether the LOOP itself improves vs. just gets busier, and
+  abandoned build-changes weren't classified (so dead-ends got re-attempted). Fixed: (1) seeded
+  docs/autonomous-loop/LOOP_HEALTH.md (contract + fenced YAML: this_run shipped/abandoned + abandoned_reasons enum adapted
+  to the GM stack [gate_tsc/gate_test/gate_build/gate_mobile/review_*/circuit_breaker/conflict/dead_end/blocked_owner],
+  verify/review failures, circuit-breaker trips; rolling_7d merged/reverts/readiness + recurring_failures +
+  harness_proposals_open; signal bootstrapping|improving|steady|churning|stuck) — updated EVERY bookkeeping run with REAL
+  git/gh counts, honest-only, observability NOT a ship gate. (2) FACTORY_STANDARD §10b verbatim (loop health: classify
+  every abandoned change so the loop never re-attempts the same dead-end; churning/stuck → open ONE harness improvement
+  proposal — the ONLY channel to improve the loop's OWN rules since it can't edit its routine/.claude). (3) ROADMAP: a
+  LOOP HEALTH bullet in the bookkeeping note + LOOP_HEALTH added to the LIVING-ARTIFACTS list. (4) META self-check of the
+  last ~10 runs: the SAME wall recurred — the loop can't enforce its functional-E2E / lint / (soon F6 visual) gates in CI
+  because it can't edit .github/ (tracked only as owner actions wire-e2e-journeys-ci + ci-workflow-scope, never as a
+  harness proposal). Opened the first `loop: harness improvement proposal` issue #232 and recorded it in LOOP_HEALTH
+  (harness_proposals_open: 1). LESSON: a recurring wall that never raises a harness proposal is a DEAD signal — the loop
+  improves the product autonomously, but improving the loop's OWN rules only happens if it escalates the signal.
