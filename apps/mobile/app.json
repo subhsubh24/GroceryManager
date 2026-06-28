@@ -8,6 +8,11 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0c8a3e"
+    },
     "plugins": ["expo-router"],
     "experiments": { "typedRoutes": true },
 
@@ -29,12 +34,6 @@
         "backgroundColor": "#0c8a3e"
       },
       "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
-    },
-
-    "extra": {
-      "eas": {
-        "projectId": "OWNER_EAS_PROJECT_ID"
-      }
     }
   }
 }
