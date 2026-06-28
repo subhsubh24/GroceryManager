@@ -22,7 +22,7 @@ The `QUALITY_SCORECARD` measures the **product**; this measures the **loop itsel
 ```yaml
 LOOP_HEALTH:
   project: GroceryManager
-  as_of: 2026-06-28
+  as_of: 2026-06-29
   last_run: null
   last_deep_audit: null
   this_run:
@@ -37,9 +37,10 @@ LOOP_HEALTH:
     reverts: 0
     readiness_attempts: 0
     readiness_rejected: 0
-    recurring_failures:          # short bullets: the SAME wall hit across ≥2 runs (→ harness proposal)
-      - "loop can't enforce functional E2E / lint / visual gates in CI (.github/ off-limits) — raised as harness proposal #232"
-    harness_proposals_open: 1    # open `loop: harness improvement proposal` issues (#232)
+    recurring_failures: []       # short bullets: the SAME wall hit across ≥2 runs (→ harness proposal)
+                                 #   (the CI-gate-enforcement wall #232 was RESOLVED via #234: lint + functional
+                                 #   E2E journeys are now REQUIRED status checks on main — META channel worked end-to-end.)
+    harness_proposals_open: 0    # open `loop: harness improvement proposal` issues (#232 resolved by #234)
   signal: bootstrapping          # bootstrapping | improving | steady | churning | stuck
 ```
 

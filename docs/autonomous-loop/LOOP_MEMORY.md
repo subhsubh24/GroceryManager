@@ -654,3 +654,18 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   harness proposal). Opened the first `loop: harness improvement proposal` issue #232 and recorded it in LOOP_HEALTH
   (harness_proposals_open: 1). LESSON: a recurring wall that never raises a harness proposal is a DEAD signal — the loop
   improves the product autonomously, but improving the loop's OWN rules only happens if it escalates the signal.
+- **2026-06-29 — META channel closed end-to-end: harness proposal #232 → enforced functional/lint gates in CI (#234).**
+  The loop-health META self-check raised #232 (the loop's quality gates weren't enforced as blocking CI checks because the
+  loop can't edit .github/). RESOLVED from an interactive session (which HAS workflow scope; the headless cron correctly
+  can't): added two CI jobs in #234 — `lint` (eslint --max-warnings=0) and `e2e functional journeys` (build → migrate a
+  throwaway pgvector Postgres → `next start` → replay the outcome-asserting journeys). The FIRST CI run failed and caught
+  two REAL gaps the local runs hid: (1) next-auth v5 refused the untrusted localhost host (no AUTH_TRUST_HOST) so the
+  credentials sign-in callback couldn't redirect → signup hung; (2) the 5/hour signup limiter throttled the self-seeding
+  suite from one runner IP. Fixed: AUTH_TRUST_HOST/AUTH_URL in the e2e job + a test-only RATE_LIMIT_DISABLED bypass (gated
+  on an env var prod NEVER sets). Re-ran → both green (~2m). Then set branch protection required_status_checks =
+  verify, mobile, migrations (fresh db), lint, e2e — so a build-but-broken / lint-failing change CANNOT auto-merge.
+  Updated LOOP_HEALTH (harness_proposals_open 1→0, recurring_failures cleared). LESSONS: (a) the META channel WORKS —
+  a recurring wall, escalated as a proposal, got resolved; (b) "verify in CI before marking required" caught a real
+  red gate (don't hand the loop a broken/flaky required check); (c) wiring functional E2E in CI surfaces env-config bugs
+  (auth trust-host, rate-limit-per-IP) that single-run local tests never hit. F6 dual-axis visual extends the same e2e
+  job when built.
