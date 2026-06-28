@@ -623,3 +623,18 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   outreach drafts (Gmail)") and decrements/closes it as the owner sends (honest counts, never stale) — that's what makes
   the review surface on the dashboard, which already renders OWNER_ACTIONS; the GROWTH_STATUS outreach block stays current
   for the tile. No routine change needed (the routine already reads OUTREACH.md for the full rails).
+- **2026-06-28 — canonical sync: visual verification goes DUAL-AXIS (prove the app WORKS *and* looks right).**
+  Replaced FACTORY_STANDARD §6's "SEE WHAT THE USER SEES" paragraph (verbatim) so the vision-capable judge reviews each
+  journey screenshot on TWO axes: (1) FUNCTIONAL REALITY — does the screen VISIBLY show the intended outcome (a populated
+  working screen / the REAL produced artifact / correct data-state), catching a visibly wrong/empty/placeholder/spinner/
+  broken/dead-end result the DOM "passed" over; and (2) DESIGN — on-brand, clears the VISION bar (not blank/broken/
+  overlapping/unstyled/vibe-coded). A FAIL on EITHER axis is release-blocking even if DOM assertions pass. Now captures at
+  every page AND every key STEP of every end-to-end journey, mobile + desktop widths. Sharpened ROADMAP F6 DoD to BOTH:
+  (1) ARTIFACTS — committed NON-ZERO screenshot for every route/state + every journey STEP (web Playwright →
+  apps/web/e2e/__screenshots__/ at mobile+desktop; screenshot the CORE-PRODUCT OUTPUT — rendered pantry/dashboard,
+  cook-suggestion, parsed-receipt→pantry, paywall — so the judge sees the real deliverable); (2) DUAL-AXIS VISION VERDICT —
+  the deep audit + readiness gate OPEN each image and RECORD a per-screenshot FUNCTIONAL + DESIGN verdict (loop-memory for
+  the audit, readiness-issue evidence for the gate); capture-and-forget does NOT satisfy it. Added a preflight honest-tick
+  guard: F6 [x] but <5 non-zero images in apps/web/e2e/__screenshots__/ → FAIL; no-op while [ ] (verified no-op now).
+  BUILD ORDER: this harness is captured BY the functional journey suite, so it comes AFTER that suite is wired — harden the
+  spec + gate now (this change), build the capture/vision code when F6 is reached; the guard keeps the tick honest.

@@ -490,6 +490,25 @@ else
   fail "side-effect round-trip NOT verified (ROADMAP F4.1): stand up an email capture (Mailpit/Mailhog or provider sandbox + fetch API) and prove confirmation/reset emails actually LEAVE + complete the flow. A 'sent' the user can't verify is a LIE — FACTORY_STANDARD §6"
 fi
 
+# ── Visual-verification honest-tick guard (ROADMAP F6 — FACTORY_STANDARD §6) ──
+# If F6 is ticked [x], there MUST be a real, committed set of non-zero journey screenshots to judge —
+# otherwise the dual-axis vision verdict is a fake tick. No-op while F6 is [ ] so it never blocks
+# current runs. (Completeness "every step" + the FUNCTIONAL/DESIGN verdict are enforced by the deep
+# audit + readiness auditors; this guard just kills the egregious capture-and-forget / empty-dir tick.)
+section "Visual verification — honest-tick guard (ROADMAP F6, dual-axis)"
+F6_LINE="$(grep -nE '^- \[.\] \*\*F6\. Visual-verification' "$ROOT/ROADMAP.md" | head -1)"
+SHOTDIR="$ROOT/apps/web/e2e/__screenshots__"
+if printf '%s' "$F6_LINE" | grep -q '\[x\]'; then
+  NSHOTS="$(find "$SHOTDIR" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) -size +0c 2>/dev/null | wc -l | tr -d ' ')"
+  if [ "${NSHOTS:-0}" -ge 5 ]; then
+    pass "visual-verification (F6) ticked + ${NSHOTS} committed non-zero screenshots in apps/web/e2e/__screenshots__/"
+  else
+    fail "visual-verification (F6) is [x] but only ${NSHOTS:-0} non-zero screenshots in apps/web/e2e/__screenshots__/ (<5) — FAKE TICK. Capture real per-step journey screenshots (FACTORY_STANDARD §6) + record the dual-axis vision verdict, or un-tick F6"
+  fi
+else
+  pass "visual-verification (F6) not yet ticked — honest-tick guard is a no-op (does not block current runs)"
+fi
+
 # ── Definition-of-Done checkboxes all ticked (the source of truth) ──
 section "Definition of Done — every box ticked"
 DOD_SECTION="$(awk '/^## DEFINITION OF DONE/{f=1;next} /^## /{if(f)f=0} f' ROADMAP.md)"

@@ -322,16 +322,35 @@ mechanical gate, not a vibe.
       `docs/autonomous-loop/LOOP_MEMORY.md`, with top findings turned into value-bar-clearing work.
       Runs ~once/day (see the routine's PERIODIC DEEP AUDIT section).
       _(Deep audit 2026-06-25: 3 critical bugs fixed — PRs #119 #120 #121; lessons recorded)_
-- [ ] **F6. Visual-verification ARTIFACTS for the journey suite** — FACTORY_STANDARD §6/§7/§10 now
-      require the deep audit + readiness gate to VISUALLY review a screenshot of every page and key
-      state (empty / loading / error, authed + logged-out), with a blank/broken/overlapping/
-      unstyled/off-brand/"vibe-coded" page treated as a release-blocking FAIL. The product side does
-      not capture those artifacts yet (`apps/web/e2e/journeys.spec.ts` has none; `playwright.config.ts`
-      sets only `trace`). Build it: **web** — `page.screenshot()` at each page + state into a committed,
-      deterministically-named `apps/web/e2e/__screenshots__/` dir; **mobile** — component snapshots for
-      the parallel screens. Then wire "visually review the journey screenshots" into the deep-audit +
-      readiness lenses so the standard's mandate has real artifacts to judge (not just config). Keep
-      this product/ROADMAP work — do NOT add it to the byte-identical `FACTORY_STANDARD.md`.
+- [ ] **F6. Visual-verification ARTIFACTS + DUAL-AXIS vision verdict (functional AND design)** —
+      FACTORY_STANDARD §6/§7/§10 require the deep audit + readiness gate to VISUALLY review the journey
+      screenshots on TWO axes — (1) **FUNCTIONAL REALITY** (does the screen visibly show the INTENDED
+      OUTCOME — a populated working screen, the REAL produced artifact, the correct data/state — not a
+      placeholder/blank/spinner/broken-image/wrong-data/dead-end the DOM "passed" over) and (2)
+      **DESIGN** (intentional, on-brand, clears the VISION bar — not blank/broken/overlapping/unstyled/
+      off-brand/"vibe-coded"). A FAIL on EITHER axis is release-blocking even if DOM assertions pass.
+      This is captured BY the functional journey suite, so it comes **AFTER** that suite is wired
+      (functional correctness first) — harden the spec + gate now, build the capture/vision code when
+      this item is reached. DoD (both required):
+      - **(1) ARTIFACTS** — a real, committed, NON-ZERO screenshot for EVERY route/state AND every key
+        journey STEP in `apps/web/e2e/ROUTE_INVENTORY.md`, captured BY the suite (**web**:
+        `page.screenshot()` into `apps/web/e2e/__screenshots__/` with screenshot capture enabled in
+        `apps/web/playwright.config.ts`; **mobile**: committed Expo component/snapshot images), at
+        **mobile + desktop** widths — never placeholders/0-byte. Crucially, screenshot the **core-product
+        OUTPUT** (the actual generated artifact — the rendered pantry/dashboard, the cook-suggestion
+        result, the parsed-receipt → pantry result, the paywall) so the judge sees whether the real
+        deliverable looks correct, not just that a page loaded.
+      - **(2) DUAL-AXIS VISION VERDICT** — the deep-audit lens AND the readiness gate actually OPEN each
+        image on the vision-capable model and RECORD a per-screenshot verdict on BOTH axes: FUNCTIONAL
+        (intended-outcome-visible / wrong / empty / placeholder / broken / dead-end) AND DESIGN (pass /
+        blank / broken / overlapping / unstyled / off-brand) — in `docs/autonomous-loop/LOOP_MEMORY.md`
+        for the deep audit and in the readiness-issue evidence for the gate. A FAIL on EITHER axis is
+        release-blocking even if DOM assertions pass. **Capture-and-forget (screenshots with no recorded
+        verdict) does NOT satisfy this item.**
+      Keep this product/ROADMAP work — do NOT add it to the byte-identical `FACTORY_STANDARD.md`. A
+      preflight honest-tick guard (`scripts/preflight.sh`) fails the gate if this box is `[x]` but
+      `apps/web/e2e/__screenshots__/` has fewer than 5 non-zero images (completeness + the dual-axis
+      verdict are enforced by the deep audit + readiness auditors; the guard just kills the fake-tick).
 
 > **Track F evidence (2026-06-25):** F1 `apps/web/eslint.config.mjs` (`--max-warnings=0`, PR #122);
 > F2 `packages/core/vitest.config.ts` coverage thresholds (PR #123); F3 `scripts/run-evals.sh`
