@@ -227,4 +227,20 @@ describe("LLM call timeout (self-bounds a slow/stalled key)", () => {
     (client as any).ai = { models: { generateContent: async () => ({ text: '{"ok":true}' }) } };
     await expect(client.generateStructured(z.object({ ok: z.boolean() }), "hi")).resolves.toEqual({ ok: true });
   });
+
+  it("runChatWithTools rejects with a timeout when the model call stalls (the `ask` agentic loop — its priciest surface)", async () => {
+    const client = new GeminiClient(envFast);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (client as any).ai = { models: { generateContent: () => new Promise(() => {}) } }; // never settles
+    await expect(
+      client.runChatWithTools({ messages: [{ role: "user", content: "hi" }], tools: [], ctx }),
+    ).rejects.toThrow(/timeout/i);
+  });
+
+  it("embed rejects with a timeout when the embedding call stalls (receipt-ingestion semantic match)", async () => {
+    const client = new GeminiClient(envFast);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (client as any).ai = { models: { embedContent: () => new Promise(() => {}) } }; // never settles
+    await expect(client.embed("milk")).rejects.toThrow(/timeout/i);
+  });
 });
