@@ -507,9 +507,20 @@ when a lever actually ships (never reverse-engineered to hit a number). Ordered 
       `premium_family` tier exists in billing config but the case banks ZERO Family adoption. Make it visible
       (upgrade page comparison, an onboarding "cook together" moment) so blended ARPU can lift. Adoption % must
       be left to live experiment data — do NOT assume a % to clear the floor.
-- [ ] **H13. Referral-reward loop (recurring-use viral lever).** The `?ref=` attribution loop exists but has
+- [x] **H13. Referral-reward loop (recurring-use viral lever).** The `?ref=` attribution loop exists but has
       NO incentive. Add earned rewards (e.g. a free month / credit at referral milestones) keyed to a new
       `referral_credits` table (RLS tenant-isolation); show perks on `/upgrade` + `/invite`. Margin-bounded.
+      _Done (run 22, PR #217): pure milestone ladder `@gm/core/referral/rewards` (1 friend→1mo, 3→3mo,
+      5→6mo, capped at `MAX_REWARD_MONTHS`=6; `earnedRewardMonths`/`referralProgress`/`referralBonusTrialDays`;
+      12 tests, 100% cov). New `referral_credits` table (`0018_referral_credits.sql`) with RLS tenant-isolation
+      (grocery_app + `app_current_user_id()`) + explicit GRANT; `grantReferralCredits` idempotent on
+      (user_id, reason) + `sumReferralCreditMonths`. `@gm/db` stays free of `@gm/core` (caller resolves the
+      ladder via `apps/web/app/lib/referral.ts`). Earned months redeem as bonus free-trial days at the user's
+      FIRST Stripe checkout (one-time via `isTrialEligible`). Surfaced on `/invite` (progress ladder + earned
+      months) + `/upgrade` (conversion banner). Honest side-effects (credits persist + extend the trial; copy
+      matches). NO adoption % banked — business case left unmoved pending live data. Gate: typecheck + 639
+      core tests + prod build clean; 2 Sonnet reviewers (A's GRANT blocker fixed, B approved). Migration is
+      human-applied — see PENDING_OPS._
 - [ ] **H14. Month-3 annual-conversion nudge (ARPU shift, zero CAC).** A lifecycle email + in-app prompt that
       offers monthly subscribers the annual rate at the renewal-salient moment, gated by the H10 experiment
       engine so the messaging is A/B-measured, never assumed.

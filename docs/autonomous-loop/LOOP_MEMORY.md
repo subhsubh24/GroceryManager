@@ -502,3 +502,33 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   needs a loop (email/SMS send, notification sender, share backend, checkout, an emitted trade confirmation), either
   BUILD+PROVE the loop or DON'T gate the flow on it — decide explicitly up front and record the call; a gate on an
   unbuilt loop is the worst kind of failure because it's self-inflicted by a decision.
+
+- **2026-06-28 (run 22) — H13 referral-reward loop shipped (weak-case loop-back: the first of the named
+  revenue levers built).** DEEP AUDIT: not due (run 21's folded deep-audit sweep was 2026-06-28, within
+  24h) → went straight to the lowest incomplete gate. The binding constraint is the below-floor business
+  case (honest median ~$33K), and the ROADMAP's "Revenue levers to BUILD" names H12–H15 as buildable
+  value-bar-clearing levers that re-open building. Selected **H13** (referral-reward loop) as the highest-ROI
+  clean, self-contained lever: the `?ref=` attribution loop already existed but had NO incentive, so nothing
+  drove referrals. Shipped (PR #217, gate-green + 2 Sonnet reviewers, auto-merged):
+  - Pure milestone ladder `@gm/core/referral/rewards` (1 friend→1mo, 3→3mo, 5→6mo; INCREMENTAL months sum
+    to a hard `MAX_REWARD_MONTHS`=6 ceiling; `earnedRewardMonths`/`referralProgress`/`referralBonusTrialDays`;
+    12 tests, 100% cov).
+  - New `referral_credits` table (`0018_referral_credits.sql`): RLS tenant-isolation (grocery_app +
+    `app_current_user_id()`) + explicit GRANT (mirrors 0017). `grantReferralCredits` idempotent on
+    (user_id, reason); `sumReferralCreditMonths`. Wired into migrate.ts + schema.ts.
+  - `@gm/db` stays free of `@gm/core` (forbidden cycle) — the caller (`apps/web/app/lib/referral.ts`)
+    resolves the ladder and passes (months, reason) grants down. Reconcile-on-read is idempotent.
+  - Redemption is REAL + honest (side-effect integrity): earned months convert to bonus free-trial days at
+    the user's FIRST Stripe checkout (intrinsically one-time via `isTrialEligible`, best-effort/never blocks
+    checkout). Copy on `/invite` (progress ladder + earned months) + `/upgrade` (conversion banner) matches
+    the behavior — credits persist AND do work; nothing overpromises.
+  - NO adoption % banked — the business case median is deliberately UNMOVED; referral-driven install +
+    conversion lift is left to live experiment data (anti-gaming). BUSINESS_CASE lever #3 records the build.
+  REVIEW LESSON: Reviewer A's one blocker was a missing explicit `GRANT ... TO grocery_app` on the new table.
+  0002's `ALTER DEFAULT PRIVILEGES` normally covers same-owner tables (0011/0012 ship without explicit grants
+  and work), but the NEWEST table migration (0017) established the explicit-GRANT convention as defense-in-
+  depth against the migration running as a different role — mirror the latest convention for new tables.
+  CONVERGENCE CALL: shipped ONE excellent, fully-verified lever rather than rushing H14/H15 (lifecycle emails
+  — a comparable-size subsystem needing audience queries + cron + experiment gating + templates). Per
+  coherence-over-churn + the value bar, a quiet coherent run that advances the binding constraint is the
+  right outcome; H14/H15/H11 remain for the next run.

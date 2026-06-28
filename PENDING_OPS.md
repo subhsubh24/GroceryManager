@@ -105,6 +105,13 @@ OWNER_ACTIONS:
       why: "The in-app waitlist analytics (`/admin/waitlist`, the Growth Agent's real signup source) needs the table + UTM + content-schedule + double-opt-in columns, plus the admin email for `/admin/*` + `GET /api/growth/snapshot`. Migration 0016 enables RLS on `waitlist_submissions` + `content_schedule` — without it, on a Supabase/PostgREST deployment the anon key could read every waitlist email (PII). Migration 0017 adds the H10 experiment tables (`experiment_exposures` + `experiment_conversions`, RLS tenant-isolation + GRANTs) — without it the experiment engine logs nothing (it degrades gracefully via `getExperimentStats`). Apply before the public waitlist + experiments go live."
       how: "Run `pnpm --filter @gm/db db:migrate` (idempotent; applies 0012 waitlist, 0013 UTM, 0014 content_schedule, 0015 confirmed_at, 0016 RLS on the two admin growth tables, 0017 experiment exposure/conversion tables); set ADMIN_EMAIL in Vercel env (see prose entry below)."
       blocks: growth-analytics
+    - id: referral-credits-migration
+      title: Apply migration 0018 (referral_credits) — H13 referral rewards
+      priority: high
+      status: open
+      why: "H13 (referral-reward loop, PR #217) persists earned free months in `referral_credits` (RLS tenant-isolation, grocery_app + app_current_user_id() + explicit GRANT). Without the table, `/invite` + `/upgrade` reconcile/read fails closed (resilient catch → zeroed rewards shown) and the bonus-trial-days redemption at Stripe checkout is skipped — the lever is inert until applied. Apply before referral rewards go live."
+      how: "Run `pnpm --filter @gm/db db:migrate` (idempotent; applies 0018_referral_credits.sql). No new env vars — the bonus rides the existing STRIPE_PRICE_* + checkout flow. Verify: `SELECT * FROM referral_credits LIMIT 1;` returns an empty result (table exists); after a milestone is reached a row appears keyed by (user_id, reason='milestone_N')."
+      blocks: none
     - id: experiment-secret
       title: (Optional) set EXPERIMENT_SECRET for A/B variant bucketing
       priority: low
