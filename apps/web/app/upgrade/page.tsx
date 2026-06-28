@@ -1,4 +1,4 @@
-import { getDb, loadPreferenceSignals, withTenant } from "@gm/db";
+import { getDb, householdsEnabled, loadPreferenceSignals, withTenant } from "@gm/db";
 import { isPremium, PREMIUM_PERKS } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
 import { reconcileReferralRewards } from "@/app/lib/referral";
@@ -34,6 +34,15 @@ export default async function UpgradePage({
   const params = await searchParams;
   const success = params.success === "1";
   const canceled = params.canceled === "1";
+
+  // Store-acceptance honesty (Apple 2.3.1 / Google accurate-listing): only advertise household
+  // sharing + the Family tier when the feature is actually live (FEATURE_HOUSEHOLDS). When it's
+  // dark, drop the "Household sharing" perk and the Family card so the paywall never sells a
+  // feature a new user can't reach. The feature ships ready; the owner flips the flag at launch.
+  const householdsLive = householdsEnabled();
+  const perks = householdsLive
+    ? PREMIUM_PERKS
+    : PREMIUM_PERKS.filter((p) => p.feature !== "household");
 
   return (
     <main className="page">
@@ -82,7 +91,7 @@ export default async function UpgradePage({
       )}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        {PREMIUM_PERKS.map((p) => (
+        {perks.map((p) => (
           <div key={p.feature} className="card-pad">
             <h2 className="section-title">{p.title}</h2>
             <p className="mt-1.5 text-sm leading-relaxed text-ink-500">{p.blurb}</p>
@@ -92,7 +101,7 @@ export default async function UpgradePage({
 
       {!premium && (
         <section className="mt-6">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className={`grid gap-4 ${householdsLive ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
             {/* Monthly card */}
             <div className="card-pad">
               <p className="font-semibold">Premium Monthly</p>
@@ -140,32 +149,34 @@ export default async function UpgradePage({
                 </button>
               )}
             </div>
-            {/* Family card */}
-            <div className="card-pad">
-              <div className="flex items-start justify-between">
-                <p className="font-semibold">Family Plan</p>
-                <span className="pill-success">
-                  Best for families
-                </span>
-              </div>
-              <p className="mt-1 text-2xl font-bold tracking-tight">
-                $9.99
-                <span className="text-sm font-normal text-ink-500"> / month</span>
-              </p>
-              <p className="mt-0.5 text-sm text-ink-400">or $79.99/yr · 7-day free trial · up to 5 members</p>
-              {billingOn ? (
-                <div className="mt-4">
-                  <CheckoutButton plan="family" label="Start free trial" />
+            {/* Family card — only when household sharing (its core value prop) is actually live. */}
+            {householdsLive && (
+              <div className="card-pad">
+                <div className="flex items-start justify-between">
+                  <p className="font-semibold">Family Plan</p>
+                  <span className="pill-success">
+                    Best for families
+                  </span>
                 </div>
-              ) : (
-                <button
-                  disabled
-                  className="btn-primary mt-4 w-full cursor-not-allowed opacity-60"
-                >
-                  Coming soon
-                </button>
-              )}
-            </div>
+                <p className="mt-1 text-2xl font-bold tracking-tight">
+                  $9.99
+                  <span className="text-sm font-normal text-ink-500"> / month</span>
+                </p>
+                <p className="mt-0.5 text-sm text-ink-400">or $79.99/yr · 7-day free trial · up to 5 members</p>
+                {billingOn ? (
+                  <div className="mt-4">
+                    <CheckoutButton plan="family" label="Start free trial" />
+                  </div>
+                ) : (
+                  <button
+                    disabled
+                    className="btn-primary mt-4 w-full cursor-not-allowed opacity-60"
+                  >
+                    Coming soon
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           {!billingOn && (
             <div className="mt-4">
