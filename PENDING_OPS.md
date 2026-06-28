@@ -22,9 +22,9 @@ OWNER_ACTIONS:
       how: "In Vercel project env, set DIRECT_DATABASE_URL to the Supabase OWNER connection (port 5432, role postgres) — Supabase dashboard → Connect → Session pooler. Format: postgres://postgres.ycvgsslzmzgoatwlniwf:<DB_PASSWORD>@aws-0-<region>.pooler.supabase.com:5432/postgres (password + region from that panel; never commit it). Leave DATABASE_URL as-is (the grocery_app/pooler URL — that's what makes RLS work). Redeploy. Then a fresh signup creates a user and lands on the dashboard; existing accounts can sign in. (Same var that `pnpm db:migrate` uses for the direct connection.)"
       blocks: launch-functional
     - id: enable-db-pitr-backups
-      title: "Enable Supabase PITR / daily backups FIRST (the recoverability net before auto-migrate)"
+      title: "Supabase daily backups confirmed ON (Pro, 7-day retention) — recoverability net for auto-migrate"
       priority: high
-      status: open
+      status: done
       why: "Auto-migrate-on-deploy (enable-auto-migrate-secret) removes the manual schema checkpoint — a migration that passes CI + the 2-reviewer/RLS review reaches prod with no human pause. The fresh-DB validation + review replace MOST of that safety, but a recoverability net is the backstop the manual step used to provide. Enable PITR/backups BEFORE turning on auto-migrate so any bad write is recoverable."
       how: "Supabase dashboard → Database → Backups: confirm daily backups are on (Pro plan) and/or enable Point-in-Time Recovery (PITR add-on) for the prod project. Then proceed with enable-auto-migrate-secret. Forward-only migrations + PITR = the conscious tradeoff for zero recurring `db push` work."
       blocks: none
