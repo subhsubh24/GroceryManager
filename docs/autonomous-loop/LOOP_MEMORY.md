@@ -489,3 +489,16 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   done" must be causally downstream of the real op; a graceful try/catch that swallows the failure and still returns
   success is the bug. Generalizes to any side-effect (trading "order placed", job "submitted") — prove the effect, not
   the message.
+- **2026-06-28 — DECISION COROLLARY: never gate on a dependency loop that doesn't exist (audited; GM clean).**
+  A sibling product dead-ended every new user: signup required email verification ("Check your email") but no email
+  send was wired — the bug-under-the-bug was a DECISION (introducing a hard gate whose loop was never built). Adopted
+  the standing rule in FACTORY_STANDARD §6 verbatim (DECISION COROLLARY: wire the dependency and prove the loop
+  end-to-end, OR don't gate on it — a gate on an unbuilt loop is a self-inflicted outage, worse than a bug because it
+  was chosen). AUDITED GroceryManager's auth: NO email-verification gate on signup (username+password → immediate
+  sign-in → /onboarding), no reset/forgot/verify route, no "check your email" anywhere outside the waitlist (which was
+  made honest last run). So the correct call ("don't gate on the unbuilt loop") was already the design — recorded the
+  decision in PENDING_OPS (re-enable verification ONLY with a real provider + the F4.1 round-trip test). Added a journey
+  assertion (`VERIFY_DEADEND`) so a future "check your email" wall on signup fails the suite. LESSON: when a feature
+  needs a loop (email/SMS send, notification sender, share backend, checkout, an emitted trade confirmation), either
+  BUILD+PROVE the loop or DON'T gate the flow on it — decide explicitly up front and record the call; a gate on an
+  unbuilt loop is the worst kind of failure because it's self-inflicted by a decision.
