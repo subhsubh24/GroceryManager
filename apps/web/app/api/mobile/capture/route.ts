@@ -2,6 +2,7 @@ import { getDb, withTenant } from "@gm/db";
 import { captureToList, parseQuickCapture } from "@gm/core/capture";
 import { verifyMobileToken } from "../_lib";
 import { parseJsonBody, serverError } from "../../_lib/guard";
+import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,9 @@ export async function POST(req: Request) {
   if (!userId) {
     return Response.json({ error: "Invalid or expired token" }, { status: 401 });
   }
+
+  const rl = rateLimit(`capture-write:${userId}`, 20, 60_000);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   const bodyOrErr = await parseJsonBody<{ text?: string }>(req);
   if (bodyOrErr instanceof Response) return bodyOrErr;

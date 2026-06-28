@@ -1,6 +1,7 @@
 import { getAdminDb, getDb, getUserById, loadPreferenceSignals, withTenant } from "@gm/db";
 import { getCurrentSubscriptionTier, type SubscriptionTier } from "@gm/core/billing";
 import { verifyMobileToken } from "../_lib";
+import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -15,6 +16,9 @@ export async function GET(req: Request) {
   if (!userId) {
     return Response.json({ error: "Invalid or expired token" }, { status: 401 });
   }
+
+  const rl = rateLimit(`profile-read:${userId}`, 60, 60_000);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   // User row (admin scope — reading own row by verified userId)
   const user = await getUserById(getAdminDb(), userId);

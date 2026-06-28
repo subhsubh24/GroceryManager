@@ -1,5 +1,6 @@
 import { deregisterMobilePushToken, getDb, registerMobilePushToken, withTenant } from "@gm/db";
 import { verifyMobileToken } from "../_lib";
+import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -13,6 +14,9 @@ function extractUserId(req: Request): string | null {
 export async function POST(req: Request) {
   const userId = extractUserId(req);
   if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  const rl = rateLimit(`push-token-write:${userId}`, 30, 60_000);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   let body: unknown;
   try {
@@ -53,6 +57,9 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   const userId = extractUserId(req);
   if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  const rl = rateLimit(`push-token-delete:${userId}`, 30, 60_000);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   let body: unknown;
   try {

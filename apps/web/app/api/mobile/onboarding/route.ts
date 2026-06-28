@@ -16,6 +16,7 @@ import {
 } from "@gm/core/personalization";
 import { verifyMobileToken } from "../_lib";
 import { parseJsonBody } from "../../_lib/guard";
+import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -33,6 +34,9 @@ export async function GET(req: Request) {
   if (guard instanceof Response) return guard;
   const { userId } = guard;
 
+  const rl = rateLimit(`onboarding-read:${userId}`, 60, 60_000);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
+
   const onboarded = await withTenant(getDb(), userId, (tx) => isOnboarded(tx, userId));
   return Response.json({ onboarded });
 }
@@ -41,6 +45,9 @@ export async function POST(req: Request) {
   const guard = authGuard(req);
   if (guard instanceof Response) return guard;
   const { userId } = guard;
+
+  const rl = rateLimit(`onboarding-write:${userId}`, 30, 60_000);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   const bodyOrErr = await parseJsonBody<Record<string, unknown>>(req);
   if (bodyOrErr instanceof Response) return bodyOrErr;
