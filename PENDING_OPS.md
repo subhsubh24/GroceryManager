@@ -21,6 +21,13 @@ OWNER_ACTIONS:
       why: "ROOT CAUSE of 'Couldn't load your dashboard' on signup/signin (proven against prod via the Supabase MCP). The `users` table has RLS enabled (policy `tenant_isolation: id = app_current_user_id()`, scoped to the `grocery_app` role); the table owner `postgres` bypasses RLS (FORCE RLS is off). `getAdminDb()` = createDb(DIRECT_DATABASE_URL ?? DATABASE_URL) and it does BOTH signup's user INSERT and signin's username lookup. DIRECT_DATABASE_URL is `.optional()`, so when it's unset in prod, getAdminDb silently falls back to the RLS-restricted DATABASE_URL (grocery_app) — which has no tenant session, so the users read/insert are DENIED. Result: signin + signup both fail and NO user row is ever created (verified: newest user stuck at 2026-06-23; a direct INSERT under an RLS-bypassing/owner connection succeeds). This is a deployment-config gap, not a code bug."
       how: "In Vercel project env, set DIRECT_DATABASE_URL to the Supabase OWNER connection (port 5432, role postgres) — Supabase dashboard → Connect → Session pooler. Format: postgres://postgres.ycvgsslzmzgoatwlniwf:<DB_PASSWORD>@aws-0-<region>.pooler.supabase.com:5432/postgres (password + region from that panel; never commit it). Leave DATABASE_URL as-is (the grocery_app/pooler URL — that's what makes RLS work). Redeploy. Then a fresh signup creates a user and lands on the dashboard; existing accounts can sign in. (Same var that `pnpm db:migrate` uses for the direct connection.)"
       blocks: launch-functional
+    - id: enable-auto-migrate-secret
+      title: "Add GitHub Actions secret PROD_DIRECT_DATABASE_URL → migrations then auto-apply on every deploy (one-time, kills schema drift)"
+      priority: high
+      status: open
+      why: "Schema drift (the loop adds a migration, a human forgets to run it against prod) was the ROOT cause of the signup/onboarding outage. The CI `migrate-prod` job now auto-applies the full chain to prod on every push to main — but ONLY after the build + fresh-DB migration validation pass, and only once it has the prod owner connection as a secret. Without the secret it warns + skips (never blocks). All migrations 0011–0019 are ALREADY applied to prod (via MCP); this makes every FUTURE migration apply itself."
+      how: "GitHub repo → Settings → Secrets and variables → Actions → New repository secret: name PROD_DIRECT_DATABASE_URL, value = the Supabase OWNER/DIRECT connection (Connect → Session pooler, port 5432, role postgres — the SAME string you set as Vercel's DIRECT_DATABASE_URL). Never commit it. After that, migrations apply automatically on merge to main (idempotent; safe no-op when already applied)."
+      blocks: none
     - id: eas-build-submit-go-live
       title: EAS project + store/signing creds + the actual build & submit (Human-Core)
       priority: high
@@ -99,7 +106,7 @@ OWNER_ACTIONS:
       how: Add `pnpm --filter web lint` and the E2E job to .github/workflows/ci.yml (see prose entry below).
       blocks: none
     - id: waitlist-migration
-      title: Apply waitlist/growth migrations 0012–0017 + set ADMIN_EMAIL
+      title: "Set ADMIN_EMAIL in Vercel (waitlist/growth migrations 0012–0017 already APPLIED to prod via MCP)"
       priority: high
       status: open
       why: "The in-app waitlist analytics (`/admin/waitlist`, the Growth Agent's real signup source) needs the table + UTM + content-schedule + double-opt-in columns, plus the admin email for `/admin/*` + `GET /api/growth/snapshot`. Migration 0016 enables RLS on `waitlist_submissions` + `content_schedule` — without it, on a Supabase/PostgREST deployment the anon key could read every waitlist email (PII). Migration 0017 adds the H10 experiment tables (`experiment_exposures` + `experiment_conversions`, RLS tenant-isolation + GRANTs) — without it the experiment engine logs nothing (it degrades gracefully via `getExperimentStats`). Apply before the public waitlist + experiments go live."
@@ -108,12 +115,12 @@ OWNER_ACTIONS:
     - id: referral-credits-migration
       title: Apply migration 0018 (referral_credits) — H13 referral rewards
       priority: high
-      status: open
+      status: done
       why: "H13 (referral-reward loop, PR #217) persists earned free months in `referral_credits` (RLS tenant-isolation, grocery_app + app_current_user_id() + explicit GRANT). Without the table, `/invite` + `/upgrade` reconcile/read fails closed (resilient catch → zeroed rewards shown) and the bonus-trial-days redemption at Stripe checkout is skipped — the lever is inert until applied. Apply before referral rewards go live."
       how: "Run `pnpm --filter @gm/db db:migrate` (idempotent; applies 0018_referral_credits.sql). No new env vars — the bonus rides the existing STRIPE_PRICE_* + checkout flow. Verify: `SELECT * FROM referral_credits LIMIT 1;` returns an empty result (table exists); after a milestone is reached a row appears keyed by (user_id, reason='milestone_N')."
       blocks: none
     - id: lifecycle-email-migration
-      title: Apply migration 0019 (lifecycle_email_sends) + schedule the H14/H15 lifecycle crons
+      title: "Schedule H14/H15 lifecycle crons + email provider key (migration 0019 already APPLIED to prod via MCP)"
       priority: high
       status: open
       why: "H14 (month-3 annual nudge) + H15 (win-back), PR #221, persist one row per (user, campaign) in `lifecycle_email_sends` (RLS tenant-isolation, grocery_app + app_current_user_id() + explicit GRANT) so a user is never re-emailed for the same campaign. Without the table the cron INSERT fails (best-effort catch → the campaign would re-send each run once a provider is connected). The campaigns also stay DORMANT until an email provider key is set (sends dry-run-skip + are NOT recorded — no fake success) AND the two cron routes are scheduled. No adoption % is banked in the business case — these are dormant infra until you connect + schedule them."
@@ -446,3 +453,19 @@ confirmation gate ONLY together with: (a) a real provider wired (`RESEND_API_KEY
 journey round-trip test (ROADMAP F4.1) proving the email is dispatched → received → link followed →
 flow completes. A new journey assertion (`VERIFY_DEADEND` in `apps/web/e2e/journeys.spec.ts`) now fails
 if signup ever shows a "check your email" dead-end, so this can't regress silently. **No owner action.**
+
+---
+
+## 2026-06-29 — Migrations 0011–0019 applied to prod + auto-migrate wired (schema drift killed)
+
+All migrations are now applied to the production DB (verified via the Supabase MCP): 0011 push_tokens,
+0012–0017 (waitlist/UTM/content/confirm/RLS/experiments), 0018 referral_credits, 0019
+lifecycle_email_sends — every table present with RLS on; security advisor clean of new issues.
+
+Going forward, the `migrate-prod` CI job (`.github/workflows/ci.yml`) **auto-applies the full chain to
+prod on every push to `main`** — but only AFTER `verify` (build green) + `migrate` (the chain validated
+against a fresh throwaway DB) pass, so a bad migration never reaches prod. Migrations are idempotent, so
+it's a safe no-op when already applied. **One-time owner step to enable it:** add the GitHub Actions
+secret `PROD_DIRECT_DATABASE_URL` (the Supabase owner/direct connection — same value as Vercel's
+`DIRECT_DATABASE_URL`). Until then the job warns + skips (never blocks). See the `enable-auto-migrate-secret`
+OWNER_ACTIONS item. This removes the human-applies-migrations step that caused the signup outage.
