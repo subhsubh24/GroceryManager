@@ -112,3 +112,91 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gm
           DIRECT_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gm
+
+  # Lint gate (F1) — eslint --max-warnings=0 on apps/web. Deterministic; safe to require.
+  lint:
+    name: lint (web, zero warnings)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm --filter @gm/web lint
+
+  # Functional E2E journeys (BUILDS != WORKS) — build the app, migrate a throwaway Postgres, start the
+  # app, and replay the outcome-asserting user journeys (signup -> working dashboard, never an error
+  # screen; every nav target resolves). The suite SELF-SEEDS via real signup, so it just needs a
+  # migrated DB + the app running with DIRECT_DATABASE_URL set (the prod-outage lesson). Captcha fails
+  # open without a Turnstile key, so signup works in CI. NOTE: NON-required initially — flip it to a
+  # required status check in branch protection once proven green, so a build-but-broken flow can't auto-merge.
+  e2e:
+    name: e2e functional journeys (BUILDS != WORKS)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: gm
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      # CI uses the owner role for both connections (RLS is exercised separately by the `migrate` job
+      # + the readiness gate); DIRECT_DATABASE_URL MUST be set or signup fails (the prod lesson).
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gm
+      DIRECT_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gm
+      AUTH_SECRET: ci-e2e-not-a-real-secret-000000000000000000
+      NEXTAUTH_SECRET: ci-e2e-not-a-real-secret-000000000000000000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Migrate (fresh DB — full chain)
+        run: pnpm --filter @gm/db exec tsx src/migrate.ts
+      - name: Install Playwright Chromium
+        run: pnpm --filter @gm/web exec playwright install --with-deps chromium
+      - name: Build web
+        run: pnpm --filter @gm/web build
+      - name: Start web + wait for it
+        run: |
+          pnpm --filter @gm/web exec next start -p 3000 > /tmp/next.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:3000 >/dev/null 2>&1; then echo "server up"; exit 0; fi
+            sleep 2
+          done
+          echo "::error::web server did not come up on :3000"; cat /tmp/next.log; exit 1
+      - name: Run functional journeys
+        run: pnpm --filter @gm/web e2e journeys
+        env:
+          BASE_URL: http://localhost:3000
+          CI: "true"
+      - name: Upload E2E artifacts (screenshots/traces)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-artifacts
+          path: |
+            apps/web/test-results
+            apps/web/e2e/__screenshots__
+          if-no-files-found: ignore
