@@ -669,3 +669,14 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   red gate (don't hand the loop a broken/flaky required check); (c) wiring functional E2E in CI surfaces env-config bugs
   (auth trust-host, rate-limit-per-IP) that single-run local tests never hit. F6 dual-axis visual extends the same e2e
   job when built.
+- **2026-06-29 — deploy-time automation reference doc + the auto-migrate recoverability rail (Part A/B follow-up).**
+  GroceryManager already has Part A (required lint + e2e functional-journey CI checks — #234, verified green before
+  marking required, with AUTH_TRUST_HOST + the RATE_LIMIT_DISABLED test-only bypass) and Part B (migrate-prod job —
+  #236, forward-only, default-branch + post-gate, gated on a secret) LIVE. This follow-up added the two pieces the
+  deploy-automation directive calls for that I'd skipped: (1) docs/ci/PROPOSED_CI.md — the canonical record of the LIVE
+  gate + auto-migrate jobs (with the two gotchas) + the required-checks list, doubling as the cross-factory reference
+  template; (2) the Part-B SAFETY RAIL I glossed: an OWNER_ACTION enable-db-pitr-backups (enable Supabase PITR/daily
+  backups FIRST as the recoverability net) + a stated TRADEOFF on enable-auto-migrate-secret (auto-migrate removes the
+  human schema checkpoint — the fresh-DB validation + 2-reviewer/RLS review + PITR are the conscious replacement).
+  LESSON: auto-applying migrations to prod is safe ONLY with the net in place — name the tradeoff and require backups
+  before the convenience, don't smuggle it in.
