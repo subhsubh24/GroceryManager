@@ -37,7 +37,8 @@
     "./growth/snapshot": "./src/growth/snapshot.ts",
     "./growth/optin": "./src/growth/optin.ts",
     "./growth/experiments": "./src/growth/experiments/index.ts",
-    "./growth/analytics": "./src/growth/analytics.ts"
+    "./growth/analytics": "./src/growth/analytics.ts",
+    "./security/site-gate": "./src/security/site-gate.ts"
   },
   "scripts": {
     "lint": "echo \"(lint) @gm/core\"",

@@ -45,6 +45,11 @@ GROWTH_STATUS:
   engine_pct: 100                # % of growth-execution engine pieces shipped — DERIVED from anchor files by preflight; NEVER hand-set
   channels_connected: []         # owner-authorized channels actually wired (e.g. [x, instagram, email])
   awaiting_connect: true         # true => agent only prepares creative; takes NO external action
+  site_gate_up: false            # HARD precondition for pre_launch execute-mode: true ONLY once the owner
+                                 #   has applied the pre-launch SITE GATE (SITE_GATE_PASSWORD set on the
+                                 #   deployment). While phase==pre_launch, the Growth Agent must NOT do
+                                 #   execute-mode public outreach unless this is true (see ANALYSIS_PLAYBOOK
+                                 #   marketing maturity gate). Lifts only at launch.
   sources:                       # per-source pull status (H7 snapshot): connected | awaiting_connect
     waitlist: awaiting_connect
     analytics: awaiting_connect

@@ -471,6 +471,21 @@ each platform's ToS.** This is how the app gets *tailored for success* with real
       computed server-side as AGGREGATES ONLY (no raw per-user event logs leave the server), admin/cron-gated,
       honest-null until present. Then the H9 `cohort_retention` block reports real curves and the Growth Agent
       can diagnose retention as the binding constraint on real data.
+- [x] **H13. Pre-launch SITE GATE (never expose a half-baked app).** Env-driven middleware: the gate is ON
+      whenever `SITE_GATE_PASSWORD` is set, password-protecting the deployed app but **EXEMPTING the public
+      marketing routes** (the waitlist / "coming soon" landing + its server action + `/api/waitlist/confirm`
+      + legal pages) so people can still join the waitlist. The exempt-route allowlist + gate logic ship in
+      code; the password **VALUE is human-applied** (`PENDING_OPS`: set `SITE_GATE_PASSWORD=deepster`
+      pre-launch; **UNSET it at launch** — every ship-critical `QUALITY_SCORECARD` dim `A`/`A+` + readiness —
+      to open the app). **Never commit the value.**
+      **🚫 BLOCKING:** pre-launch **execute-mode public outreach is FORBIDDEN until `GROWTH_STATUS.site_gate_up:
+      true`** (the Growth Agent's marketing maturity gate enforces this; `site_gate_up` flips true only once
+      the owner has applied the gate). Per-stack: GroceryManager gates the web app (waitlist/landing exempt);
+      mobile pre-launch goes via TestFlight / internal track.
+      _Done (run 22): pure decision logic `@gm/core/security/site-gate` (`isSiteGateExempt` + `siteGateDecision`
+      + constant-time compare; 33 tests, 100% cov); `apps/web/middleware.ts` runs the gate first (cookie via
+      `?gate=…`, 401 password-prompt page, waitlist link); `SITE_GATE_PASSWORD` added to env as a known optional
+      (read directly in edge middleware). Value is owner-applied — see `PENDING_OPS`._
 
 ### Revenue levers to BUILD (weak-case loop-back — honest median ~$33K is below the $100K floor)
 The monetization deep-audit (run 21) named specific, buildable, value-bar-clearing levers that would
