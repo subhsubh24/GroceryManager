@@ -2,17 +2,19 @@
 
 import { useState } from "react";
 import { Check } from "@/app/components/icons";
-import { submitWaitlistEmail } from "./waitlist-action";
+import { submitWaitlistEmail, type WaitlistResult } from "./waitlist-action";
 import { trackConversion } from "./experiment-action";
 import { trackEvent } from "@/app/lib/plausible";
 
 /**
- * Staged email capture for the landing page waitlist. Emails are sent server-side (logged to
- * stdout); see PENDING_OPS.md to wire up to ConvertKit / Mailchimp before launch.
+ * Staged email capture for the landing page waitlist. SIDE-EFFECT INTEGRITY (FACTORY_STANDARD §6):
+ * the success state is contingent on the REAL result — we show "you're on the list" only when the
+ * email was actually captured, and "check your email" only when a confirmation email truly left. A
+ * failed capture shows an honest error, never a fake success.
  */
 export function WaitlistForm() {
   const [email, setEmail] = useState("");
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState<WaitlistResult | null>(null);
   const [error, setError] = useState("");
 
   async function submit(e: React.FormEvent) {
@@ -22,18 +24,31 @@ export function WaitlistForm() {
       return;
     }
     setError("");
-    await submitWaitlistEmail(email);
-    // Track in Plausible (existing) + experiment engine (additive, best-effort).
+    let result: WaitlistResult;
+    try {
+      result = await submitWaitlistEmail(email);
+    } catch {
+      result = "error";
+    }
+
+    if (result === "error") {
+      // The email was NOT captured — never show a fake "you're on the list".
+      setError("Something went wrong — please try again in a moment.");
+      return;
+    }
+    // Only track a conversion on a real capture.
     trackEvent("waitlist_signup");
     void trackConversion("landing_hero", "waitlist_signup");
-    setDone(true);
+    setDone(result);
   }
 
   if (done) {
     return (
       <div className="flex items-center gap-2 text-sm font-medium text-brand-700">
         <Check className="h-5 w-5 shrink-0 text-brand-600" strokeWidth={2.5} />
-        You&apos;re on the list — we&apos;ll reach out when the app launches.
+        {done === "confirm_sent"
+          ? "Almost there — check your email to confirm your spot."
+          : "You’re on the list — we’ll reach out when the app launches."}
       </div>
     );
   }
