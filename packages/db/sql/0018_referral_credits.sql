@@ -23,3 +23,8 @@ CREATE POLICY referral_credits_tenant_isolation ON referral_credits
   TO grocery_app
   USING  (user_id = app_current_user_id())
   WITH CHECK (user_id = app_current_user_id());
+
+-- Explicit table grant for the app role (mirrors 0017). 0002 ALTER DEFAULT PRIVILEGES normally covers
+-- tables created by the same migration owner, but this makes the grant robust if the migration runs as a
+-- different role. Idempotent — GRANT is a no-op when already held.
+GRANT SELECT, INSERT, UPDATE, DELETE ON referral_credits TO grocery_app;
