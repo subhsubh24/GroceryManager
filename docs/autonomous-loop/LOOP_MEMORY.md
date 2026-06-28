@@ -471,3 +471,21 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   shorter than the function budget; a graceful try/catch is useless if the runtime kills the function first. Wrote the
   reusable method in `docs/autonomous-loop/DEEP_DIAGNOSIS.md` (observe-the-real-env → prove-the-hypothesis →
   find-the-uncaught-throw → verify-in-prod → fix-root-cause+fail-loud → peel-the-next-layer).
+- **2026-06-28 — SIDE-EFFECT INTEGRITY: a "success" the user can't verify is a LIE (canonical-sync + P0 fix).**
+  A sibling product shipped signup showing "confirmation email sent" while the provider was dry-run/unconfigured —
+  BUILDS≠WORKS missed it because it asserts on the SCREEN and email is a side-effect. Closed the blind spot here:
+  (1) FACTORY_STANDARD §6 gains the verbatim SIDE-EFFECT INTEGRITY paragraph (no fake success; verify the EFFECT
+  end-to-end in sandbox; narrow escape hatch = gate with honest messaging or PENDING_OPS, never a silent dead-end).
+  (2) ROADMAP BUILDS≠WORKS bullet + new enforced item F4.1 (email round-trip via Mailpit/sandbox: dispatch→retrieve
+  →follow link→confirmed; assert the provider client was invoked with the right recipient/payload; assert no success
+  state unless the op truly succeeded). (3) preflight gains a "Side-effect integrity" section: a regression guard
+  (waitlist must return a REAL result + the form branches on it) PASSES, and the F4.1 round-trip guard FAILS until
+  built (blocks readiness). P0 FIX: `submitWaitlistEmail` returned `void` on EVERY path and the form set success
+  UNCONDITIONALLY — so a failed capture (captcha/RLS/missing-table) or a skipped confirm-email (no provider key) still
+  showed "you're on the list." Now it returns `WaitlistResult` ("error" | "saved" | "confirm_sent"): success is shown
+  ONLY when the row was actually persisted, and "check your email" ONLY when the email truly left (sendEmail.sent ===
+  true); failure shows an honest error. Audited the rest — cookbook save is optimistic-WITH-rollback (reconciles to the
+  real DB state, honest) and profile redirects only on success (honest). LESSON: every user-facing "sent/saved/charged/
+  done" must be causally downstream of the real op; a graceful try/catch that swallows the failure and still returns
+  success is the bug. Generalizes to any side-effect (trading "order placed", job "submitted") — prove the effect, not
+  the message.

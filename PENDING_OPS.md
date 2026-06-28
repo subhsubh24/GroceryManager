@@ -399,3 +399,20 @@ ceiling (G7), but the real backstop is the provider dashboard. Set these IMMEDIA
 4. **Anthropic Console**: the spend cap on the factory routine itself (separate from app APIs).
 Verify: trigger a 50%-of-cap test alert and confirm it arrives. If a key is ever suspected exposed,
 regenerate it immediately in the provider dashboard and rotate the env var.
+
+---
+
+## 2026-06-28 — Side-effect round-trip test (ROADMAP F4.1) + waitlist email deliverability
+
+SIDE-EFFECT INTEGRITY (FACTORY_STANDARD §6) is now enforced. Two human-side notes:
+
+1. **F4.1 round-trip in CI (needs `.github/` — human only).** The factory will build an email-capture
+   round-trip in the journey suite (Mailpit/Mailhog or a provider sandbox + fetch API): signup/confirm/
+   reset → the real email is dispatched → retrieved → link followed → confirmed. Running it in CI needs
+   a workflow edit (the loop can't touch `.github/`). Until it runs green, preflight BLOCKS readiness
+   (the "side-effect round-trip NOT verified" gate) — by design.
+2. **Waitlist confirmation email won't actually send until an email provider is set.** With no
+   `RESEND_API_KEY`/`SENDGRID_API_KEY`/`POSTMARK_API_KEY` (see `track-h-activation`), the double-opt-in
+   email is a no-op. The product now degrades HONESTLY — it shows "you're on the list" (the address IS
+   captured) and only says "check your email" when an email truly left — but visitors won't be able to
+   CONFIRM (double-opt-in) until a provider key is set. Set one before relying on confirmed-signup counts.

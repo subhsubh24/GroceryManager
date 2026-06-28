@@ -305,6 +305,17 @@ mechanical gate, not a vibe.
 - [x] **F4. E2E + a11y + visual + performance gates** — Playwright E2E for the core journey;
       automated accessibility checks on key pages; visual checks on the design-bar surfaces; a
       Lighthouse/performance budget on hot paths. These catch what unit tests can't.
+- [ ] **F4.1 Side-effect round-trip (verify the EFFECT, not the message).** Extend the journey suite
+      with an **email capture** (Mailpit/Mailhog, or a provider sandbox + its fetch API) so the
+      waitlist double-opt-in + any confirmation/password-reset/magic-link/2FA flow completes as a
+      GENUINE round-trip: submit → the real email is **dispatched to the right recipient** → RETRIEVE
+      it → follow the link → confirmed/logged-in. Assert the provider client was actually invoked with
+      the right recipient/payload, and assert the product **never shows a success state unless the op
+      truly succeeded** (no optimistic "sent"). Same pattern for payments (sandbox charge/entitlement
+      call fires) + any side-effecting integration. Wire into preflight + the gate so a fake-success or
+      undelivered side-effect **BLOCKS merge + readiness** (preflight already flags the missing
+      round-trip — see `scripts/preflight.sh`). Until this passes, every affected flow is UNVALIDATED
+      and may NOT be ticked "done" (FACTORY_STANDARD §6 SIDE-EFFECT INTEGRITY).
 - [x] **F5. Periodic DEEP AUDIT (holistic)** — a recurring whole-codebase audit beyond per-diff
       review (correctness/dead-code, security/RLS, performance, a11y/design-bar, test/eval coverage,
       dependency/config health), distilled into a prioritized list, dated in
@@ -602,6 +613,23 @@ every periodic DEEP AUDIT; (3) at the readiness gate, a build-but-broken flow OR
 no outcome-asserting runtime test = NOT ready. What genuinely can't run headlessly (real payment capture,
 email deliverability, device store purchases) goes on the **PENDING_OPS human checklist as "must be manually
 verified"** — never silently assumed working.
+
+> **SIDE-EFFECT INTEGRITY — verify the EFFECT, not the message (a "success" the user can't verify is a LIE).**
+> A green DOM + a happy toast prove the code RAN, not that the EFFECT happened — and DOM/screenshot asserts
+> pass right over it. Two non-negotiable rules: **(1) No fake success in the product** — every user-facing
+> success state ("sent / saved / submitted / charged / done") MUST be causally downstream of the operation
+> actually succeeding (await the real result, check it, surface failure honestly). A message fired
+> optimistically regardless of the provider's result (or while the provider is dry-run / unconfigured) is a
+> correctness bug. You CANNOT ship email confirmation / 2FA / password-reset without proving the email
+> actually LEAVES the system. **(2) Verify the EFFECT end-to-end** — for every side-effecting integration
+> (email, SMS, push, payment charge/refund, outbound webhook, storage write, any 3rd-party API write),
+> "works" means the effect is OBSERVABLY produced in a test/sandbox env, never that the UI showed success
+> (confirmation/reset email ⇒ a real round-trip via an email capture; payments ⇒ the sandbox charge call
+> actually fires). Narrow escape hatch: if a side-effect can't be exercised even in sandbox (only the owner's
+> live key enables it), the flow may NOT be a silent dead-end — gate/disable it with honest messaging, OR
+> it's a release-blocking gap on PENDING_OPS AND the gate must still prove the flow COMPLETES with the secret
+> set in sandbox/test. A critical-path flow (signup, login, billing) that depends on an unverified side-effect
+> is NOT "done"; overclaiming a side-effect you did not observe is the SAME failure as a broken flow.
 
 **READINESS AUDIT GATE (mandatory — the loop CANNOT reach 'ready' without passing this).** Preflight is
 mechanical but shallow; the box-ticker must NOT also be the sole certifier. So when you believe the DoD

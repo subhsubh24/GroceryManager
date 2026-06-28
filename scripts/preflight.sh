@@ -468,6 +468,28 @@ else
   fail "functional journeys NOT run this attempt — start a built app against a seeded DB, run \`pnpm --filter @gm/web e2e journeys\`, and export E2E_JOURNEYS_PASSED=1. Readiness requires an ACTUAL green run, not just a green build"
 fi
 
+# ── Side-effect integrity — verify the EFFECT, not the message (FACTORY_STANDARD §6) ──
+section "Side-effect integrity — a success the user can't verify is a LIE (BUILDS ≠ WORKS)"
+# (1) Regression guard: the waitlist confirm-email capture must return a REAL result and never report
+#     a fake "you're on the list" when the capture/send didn't happen (the P0 bug). The action must
+#     expose a result type + an honest failure path, and the form must branch on it.
+WL_ACTION="$ROOT/apps/web/app/components/waitlist-action.ts"
+WL_FORM="$ROOT/apps/web/app/components/waitlist-form.tsx"
+if [ -f "$WL_ACTION" ] && grep -qE "WaitlistResult" "$WL_ACTION" && grep -qE 'return "error"' "$WL_ACTION" \
+   && [ -f "$WL_FORM" ] && grep -qE 'result === "error"|=== "error"' "$WL_FORM"; then
+  pass "waitlist capture reports a REAL result (no optimistic 'you're on the list' on failure)"
+else
+  fail "waitlist may show FAKE success: submitWaitlistEmail must return a real result (captured? emailed?) and the form must branch on it — success only when the effect happened. FACTORY_STANDARD §6 SIDE-EFFECT INTEGRITY"
+fi
+# (2) Side-effect ROUND-TRIP (ROADMAP F4.1): the journey suite must prove a real email round-trip
+#     (dispatch → retrieve → follow link → confirmed), not that a toast appeared. Blocks readiness
+#     until built — an unverified side-effect on a critical path is NOT "done".
+if grep -rqiE "mailpit|mailhog|inbucket|getEmail|fetchEmail|confirm.*link|round-?trip" "$ROOT/apps/web/e2e/" 2>/dev/null; then
+  pass "side-effect round-trip present (email capture/retrieve in the journey suite)"
+else
+  fail "side-effect round-trip NOT verified (ROADMAP F4.1): stand up an email capture (Mailpit/Mailhog or provider sandbox + fetch API) and prove confirmation/reset emails actually LEAVE + complete the flow. A 'sent' the user can't verify is a LIE — FACTORY_STANDARD §6"
+fi
+
 # ── Definition-of-Done checkboxes all ticked (the source of truth) ──
 section "Definition of Done — every box ticked"
 DOD_SECTION="$(awk '/^## DEFINITION OF DONE/{f=1;next} /^## /{if(f)f=0} f' ROADMAP.md)"
