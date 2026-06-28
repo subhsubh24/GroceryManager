@@ -21,6 +21,10 @@ const EnvSchema = z.object({
   GEMINI_API_KEY: z.string().optional(),
   GOOGLE_VERTEX_PROJECT: z.string().optional(),
   GOOGLE_VERTEX_LOCATION: z.string().default("us-central1"),
+  // Per-call wall-clock budget (ms) for a single Gemini request. A slow/rate-limited key must fail
+  // FAST so callers degrade gracefully within the serverless timeout instead of the function being
+  // killed mid-call (a user-visible dead-end). Keep under the smallest function limit (Hobby = 10s).
+  LLM_TIMEOUT_MS: z.coerce.number().int().positive().optional(),
   // Flash-Lite is public preview; when false we fall back to gemini-2.5-flash everywhere.
   LLM_USE_FLASH_LITE: z
     .enum(["true", "false"])

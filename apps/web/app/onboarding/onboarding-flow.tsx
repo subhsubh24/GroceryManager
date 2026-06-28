@@ -418,7 +418,19 @@ function TasteStepAI({ onDone, onBack }: { onDone: () => void; onBack: () => voi
         setCustom("");
         setAnswered(answeredNow);
       } catch {
-        setError("Hmm, that didn't go through. Mind trying that again?");
+        // The server action self-bounds the LLM call and normally returns a graceful fallback, so a
+        // hard reject here is rare (e.g. a network blip). Don't dead-end onboarding: advance with a
+        // generic question + tappable chips and clear the inputs so the user can always keep going
+        // (or Skip). Onboarding is best-effort — never trap the user on a model hiccup.
+        setTranscript((t) => [
+          ...t,
+          { role: "assistant", content: "Got it! What kinds of food do you usually love to eat?" },
+        ]);
+        setQuestion("Got it! What kinds of food do you usually love to eat?");
+        setOptions(["Italian", "Mexican", "Thai", "Indian", "Comfort food"]);
+        setPicked([]);
+        setCustom("");
+        setAnswered(answeredNow);
       }
     });
   }
