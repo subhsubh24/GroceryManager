@@ -14,6 +14,13 @@ OWNER_ACTIONS:
   project: GroceryManager
   as_of: 2026-06-27
   items:
+    - id: set-direct-database-url-prod
+      title: "URGENT: set DIRECT_DATABASE_URL in Vercel (owner connection) — signin + signup are BROKEN without it"
+      priority: urgent
+      status: open
+      why: "ROOT CAUSE of 'Couldn't load your dashboard' on signup/signin (proven against prod via the Supabase MCP). The `users` table has RLS enabled (policy `tenant_isolation: id = app_current_user_id()`, scoped to the `grocery_app` role); the table owner `postgres` bypasses RLS (FORCE RLS is off). `getAdminDb()` = createDb(DIRECT_DATABASE_URL ?? DATABASE_URL) and it does BOTH signup's user INSERT and signin's username lookup. DIRECT_DATABASE_URL is `.optional()`, so when it's unset in prod, getAdminDb silently falls back to the RLS-restricted DATABASE_URL (grocery_app) — which has no tenant session, so the users read/insert are DENIED. Result: signin + signup both fail and NO user row is ever created (verified: newest user stuck at 2026-06-23; a direct INSERT under an RLS-bypassing/owner connection succeeds). This is a deployment-config gap, not a code bug."
+      how: "In Vercel project env, set DIRECT_DATABASE_URL to the Supabase OWNER connection (port 5432, role postgres) — Supabase dashboard → Connect → Session pooler. Format: postgres://postgres.ycvgsslzmzgoatwlniwf:<DB_PASSWORD>@aws-0-<region>.pooler.supabase.com:5432/postgres (password + region from that panel; never commit it). Leave DATABASE_URL as-is (the grocery_app/pooler URL — that's what makes RLS work). Redeploy. Then a fresh signup creates a user and lands on the dashboard; existing accounts can sign in. (Same var that `pnpm db:migrate` uses for the direct connection.)"
+      blocks: launch-functional
     - id: eas-build-submit-go-live
       title: EAS project + store/signing creds + the actual build & submit (Human-Core)
       priority: high

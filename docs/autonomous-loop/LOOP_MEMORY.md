@@ -441,3 +441,19 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   remediation I suggested (rotate AUTH_SECRET) can itself trigger this class — invalidating cookies must pair with
   code that fails OPEN to logged-out, never crashes. (d) Immediate user unblock for this class: incognito / clear
   cookies (no cookie = no decryption = no throw).
+- **2026-06-27 — THE signin/signup outage: `DIRECT_DATABASE_URL` unset in prod → getAdminDb falls back to the RLS-restricted role.**
+  After ruling out migrations (#0011–0017 applied), the non-UUID session (#211), and the auth() throw (#212), signup
+  STILL failed for fresh accounts. Proven via the Supabase MCP: zero users created since 06-23 despite repeated attempts
+  → signup throws BEFORE creating the row. The `users` table has RLS ON (policy `tenant_isolation: id =
+  app_current_user_id()`, role `grocery_app`), owner `postgres`, FORCE RLS off (owner bypasses). `getAdminDb()` =
+  createDb(DIRECT_DATABASE_URL ?? DATABASE_URL) and runs BOTH signup's INSERT and signin's username lookup. With
+  DIRECT_DATABASE_URL `.optional()` and UNSET in prod, getAdminDb silently fell back to the RLS-restricted DATABASE_URL
+  (grocery_app) → provisioning + lookup DENIED (no tenant session) → signin AND signup both broken, no user created.
+  A direct INSERT under an owner/RLS-bypassing connection succeeds (verified + cleaned up). FIX: owner sets
+  DIRECT_DATABASE_URL to the Supabase owner connection (port 5432, role postgres) in Vercel; redeploy. Shipped a
+  safeguard: getAdminDb now logs a LOUD error when DIRECT_DATABASE_URL is unset (the silent fallback cost hours).
+  LESSONS: (a) An `.optional()` env var that is actually REQUIRED for a critical path in production is a latent outage —
+  provisioning/auth must fail LOUD, not silently degrade into RLS denials. (b) When "it works locally but not in prod"
+  and the symptom is a generic error boundary, READ PROD: the data (no new users) + the RLS policy + the connection
+  fallback logic pinpointed it without ever seeing Vercel logs. (c) Diagnose to certainty before "fixing" — three prior
+  defensive PRs (#211/#212) were real hardening but none was THE cause; the cause was deployment config.
