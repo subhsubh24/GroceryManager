@@ -602,3 +602,18 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   growth routines (model/cron/sources/tools/MCP preserved); pure digest/dashboard reporters left untouched (they don't
   follow the operating standard). LESSON: pre-PMF, pouring growth into a leaky bucket wastes spend + the run — let the
   live retention/activation read GOVERN what gets built and marketed; revenue follows PMF, never the reverse.
+- **2026-06-28 — STRATEGIC OUTREACH for the Growth Agent: curated, human-reviewed Gmail DRAFTS only (repo + routine).**
+  Added a high-leverage but tightly-railed channel: the Growth Agent MAY draft a FEW deeply-personalized 1:1 outreach
+  emails to genuinely strategic targets (press/partners/overlapping communities/newsletter curators) as Gmail DRAFTS for
+  the OWNER to review + send — it NEVER sends (its Gmail tool is create_draft only). Curation, NOT cold-email at scale.
+  REPO: created docs/growth/OUTREACH.md (the playbook; RAILS verbatim — draft-only/human-sends; high-confidence + name
+  recipient+why+anticipated-reply or don't draft; a few/run max, zero is fine; real PUBLISHED contacts via WebSearch,
+  never invent/scrape/harvest PII; honest + opt-out + CAN-SPAM/GDPR-clean; pre-launch links to the waitlist; maker≠checker
+  review — target-type examples adapted to GroceryManager's food/cooking/grocery/personal-finance space); added a
+  "Strategic outreach" pointer to ANALYSIS_PLAYBOOK; added a machine-tracked `outreach` block to GROWTH_STATUS
+  (drafted_7d, owner_sent_7d, replies_7d owner-reported-never-fabricated, signal: none; 0/null pre-launch; valid YAML).
+  ROUTINE: added docs/growth/OUTREACH.md to the Growth Agent's ORIENT read list; added a (3b) STRATEGIC OUTREACH
+  (DRAFT-ONLY) step; reconciled HARD BOUNDARIES to note the ONE drafting exception (create Gmail DRAFTS for the owner to
+  review+send; still NEVER auto-send). Preserved model (Sonnet) / cron (0 14 * * *) / sources / allowed_tools / Gmail MCP.
+  LESSON: outreach is curation, not volume — a quiet run with zero drafts is success; a pile of generic cold drafts is
+  failure; the human always sends.
