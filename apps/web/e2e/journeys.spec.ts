@@ -16,18 +16,26 @@ import { test, expect, type Page } from "@playwright/test";
  * The error-boundary text we must NEVER see on a successful journey.
  */
 const ERROR_SCREEN = /Couldn.t load your dashboard|Something went wrong|not available/i;
+/** A confirmation/verification DEAD-END (FACTORY_STANDARD §6 DECISION COROLLARY): signup must NOT gate
+ *  on an email-verification step — a brand-new account must reach the working app, never a "check your
+ *  email" wall (that gate's email-send loop isn't wired, so it would dead-end every new user). */
+const VERIFY_DEADEND = /check your (e-?mail|inbox)|verify your (e-?mail|account)|confirm your (e-?mail|account)|we (?:just )?sent you/i;
 
 /** Create a brand-new account through the real UI and return its username. Asserts the signup OUTCOME
- *  (redirect into onboarding), so a broken signup fails here, not silently. */
+ *  (redirect into onboarding, NO verification dead-end), so a broken signup fails here, not silently. */
 async function signUp(page: Page): Promise<string> {
   const username = `e2e${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
   await page.goto("/signup", { waitUntil: "domcontentloaded" });
   await page.fill('input[name="username"]', username);
   await page.fill('input[name="password"]', "e2e-passw0rd");
   await page.click('button[type="submit"]');
-  // INTENDED OUTCOME of signup: a brand-new account lands in guided onboarding (not an error, not back on /signup).
+  // INTENDED OUTCOME of signup: a brand-new account lands in guided onboarding (not an error, not back
+  // on /signup, and NOT a "check your email" verification wall whose send isn't wired).
   await page.waitForURL(/\/onboarding/, { timeout: 15_000 });
   await expect(page.locator("body")).not.toContainText(ERROR_SCREEN);
+  await expect(page.locator("body"), "signup must not dead-end on an email-verification gate").not.toContainText(
+    VERIFY_DEADEND,
+  );
   return username;
 }
 

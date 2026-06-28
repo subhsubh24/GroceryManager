@@ -416,3 +416,19 @@ SIDE-EFFECT INTEGRITY (FACTORY_STANDARD §6) is now enforced. Two human-side not
    email is a no-op. The product now degrades HONESTLY — it shows "you're on the list" (the address IS
    captured) and only says "check your email" when an email truly left — but visitors won't be able to
    CONFIRM (double-opt-in) until a provider key is set. Set one before relying on confirmed-signup counts.
+
+---
+
+## 2026-06-28 — DECISION: signup is NOT gated on email verification (no gate-on-unbuilt-loop)
+
+Audited auth per FACTORY_STANDARD §6 DECISION COROLLARY. **GroceryManager does NOT have the
+gate-on-unbuilt-loop outage** (signup shows no "check your email" wall; account creation is
+username+password, signs the user in, and lands them in `/onboarding` → the working app). There is no
+password-reset/forgot/verify route either. Email is optional and set only when the user connects Gmail.
+
+**The decision (explicit):** signup intentionally does **not** require email verification — the username-first
+design avoids gating on an email-send loop that isn't wired. Re-enable email verification / 2FA / any
+confirmation gate ONLY together with: (a) a real provider wired (`RESEND_API_KEY`/etc.), and (b) the
+journey round-trip test (ROADMAP F4.1) proving the email is dispatched → received → link followed →
+flow completes. A new journey assertion (`VERIFY_DEADEND` in `apps/web/e2e/journeys.spec.ts`) now fails
+if signup ever shows a "check your email" dead-end, so this can't regress silently. **No owner action.**
