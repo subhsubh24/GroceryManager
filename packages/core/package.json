@@ -38,7 +38,8 @@
     "./growth/optin": "./src/growth/optin.ts",
     "./growth/experiments": "./src/growth/experiments/index.ts",
     "./growth/analytics": "./src/growth/analytics.ts",
-    "./security/site-gate": "./src/security/site-gate.ts"
+    "./security/site-gate": "./src/security/site-gate.ts",
+    "./security/uuid": "./src/security/uuid.ts"
   },
   "scripts": {
     "lint": "echo \"(lint) @gm/core\"",

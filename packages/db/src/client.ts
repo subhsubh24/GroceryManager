@@ -47,12 +47,22 @@ export type Tx = Parameters<Parameters<DB["transaction"]>[0]>[0];
 /** Anything you can run tenant-scoped queries on (the live DB or a transaction). */
 export type Querier = DB | Tx;
 
+// The tenant id is set as the `app.current_user_id` GUC and RLS casts it to `uuid`. Guard here so a
+// non-UUID id fails CLOSED with a clear error before any query runs — rather than a cryptic
+// `invalid input syntax for type uuid` thrown deep inside the first RLS-checked statement. (Defense
+// in depth: callers like `currentUserId()` already reject non-UUID sessions; this protects every
+// other caller — cron, workers — too.) Regex inlined: `@gm/db` must not import `@gm/core`.
+const TENANT_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * Run `fn` inside a transaction with `app.current_user_id` set for RLS (PLAN §11). The setting is
  * transaction-local (`set_config(..., true)`), so it's safe under the Supabase transaction pooler
  * and never leaks across pooled connections. Forgetting it → policies deny by default.
  */
 export function withTenant<T>(db: DB, userId: string, fn: (tx: Tx) => Promise<T>): Promise<T> {
+  if (!TENANT_UUID_RE.test(userId)) {
+    throw new Error("withTenant: tenant userId must be a UUID (refusing to scope RLS to a non-UUID id)");
+  }
   return db.transaction(async (tx) => {
     await tx.execute(sql`select set_config('app.current_user_id', ${userId}, true)`);
     return fn(tx);

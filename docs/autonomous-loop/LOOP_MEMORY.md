@@ -409,3 +409,20 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   lens (hunts the live UI via §6 screenshots) + the §7 readiness visual review — a generated-looking/"vibe-coded"
   surface is a release-blocking FAIL equal to a red test. Product brand/voice/tokens stay in VISION.md. FACTORY_STANDARD
   remains a STABLE ANCHOR — changes ONLY by canonical sync across all factory repos, never as loop work.
+- **2026-06-27 — prod incident: "dashboard not available" = a non-UUID session id, NOT migration drift (found by RUNNING prod, not reading code).**
+  Used the Supabase MCP to inspect prod directly (the right move — replicate/observe the real env, don't guess). Two
+  separate issues surfaced: (1) MIGRATION DRIFT — prod was missing 0011–0017 (push_tokens, waitlist_submissions +
+  UTM/confirm cols, content_schedule, experiment tables); applied via MCP apply_migration (idempotent, additive, all
+  RLS-enabled, advisor clean). This had silently broken the PUBLIC WAITLIST in prod but was NOT the dashboard break.
+  (2) THE DASHBOARD BREAK — prod postgres logs showed recurring `invalid input syntax for type uuid: "user-1"` in
+  bursts of 5; the authed home (`apps/web/app/page.tsx`) runs 5 reads in ONE `withTenant(userId)` tx, and a session
+  whose JWT uid is the non-UUID string "user-1" makes the RLS uuid-cast throw → the whole home subtree 500s. "user-1"
+  is NOT a real user (all real ids are UUIDs; the normal signup/login path can only set a UUID via `token.uid =
+  user.id`) — it's a stale/forged/legacy session cookie. So a real NEW signup works; only that one polluted session
+  saw the error. FIX (defense in depth, via gate/PR): added `@gm/core/security/uuid` `isUuid`; `currentUserId()` now
+  treats a non-UUID session as signed-out (clean logged-out render instead of 500); `withTenant()` fails CLOSED on a
+  non-UUID id (cron/workers too) — inlined regex since `@gm/db` must not import `@gm/core`. LESSONS: (a) BUILDS≠WORKS
+  and "didn't reproduce locally" → inspect the REAL prod env; logs named the cause in seconds. (b) Any value that
+  reaches an RLS GUC cast to a typed column must be validated at the trust boundary — a malformed identity should fail
+  closed (signed-out), never crash a page. (c) A green build hid a broken waitlist (missing table) — runtime/prod
+  inspection caught what the build couldn't.
