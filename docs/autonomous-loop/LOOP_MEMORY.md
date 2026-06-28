@@ -343,3 +343,43 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   mobile component snapshots, then wire "visually review the journey screenshots" into the deep-audit + readiness
   lenses. LESSON: when a canonical sync adds a verification REQUIREMENT, immediately check the product can PRODUCE
   what it asks to verify, and file the capture work separately — keep the byte-identical standard untouched.
+
+- **2026-06-28 (run 21) — DEEP AUDIT (folded scout sweep) + 3 file-disjoint changes shipped.** Last
+  standalone deep+readiness audit was run 19 (2026-06-27, ~24h prior); this run folded the deep-audit lenses
+  into the parallel scout sweep (security/abuse, design/taste, correctness/dead-code, monetization/business-
+  case, artifact-freshness — Haiku). Shipped (all gate-green + 2 Sonnet reviewers each, file-disjoint, auto-
+  merged):
+  - **PR #207 — env-driven mobile distribution config (Track B gate "Distribution/release config is REAL").**
+    Removed the hardcoded `extra.eas.projectId: "OWNER_EAS_PROJECT_ID"`; `app.config.ts` now extends `app.json`
+    and reads projectId + version + iOS buildNumber + Android versionCode from env. Ticked the two distribution
+    boxes.
+  - **PR #206 — Track G: rate-limited 12 authenticated mobile/v1 API routes** that had none (recipes, recipe
+    detail, profile, digest, list, cooked, capture, onboarding, push-token, pantry, v1/list, v1/pantry); reuses
+    the existing per-user limiter. Reads 60/min, writes 30/min, capture 20/min.
+  - **PR #205 — design-bar: fixed a broken `bg-ok`/`text-ok` Tailwind token** (undefined in the palette; the
+    `success` token is the real one) on the paywall + manage-subscription — the conversion-surface badges were
+    rendering unstyled.
+  - **LESSON — SDK-version type drift bites config files that were previously JSON.** Moving `app.json` →
+    a standalone typed `app.config.ts` literal failed CI: Expo SDK 56's freshly-resolved `@expo/config-types`
+    rejects `newArchEnabled` and top-level `splash` as typed `ExpoConfig` properties (TS2353), even though a
+    STALE local `node_modules` accepted them (my first local typecheck passed; CI's `npm ci` was stricter).
+    The robust fix is the idiomatic Expo pattern: keep the static identity in `app.json` (NOT typechecked) and
+    have `app.config.ts` EXTEND it (`config` = app.json contents), overriding only env-driven fields — spreads
+    don't trigger excess-property checks. Generalize: when converting a JSON config to a typed `.ts`, expect
+    excess-property friction against the installed type version; prefer extend-the-JSON over a hand-typed
+    literal, and trust CI's fresh install over a possibly-stale local one.
+  - **LESSON — a reviewer's "ExpoConfig has a catch-all index signature" claim was version-specific.** Both
+    the maker's local typecheck AND Reviewer A asserted the standalone literal was type-safe; both were reading
+    a different `@expo/config-types` than CI resolved. When a type claim hinges on a dependency's `.d.ts`,
+    the binding source of truth is the version the GATE (CI) installs, not a local read.
+  - **DEEP-AUDIT findings queued (not shipped this run):** (a) Track G — `mobile/discover` POST (swipe
+    recording) still lacks a per-user rate limit on its write path (Reviewer A flagged; out of scope of #206);
+    (b) weak-case loop-back — the honest median ARR (~$33K) remains below the $100K floor; the monetization
+    scout named buildable levers (referral-reward tiering, surfacing the already-built Family tier, a month-3
+    annual nudge, win-back/churn sequences) — added as tracked ROADMAP items for future runs to build through
+    the gate. Business case unchanged this run (no revenue lever shipped → no honest movement).
+  - **Verified-real (not gaps):** RLS on all public tables; Stripe `checkout.sessions.create` + webhook
+    `constructEvent` exist (not stubs); the CORS "missing Access-Control-Allow-Origin" scout flag was a FALSE
+    POSITIVE (omitting ACAO is the secure default — browsers block cross-origin reads). The independent
+    QUALITY_SCORECARD (docs/quality/) does not yet exist → quality-grade DoD box correctly stays a readiness
+    blocker (no self-grade; that artifact is the separate Quality Auditor routine's to author).

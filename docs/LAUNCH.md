@@ -154,7 +154,9 @@ pnpm --filter @gm/db db:migrate
    eas project:init          # Creates the EAS project, gives you EXPO_PUBLIC_PROJECT_ID
    eas credentials           # Generates/imports Apple Distribution cert + provisioning profile
    ```
-4. Set `EXPO_PUBLIC_PROJECT_ID=<project-id>` in EAS secrets AND in `apps/mobile/.env`.
+4. Set `EXPO_PUBLIC_PROJECT_ID=<project-id>` in EAS secrets AND in `apps/mobile/.env`. _(That's all —
+   `apps/mobile/app.config.ts` reads the projectId from this env var; no committed config file needs editing.
+   You can also override `APP_VERSION` / `IOS_BUILD_NUMBER` / `ANDROID_VERSION_CODE` the same way.)_
 5. Update `apps/mobile/eas.json` → replace `OWNER_APPLE_ID` and `OWNER_APPLE_TEAM_ID` placeholders.
 
 **Verify:** `cd apps/mobile && npm run typecheck` exits 0. `eas build --platform ios --profile preview` triggers a cloud build.

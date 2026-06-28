@@ -165,12 +165,11 @@ feature parity with `apps/web`** before submission (owner decision, locked).
       migration 0011 + set EXPO_PUBLIC_PROJECT_ID (EAS project ID) — see PENDING_OPS.md.)_
 - [x] Mobile gate green in CI (the graceful-skip `mobile` job starts enforcing once initialized).
       _(`npm ci && npm run typecheck` exits 0; every merged mobile PR shows `mobile: success`.)_
-- [ ] EAS build config staged (credentials are Human Core).
-      _(Un-ticked 2026-06-27 (BUILDS ≠ WORKS / ticked-box-not-backed audit): eas.json + app.json exist, but
-      the loop-owned config is NOT validated and `extra.eas.projectId` is a hardcoded `OWNER_EAS_PROJECT_ID`
-      string rather than read from env — a "build-ready" box not backed by a buildable artifact. Re-ticks
-      under the REAL item below once env-driven + validated.)_
-- [ ] **Distribution/release config is REAL + validated (not a placeholder).** A checkbox-driven loop won't
+- [x] EAS build config staged (credentials are Human Core).
+      _(Re-ticked 2026-06-28, PR #207: the hardcoded `extra.eas.projectId: "OWNER_EAS_PROJECT_ID"` is gone —
+      `app.config.ts` now extends `app.json` and reads the projectId (+ version/buildNumber/versionCode) from
+      env. eas.json keeps its production build + submit profiles. Backed by the REAL item below.)_
+- [x] **Distribution/release config is REAL + validated (not a placeholder).** A checkbox-driven loop won't
       fix a build/deploy gap whose parent box already reads done — so make the config real and gate it. Own
       the BUILDABLE parts: app config reads `projectId` + `version` + iOS `buildNumber` / Android `versionCode`
       from ENV (convert to `app.config.ts`; no hardcoded `OWNER_*` projectId in committed config); `eas.json`
@@ -182,6 +181,14 @@ feature parity with `apps/web`** before submission (owner decision, locked).
       Human-only stays in PENDING_OPS: EAS project creation (`eas init` → the real projectId), Apple/Google
       store + hosting accounts, signing/provisioning, and the actual `eas build` + submit/deploy step; the loop
       never touches signing/secrets or `.github/`.
+      _(DONE 2026-06-28, PR #207: `apps/mobile/app.config.ts` extends `app.json` and reads `projectId`
+      (EXPO_PUBLIC_PROJECT_ID/EAS_PROJECT_ID), `version` (APP_VERSION), iOS `buildNumber` (IOS_BUILD_NUMBER)
+      and Android `versionCode` (ANDROID_VERSION_CODE) from env — NO `OWNER_*` projectId in committed config.
+      The static identity (bundle ids, icons, splash, permission strings) stays real in app.json. `eas.json`
+      has production BUILD + SUBMIT profiles. `scripts/preflight.sh` distribution check PASSES; mobile CI
+      (`npm ci && npm run typecheck`) green. The SDK-56 type drift that broke a first standalone-literal
+      attempt was fixed by the extend-app.json pattern. Human-Core (real projectId value, Apple/Play submit
+      creds, signed build/submit) stays in PENDING_OPS.)_
 
 ## Track C — Monetization (SUBSCRIPTION ONLY)
 Scaffold exists: `@gm/core/billing` + `/upgrade` behind `FEATURE_BILLING` (fail-open, no live keys).
@@ -331,6 +338,11 @@ regression, and preflight verifies the critical ones.** Build + enforce:
       _Done PR #164 (2026-06-27): `apps/web/app/api/_lib/rate-limit.ts` in-memory sliding-window limiter
       + `tooManyRequests()` (429 + Retry-After). Applied to: mobile auth (10/15min/IP), discover (30/min/user),
       plan (10/min/user), cook-tonight (20/min), wrapped (20/min), spend (20/min), Stripe checkout (5/min), Stripe portal (5/min)._
+      _Extended PR #206 (2026-06-28, run 21): the 12 remaining authenticated mobile/v1 routes that lacked a
+      limiter are now covered — recipes, recipes/[id], profile, digest, list, cooked, capture (20/min),
+      onboarding, push-token, pantry, v1/list, v1/pantry (reads 60/min, writes 30/min)._
+      _FOLLOW-UP (queued run 21): `apps/web/app/api/mobile/discover/route.ts` GET is limited but its **POST**
+      (swipe-signal write) is not — add a `discover-write` per-user limit through the gate next run._
 - [x] **G2. SERVER-SIDE VALIDATION on every write** — client-side validation is UX, not security.
       Re-validate type/length/shape on the server; reject malformed/oversized input.
       _Done PR #162 (2026-06-27): `apps/web/app/api/_lib/guard.ts` — `parseJsonBody<T>()` (32 KB body guard +
@@ -459,6 +471,25 @@ each platform's ToS.** This is how the app gets *tailored for success* with real
       computed server-side as AGGREGATES ONLY (no raw per-user event logs leave the server), admin/cron-gated,
       honest-null until present. Then the H9 `cohort_retention` block reports real curves and the Growth Agent
       can diagnose retention as the binding constraint on real data.
+
+### Revenue levers to BUILD (weak-case loop-back — honest median ~$33K is below the $100K floor)
+The monetization deep-audit (run 21) named specific, buildable, value-bar-clearing levers that would
+materially strengthen the case. Per the WEAK-CASE LOOP-BACK these are BUILD work (not a "listed lever"),
+each shipped through the normal gate + 2-reviewer path, with the business case RECOMPUTED + re-sourced only
+when a lever actually ships (never reverse-engineered to hit a number). Ordered by ROI:
+- [ ] **H12. Surface the already-built Family/household tier at the paywall + onboarding.** The
+      `premium_family` tier exists in billing config but the case banks ZERO Family adoption. Make it visible
+      (upgrade page comparison, an onboarding "cook together" moment) so blended ARPU can lift. Adoption % must
+      be left to live experiment data — do NOT assume a % to clear the floor.
+- [ ] **H13. Referral-reward loop (recurring-use viral lever).** The `?ref=` attribution loop exists but has
+      NO incentive. Add earned rewards (e.g. a free month / credit at referral milestones) keyed to a new
+      `referral_credits` table (RLS tenant-isolation); show perks on `/upgrade` + `/invite`. Margin-bounded.
+- [ ] **H14. Month-3 annual-conversion nudge (ARPU shift, zero CAC).** A lifecycle email + in-app prompt that
+      offers monthly subscribers the annual rate at the renewal-salient moment, gated by the H10 experiment
+      engine so the messaging is A/B-measured, never assumed.
+- [ ] **H15. Win-back / churn-prevention sequence.** On a Stripe cancellation or N-day inactivity, trigger a
+      re-engagement email (+ optional one-time discount) via the existing cron + email pipeline, experiment-
+      gated. Lifts steady-state paying users without new acquisition.
 > **Note:** Track H is the EXECUTION ENGINE (loop-buildable code). Actually *running* it + *getting
 > leads* is post-launch and needs the owner CONNECT step + the separate Growth Agent — leads flowing is
 > NOT a store-submission gate (the app can submit without it), but the engine being built + ready-to-run
