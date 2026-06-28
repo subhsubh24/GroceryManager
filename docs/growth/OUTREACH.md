@@ -8,4 +8,6 @@ Target types (examples, adapt to your product; not a quota): journalists/publica
 
 Draft format (what the owner receives): one Gmail DRAFT per target containing — Target (name/org/role + PUBLIC contact or "contact form: <url>"); Why this target now + anticipated reply; Confidence (high only); the Email (subject + personalized body + ask + opt-out). Track in the GROWTH_STATUS outreach block (real numbers; replies owner-reported, never fabricated); durable lessons in GROWTH_MEMORY.
 
+Surfacing on the factory dashboard: when outreach drafts await the owner, file/refresh ONE OWNER_ACTIONS item in PENDING_OPS.md (id: review-outreach-drafts, title "Review + send N strategic outreach drafts (Gmail)") and decrement/close it as the owner sends (honest counts; never stale) — this is what makes the review surface on the factory dashboard, which already renders OWNER_ACTIONS. Keep the GROWTH_STATUS outreach block current for the tile.
+
 When NOT to: no genuinely strategic researchable target this run → do NONE. A quiet run with zero outreach drafts is success; a pile of generic cold drafts is failure.
