@@ -208,3 +208,44 @@ jobs:
             apps/web/test-results
             apps/web/e2e/__screenshots__
           if-no-files-found: ignore
+
+  # Auto-apply DB migrations to PROD on every push to main, so schema drift (the root cause of the
+  # signup outage — the loop adds a migration, a human forgets to run it) can never recur. Runs ONLY
+  # after `verify` (build green) + `migrate` (the full chain validated against a fresh throwaway DB)
+  # pass — so a bad migration NEVER reaches prod. Migrations are idempotent (CREATE/ADD ... IF NOT
+  # EXISTS), so this is a safe no-op when everything is already applied. Serialized via `concurrency`.
+  # ONE-TIME owner step: add the GitHub Actions secret PROD_DIRECT_DATABASE_URL = the Supabase OWNER
+  # connection (port 5432, role postgres — the SAME value as Vercel's DIRECT_DATABASE_URL). Until it's
+  # set, this job warns + skips (it never blocks). Never commit the value.
+  migrate-prod:
+    name: migrate prod (auto-apply on push to main)
+    runs-on: ubuntu-latest
+    needs: [verify, migrate]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    concurrency: migrate-prod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Apply migrations to prod (idempotent; no-op if already applied)
+        env:
+          DIRECT_DATABASE_URL: ${{ secrets.PROD_DIRECT_DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.PROD_DIRECT_DATABASE_URL }}
+        run: |
+          if [ -z "$DIRECT_DATABASE_URL" ]; then
+            echo "::warning::PROD_DIRECT_DATABASE_URL secret not set — skipping auto-migrate. Add it in"
+            echo "::warning::Settings → Secrets and variables → Actions to enable (the Supabase owner/direct"
+            echo "::warning::connection, port 5432, role postgres). Migrations are idempotent + already validated"
+            echo "::warning::against a fresh DB by the 'migrate' job, so enabling this is safe."
+            exit 0
+          fi
+          echo "Applying the full migration chain to prod (idempotent)…"
+          pnpm --filter @gm/db exec tsx src/migrate.ts
+          echo "✅ prod migrations applied."
