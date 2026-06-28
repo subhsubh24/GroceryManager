@@ -335,3 +335,11 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   capture in the suite, judge at the deep audit + readiness gate — not a vision pass on every micro-change.
   FACTORY_STANDARD.md remains a STABLE ANCHOR — changes ONLY by canonical sync across all factory repos,
   never as loop work; product-specifics stay in ROADMAP/VISION.
+- **2026-06-27 — follow-up: the standard's visual-review lenses need ARTIFACTS the product doesn't capture yet.**
+  After the canonical sync, FACTORY_STANDARD §6/§7/§10 MANDATE visually reviewing a screenshot of every page +
+  state — but GroceryManager's journey suite captures NONE (`apps/web/e2e/journeys.spec.ts`: 0 screenshots;
+  `playwright.config.ts`: only `trace`). A mandate with no artifacts is a no-op. Filed ROADMAP **F6** (product
+  work, NOT the standard): web `page.screenshot()` per page+state into a committed `apps/web/e2e/__screenshots__/`,
+  mobile component snapshots, then wire "visually review the journey screenshots" into the deep-audit + readiness
+  lenses. LESSON: when a canonical sync adds a verification REQUIREMENT, immediately check the product can PRODUCE
+  what it asks to verify, and file the capture work separately — keep the byte-identical standard untouched.
