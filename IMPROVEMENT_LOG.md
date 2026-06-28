@@ -4,6 +4,39 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-28 (run 23) — H14+H15 lifecycle email engine + 2 CRITICAL hardening fixes
+
+Three file-disjoint PRs, each gate-green + 2 Sonnet reviewers, auto-merged. Deep-audit lenses folded into
+the parallel scout sweep (last standalone deep+readiness audit was run 19; runs 20–22 folded). The
+'FACTORY: ready for submission' issue was **NOT opened** — the honest business-case median (~$33K) is still
+below the $100K floor (reach-gated) and the independent QUALITY_SCORECARD doesn't exist yet (the separate
+Quality Auditor routine owns it), so the Confidence + floor + quality-grade DoD boxes stay `[ ]`.
+
+- **#221 — H14 + H15 lifecycle email engine (the named weak-case-loop-back revenue levers).** One coherent
+  subsystem reusing the existing email sender + experiment engine + CRON_SECRET cron pattern. H14: month-3
+  annual-nudge to active monthly subscribers (ARPU, zero CAC). H15: win-back to users who churned ≥30d ago
+  but are still cooking on the free tier (highest-intent retention). Migration 0019 `lifecycle_email_sends`
+  (RLS tenant-isolation + GRANT, unique (user_id, email_type) for idempotency); `@gm/db/queries/lifecycle.ts`
+  candidate queries off the `preference_signals` ledger; pure tested `@gm/core/lifecycle/emails` builders
+  (prices match billing config; user name HTML-escaped — a bug my own test caught); two CRON_SECRET-gated
+  cron routes via a shared runner; CAN-SPAM `/api/email/unsubscribe` (HMAC-verified) + opt-out filter.
+  Side-effect integrity: a recipient is recorded + counted "sent" ONLY on a true provider send (dry-run
+  skips are not recorded → retry once connected). NO discount promised (none wired). NO adoption % banked →
+  business case unmoved. Dormant until the owner connects a provider + schedules the crons (PENDING_OPS).
+- **#219 — Track G (CRITICAL): `POST /api/mobile/discover` swipe-write** had no rate limit + unbounded
+  `req.json()` (ledger-flood / oversized-payload abuse). Added a per-user limit (discover-write 30/min) +
+  `parseJsonBody` (32 KB); also swapped the last unbounded mobile write bodies (push-token POST/DELETE) to
+  `parseJsonBody`. (account DELETE already guarded.)
+- **#220 — reliability (CRITICAL): bounded the SMS (Twilio) + captcha (Turnstile) external fetches** with
+  `AbortSignal.timeout` (5s / 3s) so a slow upstream can't hang the digest cron / signup serverless function
+  until the platform deadline (same failure class as the run-22 onboarding LLM-timeout incident).
+
+DoD reconcile: re-ticked **Track B complete** (its blocking sub-item — REAL distribution config — landed in
+PR #207 run 21 and is ticked; mobile CI green this run). Ticked **H14** + **H15**. Migration 0019 + provider/
+cron-schedule recorded in PENDING_OPS (Human-Core). Deferred findings → next run (see LOOP_MEMORY run 23).
+
+---
+
 ## 2026-06-27 (run 20) — Track H analytics+experiment engine (H9/H10) + Track-G/conversion levers
 
 Three file-disjoint PRs (each 2 Sonnet reviewers, CI auto-merge), advancing the lowest incomplete ROADMAP

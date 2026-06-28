@@ -521,12 +521,26 @@ when a lever actually ships (never reverse-engineered to hit a number). Ordered 
       matches). NO adoption % banked — business case left unmoved pending live data. Gate: typecheck + 639
       core tests + prod build clean; 2 Sonnet reviewers (A's GRANT blocker fixed, B approved). Migration is
       human-applied — see PENDING_OPS._
-- [ ] **H14. Month-3 annual-conversion nudge (ARPU shift, zero CAC).** A lifecycle email + in-app prompt that
+- [x] **H14. Month-3 annual-conversion nudge (ARPU shift, zero CAC).** A lifecycle email + in-app prompt that
       offers monthly subscribers the annual rate at the renewal-salient moment, gated by the H10 experiment
       engine so the messaging is A/B-measured, never assumed.
-- [ ] **H15. Win-back / churn-prevention sequence.** On a Stripe cancellation or N-day inactivity, trigger a
-      re-engagement email (+ optional one-time discount) via the existing cron + email pipeline, experiment-
-      gated. Lifts steady-state paying users without new acquisition.
+      _Done (run 23, PR #221): `GET /api/cron/h14-annual-nudge` (CRON_SECRET-gated) emails active monthly
+      subscribers ≥90 days in the cheaper annual rate ($39.99/yr ≈ $3.33/mo, ~$20 saved) via the pure tested
+      `@gm/core/lifecycle/emails` builder; eligibility from the `preference_signals` ledger
+      (`@gm/db/queries/lifecycle.ts`); experiment `h14_annual_nudge` (control/savings) logs exposures on send
+      (conversion stays null/"running" until switches are logged — never fabricated). Idempotent via migration
+      0019 `lifecycle_email_sends`. Dormant until an email provider + cron schedule are connected (PENDING_OPS).
+      NO adoption % banked → business case unmoved._
+- [x] **H15. Win-back / churn-prevention sequence.** On a Stripe cancellation or N-day inactivity, trigger a
+      re-engagement email via the existing cron + email pipeline, experiment-gated. Lifts steady-state paying
+      users without new acquisition.
+      _Done (run 23, PR #221): `GET /api/cron/h15-winback` targets users who churned ≥30 days ago BUT are still
+      cooking on the free tier (a `meal_logs` cook in the last 30d — highest-intent), via the same lifecycle
+      engine; experiment `h15_winback` (control/value). NO discount is promised (none is wired into checkout —
+      variants change framing only). Side-effect integrity: a user is recorded + counted "sent" ONLY on a true
+      provider send (dry-run skips are not recorded → retries once connected). CAN-SPAM unsubscribe route
+      (`/api/email/unsubscribe`, HMAC-token verified) + opt-out filter on both campaigns. Dormant until a
+      provider + cron schedule are connected (PENDING_OPS). NO adoption % banked → business case unmoved._
 > **Note:** Track H is the EXECUTION ENGINE (loop-buildable code). Actually *running* it + *getting
 > leads* is post-launch and needs the owner CONNECT step + the separate Growth Agent — leads flowing is
 > NOT a store-submission gate (the app can submit without it), but the engine being built + ready-to-run
@@ -695,10 +709,13 @@ missing, and do not add scope after Done.
 
 **Product 100%:**
 - [x] Track A complete — web app at paid quality, **live eval suite passes**.
-- [ ] Track B complete — native Expo app at full parity (not a wrapper), mobile CI green, push +
-      offline behavior code complete (only Human-Core keys/IDs pending). _(Un-ticked 2026-06-27: the
-      distribution/release config is not yet REAL+validated — env-driven projectId + `npx expo config`
-      validation pending, enforced by preflight; re-ticks when that Track-B item lands.)_
+- [x] Track B complete — native Expo app at full parity (not a wrapper), mobile CI green, push +
+      offline behavior code complete (only Human-Core keys/IDs pending). _(Re-ticked 2026-06-28 run 23:
+      the blocking sub-item — REAL+validated distribution/release config (env-driven projectId/version/build,
+      `npx expo config` resolving with no loop-owned placeholders, eas.json prod build+submit profiles) —
+      landed in PR #207 (run 21) and is `[x]` under Track B, enforced by preflight; mobile CI (`npm ci && npm
+      run typecheck`) is green on this run's PRs. Only Human-Core remains: the real EAS projectId value +
+      signing/store creds + the signed build/submit, in PENDING_OPS.)_
 - [x] Track C complete — subscription + entitlement gating in code (live keys pending in Human Core).
       _(PRs #142 #143 2026-06-26: Stripe Checkout wired — `checkout.sessions.create` in POST /api/stripe/checkout;
       Customer Portal in POST /api/stripe/portal; real `constructEvent` webhook verification;

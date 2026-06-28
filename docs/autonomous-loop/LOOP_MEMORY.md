@@ -532,3 +532,57 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   — a comparable-size subsystem needing audience queries + cron + experiment gating + templates). Per
   coherence-over-churn + the value bar, a quiet coherent run that advances the binding constraint is the
   right outcome; H14/H15/H11 remain for the next run.
+
+- **2026-06-28 (run 23) — built H14 + H15 (the remaining named lifecycle revenue levers) + 2 CRITICAL
+  hardening fixes; DEEP AUDIT folded into the scout sweep (last standalone run 19; runs 20–22 folded, within
+  the cadence).** 3 file-disjoint PRs (#219 #220 #221), each gate-green + 2 Sonnet reviewers, auto-merged.
+  The 'ready' issue was NOT opened (honest median ~$33K < $100K floor, reach-gated; QUALITY_SCORECARD absent).
+  - **H14/H15 as ONE coherent lifecycle-email subsystem (PR #221).** Migration 0019 `lifecycle_email_sends`
+    (RLS tenant-isolation + explicit GRANT, unique (user_id, email_type)); candidate queries off the
+    `preference_signals` ledger; pure tested `@gm/core/lifecycle/emails`; two CRON_SECRET cron routes via a
+    shared runner; CAN-SPAM `/api/email/unsubscribe` + opt-out filter. The `migrations (fresh db)` CI job
+    validated 0019 on the full chain.
+  - **LESSON — when two ROADMAP items share infra (table/cron/registry/runner), build them as ONE coherent
+    subsystem, not two colliding PRs.** H14 + H15 share `lifecycle_email_sends`, `runLifecycleCampaign`,
+    migrate.ts/schema.ts/index.ts, and the experiment registry — so they CANNOT be file-disjoint separate PRs
+    in one run. Building both together (with the second lever's marginal surface ≈ one query + one builder +
+    one ~20-line route + one registry entry) maximized the run without violating the disjoint rule. The
+    migration-bearing files (migrate.ts/schema.ts/index.ts) are a SHARED RESOURCE: only ONE migration-bearing
+    change can ship per run — H11 (also needs a new table) was correctly deferred rather than colliding on
+    those files.
+  - **LESSON — write the test that catches the XSS, then fix the bug it finds.** My own `emails.test.ts`
+    escape-assertion FAILED on first run: the user-set `name` was interpolated into the email HTML unescaped
+    (the builders escaped some fields but not the greeting). The test caught a real stored-XSS-class bug
+    before review. Any builder that puts user-controlled DB values into HTML must escape at EVERY
+    interpolation point; a shell() that takes raw `bodyHtml` must document that the CALLER escapes its dynamic
+    values (and the test must prove it).
+  - **LESSON — SIDE-EFFECT INTEGRITY on a fan-out sender: record the idempotency row BEFORE counting "sent",
+    and only count a true provider send.** Reviewer A (correctly) caught that `sent++` ran before
+    `recordLifecycleEmailSent`, with the record failure swallowed → an email counted sent but unrecorded →
+    re-sent next run. Fix: `await record` first, `sent++` only on success, a record failure → `failed++`
+    (honest report; ON CONFLICT-safe retry re-records). And a recipient is recorded ONLY when the provider
+    returns sent=true — a dry-run (no provider) is `skipped` and NOT recorded, so the campaign retries once
+    connected (no fake success). Generalizes: for any batched side-effecting job, "count it done" must be
+    downstream of the durable record, and the durable record downstream of the real effect.
+  - **LESSON — don't promise an offer you didn't build.** The H15 spec mentioned an "optional one-time
+    discount", but no coupon is wired into Stripe checkout — so the win-back email promises NO discount
+    (variants change FRAMING only), with a test asserting the output contains no "discount"/"coupon"/"% off"/
+    "promo". Honest copy beats a real-looking promise the checkout can't honor.
+  - **VERIFIED-REAL (not a bug):** on cancellation the Stripe webhook writes `entitlement = NULL` (and
+    `subscription_tier = NULL`); entitlement is BINARY (`premium`|`null`, never an intermediate string), so
+    the win-back churn check `entitlement IS DISTINCT FROM 'premium'` + an `ever_premium` join is correct.
+    The security scout's "account DELETE missing parseJsonBody" was a FALSE POSITIVE (already guarded). The
+    `/api/cron` prefix is already in the middleware PUBLIC allowlist (CRON_SECRET is the limiter); no
+    vercel.json exists (cron scheduling is an owner/deploy step, like the digest cron — documented, not
+    committed).
+  - **DEFERRED FINDINGS → next run (from the folded deep-audit sweep):** (a) DESIGN/STORE-COMPLIANCE (HIGH) —
+    the `household` perk is shown in `PREMIUM_PERKS` on `/upgrade` while `FEATURE_HOUSEHOLDS` defaults OFF
+    (Apple 2.3.1 "advertise only shipped features" risk); ENTANGLED with the Family tier value prop ("up to 5
+    members"), so it needs a product decision (enable the flag + prove household sharing works, OR gate the
+    perk + reframe Family) rather than a quick edit — investigate + fix next run. (b) H12 onboarding
+    "cook together" Family moment (the /upgrade Family card already exists since PR #154 — only the onboarding
+    surface remains; marginal). (c) H11 cohort-retention data source (needs the next migration). (d) F4.1
+    email round-trip (needs Mailpit/docker) + F6 visual screenshots (need a live seeded e2e run to produce
+    REAL committed artifacts — can't honestly commit empty screenshots). (e) minor: log swallowed errors on
+    the best-effort onboarding profile/taste saves (silent data-loss observability). NOT actioned (churn):
+    the unused PageHeader `accent` prop across 20+ call sites.
