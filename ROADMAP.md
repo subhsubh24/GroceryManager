@@ -304,6 +304,16 @@ mechanical gate, not a vibe.
       `docs/autonomous-loop/LOOP_MEMORY.md`, with top findings turned into value-bar-clearing work.
       Runs ~once/day (see the routine's PERIODIC DEEP AUDIT section).
       _(Deep audit 2026-06-25: 3 critical bugs fixed — PRs #119 #120 #121; lessons recorded)_
+- [ ] **F6. Visual-verification ARTIFACTS for the journey suite** — FACTORY_STANDARD §6/§7/§10 now
+      require the deep audit + readiness gate to VISUALLY review a screenshot of every page and key
+      state (empty / loading / error, authed + logged-out), with a blank/broken/overlapping/
+      unstyled/off-brand/"vibe-coded" page treated as a release-blocking FAIL. The product side does
+      not capture those artifacts yet (`apps/web/e2e/journeys.spec.ts` has none; `playwright.config.ts`
+      sets only `trace`). Build it: **web** — `page.screenshot()` at each page + state into a committed,
+      deterministically-named `apps/web/e2e/__screenshots__/` dir; **mobile** — component snapshots for
+      the parallel screens. Then wire "visually review the journey screenshots" into the deep-audit +
+      readiness lenses so the standard's mandate has real artifacts to judge (not just config). Keep
+      this product/ROADMAP work — do NOT add it to the byte-identical `FACTORY_STANDARD.md`.
 
 > **Track F evidence (2026-06-25):** F1 `apps/web/eslint.config.mjs` (`--max-warnings=0`, PR #122);
 > F2 `packages/core/vitest.config.ts` coverage thresholds (PR #123); F3 `scripts/run-evals.sh`
