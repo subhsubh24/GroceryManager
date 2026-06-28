@@ -1327,3 +1327,26 @@ levers the monetization scout named (referral rewards, Family-tier surfacing, an
 
 **Business case:** unchanged (no revenue lever shipped this run → honest median stays ~$33K, below floor; the
 named levers are now tracked ROADMAP items to build through the gate in future runs).
+
+---
+
+## Run 22 — 2026-06-28 — H13 referral-reward loop (weak-case loop-back: first named revenue lever built)
+
+**Selected:** the lowest incomplete gate is the below-floor business case (honest median ~$33K). The ROADMAP
+"Revenue levers to BUILD" (weak-case loop-back) names H12–H15. Shipped **H13** — the highest-ROI clean,
+self-contained lever — as one cohesive change (file-disjoint within the run; bookkeeping in this PR).
+
+**PR #217 — referral-reward loop.** The `?ref=` attribution loop existed but had no incentive. Added an
+earned-reward ladder: friends who join move the referrer up milestones (1→1mo, 3→3mo, 5→6mo, capped at 6),
+persisted in a new RLS-isolated `referral_credits` table, surfaced on `/invite` (progress ladder) +
+`/upgrade` (conversion banner), and redeemed as bonus free-trial days at the user's first Stripe checkout
+(one-time via `isTrialEligible`). Pure milestone logic in `@gm/core/referral/rewards` (12 tests, 100% cov);
+`@gm/db` kept free of `@gm/core`. Gate: typecheck + 639 core tests + prod build clean. 2 Sonnet reviewers
+(A's missing-GRANT blocker fixed; B approved). Migration 0018 is human-applied (PENDING_OPS).
+
+**DEEP AUDIT:** not due (run 21 folded sweep was within 24h).
+
+**Business case:** lever BUILT but median deliberately UNMOVED — no referral adoption % banked (anti-gaming);
+referral-driven install + conversion lift is left to live experiment data. BUSINESS_CASE lever #3 updated to
+record the build. Remaining buildable revenue levers: H14 (month-3 annual nudge), H15 (win-back), H11 (cohort
+retention data source).

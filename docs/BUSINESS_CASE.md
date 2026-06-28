@@ -257,9 +257,14 @@ optimistic trajectory.
    retention levers remain for subsequent runs — month-3 annual nudge, expiry/reorder push, referral perks,
    win-back — to be shipped through the normal gate until the honest median clears the floor or only reach
    remains.)_
-3. **RETENTION / LTV.** Lower churn both raises steady state *and* shortens the ramp. Re-engagement
-   (push, weekly cook-tonight digest, annual-plan nudge) is built; the recurring weekly-use loop is the
-   structural advantage.
+3. **RETENTION / LTV + viral acquisition.** Lower churn both raises steady state *and* shortens the ramp.
+   Re-engagement (push, weekly cook-tonight digest, annual-plan nudge) is built; the recurring weekly-use
+   loop is the structural advantage. _(Built 2026-06-28, run 22: the referral-reward loop — PR #217 — turns
+   the `?ref=` attribution into an earned incentive (free months at 1/3/5-friend milestones, capped at 6,
+   redeemed as bonus trial days at first checkout). This is a margin-bounded viral-acquisition + retention
+   lever. The median ARR is deliberately UNMOVED: referral-driven installs and their conversion are left to
+   live experiment data — no adoption % is banked to clear the floor. Remaining buildable retention levers:
+   month-3 annual nudge (H14), win-back sequence (H15).)_
 4. **ARPU — Family + annual mix.** Family adoption (upside) and shifting mix toward annual lift ARPU
    ~13 %; secondary to reach/conversion.
 5. **MARGIN.** Already ~97 %; not a constraint.
