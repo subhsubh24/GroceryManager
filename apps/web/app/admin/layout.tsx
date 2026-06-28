@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { currentSession } from "@/app/lib/tenant";
 
 // Owner-only admin area. Set ADMIN_EMAIL in Vercel environment variables to the owner's
 // account email. All other sessions are redirected to sign-in.
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const adminEmail = process.env.ADMIN_EMAIL;
-  const session = await auth();
+  // currentSession() never throws (a stale/undecryptable cookie would otherwise crash the layout
+  // instead of redirecting to sign-in).
+  const session = await currentSession();
   const userEmail = (session?.user as { email?: string } | undefined)?.email;
 
   if (!adminEmail) {
