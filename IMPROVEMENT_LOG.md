@@ -1383,3 +1383,48 @@ persisted in a new RLS-isolated `referral_credits` table, surfaced on `/invite` 
 referral-driven install + conversion lift is left to live experiment data. BUSINESS_CASE lever #3 updated to
 record the build. Remaining buildable revenue levers: H14 (month-3 annual nudge), H15 (win-back), H11 (cohort
 retention data source).
+
+## Run 24 — 2026-06-28 — 4 file-disjoint hardening/compliance/reliability fixes (deep audit folded into scout sweep)
+
+**Context:** All Track A–H *build* items are complete except the environment-gated ones (H11 cohort
+data source needs a live DB; F4.1 email round-trip needs Mailpit/docker; F6 visual screenshots need a
+seeded e2e run) and the marginal H12 onboarding "cook together" surface. The honest median ARR (~$33K)
+stays below the $100K floor and the independent QUALITY_SCORECARD does not yet exist, so the product is
+NOT submission-ready and the 'ready' issue was correctly NOT opened. This run advanced the security (G),
+store-compliance, and reliability bars with the maximal file-disjoint set that could be **fully verified**
+in an environment with **no Postgres + no docker daemon** (so DB/side-effect-dependent items were
+deferred rather than shipped unverifiable — BUILDS≠WORKS).
+
+**DEEP AUDIT (folded into a 3-scout Haiku sweep):** security/abuse, design-taste + store-compliance,
+correctness/dead-code + artifact-freshness. Last standalone deep+readiness audit was run 19; runs 20–23
+folded it. Lenses NOT covered this run (perf, a11y, test/eval coverage, dependency health) — fold or run
+standalone next run.
+
+**Shipped (each gate-green + 2 Sonnet reviewers, auto-merged, file-disjoint):**
+- **PR #225 — reliability: bound the last unbounded LLM calls.** `runChatWithTools` (the agentic `ask`
+  loop — priciest surface) had THREE unwrapped `generateContent` calls (per-round, tool-combine fallback,
+  final summary) and `embed()` had an unwrapped `embedContent`. Wrapped all four in `withTimeout(callTimeoutMs)`
+  (the pattern `chat()`/`generateStructured()` already used) so a stalled/rate-limited key fails fast →
+  graceful fallback within the serverless budget instead of a 504 dead-end. +2 regression tests.
+- **PR #226 — security/G: cron/publish fail-CLOSED in production.** The content-publish cron allowed
+  unauthenticated access in prod when `CRON_SECRET` was unset (warn-and-allow), unlike every other cron
+  route. Adopted the established fail-closed pattern (unset secret ⇒ dev/staging only; else constant-time
+  Bearer compare). Found by the security scout (HIGH).
+- **PR #227 — store-compliance: only advertise household + Family tier when live.** Resolves run-23's
+  HIGH deferred finding the verifiable way: `/upgrade` gated the "Household sharing" perk + the $9.99
+  Family card on `householdsEnabled()` so a default-config (FEATURE_HOUSEHOLDS OFF) install never sells a
+  dark feature (Apple 2.3.1). The feature ships ready; the owner flips the flag at launch and both reappear
+  (recorded in PENDING_OPS). Advertising-only change — no pricing/business-case/entitlement change.
+- **PR #229 — observability: log swallowed errors on best-effort onboarding saves.** `saveProfileAction`
+  + `saveTasteAction` swallowed all failures with bare `catch {}` → silent loss of profile/taste prefs;
+  added server-side `console.error` (still never blocks the flow). Run-23 deferred minor finding.
+
+**Over-flagged / verified-not-a-gap (not shipped, to avoid churn):** the design scout flagged the store
+metadata docs as advertising premium features as free — but both `app-store-metadata.md` and
+`google-play-metadata.md` already carry a clear free/premium SUBSCRIPTION disclosure and do NOT advertise
+the dark household feature (only generic "household size" portion-scaling phrasing). The security scout
+confirmed all post-0010 tables (incl. 0016–0019) have RLS + correct policies; all paid/auth/cron routes
+are rate-limited + (except the publish bug, now fixed) fail-closed.
+
+**Business case:** UNMOVED (honest). No revenue lever shipped this run — these are hardening/compliance/
+reliability fixes. The Family-tier visibility fix (#227) protects the lever's honesty but banks no adoption %.

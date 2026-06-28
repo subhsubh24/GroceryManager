@@ -602,3 +602,41 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   growth routines (model/cron/sources/tools/MCP preserved); pure digest/dashboard reporters left untouched (they don't
   follow the operating standard). LESSON: pre-PMF, pouring growth into a leaky bucket wastes spend + the run — let the
   live retention/activation read GOVERN what gets built and marketed; revenue follows PMF, never the reverse.
+
+- **2026-06-28 (run 24) — 4 file-disjoint hardening/compliance/reliability fixes; deep audit folded into
+  the scout sweep; 'ready' issue NOT opened (median ~$33K < $100K floor + no QUALITY_SCORECARD).** PRs
+  #225 (LLM timeouts), #226 (cron/publish fail-closed), #227 (upgrade household/Family honesty), #229
+  (onboarding save observability) — each gate-green + 2 Sonnet reviewers, auto-merged. Lessons:
+  - **The "bound every LLM call" rule was only PARTIALLY applied — re-grep when adopting a systemic rule.**
+    `chat()`/`generateStructured()` were wrapped in `withTimeout` after the run-23 onboarding-timeout
+    incident, but `runChatWithTools` (the agentic `ask` loop — the PRICIEST surface, and the most likely
+    to stall since it makes up to 8 model calls) had THREE unwrapped `generateContent` calls and `embed()`
+    had an unwrapped `embedContent`. A systemic reliability/security rule ("bound EVERY external call") is
+    only as good as its coverage — grep for ALL call sites of the dangerous primitive (`ai.models.generate*`,
+    `embedContent`) when the rule is adopted, not just the one that triggered it. Same class as the run-19
+    G7 web-vs-mobile gap (a ticked systemic box hid uncovered surfaces).
+  - **A store-compliance dark-feature risk that's "entangled with a revenue lever" still has a verifiable
+    resolution — take it when you can't runtime-verify the bigger move.** Run 23 deferred the household/
+    Family `/upgrade` issue as "needs a product decision (enable the flag + prove it works, OR gate the
+    perk)." With NO local Postgres/docker, I could not runtime-verify the household UX flow end-to-end, so
+    flipping FEATURE_HOUSEHOLDS dark→live for a store submission would violate BUILDS≠WORKS. The verifiable
+    half — make `/upgrade` advertise household + Family ONLY when the feature is live — definitively removes
+    the Apple 2.3.1 risk in EVERY deploy config, preserves the revenue lever for when the owner enables the
+    (built + RLS-tested) feature, and is fully gate-checkable. Recorded the launch-config coupling in
+    PENDING_OPS (set FEATURE_HOUSEHOLDS=1 at launch or forgo the Family tier). Lesson: when the
+    revenue-maximal move needs runtime proof you can't get, ship the honest/compliant half now and record
+    the lever as a flag the owner flips — don't ship an unverifiable dark→live flip, and don't gut the
+    lever's config either.
+  - **No-DB/no-docker environment ⇒ defer DB-query-heavy + side-effect items, don't ship them green-but-
+    unverifiable.** H11 (cohort retention — even a thin SQL query I can't execute risks a silent column/
+    join/bucketing bug; CI's migrate job validates the migration but NOT the analytics query against data),
+    F4.1 (email round-trip needs Mailpit), and F6 (screenshots need a seeded e2e run — committing empty
+    screenshots would be dishonest) all require runtime infra this env lacks. Per BUILDS≠WORKS + side-effect
+    integrity, these stay deferred to a run with a seeded DB rather than shipped on a green build alone.
+  - **Reviewers must get the diff VERBATIM, not a shell substitution.** First reviewer prompt embedded a
+    literal `$(cat diff.txt)` (the Agent tool doesn't run bash, so it didn't expand) — I had to paste a
+    hand-summary. For the rest I pasted the real diff text. Always paste the actual `git diff` output into
+    the reviewer prompt; never rely on a command substitution inside an Agent prompt.
+  - **DEEP-AUDIT findings still open for next run:** H11 cohort data source (needs DB), F4.1 email round-trip
+    (needs Mailpit/docker), F6 visual screenshots (needs seeded e2e), H12 onboarding "cook together" Family
+    moment (marginal). Lenses not covered this run: performance, a11y, test/eval coverage, dependency health.

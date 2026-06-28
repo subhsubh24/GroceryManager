@@ -263,7 +263,13 @@ Customer Portal wired, webhook signature verification live. To go live, the owne
    - `STRIPE_PRICE_ANNUAL` — `price_…` for the $39.99/yr product
    - `STRIPE_PRICE_FAMILY` — `price_…` for the $9.99/mo Family plan (up to 5 members)
 3. **Set `FEATURE_BILLING=1`** in Vercel env once keys are verified.
-4. **(Mobile, later)** Create RevenueCat account → create products → set `REVENUECAT_API_KEY`.
+4. **Set `FEATURE_HOUSEHOLDS=1`** to surface the **Family tier + household-sharing perk** at launch.
+   As of PR #227 the `/upgrade` page only advertises the Family Plan card + the "Household sharing"
+   perk when this flag is on (Apple 2.3.1 / Google accurate-listing honesty — never sell a dark
+   feature). The household feature ships complete + RLS-tested (`packages/db/sql/0005_households.sql`,
+   `/household` flow, cross-household RLS isolation tests). If you launch billing WITHOUT this flag,
+   the Family tier is hidden and you forgo that revenue — so set it on at launch.
+5. **(Mobile, later)** Create RevenueCat account → create products → set `REVENUECAT_API_KEY`.
 
 **Factory-complete (no owner action needed):**
 - ✅ Stripe SDK (`stripe@^22.3.0`) installed in `apps/web`
