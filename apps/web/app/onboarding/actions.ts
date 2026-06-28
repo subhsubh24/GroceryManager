@@ -131,8 +131,10 @@ export async function saveProfileAction(profile: ProfileInput): Promise<void> {
         });
       }
     });
-  } catch {
-    // Best-effort — never block the onboarding flow on a profile save.
+  } catch (e) {
+    // Best-effort — never block the onboarding flow on a profile save — but LOG it server-side so a
+    // persistent failure (silent profile data loss) is observable instead of vanishing.
+    console.error("[onboarding] saveProfileAction failed — profile signals not persisted:", e);
   }
 }
 
@@ -168,8 +170,10 @@ export async function saveTasteAction(answers: OnboardingAnswers): Promise<void>
         });
       }
     });
-  } catch {
-    // Best-effort — never block onboarding on a taste save.
+  } catch (e) {
+    // Best-effort — never block onboarding on a taste save — but LOG it server-side so a persistent
+    // failure (silent taste-preference data loss) is observable instead of vanishing.
+    console.error("[onboarding] saveTasteAction failed — taste signals not persisted:", e);
   }
 }
 
