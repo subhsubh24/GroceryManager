@@ -21,6 +21,7 @@ import { canUse, isPremium } from "@gm/core/billing";
 import { verifyMobileToken } from "../_lib";
 import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
 import { checkLlmQuota } from "../../_lib/llm-quota";
+import { parseJsonBody } from "../../_lib/guard";
 
 export const runtime = "nodejs";
 
@@ -134,12 +135,15 @@ export async function POST(req: Request) {
   const userId = verifyMobileToken(token);
   if (!userId) return Response.json({ error: "Invalid or expired token" }, { status: 401 });
 
-  let body: { recipeId?: unknown; cuisine?: unknown; dir?: unknown };
-  try {
-    body = await req.json();
-  } catch {
-    return Response.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  // G1: rate-limit the swipe-signal write per user so a logged-in client can't flood the
+  // preference_signals ledger (data-poisoning / availability abuse). Mirrors the GET limit.
+  const rl = rateLimit(`discover-write:${userId}`, 30, 60_000);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
+
+  // G2: bounded body parse (32 KB cap) instead of an unbounded req.json().
+  const bodyOrErr = await parseJsonBody<{ recipeId?: unknown; cuisine?: unknown; dir?: unknown }>(req);
+  if (bodyOrErr instanceof Response) return bodyOrErr;
+  const body = bodyOrErr;
 
   const { recipeId, cuisine, dir } = body;
   if (typeof recipeId !== "string" || (dir !== "like" && dir !== "skip")) {

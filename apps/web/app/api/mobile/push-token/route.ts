@@ -1,6 +1,7 @@
 import { deregisterMobilePushToken, getDb, registerMobilePushToken, withTenant } from "@gm/db";
 import { verifyMobileToken } from "../_lib";
 import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
+import { parseJsonBody } from "../../_lib/guard";
 
 export const runtime = "nodejs";
 
@@ -18,12 +19,10 @@ export async function POST(req: Request) {
   const rl = rateLimit(`push-token-write:${userId}`, 30, 60_000);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return Response.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  // G2: bounded body parse (32 KB cap) instead of an unbounded req.json().
+  const bodyOrErr = await parseJsonBody<unknown>(req);
+  if (bodyOrErr instanceof Response) return bodyOrErr;
+  const body = bodyOrErr;
 
   const token =
     typeof (body as Record<string, unknown>).token === "string"
@@ -61,12 +60,10 @@ export async function DELETE(req: Request) {
   const rl = rateLimit(`push-token-delete:${userId}`, 30, 60_000);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return Response.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  // G2: bounded body parse (32 KB cap) instead of an unbounded req.json().
+  const bodyOrErr = await parseJsonBody<unknown>(req);
+  if (bodyOrErr instanceof Response) return bodyOrErr;
+  const body = bodyOrErr;
 
   const token =
     typeof (body as Record<string, unknown>).token === "string"
