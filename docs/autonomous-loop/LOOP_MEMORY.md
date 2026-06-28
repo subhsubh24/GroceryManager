@@ -617,3 +617,9 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   review+send; still NEVER auto-send). Preserved model (Sonnet) / cron (0 14 * * *) / sources / allowed_tools / Gmail MCP.
   LESSON: outreach is curation, not volume — a quiet run with zero drafts is success; a pile of generic cold drafts is
   failure; the human always sends.
+- **2026-06-28 — outreach drafts surface on the factory dashboard via OWNER_ACTIONS.** Added a "Surfacing on the
+  factory dashboard" note to docs/growth/OUTREACH.md: when strategic-outreach drafts await the owner, the Growth Agent
+  files/refreshes ONE OWNER_ACTIONS item in PENDING_OPS.md (id: review-outreach-drafts, "Review + send N strategic
+  outreach drafts (Gmail)") and decrements/closes it as the owner sends (honest counts, never stale) — that's what makes
+  the review surface on the dashboard, which already renders OWNER_ACTIONS; the GROWTH_STATUS outreach block stays current
+  for the tile. No routine change needed (the routine already reads OUTREACH.md for the full rails).
