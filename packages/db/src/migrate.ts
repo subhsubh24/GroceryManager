@@ -75,6 +75,9 @@ async function main() {
     console.log("→ A/B experiment tables (exposures + conversions)…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0017_experiments.sql"), "utf8"));
 
+    console.log("→ referral reward credits ledger…");
+    await sql.unsafe(readFileSync(join(pkgRoot, "sql/0018_referral_credits.sql"), "utf8"));
+
     console.log("✓ migrations complete");
   } finally {
     await sql.end();

@@ -1,8 +1,9 @@
 import { getDb, loadPreferenceSignals, withTenant } from "@gm/db";
 import { isPremium, PREMIUM_PERKS } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
+import { reconcileReferralRewards } from "@/app/lib/referral";
 import { PageHeader } from "@/app/components/page-header";
-import { Check, Star } from "@/app/components/icons";
+import { Check, Gift, Star } from "@/app/components/icons";
 import { PreviewButton } from "./preview-button";
 import { CheckoutButton } from "./checkout-button";
 import { PlausiblePageview } from "@/app/components/PlausiblePageview";
@@ -18,11 +19,13 @@ export default async function UpgradePage({
   const billingOn = process.env.FEATURE_BILLING === "1";
 
   let premium = false;
+  let referralMonths = 0;
   try {
     const userId = await currentUserId();
     if (userId) {
       const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
       premium = isPremium(signals);
+      referralMonths = (await reconcileReferralRewards(userId)).earnedMonths;
     }
   } catch {
     premium = false;
@@ -66,6 +69,15 @@ export default async function UpgradePage({
         <p className="notice-ok mt-6 flex items-center gap-1.5">
           <Check className="h-4 w-4 shrink-0" strokeWidth={2} /> You&apos;re Premium — thanks for the
           support. You have full access.
+        </p>
+      )}
+
+      {referralMonths > 0 && !premium && !success && (
+        <p className="notice-ok mt-6 flex items-center gap-1.5">
+          <Gift className="h-4 w-4 shrink-0" strokeWidth={2} />
+          {referralMonths === 1
+            ? "You've earned 1 free month from referrals — it's added to your trial when you start Premium."
+            : `You've earned ${referralMonths} free months from referrals — added to your trial when you start Premium.`}
         </p>
       )}
 

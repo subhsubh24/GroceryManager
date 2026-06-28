@@ -9,7 +9,9 @@
 import Stripe from "stripe";
 import { getDb, loadPreferenceSignals, withTenant } from "@gm/db";
 import { isTrialEligible } from "@gm/core/billing";
+import { referralBonusTrialDays } from "@gm/core/referral/rewards";
 import { currentUserId } from "@/app/lib/tenant";
+import { reconcileReferralRewards } from "@/app/lib/referral";
 import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -74,6 +76,19 @@ export async function POST(req: Request) {
     trialEligible = false;
   }
 
+  // Referral reward: earned free months extend the free trial (only on the user's FIRST subscription,
+  // so it's intrinsically one-time per user via isTrialEligible). Capped + margin-bounded in core.
+  // Best-effort — a hiccup here must never block checkout, just skip the bonus.
+  let trialDays = trialEligible ? 7 : 0;
+  if (trialEligible) {
+    try {
+      const { earnedMonths } = await reconcileReferralRewards(userId);
+      trialDays += referralBonusTrialDays(earnedMonths);
+    } catch {
+      // Skip the bonus on failure — base trial still applies.
+    }
+  }
+
   // Derive origin for success/cancel URLs
   const origin = new URL(req.url).origin;
 
@@ -84,7 +99,7 @@ export async function POST(req: Request) {
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
-        ...(trialEligible ? { trial_period_days: 7 } : {}),
+        ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
         metadata: { userId },
       },
       metadata: { userId },
