@@ -457,3 +457,17 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   and the symptom is a generic error boundary, READ PROD: the data (no new users) + the RLS policy + the connection
   fallback logic pinpointed it without ever seeing Vercel logs. (c) Diagnose to certainty before "fixing" — three prior
   defensive PRs (#211/#212) were real hardening but none was THE cause; the cause was deployment config.
+- **2026-06-28 — onboarding "Hmm, that didn't go through" = an unbounded LLM call timing out the serverless function.**
+  After signup/signin were fixed, the AI taste step dead-ended. Deep trace: the action's try/catch already converts
+  LLM errors into a GRACEFUL reply, so the client-only "didn't go through" could ONLY mean the server action
+  REJECTED — i.e. the function was KILLED before its catch ran. Cause: `GeminiClient.generateStructured`/`chat` call
+  `ai.models.generateContent` with NO timeout/abort (and the SDK retries with backoff), and `onboarding/page.tsx` set
+  no `maxDuration` — so a slow/rate-limited (free-tier) key runs past the function limit → kill → client dead-end
+  (instead of the graceful fallback). FIX: bound every Gemini call with `withTimeout` (`LLM_TIMEOUT_MS`, default 8s,
+  under Hobby's 10s) so a stuck key fails FAST → the action returns its graceful fallback; added `maxDuration=30` to
+  the onboarding route for headroom; hardened the client catch to advance with generic chips instead of dead-ending;
+  +2 regression tests. OWNER follow-up: enable billing on `GEMINI_API_KEY` (free-tier rate limits are the likely
+  trigger) — but the app now degrades gracefully either way. LESSON: bound EVERY external/LLM call with a timeout
+  shorter than the function budget; a graceful try/catch is useless if the runtime kills the function first. Wrote the
+  reusable method in `docs/autonomous-loop/DEEP_DIAGNOSIS.md` (observe-the-real-env → prove-the-hypothesis →
+  find-the-uncaught-throw → verify-in-prod → fix-root-cause+fail-loud → peel-the-next-layer).

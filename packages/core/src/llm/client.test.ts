@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 import { extractJsonValue, GeminiClient, l2normalize } from "./client.js";
 import type { Env } from "@gm/config/env";
 import type { Tool, ToolContext } from "./semantic-layer.js";
@@ -204,5 +205,26 @@ describe("runChatWithTools (function-calling loop)", () => {
     await expect(
       client.runChatWithTools({ messages: [{ role: "user", content: "hi" }], tools: [], ctx, codeExecution: true }),
     ).rejects.toThrow(/503/);
+  });
+});
+
+describe("LLM call timeout (self-bounds a slow/stalled key)", () => {
+  // A slow / rate-limited (free-tier) key must FAIL FAST so the caller's try/catch runs and degrades
+  // gracefully WITHIN the serverless budget — instead of the model call hanging until the function is
+  // killed (which dead-ends the user). Regression test for the onboarding "didn't go through" bug.
+  const envFast = { ...fakeEnv, LLM_TIMEOUT_MS: 30 } as unknown as Env;
+
+  it("generateStructured rejects with a timeout when the model call stalls past the budget", async () => {
+    const client = new GeminiClient(envFast);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (client as any).ai = { models: { generateContent: () => new Promise(() => {}) } }; // never settles
+    await expect(client.generateStructured(z.object({ ok: z.boolean() }), "hi")).rejects.toThrow(/timeout/i);
+  });
+
+  it("does NOT time out a fast call (resolves normally under the budget)", async () => {
+    const client = new GeminiClient(envFast);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (client as any).ai = { models: { generateContent: async () => ({ text: '{"ok":true}' }) } };
+    await expect(client.generateStructured(z.object({ ok: z.boolean() }), "hi")).resolves.toEqual({ ok: true });
   });
 });

@@ -142,9 +142,41 @@ function mediaResolutionEnum(r?: "low" | "medium" | "high"): MediaResolution | u
   return undefined;
 }
 
+/** Default per-call LLM timeout (ms). A slow / rate-limited (e.g. free-tier) key must fail FAST so
+ *  callers can degrade gracefully WITHIN the serverless function budget — otherwise the underlying
+ *  SDK call (with its own internal retries/backoff) runs until the function is KILLED, the caller's
+ *  try/catch never runs, and the user hits a dead-end instead of the graceful fallback. Keep this
+ *  comfortably under the smallest function limit (Vercel Hobby is 10s). Override via LLM_TIMEOUT_MS. */
+const DEFAULT_LLM_TIMEOUT_MS = 8_000;
+
+/** Reject `p` if it doesn't settle within `ms`, so one stuck Gemini call can't hang the whole request. */
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`Gemini call exceeded ${ms}ms timeout (${label})`)),
+      ms,
+    );
+    p.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
+}
+
 export class GeminiClient {
   private readonly ai: GoogleGenAI;
   private readonly env: Env;
+
+  /** Per-call wall-clock budget for a single Gemini request (see DEFAULT_LLM_TIMEOUT_MS). */
+  private get callTimeoutMs(): number {
+    return this.env.LLM_TIMEOUT_MS ?? DEFAULT_LLM_TIMEOUT_MS;
+  }
 
   constructor(env: Env = loadEnv()) {
     this.env = env;
@@ -175,15 +207,19 @@ export class GeminiClient {
       for (const img of opts.images ?? []) {
         parts.push({ inlineData: { mimeType: img.mimeType, data: img.dataBase64 } });
       }
-      const res = await this.ai.models.generateContent({
-        model,
-        contents: { role: "user", parts },
-        config: {
-          tools: [{ codeExecution: {} }],
-          ...(opts.system ? { systemInstruction: opts.system } : {}),
-          ...(mediaRes ? { mediaResolution: mediaRes } : {}),
-        },
-      });
+      const res = await withTimeout(
+        this.ai.models.generateContent({
+          model,
+          contents: { role: "user", parts },
+          config: {
+            tools: [{ codeExecution: {} }],
+            ...(opts.system ? { systemInstruction: opts.system } : {}),
+            ...(mediaRes ? { mediaResolution: mediaRes } : {}),
+          },
+        }),
+        this.callTimeoutMs,
+        `generateStructured/codeExec ${model}`,
+      );
       return schema.parse(extractJsonValue(res.text ?? "")) as z.infer<S>;
     }
 
@@ -194,19 +230,23 @@ export class GeminiClient {
     }
     const contents: Content = { role: "user", parts };
 
-    const res = await this.ai.models.generateContent({
-      model,
-      contents,
-      config: {
-        responseMimeType: "application/json",
-        // Gemini accepts an OpenAPI-subset schema; zod-to-json-schema is close enough for
-        // most shapes. (Enums need an explicit "type":"string" — handled at schema authoring.)
-        responseSchema: jsonSchema,
-        ...(opts.system ? { systemInstruction: opts.system } : {}),
-        ...(mediaRes ? { mediaResolution: mediaRes } : {}),
-        ...(budget !== -1 ? { thinkingConfig: { thinkingBudget: budget } } : {}),
-      },
-    });
+    const res = await withTimeout(
+      this.ai.models.generateContent({
+        model,
+        contents,
+        config: {
+          responseMimeType: "application/json",
+          // Gemini accepts an OpenAPI-subset schema; zod-to-json-schema is close enough for
+          // most shapes. (Enums need an explicit "type":"string" — handled at schema authoring.)
+          responseSchema: jsonSchema,
+          ...(opts.system ? { systemInstruction: opts.system } : {}),
+          ...(mediaRes ? { mediaResolution: mediaRes } : {}),
+          ...(budget !== -1 ? { thinkingConfig: { thinkingBudget: budget } } : {}),
+        },
+      }),
+      this.callTimeoutMs,
+      `generateStructured ${model}`,
+    );
 
     const text = res.text ?? "";
     let json: unknown;
@@ -270,14 +310,18 @@ export class GeminiClient {
       role: m.role === "assistant" ? "model" : "user",
       parts: [{ text: m.content }],
     }));
-    const res = await this.ai.models.generateContent({
-      model,
-      contents,
-      config: {
-        ...(args.codeExecution ? { tools: [{ codeExecution: {} }] } : {}),
-        ...(args.system ? { systemInstruction: args.system } : {}),
-      },
-    });
+    const res = await withTimeout(
+      this.ai.models.generateContent({
+        model,
+        contents,
+        config: {
+          ...(args.codeExecution ? { tools: [{ codeExecution: {} }] } : {}),
+          ...(args.system ? { systemInstruction: args.system } : {}),
+        },
+      }),
+      this.callTimeoutMs,
+      `chat ${model}`,
+    );
     return { text: res.text ?? "" };
   }
 

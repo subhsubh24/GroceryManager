@@ -2,6 +2,10 @@ import { loadEnv } from "@gm/config/env";
 import { OnboardingFlow } from "./onboarding-flow";
 
 export const dynamic = "force-dynamic";
+// The AI taste step calls Gemini inside a server action. Give the function headroom (on plans that
+// honor it) so a healthy-but-slow model call completes; the LLM client also self-bounds each call
+// (LLM_TIMEOUT_MS) so a slow/failing key degrades to the graceful fallback well within this budget.
+export const maxDuration = 30;
 
 /**
  * Onboarding entry — a mobile-first TILE step-flow (Profile → Taste → Add first items → Done), NOT a
