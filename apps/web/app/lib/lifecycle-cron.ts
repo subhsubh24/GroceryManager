@@ -117,15 +117,19 @@ export async function runLifecycleCampaign(opts: {
 
       const result = await sendEmail(payload);
       if (result.sent) {
-        sent++;
-        // Idempotent record — only after the email truly left (side-effect integrity).
+        // Record FIRST (idempotent), then count as `sent` only once the idempotency row is written
+        // — so `sent` always means "emailed AND recorded". If the record write fails the email did
+        // leave, but we count it `failed` (honest) and the ON CONFLICT-safe retry will re-record it
+        // next run rather than silently double-emailing being masked by an inflated `sent` count.
         try {
           await recordLifecycleEmailSent(admin, {
             userId: c.userId,
             emailType: opts.emailType,
             variant,
           });
+          sent++;
         } catch (e) {
+          failed++;
           console.error(`[lifecycle/${opts.emailType}] record failed for ${c.userId}`, e);
         }
         // Best-effort experiment exposure (per-tenant) — never blocks.

@@ -84,6 +84,11 @@ export async function getAnnualNudgeCandidates(db: Querier): Promise<LifecycleCa
  * H15 — users who churned (ever had premium; latest entitlement is no longer premium) at least 30
  * days ago BUT are still active on the free tier (cooked in the last 30 days) — the highest-intent
  * win-back audience. Excludes anyone who has since re-subscribed (latest entitlement = premium).
+ *
+ * The `entitlement` signal is BINARY by the Stripe webhook's contract: it writes value `'premium'`
+ * (active) or `null` (inactive/cancelled) and never an intermediate string, so
+ * `value IS DISTINCT FROM 'premium'` correctly identifies the churned (null) state without matching
+ * any non-premium-non-null tier. `occurred_at` of that latest signal is the cancellation time.
  */
 export async function getWinbackCandidates(db: Querier): Promise<LifecycleCandidate[]> {
   const rows = (await db.execute(

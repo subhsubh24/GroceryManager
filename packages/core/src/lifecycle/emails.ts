@@ -52,7 +52,12 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-/** Minimal, on-brand HTML shell with inline styles (email clients ignore <style>). */
+/**
+ * Minimal, on-brand HTML shell with inline styles (email clients ignore <style>).
+ * CONTRACT: `bodyHtml` is raw HTML — the CALLER must `escapeHtml()` every dynamic value it
+ * interpolates (the builders below escape `name` + `lead`; prices are numeric). `heading`,
+ * `ctaLabel`, `ctaUrl`, and `unsubscribeUrl` are escaped here.
+ */
 function shell(opts: { heading: string; bodyHtml: string; ctaLabel: string; ctaUrl: string; unsubscribeUrl: string }): string {
   return `<!doctype html><html><body style="margin:0;padding:0;background:#f6f7f8;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f7f8;padding:24px 0;">
