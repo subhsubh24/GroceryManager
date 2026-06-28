@@ -26,7 +26,14 @@ export interface RateLimitResult {
   retryAfterMs?: number;
 }
 
+// TEST/CI ONLY — disable rate limiting in an ephemeral E2E environment so the functional journey
+// suite (which self-seeds many real signups from a single CI runner IP) isn't throttled by the
+// signup limiter. Gated on an explicit env var that PRODUCTION NEVER SETS; unset (the default, and
+// always in prod) → the limiter behaves normally. Never set RATE_LIMIT_DISABLED in production.
+const RATE_LIMIT_DISABLED = process.env.RATE_LIMIT_DISABLED === "1";
+
 export function rateLimit(key: string, limit: number, windowMs: number): RateLimitResult {
+  if (RATE_LIMIT_DISABLED) return { allowed: true, limit, remaining: limit };
   const now = Date.now();
   const existing = buckets.get(key);
   if (!existing || now > existing.resetAt) {

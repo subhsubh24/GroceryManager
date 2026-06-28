@@ -161,6 +161,14 @@ jobs:
       DIRECT_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gm
       AUTH_SECRET: ci-e2e-not-a-real-secret-000000000000000000
       NEXTAUTH_SECRET: ci-e2e-not-a-real-secret-000000000000000000
+      # next-auth v5 refuses to act on an "untrusted" host (Vercel sets this automatically; localhost
+      # CI doesn't) — without it the credentials sign-in callback can't redirect → signup hangs.
+      AUTH_TRUST_HOST: "true"
+      AUTH_URL: http://localhost:3000
+      NEXTAUTH_URL: http://localhost:3000
+      # TEST/CI ONLY — the journey suite self-seeds many real signups from one runner IP; without this
+      # the 5/hour signup limiter throttles the run. Prod NEVER sets this (see app/api/_lib/rate-limit.ts).
+      RATE_LIMIT_DISABLED: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
