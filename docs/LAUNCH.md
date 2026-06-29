@@ -36,7 +36,7 @@ GroceryManager is a **grocery + cooking autopilot** — a Next.js 15 PWA and a n
 
 18 screens at full parity with the web:
 
-Login · Onboarding (taste interview) · Home · Pantry · Shopping list · Cookbook · Cook tonight · Cook mode · Discover (swipe feed) · Use-it-up · Meals & macros log · Cooking streak/stats · Quick-add/capture · Profile + account deletion · Upgrade/paywall (RevenueCat scaffold) · Spend intelligence · Plan-my-week · Grocery Wrapped
+Login · Onboarding (taste interview) · Home · Pantry · Shopping list · Cookbook · Cook tonight · Cook mode · Discover (swipe feed) · Use-it-up · Meals & macros log · Cooking streak/stats · Quick-add/capture · Profile + account deletion · Upgrade/paywall (RevenueCat IAP wired — purchase + restore) · Spend intelligence · Plan-my-week · Grocery Wrapped
 
 Push notification infrastructure fully wired (`expo-notifications`, `push_tokens` table, `/api/mobile/push-token`). EAS build config staged (`eas.json`). Remaining Human Core: EAS project ID + icon PNG + screenshots.
 
@@ -45,7 +45,7 @@ Push notification infrastructure fully wired (`expo-notifications`, `push_tokens
 - `packages/core/src/billing` — `SUBSCRIPTION_PLANS`, `getCurrentSubscriptionTier`, `canUse()`, `isTrialEligible`
 - Stripe webhook handler (fail-closed until SDK + secret wired)
 - `FEATURE_BILLING` flag (default off; set to 1 in Vercel once billing is live)
-- RevenueCat: `REVENUECAT_API_KEY` in env schema, mobile upgrade screen wired
+- RevenueCat: mobile purchase flow (`Purchases.purchasePackage` + Restore) + server entitlement webhook (`/api/webhooks/revenuecat`) wired; degrades to "Payments coming soon" until the public SDK keys + `REVENUECAT_WEBHOOK_AUTH` are set (Step 7)
 
 ### 2d. Compliance + privacy
 
@@ -83,7 +83,7 @@ Key passing items:
 - ✅ All 26 public tables RLS-protected; no cross-tenant data leaks
 - ✅ No WebView wrapper — 18 native screens using React Native primitives (Apple 4.2)
 - ✅ No prohibited content; utility app well within content guidelines
-- ⚠️ IAP for subscription (RevenueCat/StoreKit2) — **Human Core, critical path before submission**
+- ⚠️ IAP for subscription (RevenueCat/StoreKit2) — purchase flow + Restore + entitlement webhook **built** (PR #266); the owner still must connect RevenueCat + set the public SDK keys + `REVENUECAT_WEBHOOK_AUTH` (Step 7) — **Human Core, critical path before submission**
 - ⚠️ App icon 1024×1024 PNG (no alpha) — **Human Core**
 - ⚠️ 5 iPhone 15 Pro screenshots — **Human Core**
 - ⚠️ Privacy policy URL live at `/privacy` before submission
@@ -218,13 +218,19 @@ Sequence (surfacing the Gmail import hook first):
 
 ### Step 7 — RevenueCat (mobile IAP)
 
-1. Create [RevenueCat](https://revenuecat.com) account → create a new project.
-2. Add App Store + Google Play apps in the RevenueCat dashboard.
-3. Create products in App Store Connect + Google Play Console (matching Step 6 prices).
-4. Set `REVENUECAT_API_KEY=<key>` in EAS secrets.
-5. Wire the mobile upgrade screen to call `Purchases.purchasePackage(...)` when the user taps subscribe (the screen at `apps/mobile/app/upgrade.tsx` is scaffolded with a placeholder tap handler).
+The mobile purchase flow and the server entitlement webhook are **already built** (PR #266):
+`apps/mobile/app/upgrade.tsx` calls `Purchases.purchasePackage(...)` + Restore via
+`apps/mobile/lib/purchases.ts`, and `apps/web/app/api/webhooks/revenuecat/route.ts` syncs the
+entitlement into the same `preference_signals` ledger the Stripe webhook uses. It degrades to an
+honest "Payments coming soon" state until configured. The owner connects it:
 
-**Verify:** Make a sandbox purchase on a test device — RevenueCat dashboard shows the entitlement active.
+1. Create [RevenueCat](https://revenuecat.com) account → create a new project; add the App Store + Google Play apps.
+2. Create products in App Store Connect + Google Play Console (matching Step 6 prices). Product ids whose names contain `annual`/`family` map to the right tier automatically.
+3. Create a `premium` **entitlement** and attach the products to it.
+4. Set the **public SDK keys** in EAS env: `EXPO_PUBLIC_REVENUECAT_IOS_KEY` + `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY`.
+5. RevenueCat → Project → Webhooks: point at `https://yourapp.com/api/webhooks/revenuecat`, set an **Authorization header value**, and put the SAME value in Vercel env as `REVENUECAT_WEBHOOK_AUTH` (the route fails closed — 401 — until this is set).
+
+**Verify:** Make a sandbox purchase on a test device — RevenueCat dashboard shows the entitlement active, the webhook fires, and a `preference_signals` row (`topic='entitlement'`, `value='premium'`) appears for the user.
 
 ---
 

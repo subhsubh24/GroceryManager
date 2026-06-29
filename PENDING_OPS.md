@@ -12,7 +12,7 @@ The dashboard surfaces every `open` item, urgent first.
 ```yaml
 OWNER_ACTIONS:
   project: GroceryManager
-  as_of: 2026-06-29 (run 25)
+  as_of: 2026-06-29 (run 28)
   items:
     - id: set-direct-database-url-prod
       title: "DONE: DIRECT_DATABASE_URL set in Vercel — signup/signin working in prod (19 users, 16 in last 7d, newest 2026-06-28)"
@@ -42,6 +42,13 @@ OWNER_ACTIONS:
       status: open
       why: "The loop builds + validates the release config (eas.json prod build+submit, app config, env-driven projectId) but cannot create the EAS project, hold signing creds, or run the real signed build/submit."
       how: "Run `eas init` in apps/mobile; set EXPO_PUBLIC_PROJECT_ID (+ EAS secrets) to the real projectId; create Apple App Store Connect + Google Play accounts; fill eas.json submit creds (appleId/ascAppId/appleTeamId + google-play-key.json); then `eas build --profile production` + `eas submit`. The loop never touches signing/secrets."
+      blocks: launch
+    - id: connect-revenuecat-iap
+      title: "Connect RevenueCat to activate mobile in-app purchases (purchase flow + webhook CODE is built, PR #266)"
+      priority: high
+      status: open
+      why: "The mobile purchase flow (Purchases.purchasePackage + Restore, apps/mobile), the wrapper (apps/mobile/lib/purchases.ts), and the server entitlement webhook (apps/web/app/api/webhooks/revenuecat/route.ts → same preference_signals ledger as Stripe) are built and gate-green; the screen degrades to an honest 'Payments coming soon' state until configured. An App-Store-targeted app must accept payment on device, so this is a critical-path owner step — only the live keys + dashboard config are Human-Core."
+      how: "RevenueCat dashboard: create project → add App Store + Google Play apps → create a `premium` entitlement → attach the monthly/annual products (product ids containing annual/family map to the right tier). Set EXPO_PUBLIC_REVENUECAT_IOS_KEY + EXPO_PUBLIC_REVENUECAT_ANDROID_KEY (public SDK keys) in EAS env. RevenueCat → Webhooks → point at https://yourapp.com/api/webhooks/revenuecat, set an Authorization header value, and set the SAME value as REVENUECAT_WEBHOOK_AUTH in Vercel env (the route returns 401 until set — no unauthenticated entitlement writes). Verify: sandbox purchase → entitlement active → webhook fires → preference_signals topic='entitlement' value='premium'. See docs/LAUNCH.md Step 7."
       blocks: launch
     - id: verify-signup-dashboard-prod
       title: "DONE: signup → onboarding → dashboard verified working on the DEPLOYED app"
@@ -295,7 +302,24 @@ Customer Portal wired, webhook signature verification live. To go live, the owne
    - `STRIPE_PRICE_ANNUAL` — `price_…` for the $39.99/yr product
    - `STRIPE_PRICE_FAMILY` — `price_…` for the $9.99/mo Family plan (up to 5 members)
 3. **Set `FEATURE_BILLING=1`** in Vercel env once keys are verified.
-4. **(Mobile, later)** Create RevenueCat account → create products → set `REVENUECAT_API_KEY`.
+4. **(Mobile IAP — CODE IS WIRED as of 2026-06-29, PR #266)** The mobile purchase flow
+   (`Purchases.purchasePackage()` + Restore) and the server entitlement webhook
+   (`/api/webhooks/revenuecat`) are built and degrade gracefully when unconfigured. To go live the
+   owner must:
+   - **RevenueCat dashboard:** create a project → add the App Store + Google Play apps → create a
+     `premium` **entitlement** → attach the monthly/annual products (product ids containing
+     `annual`/`family` map to the right tier; see `tierFromProduct` in the webhook).
+   - **Public SDK keys** (safe to ship in the client): set `EXPO_PUBLIC_REVENUECAT_IOS_KEY` and
+     `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` in EAS env (without them the upgrade screen shows the honest
+     "Payments coming soon" state).
+   - **Webhook:** RevenueCat → Project → Webhooks → point at `https://yourapp.com/api/webhooks/revenuecat`,
+     set an **Authorization header value**, and set the SAME value as `REVENUECAT_WEBHOOK_AUTH` in
+     Vercel env (the route fails closed — returns 401 — until this is set, so no unauthenticated
+     entitlement writes).
+   - **(Optional)** `REVENUECAT_API_KEY` — the SECRET REST key, only if you later add server-side
+     verification; not required for the webhook.
+   - **Verify:** sandbox purchase on a test device → RevenueCat dashboard shows the entitlement →
+     the webhook fires → `preference_signals` row `topic='entitlement' value='premium'` appears.
 
 **Factory-complete (no owner action needed):**
 - ✅ Stripe SDK (`stripe@^22.3.0`) installed in `apps/web`
@@ -497,3 +521,14 @@ it's a safe no-op when already applied. **One-time owner step to enable it:** ad
 secret `PROD_DIRECT_DATABASE_URL` (the Supabase owner/direct connection — same value as Vercel's
 `DIRECT_DATABASE_URL`). Until then the job warns + skips (never blocks). See the `enable-auto-migrate-secret`
 OWNER_ACTIONS item. This removes the human-applies-migrations step that caused the signup outage.
+
+## 2026-06-29 — CI performance-budget gate (owner/CI; the headless loop cannot edit `.github/`)
+
+ROADMAP F4 was reconciled (2026-06-29): the E2E + a11y + visual gates are shipped and gating, but a
+CI *performance-budget* gate is not wired. `next build` reports per-route first-load JS (~102 kB
+shared, verified small) yet nothing asserts a budget. To add one (optional, hardening):
+- Add a `bundlesize` or `@lhci/cli` (Lighthouse CI) step to `.github/workflows/ci.yml` asserting
+  e.g. per-page first-load < ~110 kB and the middleware bundle < ~150 kB.
+- This is a `.github/` change an unattended run must not make (it trips the sensitive-file prompt),
+  so it is an owner/CI item. Non-blocking — the app ships without it; it only guards against future
+  bundle bloat.

@@ -1553,3 +1553,36 @@ discovery recall but over-report; the Opus orchestrator must dissolve false posi
 selecting — this run, 4 of ~6 "candidates" were scout errors (a missed test file, hallucinated copy, an
 already-surfaced route) and shipping any of them would have been churn. The correct output of a converged sweep
 is often ONE real fix + an honest "the rest didn't clear the bar," not a padded batch.
+
+## 2026-06-29 (run 28) — quality-scorecard-driven: drove both ship-critical B dimensions toward A
+
+The independent Quality Auditor's first baseline grade (PR #259) landed: **overall B, ship gate NOT
+met**, with two ship-critical dimensions at B and precisely-named buildable gaps. That scorecard was
+the run's primary signal (consumed as DATA, never self-graded). Shipped 4 file-disjoint PRs, each
+through 2 Sonnet reviewers + the CI gate:
+
+- **#266 (launch_readiness → A): mobile RevenueCat IAP, end-to-end.** Replaced the disabled "Payments
+  coming soon" stub with a real `Purchases.purchasePackage()` + Restore flow (`apps/mobile/lib/purchases.ts`
+  + rewritten `upgrade.tsx`) AND a server entitlement webhook (`/api/webhooks/revenuecat`) that writes
+  the SAME `preference_signals` ledger as Stripe — so an on-device purchase actually unlocks server-side
+  premium (the loop is genuinely closed, not a fake-success dead-end). Degrades to an honest state when
+  the public SDK key is absent. The only gap that hard-blocked App Store / Play submission.
+- **#263 (correctness_reliability → A, gap a): ledger-only invariant fix.** `applyVisionScan` wrote
+  `pantry_stock` directly after `appendLedgerAndReproject` (violating §6). Threaded an optional `source`
+  through the ledger path instead; reproject already derives `lastConfirmedAt` from the appended event.
+  New skipIf integration test ran GREEN locally against a seeded Postgres (persist.ts 0.86% → 95.65%).
+- **#264 (tests_evals): vision detect/resolve adapter tests** (~0% → covered) — pure, CI-runnable.
+- **#265 (security/G5): captcha fails CLOSED in production** on a verify-call network error/timeout
+  (an attacker could induce a timeout to bypass bot protection); dev/staging still fail open.
+
+Plus living-artifact reconciliation: ROADMAP F4's unbacked "performance budget" sub-claim corrected
+(no CI perf-budget gate exists; the `.github/` edit is an owner item — PENDING_OPS), and PENDING_OPS +
+docs/LAUNCH Step 7 updated to reflect the mobile IAP code is now wired (owner connects RevenueCat).
+
+**Lesson:** when an independent quality grade names specific buildable ship-critical gaps, that IS the
+run's work-list — drive the named gaps to A, file-disjoint, one PR each. The scorecard's "shared root
+cause" hint (correctness + tests both = the untested vision path) let one integration test + two unit
+files close two gaps at once. Did NOT tick the "Independent QUALITY GRADE = A" DoD box — the grade is
+owned by the separate Quality Auditor and is only re-earned on its next run; building the fixes ≠
+self-awarding the grade. Factory remains NOT submission-ready (quality grade still B until re-graded;
+business-case floor reach-gated per FYI #190).
