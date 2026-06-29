@@ -3,8 +3,9 @@
  * RLS-scoped to the user. Semantics mirror the §5.6 rules exactly:
  *
  *   confirm_present → append a `vision_confirmed` ledger event at `now` (resets the confidence
- *     decay clock, preserving the learned rate; restores an out/expired item to in_stock) and
- *     stamp `lastConfirmedAt` / `source=user_confirmed`.
+ *     decay clock, preserving the learned rate; restores an out/expired item to in_stock); the
+ *     reprojection stamps `lastConfirmedAt` / `source=user_confirmed` via the ledger path — never a
+ *     direct pantry_stock write (the §6 ledger-only invariant).
  *   new_item       → normalize the label to a canonical (trigram → else create, like §5.4) and
  *     seed pantry via the ledger.
  *   unconfirmed (absence) → NOT written here. Absence ≠ depletion; the review surfaces it as a
@@ -95,6 +96,9 @@ export async function applyVisionScan(
     const cur = curMap.get(c.canonicalItemId);
     const wasEmpty =
       !cur || cur.status === "out" || cur.status === "expired_likely" || Number(cur.qty) <= 0;
+    // Ledger-only (§6): the `vision_confirmed` event at `now` re-grounds the projection — reproject
+    // already derives lastConfirmedAt from it — and `source: "user_confirmed"` stamps the provenance
+    // through the same path. No direct pantry_stock write (the invariant the rest of the app relies on).
     await appendLedgerAndReproject(db, {
       userId,
       canonicalItemId: c.canonicalItemId,
@@ -105,11 +109,8 @@ export async function applyVisionScan(
       refId: det!.id,
       occurredAt: now,
       ratePerDay: cur?.rate != null ? Number(cur.rate) : null,
+      source: "user_confirmed",
     });
-    await db
-      .update(pantryStock)
-      .set({ lastConfirmedAt: now, source: "user_confirmed" })
-      .where(and(eq(pantryStock.userId, userId), eq(pantryStock.canonicalItemId, c.canonicalItemId)));
     confirmed++;
   }
 

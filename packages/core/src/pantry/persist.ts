@@ -9,6 +9,9 @@ import type { LedgerEventType } from "@gm/shared";
 import { ewmaConsumptionRate } from "./depletion.js";
 import { projectPantryStock } from "./project.js";
 
+/** Provenance of the current projection. Mirrors the `stock_source` enum. */
+export type StockSource = "derived" | "user_confirmed";
+
 export interface LedgerAppend {
   userId: string;
   canonicalItemId: string;
@@ -19,6 +22,12 @@ export interface LedgerAppend {
   refId?: string | null;
   occurredAt?: Date;
   ratePerDay?: number | null;
+  /**
+   * Marks the resulting projection as `user_confirmed` (an explicit "it's here" from the user, e.g.
+   * a reviewed vision scan) rather than the default `derived`. Omitted → the projection's existing
+   * source is preserved (a routine reprojection never downgrades a confirmed item back to derived).
+   */
+  source?: StockSource;
 }
 
 export async function appendLedgerAndReproject(db: Querier, a: LedgerAppend) {
@@ -32,15 +41,21 @@ export async function appendLedgerAndReproject(db: Querier, a: LedgerAppend) {
     refId: a.refId ?? null,
     occurredAt: a.occurredAt ?? new Date(),
   });
-  return reprojectStock(db, a.userId, a.canonicalItemId, a.ratePerDay ?? null);
+  return reprojectStock(db, a.userId, a.canonicalItemId, a.ratePerDay ?? null, a.source);
 }
 
-/** Recompute PantryStock for one (user, item) from its full ledger and upsert it. */
+/**
+ * Recompute PantryStock for one (user, item) from its full ledger and upsert it. `source`, when
+ * given, stamps the projection's provenance (`user_confirmed`); omitting it leaves an existing row's
+ * source untouched and defaults a new row to `derived` — so the projection stays a pure function of
+ * the ledger and stock is NEVER written outside this path (the §6 ledger-only invariant).
+ */
 export async function reprojectStock(
   db: Querier,
   userId: string,
   canonicalItemId: string,
   ratePerDay: number | null,
+  source?: StockSource,
 ) {
   const events = await db
     .select({
@@ -105,6 +120,9 @@ export async function reprojectStock(
     estimatedConsumptionRatePerDay: rate,
     lastPurchaseAt,
     lastConfirmedAt,
+    // Only stamp source when the caller asserts it (user confirmation). Omitting it lets a new row
+    // default to "derived" and leaves an existing row's source unchanged on reprojection.
+    ...(source ? { source } : {}),
   };
 
   await db
