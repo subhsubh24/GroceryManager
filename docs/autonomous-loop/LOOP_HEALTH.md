@@ -22,19 +22,19 @@ The `QUALITY_SCORECARD` measures the **product**; this measures the **loop itsel
 ```yaml
 LOOP_HEALTH:
   project: GroceryManager
-  as_of: 2026-06-29
+  as_of: 2026-06-29 (run 25)
   enforced_in_ci: true           # lint + functional E2E journeys are REQUIRED checks on main, enforce_admins=true
-  last_run: null
-  last_deep_audit: null
+  last_run: 2026-06-29 (run 25)
+  last_deep_audit: 2026-06-29 (run 24; folded into scout sweep — within 24h, so run 25 went straight to fan-out)
   this_run:
-    changes_shipped: 0
+    changes_shipped: 1           # PR #247 (F4.1 round-trip) — 1 code PR + this housekeeping PR
     changes_abandoned: 0
     abandoned_reasons: []        # [{change, reason}] reason ∈ gate_tsc|gate_test|gate_build|gate_mobile|review_value|review_correctness|circuit_breaker|conflict|dead_end|blocked_owner
     verify_cycle_failures: 0
-    review_rejections: 0
+    review_rejections: 0         # both Sonnet reviewers APPROVED #247 first pass
     circuit_breaker_trips: 0
   rolling_7d:
-    merged_prs: 0
+    merged_prs: 51
     reverts: 0
     readiness_attempts: 0
     readiness_rejected: 0
@@ -42,7 +42,10 @@ LOOP_HEALTH:
                                  #   (the CI-gate-enforcement wall #232 was RESOLVED via #234: lint + functional
                                  #   E2E journeys are now REQUIRED status checks on main — META channel worked end-to-end.)
     harness_proposals_open: 0    # open `loop: harness improvement proposal` issues (#232 resolved by #234)
-  signal: bootstrapping          # bootstrapping | improving | steady | churning | stuck
+  signal: steady                 # bootstrapping | improving | steady | churning | stuck
+                                 #   run 25: 1 real gate (F4.1) closed first-pass (0 abandons/reverts/rejections);
+                                 #   2 scouts found 0 other value-bar work → deliberately quiet, coherent. Convergence
+                                 #   is reach-gated (#190) + missing QUALITY_SCORECARD, not product/quality churn.
 ```
 
 ## How to read it (owner)

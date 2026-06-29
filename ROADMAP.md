@@ -322,7 +322,7 @@ mechanical gate, not a vibe.
 - [x] **F4. E2E + a11y + visual + performance gates** — Playwright E2E for the core journey;
       automated accessibility checks on key pages; visual checks on the design-bar surfaces; a
       Lighthouse/performance budget on hot paths. These catch what unit tests can't.
-- [ ] **F4.1 Side-effect round-trip (verify the EFFECT, not the message).** Extend the journey suite
+- [x] **F4.1 Side-effect round-trip (verify the EFFECT, not the message).** Extend the journey suite
       with an **email capture** (Mailpit/Mailhog, or a provider sandbox + its fetch API) so the
       waitlist double-opt-in + any confirmation/password-reset/magic-link/2FA flow completes as a
       GENUINE round-trip: submit → the real email is **dispatched to the right recipient** → RETRIEVE
@@ -333,6 +333,20 @@ mechanical gate, not a vibe.
       undelivered side-effect **BLOCKS merge + readiness** (preflight already flags the missing
       round-trip — see `scripts/preflight.sh`). Until this passes, every affected flow is UNVALIDATED
       and may NOT be ticked "done" (FACTORY_STANDARD §6 SIDE-EFFECT INTEGRITY).
+      _Done (run 25, PR #247): a TEST/CI **file-capture transport** in `@gm/core/email`, gated on
+      `EMAIL_CAPTURE_DIR` — when set, `sendEmail` writes each outgoing email to that dir as JSON (no
+      Mailpit/SMTP needed; both egress-blocked here) and reports a REAL send. `resolveEmailCaptureDir`
+      **fails closed** (throws) in any production runtime (mirrors the rate-limit bypass guard) so the
+      sink can never divert live customer email to disk; +6 unit tests for the guard matrix + a
+      write-and-retrieve assertion. `apps/web/e2e/email-roundtrip.spec.ts` runs the waitlist
+      double-opt-in as a real round-trip: submit → "check your email" appears ONLY because the email
+      truly left → RETRIEVE it from the sink → a tampered token does NOT confirm (`?confirmed=0`) → the
+      real link DOES (`?confirmed=1`, proving the DB write ran). preflight now requires the spec to be
+      outcome-asserting AND to have ACTUALLY RUN GREEN (`E2E_ROUNDTRIP_PASSED=1`). VERIFIED green this
+      run against a built app + migrated/seeded Postgres: the captured email contained the confirm
+      link, the link confirmed the signup, and `waitlist_submissions.confirmed_at` was set; all 6
+      journeys still pass. Running it in the CI e2e job needs a `.github/` env edit (owner) — see
+      PENDING_OPS `wire-e2e-roundtrip-ci`. 2 Sonnet reviewers APPROVE._
 - [x] **F5. Periodic DEEP AUDIT (holistic)** — a recurring whole-codebase audit beyond per-diff
       review (correctness/dead-code, security/RLS, performance, a11y/design-bar, test/eval coverage,
       dependency/config health), distilled into a prioritized list, dated in

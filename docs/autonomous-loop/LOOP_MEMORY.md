@@ -754,3 +754,25 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
     submission-ready; did NOT open the 'ready' issue. LESSON: when egress blocks the canonical infra (docker
     images), reach for the local equivalent (apt postgres + pgvector) rather than abandoning the live run —
     the live run is what produced the real artifacts AND found the real bug.
+- **2026-06-29 (run 25) — F4.1 side-effect round-trip CLOSED with a file-capture transport (no Mailpit/SMTP).**
+  F4.1 had been deferred twice on the same wall: the email client sends over provider HTTP APIs (not SMTP),
+  Mailpit's docker image + SMTP egress are both blocked here, and the CI wiring is a `.github/` edit the
+  headless loop can't make. The unlock was to stop trying to intercept at the SMTP layer and add a TEST/CI
+  **file-capture transport** to the email module itself, gated on `EMAIL_CAPTURE_DIR`: `sendEmail` writes
+  the payload to a JSON file in that dir and reports a real send. A Playwright spec submits the waitlist,
+  reads the captured file from the SHARED filesystem (server writes, test reads — no env handshake needed
+  beyond both seeing the same dir), extracts the confirm link, and proves dispatch→retrieve→confirm
+  (`?confirmed=1`, DB `confirmed_at` set) PLUS the negative (a tampered token → `?confirmed=0`). Ran it
+  GREEN against a built app + apt-postgres/pgvector (same local-infra trick as run 24). Two safety rails
+  that earned reviewer approval: (1) the capture guard **fails closed** in prod (throws if EMAIL_CAPTURE_DIR
+  is ever set in a Vercel/NODE_ENV=production-non-CI runtime) — mirrors the rate-limit bypass guard so the
+  sink can never silently swallow live customer email; (2) the throw is DELIBERATELY outside sendEmail's
+  provider try/catch (fail-closed = crash, not swallow) with a comment so no one "fixes" it. LESSONS:
+  (a) when the canonical test double (Mailpit/SMTP catcher) is unreachable, a tiny in-app file sink at the
+  transport boundary is a legitimate, zero-dependency equivalent — capture where YOUR code emits, not where
+  the protocol delivers; (b) any test/CI behavioral bypass (rate-limit OFF, email-to-disk) MUST fail closed
+  in a prod runtime, or it's a latent outage/abuse hole — make the guard a reused pattern, not a one-off;
+  (c) wire the new proof into preflight as a RAN-GREEN flag (E2E_ROUNDTRIP_PASSED=1), not a mere file-exists
+  grep, so the tick can't be faked. Two scouts found zero other value-bar work → a deliberately quiet,
+  coherent run (one real gate closed). Still NOT submission-ready: business-case floor (reach-gated, #190)
+  + missing QUALITY_SCORECARD keep the DoD open; did not open the 'ready' issue.
