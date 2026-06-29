@@ -72,7 +72,10 @@ Env (`.env` at repo root): `DATABASE_URL` required; everything else optional and
   it's proven **keyless** in CI: an `e2e` spec the e2e job actually runs (`specs`), or a unit/degrade test
   (`tests`) — plus any non-secret CI env it needs (`requiresCiEnv`, e.g. `EMAIL_CAPTURE_DIR`). If a capability
   can ONLY be validated with a key the loop can't supply (an external sandbox secret), set `requiresOwnerSecret`
-  + `ownerActionId` AND surface an `OWNER_ACTION` (`blocks: validation`) in `PENDING_OPS.md` — the tripwire then
+  + `ownerActionId` AND surface it in BOTH owner-visible channels: an **urgent** `OWNER_ACTION`
+  (`id: validation-capability-<service>`, `priority: urgent`, `blocks: validation`) in `PENDING_OPS.md` AND the
+  `validation.unmet` list in `LOOP_HEALTH.md` (refresh it every run from `node scripts/check-self-validation.mjs
+  --readiness`). An unmet capability in only one place is invisible to the owner — that's a bug. The tripwire
   goes RED until the owner wires the secret in CI, so the PR can't merge. NEVER ship a capability behind an
   env-gated `test.skip` without declaring its env in the manifest (the checker rejects undeclared skips — that's
   the silent-green hole). Degrade-by-default is the norm here (LLM/captcha/SMS/Stripe no-op without keys), so most
