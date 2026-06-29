@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check } from "@/app/components/icons";
+import { Turnstile } from "@/app/components/turnstile";
 import { submitWaitlistEmail, type WaitlistResult } from "./waitlist-action";
 import { trackConversion } from "./experiment-action";
 import { trackEvent } from "@/app/lib/plausible";
@@ -16,6 +17,7 @@ export function WaitlistForm() {
   const [email, setEmail] = useState("");
   const [done, setDone] = useState<WaitlistResult | null>(null);
   const [error, setError] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,7 +28,9 @@ export function WaitlistForm() {
     setError("");
     let result: WaitlistResult;
     try {
-      result = await submitWaitlistEmail(email);
+      // Pass the Turnstile token (empty string when no widget is configured — the server then
+      // fail-opens, matching dev/staging). submitWaitlistEmail already accepts a captcha token.
+      result = await submitWaitlistEmail(email, captchaToken || undefined);
     } catch {
       result = "error";
     }
@@ -70,6 +74,10 @@ export function WaitlistForm() {
       <button type="submit" className="btn-primary px-5 py-3 text-base">
         Notify me
       </button>
+      {/* G5: bot protection. Renders nothing unless a Turnstile site key is configured. */}
+      <div className="sm:col-span-2">
+        <Turnstile action="waitlist" onToken={setCaptchaToken} />
+      </div>
       {error && <p className="text-xs text-danger-ink sm:col-span-2">{error}</p>}
     </form>
   );

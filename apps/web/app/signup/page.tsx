@@ -12,6 +12,7 @@ import { hashPassword } from "@gm/core/crypto";
 import { isValidReferralCode, isValidUsername, normalizeUsername } from "@gm/core/personalization";
 import { signIn } from "@/auth";
 import { Leaf } from "@/app/components/icons";
+import { Turnstile } from "@/app/components/turnstile";
 import { verifyTurnstile } from "@/app/api/_lib/captcha";
 import { rateLimit } from "@/app/api/_lib/rate-limit";
 
@@ -148,6 +149,9 @@ export default async function SignUpPage({
               />
               <span className="field-hint">At least 8 characters.</span>
             </label>
+            {/* G5: renders the Turnstile challenge (and the cf-turnstile-response token the server
+                action verifies) only when a site key is configured; renders nothing otherwise. */}
+            <Turnstile action="signup" />
             <button type="submit" className="btn-primary btn-block">
               Create account
             </button>
