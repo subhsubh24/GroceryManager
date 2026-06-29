@@ -20,16 +20,37 @@ This is the narrative companion to the machine-readable `GROWTH_STATUS` block in
 - Real data only. No invented metrics, no fabricated wins. A quiet, honest entry is a good entry.
 
 ## DURABLE LESSONS (the compounding layer — distilled, carried forward)
-_None yet — the first runs will establish these. Promote a RUN LOG finding here once it's confirmed._
+_None yet — the first run established the baseline. Promote a finding here once confirmed across ≥2 runs._
+
+### LESSON-0 (established 2026-06-29): Receipt-auto-fill is the real differentiator
+Competitor research (Paprika, Mealime, AnyList, KitchenPal, SuperCook, Foodat) confirms that manual
+entry or barcode scanning is the dominant pantry update method across all established apps. Automatic
+receipt-based pantry building (Gmail + photo) combined with depletion tracking is a genuine gap — not
+just a marketing claim. Use this in every positioning surface. Do NOT invent user counts or ratings to
+support it; the gap speaks for itself.
 
 ## RUN LOG (newest first)
-<!-- Append one dated entry per run, e.g.:
-### 2026-06-27 — pre_launch, awaiting_connect
-- Did: tightened the waitlist landing headline against 3 researched competitor angles; refreshed the
-  pre-launch email welcome copy. No external action (no channels connected).
-- Hypothesis: a benefit-led headline ("never run out, never overbuy") out-pulls the feature-led one.
-- Result: not measurable yet (no traffic source connected).
-- Decision: staged as the A variant for when channels connect; logged owner_blocker = connect channels.
-- Reviewer (maker≠checker): approved — on-brand, no invented metrics, genuinely sharper.
--->
-_No runs logged yet._
+
+### 2026-06-29 — pre_launch, awaiting_connect, FIRST GROWTH AGENT RUN
+- **Mode**: PREPARE (site_gate_up: false; no channels connected). No external actions taken.
+- **Did**:
+  - Full orientation: read FACTORY_STANDARD, VISION, ROADMAP, GROWTH_STATUS, ANALYSIS_PLAYBOOK,
+    OUTREACH rails, BRAND_KIT, EMAIL_LIFECYCLE, CONTENT_DRAFTS, LAUNCH_PLAN, PRESS_KIT, PENDING_OPS,
+    landing page A/B variants (page.tsx), all 3 blog posts (posts.ts).
+  - Competitor research via WebSearch: mapped the pantry tracker landscape (Paprika, Mealime, AnyList,
+    KitchenPal, SuperCook, MealBoard, Foodat, Recipy). Key finding: no mainstream app auto-fills from
+    Gmail receipts + tracks depletion rates. This is a real, unaddressed positioning gap.
+  - Drafted the 4th blog post ("Pantry tracker apps: what actually works in 2026") — honest competitor
+    comparison targeting high-intent searchers evaluating options. Covers Paprika (recipe notebook, manual
+    pantry), Mealime (meal planning, no pantry), AnyList (shared lists, light pantry), KitchenPal
+    (dedicated tracker, manual/barcode). No invented metrics or false competitor claims.
+  - Updated GROWTH_STATUS: as_of → 2026-06-29; added learnings, next_actions, owner_blockers.
+  - Filed daily growth report as Gmail draft to subh.mukherjee1996@gmail.com.
+- **Hypothesis**: The "pantry tracker apps" comparison post targets high buyer-intent search queries.
+  Not yet measurable (no analytics connected).
+- **Result**: Not measurable (no Plausible, no ADMIN_EMAIL, no connected source). All funnel: 0/null.
+- **Decision**: Blog post staged; will measure organic traffic once Plausible connects.
+- **Owner blockers surfaced**: SITE_GATE_PASSWORD (critical, blocks all execute-mode outreach);
+  ADMIN_EMAIL (blocks real waitlist count); RESEND_API_KEY (warm leads not nurtured); PLAUSIBLE domain
+  (no traffic measurement); final app name choice (all copy uses [APP_NAME] placeholder).
+- **Operational note**: No `gh` CLI available in this environment — using GitHub MCP tools for push/PR.

@@ -215,6 +215,68 @@ export const BLOG_POSTS: BlogPost[] = [
     ctaBody:
       "GroceryManager imports your grocery receipts automatically — from photos or your Gmail inbox — and shows you where your food budget actually goes. Category breakdowns, weekly trends, and a year-end summary of your kitchen life. No spreadsheet required.",
   },
+  {
+    slug: "pantry-tracker-apps-2026",
+    title: "Pantry tracker apps: what actually works in 2026",
+    description:
+      "A practical comparison of pantry tracking apps in 2026 — what they track, how they stay current, and how to choose the right one for your kitchen.",
+    publishedAt: "2026-06-29",
+    readMinutes: 7,
+    keywords: [
+      "pantry tracker app",
+      "pantry tracking app",
+      "best pantry app",
+      "pantry inventory app",
+      "pantry manager app 2026",
+    ],
+    sections: [
+      {
+        heading: "The problem most pantry apps share",
+        body: [
+          "Most pantry tracking apps run into the same wall: the pantry only stays accurate if someone keeps it updated. You add 50 items on a Sunday, life gets busy, and by Wednesday the tracker is wrong. Most people delete the app before the month is out.",
+          "The apps that stick are the ones that can update the pantry without relying on you to remember. That's the single most important question to ask about any pantry tracker: how does the data get in, and how does it stay current? Everything else follows from that.",
+        ],
+      },
+      {
+        heading: "Recipe managers with a pantry tab (Paprika)",
+        body: [
+          "Paprika Recipe Manager is the most established app in this category, and it's genuinely excellent — if what you want is a digital recipe notebook with grocery list generation. You clip recipes from websites, organise them into categories, scale them for a crowd, and build a shopping list from the ingredients automatically.",
+          "Paprika does include a pantry section, but it functions as a digital cupboard checklist: you mark items as 'in stock' or 'out of stock' manually. There's no receipt scanning, no depletion tracking, and no suggestion engine that works from what you actually have. If you're a dedicated recipe collector who wants a smart notebook, Paprika is best-in-class. If you want the pantry to update itself after a shop, you'll be entering that manually every time.",
+        ],
+      },
+      {
+        heading: "Shopping list apps with meal planning (Mealime, AnyList)",
+        body: [
+          "Mealime is a meal planning app with an automatically generated grocery list: choose meals for the week, get a precise list of what to buy. It's clean, fast, and genuinely useful for people who plan ahead. The catch is that Mealime doesn't track your pantry. It doesn't know what you already have, so the shopping list doesn't subtract the ingredients you bought last week and haven't used yet. It's a planning tool, not an inventory tool.",
+          "AnyList is built primarily around real-time, multi-person grocery list editing — the feature most useful for couples and families who shop together. It has basic pantry tracking and meal planning, but the shared live list is the real product. If your problem is 'my partner and I both buy milk' rather than 'I don't know what's in my fridge,' AnyList solves it well. If you want a persistent pantry that tracks what you have and what's running low, it's not the right fit.",
+        ],
+      },
+      {
+        heading: "Dedicated pantry trackers (KitchenPal)",
+        body: [
+          "KitchenPal has been focused on pantry management since 2016. It tracks inventory by item — quantities, expiry dates, storage locations — with barcode scanning so you can log items in and out as you shop and cook. The app is well-reviewed and has a large user base.",
+          "KitchenPal's strength is depth: storage location tracking, expiry alerts, and a reasonably complete inventory model. Its limitation is the same one that affects most of the category: data has to be entered manually or via barcode scan. For a household that buys the same weekly staples, this can work — scan in, scan out, track expiry. For anyone who orders groceries online, gets supermarket deliveries, or simply doesn't want to scan 40 items after every shop, the manual burden accumulates quickly.",
+        ],
+      },
+      {
+        heading: "The receipt gap: how the pantry actually stays current",
+        body: [
+          "The category gap no mainstream pantry app has fully closed is automated receipt import. Your pantry changes every time you shop. If the app requires a manual barcode scan or a typed entry for each item, it will fall behind the moment life gets busy — and it usually does within the first two weeks.",
+          "The more durable approach is to read the receipt. A grocery receipt contains everything the pantry needs — the date, the items, the quantities, and the price. An app that can read a receipt photo or pull receipts directly from your email inbox can update the pantry after each shop without any input from you. Combined with depletion tracking — the pantry doesn't just log what you bought, but watches how fast you go through things and estimates when you'll run out — this is where the category is heading: a pantry that maintains itself and alerts you when to restock before you notice you've run out.",
+        ],
+      },
+      {
+        heading: "What to prioritise when choosing",
+        body: [
+          "If you collect recipes and want a smart notebook: Paprika is best-in-class. If real-time shared grocery lists with a partner or family are the priority: AnyList handles this better than most. If you meal plan in advance and just want the list generated from a weekly menu: Mealime keeps it simple. If you want a thorough manual inventory with expiry tracking and barcode support: KitchenPal has the depth for it.",
+          "If you want the pantry to update from your receipts automatically — and to tell you what to cook tonight from what's already there, and when to restock before you run out — you're looking for an app that starts with the receipt, not the recipe. That's a meaningfully different design, and the gap between manual-entry trackers and receipt-first trackers is where the most useful pantry apps are being built.",
+        ],
+      },
+    ],
+    ctaHeading: "A pantry that updates from your receipts",
+    ctaBody:
+      "GroceryManager is built around the receipt-first model: snap a photo of your grocery receipt or connect your Gmail inbox, and your pantry fills in automatically from what you bought. It watches how fast you go through things, tells you when to reorder before you run out, and suggests what to cook tonight from what's literally in your kitchen — no manual entry required.",
+  },
 ];
 
 export function getPost(slug: string): BlogPost | undefined {

@@ -39,7 +39,7 @@ the owner sees pre-launch / launch / post-launch growth progress in one place.
 ```yaml
 GROWTH_STATUS:
   project: GroceryManager
-  as_of: 2026-06-26
+  as_of: 2026-06-29
   phase: pre_launch              # pre_launch | launching | post_launch
   engine_built: true             # MUST equal (engine_pct == 100); preflight enforces it against real anchor files
   engine_pct: 100                # % of growth-execution engine pieces shipped — DERIVED from anchor files by preflight; NEVER hand-set
@@ -95,17 +95,45 @@ GROWTH_STATUS:
     click_rate: null
   content:
     published_7d: 0
-    scheduled_next_7d: 0
+    scheduled_next_7d: 1         # "pantry tracker apps 2026" comparison post staged this run
     organic_sessions_7d: 0
   outreach:                      # STRATEGIC OUTREACH — curated, human-reviewed Gmail DRAFTS (docs/growth/OUTREACH.md).
                                  #   DRAFT-ONLY: the agent never sends; the OWNER reviews + sends. REAL numbers only.
-    drafted_7d: 0                # curated 1:1 outreach drafts the agent queued for the owner this window
+    drafted_7d: 0                # 0: site_gate_up false — PREPARE mode only; no outreach drafted this run
     owner_sent_7d: 0             # how many the OWNER actually sent (owner-reported)
     replies_7d: 0                # replies received (OWNER-reported — NEVER fabricated)
     signal: none                 # none | weak | emerging | strong  (0/none pre-launch)
-  learnings: []                  # short, data-grounded bullets: what's working / what's not
-  next_actions: []               # what the agent will do next run
-  owner_blockers: []             # things needing the owner before the agent can execute externally
+  learnings:
+    - "FIRST RUN (2026-06-29): all funnel metrics 0/null — no analytics source connected. Cannot
+      diagnose binding constraint until Plausible + admin email are set."
+    - "Blog content audit: 3 posts exist (food waste, meal planning, budget tracking). The missing
+      high-intent piece was a competitor comparison ('pantry tracker apps') — drafted this run.
+      Competitor research confirmed the receipt-auto-fill gap is real and not addressed by Paprika,
+      Mealime, AnyList, or KitchenPal — genuine positioning signal."
+    - "site_gate_up: false — the SITE_GATE_PASSWORD has not been set in Vercel. No public-facing
+      outreach can be driven pre-launch until this is set. This is the single highest-priority
+      owner action to unlock the growth agent's execute mode."
+    - "Email provider not connected — waitlist signups ARE captured in DB (confirmed from prod data)
+      but double-opt-in confirmation emails are not being sent. Warm leads are not being nurtured."
+  next_actions:
+    - "Next run: attempt to read real waitlist count from /admin/waitlist once ADMIN_EMAIL is set"
+    - "Next run: research 2-3 food-tech press/newsletter targets for outreach drafts — stage for
+      when site_gate_up flips true"
+    - "Next run: check if the 4th blog post ('pantry-tracker-apps-2026') was published (merged to main)"
+    - "Once site_gate_up true AND a channel connects: draft 1-2 curated outreach emails (press/newsletter)"
+  owner_blockers:
+    - "CRITICAL: Set SITE_GATE_PASSWORD in Vercel env to flip site_gate_up: true — this is the
+      HARD gate blocking all execute-mode outreach. Without it the growth agent stays in PREPARE
+      mode indefinitely. (Docs: PENDING_OPS.md 'site-gate-prelaunch')"
+    - "HIGH: Set ADMIN_EMAIL in Vercel env to access /admin/waitlist — the growth agent cannot
+      pull real waitlist signup counts without it. Funnel stays 0 until this is set."
+    - "HIGH: Connect an email provider (RESEND_API_KEY or SENDGRID_API_KEY) — waitlist signups are
+      being captured in the DB but confirmation emails are not being sent. Real signups are not
+      being nurtured. (Docs: PENDING_OPS.md 'track-h-activation')"
+    - "HIGH: Connect NEXT_PUBLIC_PLAUSIBLE_DOMAIN — without analytics the agent cannot measure
+      blog/landing traffic or visitor-to-waitlist conversion rate."
+    - "NORMAL: Pick a final app name from NAMING_CANDIDATES.md (Pantri / Mise / Larder) —
+      all content assets currently use '[APP_NAME]' placeholder; this blocks final email/store copy."
   links:
     in_app_analytics: /admin/waitlist
     owner_doc: docs/growth/GROWTH_STATUS.md
