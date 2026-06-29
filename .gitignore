@@ -42,3 +42,7 @@ coverage/
 
 # locally-installed agent skills (not committed)
 .agents/
+
+# playwright scratch output (traces, error contexts, reports) — regenerable, never commit
+test-results/
+playwright-report/
