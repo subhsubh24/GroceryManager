@@ -824,3 +824,48 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   now fixed); RLS/Track-G otherwise CLEAN per the security scout (rate limits, spend ceiling, headers,
   error hygiene, double-opt-in all verified present). Still NOT submission-ready (FYI #190 floor + absent
   QUALITY_SCORECARD).
+
+- **2026-06-29 (run 28) — consumed the first independent QUALITY_SCORECARD (overall B) as the run's
+  work-list; drove both ship-critical B dimensions toward A in 4 file-disjoint PRs (#263–#266).** The
+  Quality Auditor's baseline grade (PR #259) named two ship-critical gaps with file:line precision —
+  the maker's job was simply to build them (consume the grade, never self-author it). Lessons:
+  - **A native dep CAN be added in the headless env when egress allows it.** `npm install
+    react-native-purchases@10.4.0` succeeded (RN ≥0.73 supports the mobile RN 0.85; it AUTOLINKS under
+    Expo prebuild — NO `app.json` config-plugin entry needed, which removed the biggest risk). The
+    mobile CI job only runs `npm ci && npm run typecheck`, so the SDK's bundled types are enough for
+    green; a full native build is the owner's EAS step. Verify reachability with `npm view <pkg>
+    version` before committing to the change.
+  - **Mobile IAP is only "done" when the purchase LOOP closes server-side (side-effect integrity).**
+    A `purchasePackage()` that charges the card but never unlocks server premium is a fake-success
+    dead-end. Built the RevenueCat → `/api/webhooks/revenuecat` → `appendPreferenceSignal` path writing
+    the SAME `preference_signals` the Stripe webhook does, so `isPremium()` works regardless of origin.
+    `Purchases.logIn(userId)` pins RevenueCat `app_user_id` to the DB user so the webhook maps back.
+  - **Webhook auth: hash both sides (SHA-256) before `timingSafeEqual`, don't length-precheck.** A
+    Sonnet reviewer caught that `a.length === b.length && timingSafeEqual(a,b)` leaks length and mishandles
+    multi-byte UTF-8; `timingSafeEqual(sha256(header), sha256(secret))` is always 32 bytes, constant-time,
+    no leak. ALSO: a `400 "not configured"` returned BEFORE the auth check is a config-state ORACLE
+    (400=no secret vs 401=wrong token) — collapse both to an identical 401 so the response can't be probed.
+    (The Stripe/gmail webhooks still use the older length-precheck; the sha256 form is the better pattern
+    for new webhooks.)
+  - **The ledger-only-invariant fix was SMALLER than it looked because reproject already did the work.**
+    `reprojectStock` computes `lastConfirmedAt` from the `vision_confirmed` ledger event (max of confirm
+    timestamps), so the direct `db.update(pantryStock).set({ lastConfirmedAt, source })` was redundant
+    except for `source`. Fix = thread one optional `source` param; `...(source ? { source } : {})` in the
+    upsert `values` means a new row defaults to `derived` and an existing row's source is PRESERVED on a
+    routine reprojection (Drizzle omits undefined keys from the SET). When fixing an "extra write", first
+    check whether the canonical path already produces the same effect — often it does.
+  - **Captcha fail-OPEN on a network error is an attacker-inducible bypass; fail CLOSED in prod.** The
+    catch returned `{success:true}` in ALL envs even with the key configured — induce a 3s timeout and bot
+    protection is gone. Made it `NODE_ENV==="production" ? reject : allow`, matching the repo's fail-closed
+    posture (cron secret, email-capture, webhooks). Both reviewers weighed the availability tradeoff
+    (a brief Cloudflare siteverify outage blocks a few signups) and approved — signup/waitlist are
+    low-frequency, high-value-to-attacker flows.
+  - **DEEP AUDIT: folded into this run** (last standalone run 24, within ~24h via runs 25–27). The
+    adversarial security + functional/artifact Haiku scouts found NO new CRITICALs beyond the scorecard's
+    named gaps; the only fresh item was the captcha fail-open (shipped #265). The in-memory rate-limit/
+    LLM-quota "multi-instance bypass" the security scout raised is the already-tracked owner Redis upgrade
+    (PENDING_OPS llm-quota-redis-upgrade), not a new finding.
+  - **Did NOT open the 'ready' issue.** Quality grade is still B until the Quality Auditor re-grades (a
+    box stays ticked only when an independent checker confirms — and the maker never self-awards the grade);
+    business-case floor remains reach-gated (FYI #190). A quiet, honest "built the named gaps, grade not
+    yet re-earned" is the correct converged state.

@@ -319,9 +319,13 @@ mechanical gate, not a vibe.
       set of REAL fixtures, gated behind `RUN_EVALS=1` so normal CI doesn't spend; a scheduled eval
       run catches output-quality regressions. (Harness exists in `packages/core/src/llm/evals/` —
       complete the per-stage coverage + the scheduled run.)
-- [x] **F4. E2E + a11y + visual + performance gates** — Playwright E2E for the core journey;
-      automated accessibility checks on key pages; visual checks on the design-bar surfaces; a
-      Lighthouse/performance budget on hot paths. These catch what unit tests can't.
+- [x] **F4. E2E + a11y + visual gates** — Playwright E2E for the core journey; automated
+      accessibility checks on key pages; visual checks on the design-bar surfaces. These catch what
+      unit tests can't. (Reconciled 2026-06-29: a *CI performance-budget* gate — lighthouse-ci /
+      bundlesize — is **not** wired; `next build` reports per-route first-load sizes (~102 kB shared,
+      verified small) but there is no automated budget assertion. The headless loop cannot add a
+      `.github/` CI job, so the perf-budget gate is an owner/CI item — tracked in PENDING_OPS rather
+      than claimed here. The E2E + a11y + visual parts of F4 ARE shipped and gating.)
 - [x] **F4.1 Side-effect round-trip (verify the EFFECT, not the message).** Extend the journey suite
       with an **email capture** (Mailpit/Mailhog, or a provider sandbox + its fetch API) so the
       waitlist double-opt-in + any confirmation/password-reset/magic-link/2FA flow completes as a
@@ -812,7 +816,8 @@ missing, and do not add scope after Done.
 **Quality 100%:**
 - [x] Track F complete — world-class quality gates all green: F1 lint enforced (zero errors/new
       warnings), F2 coverage floor, F3 complete evals (per-stage + scheduled), F4 E2E + a11y + visual
-      + performance budgets, F5 periodic deep audit running with findings worked off.
+      gates (CI perf-budget gate deferred to owner/CI — see F4 note), F5 periodic deep audit running
+      with findings worked off.
 - [ ] **Independent QUALITY GRADE = A/A+ on every ship-critical dimension** (and ≥ B elsewhere), per
       `docs/quality/QUALITY_SCORECARD.md` — assigned by the SEPARATE Quality Auditor routine (maker ≠ checker;
       the loop consumes the grade, never self-grades), the scorecard parsing valid + preflight-backed, with no
