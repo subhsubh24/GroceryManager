@@ -445,6 +445,17 @@ else
 fi
 
 # ── BUILDS ≠ WORKS: runtime functional journey suite (an ACTUAL RUN, not a code read) ──
+section "Self-validation tripwire — every capability is provable in CI"
+# The loop must never merge a capability it cannot itself VALIDATE. The checker reads
+# packages/config/capabilities.json + the real CI/repo facts and fails when an active capability isn't
+# proven keyless in CI (or its owner-secret gap isn't wired + surfaced + blocking). Pure file reads.
+if node "$ROOT/scripts/check-self-validation.mjs" > /tmp/gm-selfval.log 2>&1; then
+  pass "self-validation: every active capability is self-validated in CI (capabilities.json)"
+else
+  cat /tmp/gm-selfval.log
+  fail "self-validation: a capability cannot be self-validated in CI — see above. Register its keyless validation in packages/config/capabilities.json, or surface an OWNER_ACTION (blocks: validation) for the missing key"
+fi
+
 section "Functional E2E — runtime journeys (BUILDS ≠ WORKS)"
 JOURNEYS="$ROOT/apps/web/e2e/journeys.spec.ts"
 INVENTORY="$ROOT/apps/web/e2e/ROUTE_INVENTORY.md"

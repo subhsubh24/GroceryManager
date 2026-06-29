@@ -169,6 +169,13 @@ jobs:
       # TEST/CI ONLY — the journey suite self-seeds many real signups from one runner IP; without this
       # the 5/hour signup limiter throttles the run. Prod NEVER sets this (see app/api/_lib/rate-limit.ts).
       RATE_LIMIT_DISABLED: "1"
+      # TEST/CI ONLY — capture sink for the email round-trip spec (proves the waitlist double-opt-in email
+      # actually LEAVES the system: dispatch → retrieve → follow confirm link). NOT a secret — just a temp
+      # dir BOTH the running server and the test read. Set at job level so `next start` (the server) and the
+      # playwright step share it. Fails closed in a real prod runtime (resolveEmailCaptureDir); allowed here
+      # because GitHub Actions sets CI=true. Declared in capabilities.json → the self-validation tripwire
+      # asserts it stays wired (else the round-trip would silently SKIP and go green-but-unvalidated).
+      EMAIL_CAPTURE_DIR: /tmp/gm-email-sink
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -188,6 +195,7 @@ jobs:
         run: pnpm --filter @gm/web build
       - name: Start web + wait for it
         run: |
+          mkdir -p "$EMAIL_CAPTURE_DIR"
           pnpm --filter @gm/web exec next start -p 3000 > /tmp/next.log 2>&1 &
           for i in $(seq 1 60); do
             if curl -fsS http://localhost:3000 >/dev/null 2>&1; then echo "server up"; exit 0; fi
@@ -196,6 +204,15 @@ jobs:
           echo "::error::web server did not come up on :3000"; cat /tmp/next.log; exit 1
       - name: Run functional journeys
         run: pnpm --filter @gm/web e2e journeys
+        env:
+          BASE_URL: http://localhost:3000
+          CI: "true"
+      # SIDE-EFFECT INTEGRITY (F4.1): prove the waitlist confirmation email genuinely leaves the system —
+      # the spec reads the captured email from EMAIL_CAPTURE_DIR (set in the job env, shared with the
+      # server) and follows the confirm link. No secret; if EMAIL_CAPTURE_DIR were unset it would SKIP, so
+      # the self-validation tripwire enforces that it stays wired.
+      - name: Run email round-trip (side-effect integrity)
+        run: pnpm --filter @gm/web e2e email-roundtrip
         env:
           BASE_URL: http://localhost:3000
           CI: "true"
@@ -208,6 +225,27 @@ jobs:
             apps/web/test-results
             apps/web/e2e/__screenshots__
           if-no-files-found: ignore
+
+  # Self-validation tripwire (capabilities) — the loop must never merge a capability it cannot itself
+  # validate. scripts/check-self-validation.mjs reads capabilities.json (the manifest of what the app
+  # does + how each capability is proven in CI) and FAILS when an active capability (a) has a declared
+  # spec/test that doesn't exist, (b) declares an e2e spec the CI e2e job doesn't actually run, (c) needs
+  # a non-secret CI env (e.g. EMAIL_CAPTURE_DIR) that isn't wired into the e2e job (so its check would
+  # silently SKIP), (d) needs an OWNER SECRET that isn't wired in CI yet (→ must be surfaced as an open
+  # OWNER_ACTION with blocks: validation), or (e) an e2e spec uses an env-gated test.skip that isn't
+  # declared in the manifest (the silent-green hole). Pure file reads (no DB/build) — fast + deterministic.
+  # When a new service needs a key the loop can't supply, THIS job goes red → the PR can't merge until the
+  # owner wires the key (or the loop adds a keyless/degrade test). Required + enforce_admins.
+  self-validation:
+    name: self-validation (capabilities tripwire)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Capability self-validation tripwire
+        run: node scripts/check-self-validation.mjs
 
   # Auto-apply DB migrations to PROD on every push to main, so schema drift (the root cause of the
   # signup outage — the loop adds a migration, a human forgets to run it) can never recur. Runs ONLY

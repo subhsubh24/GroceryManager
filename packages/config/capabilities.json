@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "doc": "Self-validation manifest — the loop must never merge a capability it cannot itself VALIDATE in CI. Each active capability declares HOW it is proven keyless (an e2e spec the CI e2e job runs, or a unit/degrade test the `verify` job runs). A capability whose validation needs an env the loop can't supply (an OWNER SECRET) sets requiresOwnerSecret + ownerActionId; until the owner wires the secret in CI, the self-validation tripwire (scripts/check-self-validation.mjs) goes RED and the PR can't merge. Non-secret CI envs a check needs (e.g. EMAIL_CAPTURE_DIR — a temp dir) go in requiresCiEnv so a missing one BLOCKS instead of silently skipping. status: active|planned|retired. Extend this as the app grows; the auditor + factory keep it in sync.",
+  "capabilities": [
+    {
+      "id": "core-user-journeys",
+      "summary": "Signup → working dashboard (never an error screen), core navigation, pantry/cook surfaces — the outcome-asserting BUILDS!=WORKS suite.",
+      "status": "active",
+      "ownerActionId": null,
+      "validation": {
+        "specs": [
+          "apps/web/e2e/journeys.spec.ts"
+        ],
+        "requiresCiEnv": [],
+        "requiresOwnerSecret": []
+      }
+    },
+    {
+      "id": "waitlist-email-roundtrip",
+      "summary": "Waitlist double-opt-in email SIDE-EFFECT integrity — submit → a real confirmation email is dispatched → retrieve it from the capture sink → follow the confirm link → confirmed (no fake success).",
+      "status": "active",
+      "ownerActionId": null,
+      "validation": {
+        "specs": [
+          "apps/web/e2e/email-roundtrip.spec.ts"
+        ],
+        "requiresCiEnv": [
+          "EMAIL_CAPTURE_DIR"
+        ],
+        "requiresOwnerSecret": []
+      }
+    },
+    {
+      "id": "billing-entitlements",
+      "summary": "Server-side subscription entitlement gating + tier resolution (premium / annual / family), fail-open when the flag is off — validated keyless via unit tests (no live Stripe key needed for the entitlement logic).",
+      "status": "active",
+      "ownerActionId": null,
+      "validation": {
+        "specs": [],
+        "tests": [
+          "packages/core/src/billing/index.test.ts"
+        ],
+        "requiresCiEnv": [],
+        "requiresOwnerSecret": []
+      }
+    },
+    {
+      "id": "rate-limit-bypass-safety",
+      "summary": "The TEST-ONLY rate-limit bypass (RATE_LIMIT_DISABLED) FAILS CLOSED in a production runtime — proves abuse protection can never be silently disabled live.",
+      "status": "active",
+      "ownerActionId": null,
+      "validation": {
+        "specs": [],
+        "tests": [
+          "packages/core/src/security/rate-limit-guard.test.ts"
+        ],
+        "requiresCiEnv": [],
+        "requiresOwnerSecret": []
+      }
+    },
+    {
+      "id": "email-capture-safety",
+      "summary": "The email capture sink (EMAIL_CAPTURE_DIR) FAILS CLOSED in a production runtime and the provider transport fails open with a warning when unconfigured — keyless unit-validated.",
+      "status": "active",
+      "ownerActionId": null,
+      "validation": {
+        "specs": [],
+        "tests": [
+          "packages/core/src/email/email.test.ts"
+        ],
+        "requiresCiEnv": [],
+        "requiresOwnerSecret": []
+      }
+    }
+  ]
+}

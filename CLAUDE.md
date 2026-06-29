@@ -66,6 +66,17 @@ Env (`.env` at repo root): `DATABASE_URL` required; everything else optional and
 - **lucide-react is pinned to `0.460.0`** — do NOT use `latest`/`^1.x` (the 1.x line is the ancient
   2020 release; npm's `latest` wrongly points at it and it lacks modern icon names). Add icons via
   `apps/web/app/components/icons.tsx` (the registry) — never emoji.
+- **Self-validate every capability — never merge what CI can't prove.** The `self-validation (capabilities
+  tripwire)` CI check (required, `enforce_admins`) runs `scripts/check-self-validation.mjs` against the
+  manifest `packages/config/capabilities.json`. When you add/extend a capability, REGISTER it there with how
+  it's proven **keyless** in CI: an `e2e` spec the e2e job actually runs (`specs`), or a unit/degrade test
+  (`tests`) — plus any non-secret CI env it needs (`requiresCiEnv`, e.g. `EMAIL_CAPTURE_DIR`). If a capability
+  can ONLY be validated with a key the loop can't supply (an external sandbox secret), set `requiresOwnerSecret`
+  + `ownerActionId` AND surface an `OWNER_ACTION` (`blocks: validation`) in `PENDING_OPS.md` — the tripwire then
+  goes RED until the owner wires the secret in CI, so the PR can't merge. NEVER ship a capability behind an
+  env-gated `test.skip` without declaring its env in the manifest (the checker rejects undeclared skips — that's
+  the silent-green hole). Degrade-by-default is the norm here (LLM/captcha/SMS/Stripe no-op without keys), so most
+  capabilities are keyless-validatable; prefer a degrade test over needing an owner secret.
 
 ## How to work here (the loop)
 
