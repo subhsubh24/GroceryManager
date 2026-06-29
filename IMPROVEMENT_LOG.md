@@ -4,6 +4,54 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-29 (run 27) — a CRITICAL launch-blocking captcha bug + 5 disjoint quality/a11y gates (6 PRs)
+
+A full ~5-Haiku scout sweep (security/RLS+Track-G, correctness/dead-code, design/a11y, mobile+coverage,
+artifact/monetization; deep audit folded in — last standalone was run 24, within 24h) surfaced one
+**CRITICAL** finding plus a cluster of genuine, file-disjoint value-bar clears. Shipped all 6 (each
+gate-green + 2 Sonnet reviewers APPROVE, auto-merged via `--auto` through the required CI checks; never
+`--admin`). The 'FACTORY: ready for submission' issue was **NOT opened** — unchanged non-buildable
+blockers (reach-gated business case FYI #190; the separately-owned QUALITY_SCORECARD is still absent).
+
+- **#252 — CRITICAL: render the Turnstile widget so G5 captcha actually works.** The signup + waitlist
+  server actions verify a `cf-turnstile-response` token, but NO widget ever rendered one client-side.
+  With the secret key set in prod (PENDING_OPS instructs this at launch), `verifyTurnstile(null)` →
+  `{success:false}` → **every signup and waitlist submission would break** (self-inflicted DOS), and G5
+  bot protection was non-functional regardless. Added a reusable `<Turnstile>` client component that
+  mirrors the server's fail-open contract: renders nothing (form works) when the SITE key is absent;
+  otherwise loads Cloudflare's script (explicit render), shows the challenge, and exposes the token via a
+  single React-controlled `cf-turnstile-response` hidden input (native signup POST) AND an `onToken`
+  callback (waitlist's JS submit → `submitWaitlistEmail(email, token)`, whose 2nd param already accepted
+  a token). `response-field: false` avoids a duplicate field; effect cleanup removes the widget + clears
+  the poll interval; `onToken` held in a ref (no stale closure). Reviewer A (security) confirmed: fail-open
+  preserved, single token field, correct threading on both forms, sound React lifecycle, no secret exposure
+  (the SITE key is public by design), no E2E regression (no key in CI → fail-open → existing waitlist
+  round-trip still green). **This is exactly the BUILDS≠WORKS / side-effect-integrity failure mode the
+  routine warns about: 408 unit tests + the DOM-asserting E2E all passed over a form whose captcha had no
+  client half — a code read found it; a green build never would.**
+- **#253 / #254 — a11y (WCAG 1.3.1/4.1.2 Level A): label unlabeled form fields.** `/import` (URL input +
+  recipe-text textarea) and `/capture` (the quick-add textarea) were placeholder-only with no programmatic
+  name — screen readers announced bare edit fields. Added accurate `aria-label`s; zero visual change.
+- **#255 — test: scheduler channel guardrail + getDueItems (0→20 tests).** `content/scheduler.ts` had no
+  tests. Locks in the security-relevant invariant that community channels (reddit/discord/slack/…) are
+  refused at the **code level** and a casing/whitespace variant (`"  ReDDit "`) can't bypass the
+  normalize-then-allowlist check — a regression here would auto-post on undisclosed channels (a trust/ToS
+  incident). Env-var save/restore so no network call + no ambient-env taint.
+- **#256 — test: FDC per-100g macro parser (0→13 tests).** `fetchFdcPer100g`/`readPer100g` — the PRIMARY
+  cook-logging macro source — was only mocked away, never directly tested. Covers three row shapes,
+  kcal-over-kJ energy preference, missing-energy→null, non-numeric skip, and all four graceful-degradation
+  returns (non-200/no-match/non-object/throw). Guards a user-facing path against silent mis-parses.
+- **#257 — test: LLM tier-escalation cost logic (0→7 tests).** `llm/models.ts` drives the cost ladder.
+  Pins `nextTier('reasoning')→null` (the escalation terminator that prevents a runaway retry/cost loop)
+  and the Flash-Lite-off `cheap→Flash` fallback; asserts against config constants (no hardcoded ids).
+- **Living-artifact fix (this PR):** PENDING_OPS `turnstile-keys` previously told the OWNER to "add the
+  widget `<script>` to the forms" — now that #252 built it in code, that step is reduced to "set the two
+  env vars" (+ a warning that setting only the secret without the site key would re-break signup).
+- **LESSON:** in a converged product, the load-bearing scout finding is the one that fails at RUNTIME, not
+  at build. The captcha hole sat behind a green gate for many runs because every test ran with no key
+  (fail-open). The fix wasn't more tests — it was rendering the missing client half. Treat any "server
+  verifies a token / signature / nonce" path as a two-sided contract and check the producer exists.
+
 ## 2026-06-29 (run 25) — F4.1 email side-effect round-trip CLOSED (the last open Track-F DoD gate)
 
 One file-disjoint code PR (#247), gate-green + 2 Sonnet reviewers, auto-merged via `--auto` (waited for

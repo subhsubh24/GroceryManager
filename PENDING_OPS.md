@@ -155,8 +155,8 @@ OWNER_ACTIONS:
       title: Create Cloudflare Turnstile site + set CLOUDFLARE_TURNSTILE_SECRET_KEY + NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY
       priority: high
       status: open
-      why: The Turnstile captcha scaffold is wired server-side (waitlist + signup), but it fail-opens when the key is absent. Without the keys set, bot protection is not active in production.
-      how: "Create site at dash.cloudflare.com → Turnstile. Set both env vars in Vercel. Add the Turnstile widget <script> to the waitlist form and signup page (copy the client-side snippet from Cloudflare docs)."
+      why: The Turnstile captcha is now wired BOTH server-side (verifyTurnstile on waitlist + signup) AND client-side (PR #252 renders the <Turnstile> widget on both forms when NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY is set; it renders nothing — and the server fail-opens — when the key is absent). So the ONLY remaining work is owner config: set the two keys. NOTE: once the SECRET key is set in prod, the SITE key MUST also be set, or the widget won't render a token and verifyTurnstile will reject every signup/waitlist submission (PR #252 fixed the missing widget; setting only the secret would re-break it).
+      how: "Create a site at dash.cloudflare.com → Turnstile. Set BOTH env vars in Vercel: CLOUDFLARE_TURNSTILE_SECRET_KEY (server) and NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY (client). No code change needed — the widget is already rendered in apps/web/app/components/turnstile.tsx. Verify: load /signup in prod and confirm the Turnstile challenge appears, then complete a test signup."
       blocks: launch-safety
     - id: llm-quota-redis-upgrade
       title: Upgrade in-memory rate limiter + LLM quota to Redis (Upstash) for multi-instance
