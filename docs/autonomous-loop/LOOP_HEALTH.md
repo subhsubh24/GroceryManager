@@ -10,6 +10,10 @@ The `QUALITY_SCORECARD` measures the **product**; this measures the **loop itsel
 - **CLASSIFY every abandoned change** (`abandoned_reasons`) so the loop does NOT re-attempt the same dead-end
   — "don't repeat the failed path."
 - **Dashboard-readable** — keep the fenced `LOOP_HEALTH` block valid, parseable YAML.
+- **Refresh the `validation` sub-block every run** from `node scripts/check-self-validation.mjs --readiness`
+  (`capabilities_total`/`active`/`unmet`/`unmet_unsurfaced`). Any **unmet** capability (one needing an owner
+  secret the loop can't supply) MUST appear in BOTH `validation.unmet` here AND an urgent `OWNER_ACTION`
+  `validation-capability-<service>` in `PENDING_OPS.md`; `unmet_unsurfaced` must stay empty.
 - **Observability, NOT a ship gate** — this never blocks a merge or readiness; it informs.
 - `signal` honest read: `churning` (high abandon/revert vs. shipped) or `stuck` (recurring failures / no
   convergence) → open ONE `loop: harness improvement proposal` issue (the META channel — the only way the
@@ -23,7 +27,13 @@ The `QUALITY_SCORECARD` measures the **product**; this measures the **loop itsel
 LOOP_HEALTH:
   project: GroceryManager
   as_of: 2026-06-29 (run 25)
-  enforced_in_ci: true           # lint + functional E2E journeys are REQUIRED checks on main, enforce_admins=true
+  enforced_in_ci: true           # lint + functional E2E journeys + the capabilities tripwire are REQUIRED checks on main, enforce_admins=true
+  validation:                    # capability self-validation feed — refresh every run from `node scripts/check-self-validation.mjs --readiness`
+    enforced_in_ci: true         # 'self-validation (capabilities tripwire)' is a required, enforce_admins status check
+    capabilities_total: 5
+    active: 5
+    unmet: []                    # capabilities needing an OWNER SECRET not wired in CI (loop can't supply) — each MUST also be an urgent OWNER_ACTION 'validation-capability-<service>' in PENDING_OPS
+    unmet_unsurfaced: []         # MUST stay empty — an unmet capability missing from PENDING_OPS or this list is invisible to the owner (a bug)
   last_run: 2026-06-29 (run 25)
   last_deep_audit: 2026-06-29 (run 24; folded into scout sweep — within 24h, so run 25 went straight to fan-out)
   this_run:
