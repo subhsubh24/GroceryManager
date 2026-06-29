@@ -4,6 +4,7 @@ import {
   getWaitlistByWeek,
   getSubscribersByWeek,
   getWaitlistSegmentCounts,
+  getCohortRetention,
 } from "@gm/db";
 import {
   buildAnalyticsSurface,
@@ -68,11 +69,14 @@ export async function GET(req: Request) {
     const analyticsConnected = !!(plausibleDomain && plausibleKey);
 
     // --- Fetch aggregates best-effort (each independently graceful) ---
-    const [waitlistByWeekRaw, subscribersByWeekRaw, segmentCountsRaw] = await Promise.all([
-      getWaitlistByWeek(db).catch(() => null),
-      billingConnected ? getSubscribersByWeek(db).catch(() => null) : Promise.resolve(null),
-      getWaitlistSegmentCounts(db).catch(() => null),
-    ]);
+    const [waitlistByWeekRaw, subscribersByWeekRaw, segmentCountsRaw, cohortRowsRaw] =
+      await Promise.all([
+        getWaitlistByWeek(db).catch(() => null),
+        billingConnected ? getSubscribersByWeek(db).catch(() => null) : Promise.resolve(null),
+        getWaitlistSegmentCounts(db).catch(() => null),
+        // Privacy-safe server-computed AGGREGATE cohorts (no per-user rows). null pre-migration.
+        getCohortRetention(db).catch(() => null),
+      ]);
 
     // Shape the WeeklyCountRow → WeekBucket (same structure, explicit cast).
     const toWeekBuckets = (rows: typeof waitlistByWeekRaw): WeekBucket[] | null =>
@@ -93,10 +97,11 @@ export async function GET(req: Request) {
         subscribersByWeek: toWeekBuckets(subscribersByWeekRaw),
       },
       cohort: {
-        // Cohort retention is not yet computed in the DB (no retention tracking table).
-        // Mark disconnected → honest null. The agent will see this and flag as a blocker.
-        connected: false,
-        rows: null,
+        // Connected only when the query returned a real (non-null) aggregate — null means the
+        // source tables are absent (pre-migration) → honest disconnected. The rows carry only
+        // cohort_week / cohort_size / retained_counts (no PII); getCohortRetention enforces that.
+        connected: cohortRowsRaw !== null,
+        rows: cohortRowsRaw,
       },
       timeSeries: {
         connected: waitlistConnected && waitlistByWeekRaw !== null,
