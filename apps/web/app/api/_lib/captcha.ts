@@ -4,6 +4,12 @@
  * Fail-open when CLOUDFLARE_TURNSTILE_SECRET_KEY is not set (dev/staging).
  * In production, set the key to enforce bot protection on public forms.
  *
+ * A verify-call FAILURE (network error / timeout) is handled by environment: in production we FAIL
+ * CLOSED (reject) so an attacker can't bypass bot protection by inducing a timeout against the
+ * siteverify endpoint; in dev/staging we fail open so a flaky local network never blocks testing.
+ * This mirrors the repo's fail-closed-in-prod posture for other security guards (cron secret,
+ * email-capture transport, billing webhooks).
+ *
  * Human Core: The owner must create a free Cloudflare account, add a Turnstile site,
  * and set CLOUDFLARE_TURNSTILE_SECRET_KEY + NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY
  * — see PENDING_OPS.md.
@@ -40,14 +46,20 @@ export async function verifyTurnstile(token: string | null | undefined): Promise
       body: new URLSearchParams({ secret: secretKey, response: token }),
       // Bound the call so a slow (not failed) Cloudflare response can't hang the signup/waitlist
       // serverless function until the platform deadline (a hung form, then a 504). On timeout the
-      // catch below fails-open, matching the existing network-error behavior.
+      // catch below decides fail-open vs fail-closed by environment.
       signal: AbortSignal.timeout(3_000),
     });
     const data = (await res.json()) as { success?: boolean };
     return { success: data.success === true, skipped: false };
   } catch {
-    // Network error verifying captcha — fail-open to avoid blocking legitimate users
-    console.warn("[captcha] Turnstile verification request failed — allowing through");
+    // Verify call failed (network error / timeout). The key IS configured, so a bot-protected form
+    // is expected here. In production fail CLOSED — otherwise an attacker who induces a timeout
+    // bypasses the captcha entirely. In dev/staging fail open so flaky networks don't block testing.
+    if (process.env.NODE_ENV === "production") {
+      console.warn("[captcha] Turnstile verification failed — rejecting (fail-closed in production)");
+      return { success: false, skipped: false };
+    }
+    console.warn("[captcha] Turnstile verification request failed — allowing through (non-production)");
     return { success: true, skipped: true };
   }
 }
