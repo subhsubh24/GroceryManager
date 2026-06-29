@@ -692,3 +692,13 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   ≤2 or abandon" rule. (4) LOOP_HEALTH.enforced_in_ci: true. ORDER (don't lock out): repo+routine changes + verify-green
   FIRST, then enforce_admins. LESSON: a required check is only real if admins (the loop) can't bypass it — pair required
   checks with enforce_admins AND the --auto protocol so the loop doesn't get stuck and reach for --admin.
+- **2026-06-28 — enforce_admins flipped LIVE + end-to-end validated (the loop now genuinely WAITS for CI).**
+  Closing the loop on the prior entry: after #241 merged GREEN (all 5 required checks SUCCESS — verify, mobile,
+  migrations (fresh db), lint, e2e functional journeys), turned on the teeth in the directive's safe order
+  (repo+routines first, verify-green, THEN protection): `enforce_admins=true`, `strict=false`, contexts = the exact
+  5 job names. Confirmed `allow_auto_merge=true`. This very PR is the end-to-end VALIDATION: shipped via
+  `gh pr merge --auto` — it sits BLOCKED on the required checks and only squash-merges once they go green, proving
+  (a) every required context name matches a real job (a typo'd context would hang the PR forever) and (b)
+  enforce_admins doesn't break `--auto` for the loop. The three routines (factory/growth/auditor) now carry the
+  "--auto, NEVER --admin" merge rule. LESSON: don't trust a protection config until a real PR has both BLOCKED on it
+  and then auto-merged through it — validate the gate with the gate, not by reading the settings JSON.
