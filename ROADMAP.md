@@ -86,6 +86,13 @@ state IS the status. Prose notes and PR references are invisible to it. Therefor
   gate green this run) — never on self-assessment. **Un-tick** any box whose proof no longer holds.
 - **Keep checkboxes in sync EVERY bookkeeping run** so the dashboard never lies. The checkbox is the
   source of truth; the prose explains it.
+- **SHIPPING PROTOCOL — merge via `--auto`, WAIT for CI, NEVER `--admin`.** Merge every PR with
+  `gh pr merge --squash --auto --delete-branch` — auto-merge **waits for the REQUIRED CI checks**
+  (lint + the functional E2E journeys), and branch protection enforces them **for admins too**
+  (`enforce_admins=true`). NEVER `gh pr merge --admin` / `--bypass` — a red required check must BLOCK
+  the merge, so **fix it (≤2 cycles) or abandon the change, never force**. A change that builds but is
+  broken-for-a-user, or is lint-dirty, MUST be unable to auto-merge. (`strict=false` keeps
+  file-disjoint PRs auto-merging without serial rebases.)
 - **LOOP HEALTH (measure the loop, not just the product — FACTORY_STANDARD §10b).** Update
   `docs/autonomous-loop/LOOP_HEALTH.md` with REAL counts EVERY bookkeeping run (changes shipped vs.
   abandoned, verify/review failures, circuit-breaker trips, rolling reverts + readiness attempts/rejections,

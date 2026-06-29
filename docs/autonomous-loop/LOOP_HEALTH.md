@@ -23,6 +23,7 @@ The `QUALITY_SCORECARD` measures the **product**; this measures the **loop itsel
 LOOP_HEALTH:
   project: GroceryManager
   as_of: 2026-06-29
+  enforced_in_ci: true           # lint + functional E2E journeys are REQUIRED checks on main, enforce_admins=true
   last_run: null
   last_deep_audit: null
   this_run:
