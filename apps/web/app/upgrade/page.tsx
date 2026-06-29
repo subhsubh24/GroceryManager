@@ -104,7 +104,7 @@ export default async function UpgradePage({
           <div className={`grid gap-4 ${householdsLive ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
             {/* Monthly card */}
             <div className="card-pad">
-              <p className="font-semibold">Premium Monthly</p>
+              <h3 className="font-semibold">Premium Monthly</h3>
               <p className="mt-1 text-2xl font-bold tracking-tight">
                 $4.99
                 <span className="text-sm font-normal text-ink-500"> / month</span>
@@ -117,6 +117,8 @@ export default async function UpgradePage({
               ) : (
                 <button
                   disabled
+                  aria-disabled="true"
+                  aria-label="Premium Monthly — available once billing is enabled"
                   className="btn-primary mt-4 w-full cursor-not-allowed opacity-60"
                 >
                   Coming soon
@@ -126,7 +128,7 @@ export default async function UpgradePage({
             {/* Annual card */}
             <div className="card-pad">
               <div className="flex items-start justify-between">
-                <p className="font-semibold">Premium Annual</p>
+                <h3 className="font-semibold">Premium Annual</h3>
                 <span className="pill-success">
                   Save ~33%
                 </span>
@@ -143,6 +145,8 @@ export default async function UpgradePage({
               ) : (
                 <button
                   disabled
+                  aria-disabled="true"
+                  aria-label="Premium Annual — available once billing is enabled"
                   className="btn-primary mt-4 w-full cursor-not-allowed opacity-60"
                 >
                   Coming soon
@@ -153,7 +157,7 @@ export default async function UpgradePage({
             {householdsLive && (
               <div className="card-pad">
                 <div className="flex items-start justify-between">
-                  <p className="font-semibold">Family Plan</p>
+                  <h3 className="font-semibold">Family Plan</h3>
                   <span className="pill-success">
                     Best for families
                   </span>
@@ -170,6 +174,8 @@ export default async function UpgradePage({
                 ) : (
                   <button
                     disabled
+                    aria-disabled="true"
+                    aria-label="Family Plan — available once billing is enabled"
                     className="btn-primary mt-4 w-full cursor-not-allowed opacity-60"
                   >
                     Coming soon
