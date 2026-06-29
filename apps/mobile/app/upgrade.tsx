@@ -1,6 +1,23 @@
-import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { Redirect, router } from "expo-router";
+import type { PurchasesOffering, PurchasesPackage } from "react-native-purchases";
 import { useAuth } from "../lib/auth";
+import {
+  getCurrentOffering,
+  initPurchases,
+  isPremiumActive,
+  isPurchasesConfigured,
+  purchase,
+  restore,
+} from "../lib/purchases";
 import { SUBSCRIPTION_PLANS, PREMIUM_PERKS } from "@gm/core/billing";
 
 const MONTHLY = SUBSCRIPTION_PLANS.find((p) => p.tier === "premium_monthly");
@@ -13,8 +30,87 @@ const ANNUAL_MONTHLY = ANNUAL?.priceAnnualCents
   ? (ANNUAL.priceAnnualCents / 100 / 12).toFixed(2)
   : "3.33";
 
+/** Pick the annual package if present, else the monthly one, else the first available. */
+function pickPackage(
+  offering: PurchasesOffering | null,
+  want: "annual" | "monthly",
+): PurchasesPackage | null {
+  if (!offering) return null;
+  const byType =
+    want === "annual"
+      ? offering.annual ?? offering.availablePackages.find((p) => p.packageType === "ANNUAL")
+      : offering.monthly ?? offering.availablePackages.find((p) => p.packageType === "MONTHLY");
+  return byType ?? offering.availablePackages[0] ?? null;
+}
+
 export default function UpgradeScreen() {
-  const { token } = useAuth();
+  const { token, userId } = useAuth();
+
+  const configured = isPurchasesConfigured();
+  const [offering, setOffering] = useState<PurchasesOffering | null>(null);
+  const [loading, setLoading] = useState(configured);
+  const [premium, setPremium] = useState(false);
+  const [busy, setBusy] = useState<null | "annual" | "monthly" | "restore">(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    if (!configured || !userId) {
+      setLoading(false);
+      return () => {
+        alive = false;
+      };
+    }
+    (async () => {
+      const ready = await initPurchases(userId);
+      if (!alive) return;
+      if (!ready) {
+        setLoading(false);
+        return;
+      }
+      const [off, active] = await Promise.all([getCurrentOffering(), isPremiumActive()]);
+      if (!alive) return;
+      setOffering(off);
+      setPremium(active);
+      setLoading(false);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [configured, userId]);
+
+  const onBuy = useCallback(
+    async (want: "annual" | "monthly") => {
+      const pkg = pickPackage(offering, want);
+      if (!pkg) {
+        setError("This plan isn't available right now. Please try again later.");
+        return;
+      }
+      setError(null);
+      setBusy(want);
+      const res = await purchase(pkg);
+      setBusy(null);
+      if (res.status === "active") {
+        setPremium(true);
+      } else if (res.status === "error") {
+        setError(res.message);
+      } else if (res.status === "inactive") {
+        setError("Purchase completed but premium isn't active yet — try Restore in a moment.");
+      }
+      // "cancelled" → stay quiet
+    },
+    [offering],
+  );
+
+  const onRestore = useCallback(async () => {
+    setError(null);
+    setBusy("restore");
+    const res = await restore();
+    setBusy(null);
+    if (res.status === "active") setPremium(true);
+    else if (res.status === "error") setError(res.message);
+    else setError("No previous purchase found to restore.");
+  }, []);
 
   if (!token) return <Redirect href="/login" />;
 
@@ -24,9 +120,11 @@ export default function UpgradeScreen() {
         <View style={styles.starMark}>
           <Text style={styles.starGlyph}>★</Text>
         </View>
-        <Text style={styles.title}>Go Premium</Text>
+        <Text style={styles.title}>{premium ? "You're Premium" : "Go Premium"}</Text>
         <Text style={styles.subtitle}>
-          Unlock the AI planner, unlimited Discover, recipe remix, and more.
+          {premium
+            ? "Thanks for supporting GroceryManager — every premium feature is unlocked."
+            : "Unlock the AI planner, unlimited Discover, recipe remix, and more."}
         </Text>
       </View>
 
@@ -66,17 +164,69 @@ export default function UpgradeScreen() {
         ))}
       </View>
 
-      {/* CTA — payments connect via PENDING_OPS.md (RevenueCat / Stripe) */}
+      {/* CTA */}
       <View style={styles.ctaSection}>
-        <Pressable style={styles.ctaBtn} disabled>
-          <Text style={styles.ctaBtnText}>Start free trial</Text>
-        </Pressable>
-        <Text style={styles.ctaHint}>
-          Payments coming soon — connect RevenueCat to activate.
-        </Text>
-        <Pressable style={styles.backLink} onPress={() => router.back()}>
-          <Text style={styles.backLinkText}>Maybe later</Text>
-        </Pressable>
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+        {premium ? (
+          <Pressable style={[styles.ctaBtn, styles.ctaBtnPrimary]} onPress={() => router.back()}>
+            <Text style={styles.ctaBtnText}>Done</Text>
+          </Pressable>
+        ) : loading ? (
+          <ActivityIndicator color="#4a1d96" style={styles.loader} />
+        ) : configured ? (
+          <>
+            <Pressable
+              style={[styles.ctaBtn, styles.ctaBtnPrimary]}
+              disabled={busy !== null}
+              onPress={() => onBuy("annual")}
+            >
+              {busy === "annual" ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text style={styles.ctaBtnText}>Start free trial — Annual</Text>
+              )}
+            </Pressable>
+            <Pressable
+              style={[styles.ctaBtn, styles.ctaBtnSecondary]}
+              disabled={busy !== null}
+              onPress={() => onBuy("monthly")}
+            >
+              {busy === "monthly" ? (
+                <ActivityIndicator color="#4a1d96" />
+              ) : (
+                <Text style={[styles.ctaBtnText, styles.ctaBtnTextSecondary]}>
+                  Start free trial — Monthly
+                </Text>
+              )}
+            </Pressable>
+            <Pressable style={styles.backLink} disabled={busy !== null} onPress={onRestore}>
+              <Text style={styles.backLinkText}>
+                {busy === "restore" ? "Restoring…" : "Restore purchases"}
+              </Text>
+            </Pressable>
+            <Text style={styles.legalHint}>
+              Billed through the App Store or Google Play. Cancel anytime in your store settings.
+            </Text>
+          </>
+        ) : (
+          // No public SDK key → honest, inert state (CI / dev / pre-launch).
+          <>
+            <Pressable style={styles.ctaBtn} disabled>
+              <Text style={styles.ctaBtnText}>Start free trial</Text>
+            </Pressable>
+            <Text style={styles.ctaHint}>
+              Payments coming soon — connect RevenueCat to activate.
+            </Text>
+          </>
+        )}
+
+        {/* The premium state already shows a "Done" CTA above; avoid a redundant second close link. */}
+        {!premium ? (
+          <Pressable style={styles.backLink} onPress={() => router.back()}>
+            <Text style={styles.backLinkText}>Maybe later</Text>
+          </Pressable>
+        ) : null}
       </View>
     </ScrollView>
   );
@@ -154,6 +304,7 @@ const styles = StyleSheet.create({
   perkBlurb: { fontSize: 13, color: "#525d6a", lineHeight: 18, marginTop: 2 },
 
   ctaSection: { alignItems: "center" },
+  loader: { paddingVertical: 16 },
   ctaBtn: {
     width: "100%",
     backgroundColor: "#a3acb5",
@@ -162,8 +313,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
+  ctaBtnPrimary: { backgroundColor: "#4a1d96" },
+  ctaBtnSecondary: {
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#4a1d96",
+  },
   ctaBtnText: { color: "#ffffff", fontSize: 16, fontWeight: "700" },
+  ctaBtnTextSecondary: { color: "#4a1d96" },
   ctaHint: { fontSize: 12, color: "#a3acb5", textAlign: "center", marginBottom: 16 },
+  legalHint: {
+    fontSize: 11,
+    color: "#a3acb5",
+    textAlign: "center",
+    marginTop: 4,
+    marginBottom: 8,
+    lineHeight: 16,
+  },
+  errorText: {
+    fontSize: 13,
+    color: "#8e261b",
+    textAlign: "center",
+    marginBottom: 12,
+    lineHeight: 18,
+  },
   backLink: { paddingVertical: 8 },
   backLinkText: { fontSize: 14, color: "#a3acb5" },
 });
