@@ -138,6 +138,7 @@ export function CaptureForm({ action }: { action: (formData: FormData) => void }
           rows={3}
           value={text}
           onChange={(e) => setText(e.target.value)}
+          aria-label="What you need or used"
           placeholder="we're out of milk and need taco stuff…"
           className="input"
         />
