@@ -34,7 +34,13 @@ export function ImportRecipe({
   return (
     <div className="space-y-6">
       <form action={formAction} className="card-pad space-y-3">
-        <input name="url" type="url" placeholder="Paste a recipe URL…" className="input mt-0" />
+        <input
+          name="url"
+          type="url"
+          aria-label="Recipe URL"
+          placeholder="Paste a recipe URL…"
+          className="input mt-0"
+        />
         <div className="flex items-center gap-3 text-center text-xs font-medium uppercase tracking-wide text-ink-300">
           <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
         </div>
@@ -54,6 +60,7 @@ export function ImportRecipe({
         <textarea
           name="text"
           rows={5}
+          aria-label="Recipe text"
           placeholder="…paste the recipe text (ingredients + steps)"
           className="input mt-0"
         />
