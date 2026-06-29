@@ -484,10 +484,21 @@ fi
 # (2) Side-effect ROUND-TRIP (ROADMAP F4.1): the journey suite must prove a real email round-trip
 #     (dispatch → retrieve → follow link → confirmed), not that a toast appeared. Blocks readiness
 #     until built — an unverified side-effect on a critical path is NOT "done".
-if grep -rqiE "mailpit|mailhog|inbucket|getEmail|fetchEmail|confirm.*link|round-?trip" "$ROOT/apps/web/e2e/" 2>/dev/null; then
-  pass "side-effect round-trip present (email capture/retrieve in the journey suite)"
+ROUNDTRIP_SPEC="$ROOT/apps/web/e2e/email-roundtrip.spec.ts"
+if [ -f "$ROUNDTRIP_SPEC" ] \
+   && grep -qiE "round-?trip" "$ROUNDTRIP_SPEC" \
+   && grep -qE "EMAIL_CAPTURE_DIR" "$ROUNDTRIP_SPEC" \
+   && grep -qE 'confirmed.*1|confirmed=1' "$ROUNDTRIP_SPEC"; then
+  pass "side-effect round-trip spec present + outcome-asserting (dispatch → retrieve → confirm)"
 else
-  fail "side-effect round-trip NOT verified (ROADMAP F4.1): stand up an email capture (Mailpit/Mailhog or provider sandbox + fetch API) and prove confirmation/reset emails actually LEAVE + complete the flow. A 'sent' the user can't verify is a LIE — FACTORY_STANDARD §6"
+  fail "side-effect round-trip NOT verified (ROADMAP F4.1): apps/web/e2e/email-roundtrip.spec.ts must dispatch a real email to a capture sink (EMAIL_CAPTURE_DIR), RETRIEVE it, follow the link, and assert the signup is confirmed (?confirmed=1). A 'sent' the user can't verify is a LIE — FACTORY_STANDARD §6"
+fi
+# The round-trip must have ACTUALLY RUN GREEN this attempt (not just exist) — the loop runs the e2e
+# suite with EMAIL_CAPTURE_DIR set against a built app + seeded DB and exports E2E_ROUNDTRIP_PASSED=1.
+if [ "${E2E_ROUNDTRIP_PASSED:-}" = "1" ]; then
+  pass "email round-trip RAN GREEN this attempt (E2E_ROUNDTRIP_PASSED=1)"
+else
+  fail "email round-trip NOT run this attempt — start a built app against a seeded DB with EMAIL_CAPTURE_DIR set, run \`pnpm --filter @gm/web e2e email-roundtrip\`, and export E2E_ROUNDTRIP_PASSED=1. Readiness requires an ACTUAL green round-trip, not just a spec file"
 fi
 
 # ── Visual-verification honest-tick guard (ROADMAP F6 — FACTORY_STANDARD §6) ──
