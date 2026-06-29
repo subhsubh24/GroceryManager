@@ -84,13 +84,19 @@ const EnvSchema = z.object({
   // STRIPE_PRICE_MONTHLY:  price_… for the $4.99/mo plan
   // STRIPE_PRICE_ANNUAL:   price_… for the $39.99/yr plan
   // STRIPE_PRICE_FAMILY:   price_… for the $9.99/mo Family plan (up to 5 members)
-  // REVENUECAT_API_KEY:    For future mobile entitlement sync (iOS / Android)
+  // REVENUECAT_API_KEY:           RevenueCat SECRET key (sk_…) — server-side REST/verification (optional).
+  // REVENUECAT_WEBHOOK_AUTH:      Shared bearer token configured in RevenueCat → Project → Webhooks →
+  //                               "Authorization header value"; the /api/webhooks/revenuecat route checks it
+  //                               (timing-safe) before syncing mobile IAP entitlements. The public SDK keys
+  //                               the mobile app uses are EXPO_PUBLIC_REVENUECAT_IOS_KEY /
+  //                               EXPO_PUBLIC_REVENUECAT_ANDROID_KEY (apps/mobile, not server env).
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   STRIPE_PRICE_MONTHLY: z.string().optional(),
   STRIPE_PRICE_ANNUAL: z.string().optional(),
   STRIPE_PRICE_FAMILY: z.string().optional(),
   REVENUECAT_API_KEY: z.string().optional(),
+  REVENUECAT_WEBHOOK_AUTH: z.string().optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
