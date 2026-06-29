@@ -12,7 +12,7 @@ The dashboard surfaces every `open` item, urgent first.
 ```yaml
 OWNER_ACTIONS:
   project: GroceryManager
-  as_of: 2026-06-28
+  as_of: 2026-06-29
   items:
     - id: set-direct-database-url-prod
       title: "URGENT: set DIRECT_DATABASE_URL in Vercel (owner connection) — signin + signup are BROKEN without it"
@@ -154,6 +154,13 @@ OWNER_ACTIONS:
       why: Current rate limiter + LLM quota use Node.js in-memory Maps — correct per-instance but not shared across multiple Vercel regions/instances. For single-instance deployments this is sufficient; for global Vercel this needs Redis.
       how: "Install @upstash/ratelimit + @upstash/redis; set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN in Vercel env. Replace the Map-based buckets in _lib/rate-limit.ts and _lib/llm-quota.ts with Upstash Ratelimit."
       blocks: multi-instance-safety
+    - id: decide-ship-households-family-tier
+      title: "PRODUCT DECISION: ship household sharing live (FEATURE_HOUSEHOLDS=1) or keep the Family tier dark?"
+      priority: normal
+      status: open
+      why: "ROADMAP H12 (surface the Family/household tier at the paywall + onboarding to lift blended ARPU) is BLOCKED on a product decision, not code. The premium_family billing tier + Stripe checkout + the household-sharing feature (households/household_invites tables, invite flow, shared list, RLS-tested) are all BUILT but flag-dark (FEATURE_HOUSEHOLDS defaults off). PR #227 (and run-24 PR #244) deliberately HIDE Family/household everywhere it's advertised, because advertising a flag-off feature risks Apple 2.3.1 / Google accurate-listing rejection. So H12 cannot be honestly completed until you decide: (A) SHIP households live — set FEATURE_HOUSEHOLDS=1, the loop then un-gates the Family card on /upgrade + the landing + builds the onboarding 'cook together' moment, and the business case can model some Family adoption; or (B) keep it dark — accept zero Family adoption and H12 stays deferred. The business case currently banks ZERO Family revenue, so (A) is the ARPU upside but needs the live feature to be store-honest."
+      how: "Decide A or B. If A: tell the loop to un-gate + build the onboarding surface (it will), then set FEATURE_HOUSEHOLDS=1 in Vercel env once you've sanity-checked the household invite → shared-list flow on staging. If B: no action — the tier stays dark and H12 is closed as deferred. Either way the loop will NOT advertise households until the flag is on."
+      blocks: revenue-lever-h12
 ```
 
 ---

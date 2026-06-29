@@ -1383,3 +1383,36 @@ persisted in a new RLS-isolated `referral_credits` table, surfaced on `/invite` 
 referral-driven install + conversion lift is left to live experiment data. BUSINESS_CASE lever #3 updated to
 record the build. Remaining buildable revenue levers: H14 (month-3 annual nudge), H15 (win-back), H11 (cohort
 retention data source).
+
+## Run 24 — 2026-06-29 — H11 + F6 cleared (3 file-disjoint PRs) + store-compliance bug caught by the F6 screenshots
+
+Advanced two of the four remaining ROADMAP boxes to DONE and fixed a store-rejection-class bug that the
+visual artifacts surfaced. Stood up the full e2e env LOCALLY (the pgvector docker image is egress-blocked, so
+used local Postgres 16 + apt `postgresql-16-pgvector` + the `db:seed` reference data) to produce REAL artifacts
+and an ACTUAL functional run.
+
+- **PR #240 — H11 cohort-retention data source (MERGED).** `getCohortRetention(db)`: one bounded aggregate
+  query (weekly signup cohorts × per-week-offset retention from `meal_logs.cooked_at`), aggregates-only,
+  admin/cron-gated, honest-null. Migration 0020 (idempotent indexes). Feeds the already-built H9 cohort
+  builder, which now reports real curves. 7 tests; 2 Sonnet reviewers APPROVE.
+- **PR #243 — F6 visual-verification artifacts (MERGED).** `apps/web/e2e/screenshots.spec.ts` drives the real
+  app flow (signup → seed pantry via the keyless add form → walk every surface) and commits **22 non-zero
+  PNGs** (mobile + desktop) incl. the core-product OUTPUT (populated pantry with run-out predictions, the
+  activation dashboard, the $4.99/$39.99 paywall). I opened every image and recorded a DUAL-AXIS verdict in
+  LOOP_MEMORY — all 11 surfaces × 2 widths PASS on FUNCTIONAL + DESIGN. 2 Sonnet reviewers APPROVE.
+- **PR #244 — store-compliance fix (auto-merging).** The F6 screenshots CAUGHT it: the logged-out landing
+  advertised "Family / household sharing" while `FEATURE_HOUSEHOLDS` is off — the Apple 2.3.1 risk PR #227
+  fixed on /upgrade but missed on the landing. Mirrored the `householdsEnabled()` gate; live-verified. 2 Sonnet
+  reviewers APPROVE.
+
+**DEEP AUDIT (2026-06-29):** folded into the scout sweep + a live functional run. No new CRITICAL findings
+beyond the landing bug (fixed). Every core surface renders its real screen or an honest on-brand empty state —
+zero dead-ends across 22 captures.
+
+**NOT shipped (honest):** H12 stays `[ ]` — BLOCKED on a product DECISION (ship `FEATURE_HOUSEHOLDS=1` live vs
+keep the Family tier dark); filed as OWNER_ACTION `decide-ship-households-family-tier`. F4.1 stays `[ ]` —
+needs an SMTP transport added to the email client (it sends via provider HTTP APIs, not SMTP) + a local SMTP
+catcher + CI service wiring (a `.github/` owner action); the Mailpit image is egress-blocked here too.
+
+**Readiness:** did NOT open the 'ready for submission' issue — F4.1 + the H12 decision remain, so the factory
+is not yet at 100%. Business case UNMOVED (no Family/retention % banked — anti-gaming).
