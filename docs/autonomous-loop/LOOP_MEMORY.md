@@ -776,3 +776,25 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   grep, so the tick can't be faked. Two scouts found zero other value-bar work → a deliberately quiet,
   coherent run (one real gate closed). Still NOT submission-ready: business-case floor (reach-gated, #190)
   + missing QUALITY_SCORECARD keep the DoD open; did not open the 'ready' issue.
+
+- **2026-06-29 (run 26) — converged quiet run: orchestrator verification dissolved a full scout sweep down to
+  one real fix (PR #250, paywall a11y).** Ran the full ~5-Haiku-scout sweep. The run's value was the FILTER, not
+  the fan-out: 4 of ~6 surfaced candidates were scout errors that would have been churn if shipped —
+  (a) "experiment-stats untested" (it's fully covered in the consolidated `growth/experiments.test.ts`; scout
+  looked for a co-located `stats.test.ts`); (b) "Gmail banner bait-and-switch" (hallucinated copy — the real
+  banner is an honest "See Premium" upsell); (c) "surface the invisible /invite loop" (already registered in
+  `lib/sections.ts`); (d) "pantry/waste/capture untested" (thin DB-bound wrappers whose pure cores are already
+  tested — testing them needs a brittle Drizzle mock). Security/RLS + Track G CLEAN (only a fail-closed CORS
+  doc nit); artifacts CLEAN (BUSINESS_CASE pricing + summary reconcile with billing config). The empty-state
+  emoji + profile danger-zone "design" findings were already DESIGN=PASS in run 24's F6 dual-axis review, so a
+  25-file sweep against that fresh verdict would be churn. Shipped the ONE genuine value-bar clear: PR #250 —
+  `/upgrade` plan titles `<p>`→`<h3>` (AT heading navigation, WCAG 1.3.1/2.4.6) + `aria-disabled`/`aria-label`
+  on the three identical disabled "Coming soon" CTAs. No visual/logic change; gate green (669 core tests);
+  2 Sonnet reviewers APPROVE. Did NOT open the 'ready' issue — unchanged non-buildable blockers: the
+  QUALITY_SCORECARD (separate Quality-Auditor routine; not authored here), the honestly reach-gated business
+  case (all named buildable levers H13/H14/H15 already built; only owner reach remains), and the H12 owner
+  product decision. LESSON: in a converged product, cheap high-recall scouts over-report; the load-bearing step
+  is the Opus orchestrator dissolving false positives against real code before selection. A converged sweep's
+  honest output is usually ONE real fix + "the rest didn't clear the bar" — padding the batch is the failure
+  mode the value bar forbids. (Within 24h of run 24's deep audit, so no fresh standalone DEEP AUDIT stamp due;
+  this sweep doubled as discovery and found no new CRITICALs.)

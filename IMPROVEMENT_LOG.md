@@ -1450,3 +1450,58 @@ catcher + CI service wiring (a `.github/` owner action); the Mailpit image is eg
 
 **Readiness:** did NOT open the 'ready for submission' issue — F4.1 + the H12 decision remain, so the factory
 is not yet at 100%. Business case UNMOVED (no Family/retention % banked — anti-gaming).
+
+## Run 26 — 2026-06-29 — converged quiet run: 1 paywall-a11y PR; full scout sweep dissolved on verification
+Full ~5-scout sweep (Haiku) across monetization/conversion, design-taste + functional reality, security/RLS +
+Track-G abuse, artifact freshness + business case, and quality/evals/mobile. The deliberate value of this run
+was ORCHESTRATOR VERIFICATION: most scout candidates evaporated when checked against real code (Haiku scouts
+over-report). What was filtered out, with evidence:
+- **"Experiment-stats untested"** (quality scout) — FALSE. `growth/experiments/stats.ts` (normalCdf,
+  twoProportionZTest, wilsonInterval, minSampleSizePerArm) is fully unit-tested in the consolidated
+  `growth/experiments.test.ts` (textbook z-test cases, Φ(1.96)≈0.975, Wilson edges). Scout looked for a
+  co-located `stats.test.ts` and missed it.
+- **"Pantry persist / waste / capture untested"** — these are thin DB-bound wrappers (`appendLedgerAndReproject`,
+  `reprojectStock`, `recordWaste`, `captureToList` all take a `Querier` + `db.insert`); their PURE cores
+  (`depletion.ts`, `project.ts`, `waste.ts`, `parse.ts`) already have tests. Unit-testing the wrappers needs a
+  Drizzle mock — brittle, low value. Not a clean gap.
+- **"Gmail banner is a bait-and-switch (says Connect Gmail → links to paywall)"** (design scout) — FALSE. The
+  real copy is "Auto-fill your pantry from receipts … See Premium" → `/upgrade?feature=gmail_import`; a correct,
+  honest premium upsell. Scout hallucinated the copy.
+- **"/invite is invisible / surface a referral banner"** (monetization scout) — `/invite` IS already registered
+  in `apps/web/app/lib/sections.ts` ("Invite friends") + the household page. Not invisible; surfacing again
+  would be redundant churn.
+- **Empty-state emoji + profile danger-zone grouping** (design scout) — both surfaces were explicitly reviewed
+  DUAL-AXIS DESIGN=PASS in run 24's F6 screenshot pass; a 25-file emoji sweep against that fresh verdict is
+  churn, not a value-bar clear. Skipped.
+- **Security/RLS + Track G** — CLEAN. All ~29 public tables RLS-enabled with correct policies (0002–0020);
+  rate-limit + zod validation + error-hygiene + per-user LLM spend ceiling all present; the only note was a
+  fail-closed (already-safe) CORS-header documentation nit on `next.config.mjs`. Nothing to fix.
+- **Artifact freshness** — CLEAN. BUSINESS_CASE pricing table matches `billing/index.ts` exactly; the
+  BUSINESS_CASE_SUMMARY base (33450) reconciles with the body; store docs correctly omit household/Family
+  language while `FEATURE_HOUSEHOLDS` is dark. No drift.
+
+### PR #250 — a11y(upgrade): semantic plan headings + accessible disabled-CTA labels (auto-merging)
+The one genuine, file-localized value-bar clear from the sweep. The `/upgrade` paywall (highest-value conversion
+surface) had its three plan titles as bare `<p>` (no heading structure for AT navigation between plan options —
+WCAG 1.3.1/2.4.6) and three identical disabled "Coming soon" CTAs that screen readers announced indistinguishably.
+Changed plan titles → `<h3>` (correct descent under the h1 page title + h2 perk cards) and added
+`aria-disabled="true"` + a per-plan `aria-label` ("… available once billing is enabled"). No visual/logic change;
+the entitlement/gating path is untouched. Gate green (typecheck + 669 core tests + prod build, no missing-export
+warnings). 2 Sonnet reviewers APPROVE (A: heading hierarchy valid, additive-only, paywall gate unaffected, no
+secrets; B: genuine a11y on the highest-value surface, not cosmetic).
+
+**Readiness:** did NOT open the 'ready for submission' issue. Unchanged blockers, all non-buildable by the loop:
+(1) `docs/quality/QUALITY_SCORECARD.md` does not exist — that grade is owned by the SEPARATE Quality Auditor
+routine (maker ≠ checker; the factory never self-grades), so the "Independent QUALITY GRADE = A/A+" DoD box
+cannot be ticked here. (2) Business-case floor is honestly reach-gated (median ≈ $33K/yr; $100K needs
+~4,000–4,500 sustained downloads/mo) and every NAMED buildable revenue lever (H13 referral, H14 annual nudge,
+H15 win-back) is already built — only owner-activated reach remains, which the loop cannot build. (3) H12
+(surface Family/household at the paywall) stays a product DECISION for the owner (shipping it dark re-introduces
+the Apple 2.3.1 risk PR #244 fixed). Confidence statement correctly stays unchecked. Business case UNMOVED
+(anti-gaming: no adoption % banked). A coherent, deliberately quiet run — one real a11y gate closed.
+
+**Lesson:** orchestrator verification is the load-bearing step in a converged run. Cheap Haiku scouts maximize
+discovery recall but over-report; the Opus orchestrator must dissolve false positives against real code BEFORE
+selecting — this run, 4 of ~6 "candidates" were scout errors (a missed test file, hallucinated copy, an
+already-surfaced route) and shipping any of them would have been churn. The correct output of a converged sweep
+is often ONE real fix + an honest "the rest didn't clear the bar," not a padded batch.
