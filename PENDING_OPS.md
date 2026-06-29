@@ -12,7 +12,7 @@ The dashboard surfaces every `open` item, urgent first.
 ```yaml
 OWNER_ACTIONS:
   project: GroceryManager
-  as_of: 2026-06-29
+  as_of: 2026-06-29 (run 25)
   items:
     - id: set-direct-database-url-prod
       title: "URGENT: set DIRECT_DATABASE_URL in Vercel (owner connection) — signin + signup are BROKEN without it"
@@ -52,9 +52,16 @@ OWNER_ACTIONS:
     - id: wire-e2e-journeys-ci
       title: Wire the runtime functional E2E journeys into CI (needs `workflow` scope — human only)
       priority: high
-      status: open
+      status: done
       why: "The loop validates that the app BUILDS, not that it WORKS. The new outcome-asserting suite (apps/web/e2e/journeys.spec.ts) catches build-but-broken flows, but the autonomous loop cannot edit .github/. Until it's a CI job, a broken user flow won't block a PR."
-      how: "Add a CI job that builds the web app, starts it against a migrated throwaway Postgres (pgvector image, like the `migrate` job), runs `BASE_URL=http://localhost:3000 pnpm --filter @gm/web e2e`, and fails the build on red. Captcha fails open without the Turnstile key, so signup works in CI."
+      how: "DONE (PR #234, from an interactive session with workflow scope): the `e2e functional journeys (BUILDS != WORKS)` job builds web, migrates a throwaway pgvector Postgres, `next start`s with AUTH_TRUST_HOST + a test-only RATE_LIMIT_DISABLED bypass, and replays the suite. It is a REQUIRED status check (enforce_admins on) so a build-but-broken flow can't auto-merge. Captcha fails open without the Turnstile key, so signup works in CI."
+      blocks: none
+    - id: wire-e2e-roundtrip-ci
+      title: Run the F4.1 email round-trip spec in the CI e2e job (one extra env var — needs `.github/`, human only)
+      priority: medium
+      status: open
+      why: "F4.1's email round-trip (apps/web/e2e/email-roundtrip.spec.ts) proves the waitlist double-opt-in actually dispatches → retrieves → confirms. It needs the server AND the test to share an EMAIL_CAPTURE_DIR sink. The loop runs it green LOCALLY at the readiness gate (verified run 25), but the CI e2e job doesn't set EMAIL_CAPTURE_DIR yet, so in CI the spec SKIPS loudly (never fails, never fakes green). Wiring it makes the round-trip a permanent blocking check, not just a gate-time one. The loop can't edit .github/."
+      how: "In the `e2e functional journeys` job (.github/workflows/ci.yml), export EMAIL_CAPTURE_DIR=$RUNNER_TEMP/email-sink for BOTH the `next start` step and the playwright step (same value, same runner — the server writes, the test reads), then either let the default `e2e` run pick it up or add `pnpm --filter @gm/web e2e email-roundtrip`. No secret needed; EMAIL_CAPTURE_DIR fails closed in prod runtimes (resolveEmailCaptureDir) so it's safe to set only in CI."
       blocks: none
     - id: track-h-activation
       title: Set Track H env vars to activate the growth-execution engine
@@ -441,11 +448,14 @@ regenerate it immediately in the provider dashboard and rotate the env var.
 
 SIDE-EFFECT INTEGRITY (FACTORY_STANDARD §6) is now enforced. Two human-side notes:
 
-1. **F4.1 round-trip in CI (needs `.github/` — human only).** The factory will build an email-capture
-   round-trip in the journey suite (Mailpit/Mailhog or a provider sandbox + fetch API): signup/confirm/
-   reset → the real email is dispatched → retrieved → link followed → confirmed. Running it in CI needs
-   a workflow edit (the loop can't touch `.github/`). Until it runs green, preflight BLOCKS readiness
-   (the "side-effect round-trip NOT verified" gate) — by design.
+1. **F4.1 round-trip — BUILT (run 25, PR #247); CI wiring is the only remaining human step.** The
+   email-capture round-trip now exists: `apps/web/e2e/email-roundtrip.spec.ts` submits the waitlist →
+   the real confirmation email is dispatched to a file sink (`EMAIL_CAPTURE_DIR`) → retrieved → the
+   confirm link is followed → the signup is confirmed (`?confirmed=1`, DB `confirmed_at` set); a
+   tampered token does NOT confirm. The loop runs it GREEN locally at the readiness gate. Running it in
+   the CI e2e job needs one env var (the loop can't touch `.github/`) — see OWNER_ACTIONS
+   `wire-e2e-roundtrip-ci`. Until then it SKIPS loudly in CI (never fakes green); preflight still
+   enforces a real green round-trip at the gate (`E2E_ROUNDTRIP_PASSED=1`).
 2. **Waitlist confirmation email won't actually send until an email provider is set.** With no
    `RESEND_API_KEY`/`SENDGRID_API_KEY`/`POSTMARK_API_KEY` (see `track-h-activation`), the double-opt-in
    email is a no-op. The product now degrades HONESTLY — it shows "you're on the list" (the address IS

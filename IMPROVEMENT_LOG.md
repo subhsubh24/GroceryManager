@@ -4,6 +4,40 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-29 (run 25) — F4.1 email side-effect round-trip CLOSED (the last open Track-F DoD gate)
+
+One file-disjoint code PR (#247), gate-green + 2 Sonnet reviewers, auto-merged via `--auto` (waited for
+the required checks; never `--admin`). Plus this housekeeping PR. Two Haiku scouts (security/abuse +
+correctness/artifact-freshness) swept the whole repo and found **zero** real value-bar-clearing gaps —
+confirming deep convergence (a full deep+readiness audit ran run 24, within 24h, so this run went straight
+to fan-out per the routine). The 'FACTORY: ready for submission' issue was **NOT opened**: the honest
+business-case median (~$33K) is still below the $100K floor (reach-gated, FYI #190) and the independent
+QUALITY_SCORECARD doesn't exist yet — so the Confidence + floor + quality-grade DoD boxes stay `[ ]`.
+
+- **#247 — F4.1 side-effect round-trip (the last open Track-F gate).** A "check your email" success
+  state is a lie unless an email actually leaves the system. Built a TEST/CI **file-capture transport**
+  in `@gm/core/email`: when `EMAIL_CAPTURE_DIR` is set, `sendEmail` writes each outgoing email to that
+  dir as JSON (a Mailpit-free sink — both Mailpit's docker image and SMTP egress are blocked in this
+  environment; the prior two runs deferred F4.1 on exactly that constraint). `resolveEmailCaptureDir`
+  **fails closed** (throws) in any production runtime — mirrors the rate-limit bypass guard so the sink
+  can never divert live customer email to disk. +6 unit tests (prod/CI/dev guard matrix + a
+  write-and-retrieve assertion). `apps/web/e2e/email-roundtrip.spec.ts` proves the waitlist
+  double-opt-in as a GENUINE round-trip: submit → "check your email" appears ONLY because the email
+  truly left → RETRIEVE it from the sink → a tampered token does NOT confirm (`?confirmed=0`) → the
+  real link DOES (`?confirmed=1`). preflight now requires the spec to be outcome-asserting AND to have
+  actually run green (`E2E_ROUNDTRIP_PASSED=1`) — a spec that merely exists can't tick F4.1.
+  **VERIFIED green this run** against a built app + a migrated/seeded Postgres (apt postgresql-16-pgvector
+  — the docker pgvector image is egress-blocked, same as run 24): the captured email file contained the
+  confirm link, following it set `waitlist_submissions.confirmed_at`, and all 6 functional journeys still
+  pass. CI wiring (one env var in the `.github/` e2e job) is the only remaining human step — PENDING_OPS
+  `wire-e2e-roundtrip-ci`; until then the spec skips loudly in CI (never fakes green).
+
+Also: closed stale PR #230 (superseded run-24 bookkeeping — already landed as #245/#246); marked the
+`wire-e2e-journeys-ci` OWNER_ACTION done (it shipped as PR #234 and is now a required CI check — the item
+was stale).
+
+---
+
 ## 2026-06-28 (run 23) — H14+H15 lifecycle email engine + 2 CRITICAL hardening fixes
 
 Three file-disjoint PRs, each gate-green + 2 Sonnet reviewers, auto-merged. Deep-audit lenses folded into
