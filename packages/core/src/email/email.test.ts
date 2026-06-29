@@ -6,7 +6,11 @@ import {
   sendEmailBatch,
   getFromEmail,
   getFromName,
+  resolveEmailCaptureDir,
 } from "./index.js";
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 // ─── Sender identity (EMAIL_FROM / EMAIL_FROM_NAME) ─────────────────────────
 
@@ -224,5 +228,87 @@ describe("sendEmailBatch", () => {
     const result = await sendEmailBatch(payloads);
     expect(result.sent).toBe(0);
     expect(result.skipped).toBe(2);
+  });
+});
+
+// ─── F4.1 capture transport (side-effect round-trip sink) ───────────────────
+
+describe("resolveEmailCaptureDir — test/CI only, fails closed in prod", () => {
+  it("returns null when EMAIL_CAPTURE_DIR is unset (real provider transport)", () => {
+    expect(resolveEmailCaptureDir({})).toBeNull();
+    expect(resolveEmailCaptureDir({ EMAIL_CAPTURE_DIR: "   " })).toBeNull();
+  });
+
+  it("returns the dir in a non-production runtime", () => {
+    expect(resolveEmailCaptureDir({ EMAIL_CAPTURE_DIR: "/sink", NODE_ENV: "test" })).toBe("/sink");
+    expect(resolveEmailCaptureDir({ EMAIL_CAPTURE_DIR: "/sink", NODE_ENV: "development" })).toBe("/sink");
+  });
+
+  it("allows it in CI even when NODE_ENV=production (next start under CI)", () => {
+    expect(
+      resolveEmailCaptureDir({ EMAIL_CAPTURE_DIR: "/sink", NODE_ENV: "production", CI: "true" }),
+    ).toBe("/sink");
+  });
+
+  it("THROWS in a Vercel production runtime (never divert live email to disk)", () => {
+    expect(() =>
+      resolveEmailCaptureDir({ EMAIL_CAPTURE_DIR: "/sink", VERCEL_ENV: "production" }),
+    ).toThrow(/PRODUCTION runtime/);
+  });
+
+  it("THROWS in NODE_ENV=production outside CI", () => {
+    expect(() =>
+      resolveEmailCaptureDir({ EMAIL_CAPTURE_DIR: "/sink", NODE_ENV: "production" }),
+    ).toThrow(/PRODUCTION runtime/);
+  });
+});
+
+describe("sendEmail — capture transport writes a retrievable round-trip artifact", () => {
+  let dir: string;
+  const saved = {
+    cap: process.env["EMAIL_CAPTURE_DIR"],
+    resend: process.env["RESEND_API_KEY"],
+    node: process.env["NODE_ENV"],
+  };
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "gm-email-capture-"));
+    process.env["EMAIL_CAPTURE_DIR"] = dir;
+    process.env["NODE_ENV"] = "test";
+    delete process.env["RESEND_API_KEY"]; // capture must take precedence even if a key existed
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+    if (saved.cap !== undefined) process.env["EMAIL_CAPTURE_DIR"] = saved.cap;
+    else delete process.env["EMAIL_CAPTURE_DIR"];
+    if (saved.resend !== undefined) process.env["RESEND_API_KEY"] = saved.resend;
+    else delete process.env["RESEND_API_KEY"];
+    if (saved.node !== undefined) process.env["NODE_ENV"] = saved.node;
+    else delete process.env["NODE_ENV"];
+  });
+
+  it("reports a REAL send (sent=true) and persists the full payload to disk", async () => {
+    const result = await sendEmail({
+      to: "Round.Trip@Example.com",
+      subject: "Confirm your spot",
+      html: '<a href="https://app/confirm?token=abc">Confirm</a>',
+      text: "Confirm: https://app/confirm?token=abc",
+    });
+
+    expect(result.sent).toBe(true);
+    expect(result.skipped).toBe(false);
+    expect(result.messageId).toMatch(/^capture:/);
+
+    const files = readdirSync(dir).filter((f) => f.endsWith(".json"));
+    expect(files).toHaveLength(1);
+    // filename embeds the (sanitized) recipient so a test can find its own message
+    expect(files[0]).toContain("round_trip_example_com");
+
+    const captured = JSON.parse(readFileSync(join(dir, files[0]!), "utf8"));
+    expect(captured.to).toBe("Round.Trip@Example.com");
+    expect(captured.subject).toBe("Confirm your spot");
+    expect(captured.html).toContain("token=abc");
+    expect(captured.text).toContain("token=abc");
   });
 });
