@@ -4,6 +4,7 @@
  * Works per Node.js process. For multi-instance/serverless at scale, replace with
  * Upstash Redis — see PENDING_OPS.md. Periodic cleanup prevents unbounded growth.
  */
+import { rateLimitBypassActive } from "@gm/core/security/rate-limit-guard";
 
 interface Bucket {
   count: number;
@@ -28,9 +29,10 @@ export interface RateLimitResult {
 
 // TEST/CI ONLY — disable rate limiting in an ephemeral E2E environment so the functional journey
 // suite (which self-seeds many real signups from a single CI runner IP) isn't throttled by the
-// signup limiter. Gated on an explicit env var that PRODUCTION NEVER SETS; unset (the default, and
-// always in prod) → the limiter behaves normally. Never set RATE_LIMIT_DISABLED in production.
-const RATE_LIMIT_DISABLED = process.env.RATE_LIMIT_DISABLED === "1";
+// signup limiter. `rateLimitBypassActive` FAILS CLOSED: it throws at module load (boot) if
+// RATE_LIMIT_DISABLED is ever set in a real PRODUCTION runtime, so this hook can never silently
+// disable abuse protection on the live platform. Unset (the default, and always in prod) → limiter ON.
+const RATE_LIMIT_DISABLED = rateLimitBypassActive(process.env);
 
 export function rateLimit(key: string, limit: number, windowMs: number): RateLimitResult {
   if (RATE_LIMIT_DISABLED) return { allowed: true, limit, remaining: limit };

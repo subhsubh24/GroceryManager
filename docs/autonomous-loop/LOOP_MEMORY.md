@@ -680,3 +680,15 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   human schema checkpoint — the fresh-DB validation + 2-reviewer/RLS review + PITR are the conscious replacement).
   LESSON: auto-applying migrations to prod is safe ONLY with the net in place — name the tradeoff and require backups
   before the convenience, don't smuggle it in.
+- **2026-06-29 — quality gate is now ENFORCED for admins too (enforce_admins) + the loop waits for CI (--auto, never --admin).**
+  GroceryManager already had lint + the functional E2E journey suite as required CI checks (#234). This adds the teeth the
+  directive calls for: (1) enforce_admins=true on main branch protection — without it, requiring checks is toothless for the
+  loop (its --admin would bypass); WITH it, even an admin/the loop must merge via --auto and wait for green. strict=false
+  keeps file-disjoint PRs auto-merging. (2) The RATE_LIMIT_DISABLED test bypass now FAILS CLOSED: rateLimitBypassActive
+  (@gm/core/security/rate-limit-guard, +5 tests) THROWS at boot if the flag is set in a real production runtime
+  (VERCEL_ENV=production, or NODE_ENV=production && !CI) — so the CI-only abuse-protection bypass can never silently disable
+  rate limiting on the live platform; CI (CI=true) is the only allowed prod-mode runtime. (3) ROADMAP gains a SHIPPING
+  PROTOCOL note + the routines' MERGE sections get the explicit "--auto, NEVER --admin, a red required check blocks → fix
+  ≤2 or abandon" rule. (4) LOOP_HEALTH.enforced_in_ci: true. ORDER (don't lock out): repo+routine changes + verify-green
+  FIRST, then enforce_admins. LESSON: a required check is only real if admins (the loop) can't bypass it — pair required
+  checks with enforce_admins AND the --auto protocol so the loop doesn't get stuck and reach for --admin.
