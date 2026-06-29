@@ -3,6 +3,7 @@ import {
   getActiveListView,
   getDb,
   getPantryView,
+  householdsEnabled,
   loadCookedAt,
   loadPreferenceSignals,
   withTenant,
@@ -262,6 +263,12 @@ export default async function HomePage({
   // Pre-compute plan data for the logged-out pricing section (constant array, always defined).
   const freePlan = SUBSCRIPTION_PLANS.find((p) => p.tier === "free")!;
   const premiumPlan = SUBSCRIPTION_PLANS.find((p) => p.tier === "premium_monthly")!;
+  // Store-acceptance honesty (Apple 2.3.1 / Google accurate-listing): advertise household sharing on
+  // the PUBLIC landing only when it's actually live — same gate /upgrade applies via householdsEnabled().
+  // FEATURE_HOUSEHOLDS defaults off, so this drops "Family / household sharing" until the owner ships it.
+  const premiumFeatures = householdsEnabled()
+    ? premiumPlan.features
+    : premiumPlan.features.filter((f) => !/household/i.test(f));
 
   return (
     <main className="relative overflow-hidden">
@@ -631,7 +638,7 @@ export default async function HomePage({
                   per month &middot; or $39.99/yr (save ~33%)
                 </p>
                 <ul className="mt-5 flex-1 space-y-2">
-                  {premiumPlan.features.map((f) => (
+                  {premiumFeatures.map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-ink-700">
                       <Check className="h-4 w-4 shrink-0 text-brand-600" strokeWidth={2.5} />
                       {f}
