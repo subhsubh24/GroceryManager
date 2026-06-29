@@ -81,6 +81,9 @@ async function main() {
     console.log("→ lifecycle email send ledger…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0019_lifecycle_email_sends.sql"), "utf8"));
 
+    console.log("→ cohort-retention activity indexes…");
+    await sql.unsafe(readFileSync(join(pkgRoot, "sql/0020_cohort_activity_index.sql"), "utf8"));
+
     console.log("✓ migrations complete");
   } finally {
     await sql.end();

@@ -5,3 +5,4 @@ export * from "./queries.js";
 export * from "./queries/growth.js";
 export * from "./queries/experiments.js";
 export * from "./queries/lifecycle.js";
+export * from "./queries/cohort-retention.js";
