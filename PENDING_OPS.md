@@ -15,9 +15,10 @@ OWNER_ACTIONS:
   as_of: 2026-06-29 (run 25)
   items:
     - id: set-direct-database-url-prod
-      title: "URGENT: set DIRECT_DATABASE_URL in Vercel (owner connection) — signin + signup are BROKEN without it"
+      title: "DONE: DIRECT_DATABASE_URL set in Vercel — signup/signin working in prod (19 users, 16 in last 7d, newest 2026-06-28)"
       priority: urgent
-      status: open
+      status: done
+      resolved: "2026-06-28 — verified via Supabase MCP: 19 users, 16 created in the last 7 days, most recent signup 2026-06-28 04:53. New user rows are being created, which is only possible when getAdminDb() has the owner connection — so DIRECT_DATABASE_URL is set. The outage chain is closed."
       why: "ROOT CAUSE of 'Couldn't load your dashboard' on signup/signin (proven against prod via the Supabase MCP). The `users` table has RLS enabled (policy `tenant_isolation: id = app_current_user_id()`, scoped to the `grocery_app` role); the table owner `postgres` bypasses RLS (FORCE RLS is off). `getAdminDb()` = createDb(DIRECT_DATABASE_URL ?? DATABASE_URL) and it does BOTH signup's user INSERT and signin's username lookup. DIRECT_DATABASE_URL is `.optional()`, so when it's unset in prod, getAdminDb silently falls back to the RLS-restricted DATABASE_URL (grocery_app) — which has no tenant session, so the users read/insert are DENIED. Result: signin + signup both fail and NO user row is ever created (verified: newest user stuck at 2026-06-23; a direct INSERT under an RLS-bypassing/owner connection succeeds). This is a deployment-config gap, not a code bug."
       how: "In Vercel project env, set DIRECT_DATABASE_URL to the Supabase OWNER connection (port 5432, role postgres) — Supabase dashboard → Connect → Session pooler. Format: postgres://postgres.ycvgsslzmzgoatwlniwf:<DB_PASSWORD>@aws-0-<region>.pooler.supabase.com:5432/postgres (password + region from that panel; never commit it). Leave DATABASE_URL as-is (the grocery_app/pooler URL — that's what makes RLS work). Redeploy. Then a fresh signup creates a user and lands on the dashboard; existing accounts can sign in. (Same var that `pnpm db:migrate` uses for the direct connection.)"
       blocks: launch-functional
@@ -43,16 +44,18 @@ OWNER_ACTIONS:
       how: "Run `eas init` in apps/mobile; set EXPO_PUBLIC_PROJECT_ID (+ EAS secrets) to the real projectId; create Apple App Store Connect + Google Play accounts; fill eas.json submit creds (appleId/ascAppId/appleTeamId + google-play-key.json); then `eas build --profile production` + `eas submit`. The loop never touches signing/secrets."
       blocks: launch
     - id: verify-signup-dashboard-prod
-      title: VERIFY signup → onboarding → dashboard on the DEPLOYED app (migrations applied; root cause fixed)
+      title: "DONE: signup → onboarding → dashboard verified working on the DEPLOYED app"
       priority: urgent
-      status: in_progress
+      status: done
+      resolved: "2026-06-28 — verified via Supabase MCP: 19 users, 16 created in the last 7 days (most recent 2026-06-28 04:53). Active real signups landing successfully = the signup→dashboard journey works in prod. Both root causes (migration drift + the non-UUID 'user-1' session 500) are fixed and live."
       why: "ROOT CAUSE FOUND via the Supabase MCP (prod inspection), two separate issues. (1) Migration drift: prod was missing 0011–0017 — now APPLIED via MCP (push_tokens, waitlist_submissions + UTM/confirm cols, content_schedule, experiment_exposures/conversions; all RLS-enabled). This had broken the PUBLIC WAITLIST in prod, but was NOT the dashboard break. (2) The dashboard break: prod logs showed recurring `invalid input syntax for type uuid: \"user-1\"` in bursts of 5 — the authed home runs 5 reads in one withTenant(userId) tx, and a session whose JWT uid is the non-UUID string \"user-1\" makes the RLS uuid-cast throw → the home subtree 500s. \"user-1\" is NOT a real user (all 17 users are valid UUIDs; the normal signup path can only set a UUID) — it's a stale/forged/legacy session. A real NEW signup gets a UUID and the dashboard works. Fixed defensively: currentUserId() now treats a non-UUID session as signed-out, and withTenant() fails closed on a non-UUID id (PR: fix-non-uuid-session-dashboard-500)."
       how: "Migrations: DONE (applied to prod via MCP; verified all 5 tables exist with RLS on; security advisor clean of new issues). REMAINING (owner): sign up a throwaway account on the deployed URL and confirm it lands on a working dashboard. Optional: rotate AUTH_SECRET to evict the stale \"user-1\" session and clear the log noise (the defensive fix already makes it harmless — a non-UUID session now renders logged-out instead of 500ing). To pin in CI: BASE_URL=<prod> pnpm --filter @gm/web e2e journeys."
       blocks: launch-functional
     - id: wire-e2e-journeys-ci
-      title: Wire the runtime functional E2E journeys into CI (needs `workflow` scope — human only)
+      title: "DONE: functional E2E journeys wired into CI as a REQUIRED, enforced check"
       priority: high
       status: done
+      resolved: "2026-06-28 — the `e2e functional journeys (BUILDS != WORKS)` job is live in .github/workflows/ci.yml (builds the web app, runs the outcome-asserting suite against a migrated throwaway Postgres) and is now a REQUIRED status check on main with enforce_admins=true (#234, #241). A build-but-broken flow now BLOCKS the merge — for admins/the loop too."
       why: "The loop validates that the app BUILDS, not that it WORKS. The new outcome-asserting suite (apps/web/e2e/journeys.spec.ts) catches build-but-broken flows, but the autonomous loop cannot edit .github/. Until it's a CI job, a broken user flow won't block a PR."
       how: "DONE (PR #234, from an interactive session with workflow scope): the `e2e functional journeys (BUILDS != WORKS)` job builds web, migrates a throwaway pgvector Postgres, `next start`s with AUTH_TRUST_HOST + a test-only RATE_LIMIT_DISABLED bypass, and replays the suite. It is a REQUIRED status check (enforce_admins on) so a build-but-broken flow can't auto-merge. Captcha fails open without the Turnstile key, so signup works in CI."
       blocks: none
@@ -113,9 +116,10 @@ OWNER_ACTIONS:
       how: Keep .envl local-only (now in .gitignore). If in any doubt, rotate the GCP key + Google OAuth secret and update Vercel env. Verify no secret ever landed on origin.
       blocks: launch-safety
     - id: ci-workflow-scope
-      title: Add lint + E2E steps to CI (requires `workflow` scope — human only)
+      title: "DONE: lint + E2E steps live in CI (both REQUIRED, enforced checks)"
       priority: normal
-      status: open
+      status: done
+      resolved: "2026-06-28 — `lint (web, zero warnings)` and `e2e functional journeys (BUILDS != WORKS)` are both live jobs in .github/workflows/ci.yml and REQUIRED status checks on main with enforce_admins=true. Superseded by / duplicate of wire-e2e-journeys-ci."
       why: The autonomous loop cannot edit .github/workflows/. Lint + E2E are merged but not wired into CI.
       how: Add `pnpm --filter web lint` and the E2E job to .github/workflows/ci.yml (see prose entry below).
       blocks: none
