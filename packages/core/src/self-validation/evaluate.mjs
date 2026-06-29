@@ -83,9 +83,9 @@ export function evaluateSelfValidation(input) {
       if (!surfaced) {
         err(
           id,
-          `the owner-secret gap for ${s} is NOT surfaced — add an OWNER_ACTION '${
-            cap.ownerActionId ?? "<id>"
-          }' with status: open and blocks: validation in PENDING_OPS so it shows on the dashboard.`,
+          `the owner-secret gap for ${s} is NOT surfaced — add an urgent OWNER_ACTION '${
+            cap.ownerActionId ?? "validation-capability-<service>"
+          }' (priority: urgent, blocks: validation) in PENDING_OPS AND list this id in LOOP_HEALTH.validation.unmet. An unmet capability invisible to the owner is a bug — it must appear in BOTH places.`,
         );
       }
     }

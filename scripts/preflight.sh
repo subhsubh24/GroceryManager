@@ -449,11 +449,14 @@ section "Self-validation tripwire — every capability is provable in CI"
 # The loop must never merge a capability it cannot itself VALIDATE. The checker reads
 # packages/config/capabilities.json + the real CI/repo facts and fails when an active capability isn't
 # proven keyless in CI (or its owner-secret gap isn't wired + surfaced + blocking). Pure file reads.
-if node "$ROOT/scripts/check-self-validation.mjs" > /tmp/gm-selfval.log 2>&1; then
-  pass "self-validation: every active capability is self-validated in CI (capabilities.json)"
+# --readiness mode: fails on any structural gap AND any UNMET capability (one needing an owner secret not
+# wired in CI). Prints the validation block (capabilities_total / unmet) for the LOOP_HEALTH dashboard feed.
+if node "$ROOT/scripts/check-self-validation.mjs" --readiness > /tmp/gm-selfval.log 2>&1; then
+  pass "self-validation: every capability is self-validated in CI; no unmet owner-secret gaps (capabilities.json)"
+  grep -E "capabilities_total|unmet:" /tmp/gm-selfval.log | sed 's/^/    /'
 else
   cat /tmp/gm-selfval.log
-  fail "self-validation: a capability cannot be self-validated in CI — see above. Register its keyless validation in packages/config/capabilities.json, or surface an OWNER_ACTION (blocks: validation) for the missing key"
+  fail "self-validation: a capability cannot be self-validated in CI — see above. Register its keyless validation in packages/config/capabilities.json, or surface an urgent OWNER_ACTION (validation-capability-<service>, blocks: validation) + LOOP_HEALTH.validation.unmet for the missing key"
 fi
 
 section "Functional E2E — runtime journeys (BUILDS ≠ WORKS)"
