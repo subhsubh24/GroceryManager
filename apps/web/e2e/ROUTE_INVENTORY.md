@@ -36,6 +36,33 @@ BASE_URL=http://localhost:3000 pnpm --filter @gm/web e2e
 - Real empty / loading / error states per surface (assert the *intended* empty copy, not a blank).
 - Onboarding completion → dashboard (the multi-step flow itself, not just the redirect target).
 
+## Visual-verification artifacts — `screenshots.spec.ts` (ROADMAP F6)
+Real, committed, non-zero PNGs of the core surfaces + the core-product OUTPUT, captured BY the suite
+through the REAL app flow (a fresh account signs up, then SEEDS its pantry via the keyless
+`addPantryItemAction` form — no LLM key required — so the pantry/dashboard show the genuine produced
+artifact, not an empty placeholder). Each is captured at **mobile (390×844)** and **desktop (1366×900)**
+into `apps/web/e2e/__screenshots__/` (`<name>-mobile.png` / `<name>-desktop.png`). The committed images
+get a per-screenshot **DUAL-AXIS** verdict (FUNCTIONAL + DESIGN) recorded in
+`docs/autonomous-loop/LOOP_MEMORY.md` (deep audit) + the readiness-issue evidence — capture-and-forget
+does NOT satisfy F6.
+
+| Artifact | Surface / state captured |
+|---|---|
+| `01-marketing-home` | logged-out marketing landing (hero, features, pricing, waitlist) |
+| `02-signup` | signup form |
+| `03-onboarding-profile` | first-run onboarding (step 1 of 4) |
+| `04-pantry-populated` | **core-product output** — a POPULATED pantry with real run-out predictions |
+| `05-dashboard` | the activation dashboard (real "5 items tracked" + getting-started checklist) |
+| `06-list` | reorder / shopping list |
+| `07-recipes` | cook-tonight (effort + diet chips) |
+| `08-plan` | plan-my-week |
+| `09-discover` | discover feed |
+| `10-profile` | account/settings (incl. account-deletion danger zone) |
+| `11-upgrade-paywall` | **monetization surface** — real $4.99 / $39.99 pricing |
+
+> Regenerate: build + `start` the app against a migrated, seeded DB, then
+> `BASE_URL=http://localhost:3000 pnpm --filter @gm/web e2e screenshots`.
+
 ## Human-only — CANNOT run headlessly → `PENDING_OPS.md` "must be manually verified" (never assumed)
 - Real payment **capture** (live Stripe charge), refunds, webhook delivery from Stripe's servers.
 - Email **deliverability** (provider actually sends + inbox placement).
