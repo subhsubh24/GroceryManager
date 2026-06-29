@@ -869,3 +869,21 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
     box stays ticked only when an independent checker confirms — and the maker never self-awards the grade);
     business-case floor remains reach-gated (FYI #190). A quiet, honest "built the named gaps, grade not
     yet re-earned" is the correct converged state.
+- **2026-06-29 — self-validation tripwire: the loop can't merge a capability CI can't PROVE (#268).**
+  Found a real silent-green hole: apps/web/e2e/email-roundtrip.spec.ts did `test.skip(!EMAIL_CAPTURE_DIR)`,
+  and CI never set EMAIL_CAPTURE_DIR — so the waitlist email round-trip SKIPPED and the suite passed without
+  ever validating the side-effect. Fix has two parts: (1) wired EMAIL_CAPTURE_DIR (a temp dir, NOT a secret)
+  into the e2e job + ran `e2e email-roundtrip` (resolves wire-e2e-roundtrip-ci; the round-trip now validates
+  green in CI). (2) A general TRIPWIRE so this can't recur: packages/config/capabilities.json declares each
+  active capability + how it's proven KEYLESS in CI (an e2e spec the job runs, or a unit/degrade test, + any
+  requiresCiEnv); scripts/check-self-validation.mjs (pure evaluator in packages/core/src/self-validation/,
+  unit-tested) is a REQUIRED, enforce_admins CI check that goes RED when an active capability isn't
+  keyless-validatable, when a declared spec isn't actually RUN by CI, when a needed non-secret env isn't wired
+  (the skip hole), when an env-gated test.skip is UNDECLARED, or when an OWNER SECRET it needs isn't wired —
+  in which case it must be surfaced as an OWNER_ACTION (blocks: validation) and the PR stays blocked until the
+  owner wires it. CONTRACT FOR THE LOOP (also in CLAUDE.md): when you add/extend a capability, REGISTER it in
+  capabilities.json with its keyless validation, or (if it truly needs an external sandbox secret) set
+  requiresOwnerSecret + ownerActionId AND open the OWNER_ACTION — never ship behind an undeclared env-gated
+  skip. Degrade-by-default (LLM/captcha/SMS/Stripe no-op without keys) means a degrade test is almost always
+  possible — prefer it over needing an owner secret. LESSON: "the suite is green" ≠ "the capability is
+  validated" — a skipped test is an unproven capability; make skips DECLARED + blocking, not silent.

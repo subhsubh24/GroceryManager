@@ -67,9 +67,10 @@ OWNER_ACTIONS:
       how: "DONE (PR #234, from an interactive session with workflow scope): the `e2e functional journeys (BUILDS != WORKS)` job builds web, migrates a throwaway pgvector Postgres, `next start`s with AUTH_TRUST_HOST + a test-only RATE_LIMIT_DISABLED bypass, and replays the suite. It is a REQUIRED status check (enforce_admins on) so a build-but-broken flow can't auto-merge. Captcha fails open without the Turnstile key, so signup works in CI."
       blocks: none
     - id: wire-e2e-roundtrip-ci
-      title: Run the F4.1 email round-trip spec in the CI e2e job (one extra env var — needs `.github/`, human only)
+      title: "DONE: F4.1 email round-trip runs in the CI e2e job (EMAIL_CAPTURE_DIR wired; no longer skips)"
       priority: medium
-      status: open
+      status: done
+      resolved: "2026-06-29 (#268) — EMAIL_CAPTURE_DIR (a temp dir, no secret) is wired into the e2e job and the job runs `e2e email-roundtrip`. The waitlist double-opt-in side-effect now VALIDATES in CI (passed green on #268) instead of skipping. Enforced going forward by the new self-validation tripwire (capabilities.json declares EMAIL_CAPTURE_DIR as a requiresCiEnv, so un-wiring it would turn the required check RED)."
       why: "F4.1's email round-trip (apps/web/e2e/email-roundtrip.spec.ts) proves the waitlist double-opt-in actually dispatches → retrieves → confirms. It needs the server AND the test to share an EMAIL_CAPTURE_DIR sink. The loop runs it green LOCALLY at the readiness gate (verified run 25), but the CI e2e job doesn't set EMAIL_CAPTURE_DIR yet, so in CI the spec SKIPS loudly (never fails, never fakes green). Wiring it makes the round-trip a permanent blocking check, not just a gate-time one. The loop can't edit .github/."
       how: "In the `e2e functional journeys` job (.github/workflows/ci.yml), export EMAIL_CAPTURE_DIR=$RUNNER_TEMP/email-sink for BOTH the `next start` step and the playwright step (same value, same runner — the server writes, the test reads), then either let the default `e2e` run pick it up or add `pnpm --filter @gm/web e2e email-roundtrip`. No secret needed; EMAIL_CAPTURE_DIR fails closed in prod runtimes (resolveEmailCaptureDir) so it's safe to set only in CI."
       blocks: none
