@@ -702,3 +702,55 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   enforce_admins doesn't break `--auto` for the loop. The three routines (factory/growth/auditor) now carry the
   "--auto, NEVER --admin" merge rule. LESSON: don't trust a protection config until a real PR has both BLOCKED on it
   and then auto-merged through it — validate the gate with the gate, not by reading the settings JSON.
+- **2026-06-29 (run 24) — DEEP AUDIT (folded scout sweep + a LIVE functional run) + 3 file-disjoint PRs:
+  H11 + F6 cleared, a store-compliance bug caught BY the F6 screenshots and fixed.** Last standalone deep
+  audit was run 19; runs 20–24 fold it into the scout sweep + (this run) an actual end-to-end app run, which
+  is the strongest form (FUNCTIONAL REALITY = an ACTUAL RUN, not a code read). Stood up the full e2e env
+  locally: docker daemon started, but the **pgvector docker image pull is BLOCKED by the org egress policy
+  (403)** — so used the locally-installed Postgres 16 + `apt-get install postgresql-16-pgvector` + a `postgres`-
+  user cluster, ran the migration chain + `db:seed` (the keyless pantry add needs the seeded `units`/`each`
+  base unit — a fresh DB without the seed throws "seed missing base unit 'each'"), built `web` in production,
+  `next start`, and replayed Playwright. THREE merged/merging PRs, all file-disjoint:
+  - **H11 (PR #240, MERGED)** — cohort-retention data source (see ROADMAP H11 done-note). Aggregates-only,
+    admin/cron-gated, honest-null; migration 0020. 2 Sonnet reviewers APPROVE.
+  - **F6 (PR #243, MERGED)** — `apps/web/e2e/screenshots.spec.ts` + 22 committed non-zero PNGs (mobile+desktop)
+    of the real app, incl. the core-product OUTPUT. **DUAL-AXIS VISION VERDICT (I opened every image):**
+    `01-marketing-home` FUNCTIONAL=intended-outcome-visible (full landing: hero, features, trust, pricing
+    $0/$4.99/$39.99, waitlist) / DESIGN=PASS (clean, on-brand green, strong type). `02-signup` FUNC=visible /
+    DESIGN=PASS. `03-onboarding-profile` FUNC=visible (step 1 of 4, progress bar) / DESIGN=PASS. `04-pantry-
+    populated` FUNC=**populated output** (Olive Oil/Eggs/Spaghetti/Canned Tomatoes/Parmesan, each "in stock"
+    + real run-out dates "runs out ~2026-…") / DESIGN=PASS. `05-dashboard` FUNC=real ("5 items tracked",
+    activation checklist with step 2 auto-completed, "You're all stocked up") / DESIGN=PASS. `06-list`
+    (Reorder "Nothing due right now" — correct: freshly stocked) / `07-recipes` ("No suggestions yet") /
+    `08-plan` ("No weekly plan yet") / `09-discover` ("Nothing to discover yet") — all FUNC=honest on-brand
+    EMPTY states (no recipe corpus/LLM locally — correct degradation, not defects) / DESIGN=PASS. `10-profile`
+    FUNC=full settings incl. the account-deletion danger zone (Apple 5.1.1(v)) / DESIGN=PASS. `11-upgrade-
+    paywall` FUNC=real pricing ($4.99/$39.99, honest "preview — billing turns on once Stripe is connected";
+    Family card correctly ABSENT per PR #227 gating) / DESIGN=PASS. **Every surface PASS on BOTH axes; zero
+    release-blocking visual failures.** 2 Sonnet reviewers APPROVE.
+  - **Store-compliance fix (PR #244)** — the F6 screenshots CAUGHT a real bug the DOM tests missed: the
+    logged-out marketing landing (`apps/web/app/page.tsx`) advertised "Family / household sharing" in its
+    Premium pricing card while `FEATURE_HOUSEHOLDS` defaults off — the exact Apple 2.3.1 / Google accurate-
+    listing risk PR #227 fixed on `/upgrade` but MISSED on the landing. Mirrored `/upgrade`'s
+    `householdsEnabled()` gate; live-verified the landing now lists 0 "household sharing" while everything else
+    renders. 2 Sonnet reviewers APPROVE. LESSON: a visual artifact pass earns its keep — it found a
+    store-rejection-class inconsistency that 408 unit tests + the DOM-asserting journey suite all passed over.
+  - **NOT shipped this run (honest):** (a) **H12** (surface Family/household at paywall+onboarding) stays
+    `[ ]` — a scout confirmed it's BLOCKED on a product DECISION (ship `FEATURE_HOUSEHOLDS=1` live, reverting
+    part of PR #227's gating + building the household sharing surface, OR keep it dark and accept zero Family
+    adoption). The billing tier + checkout + the household feature (RLS-tested) are built but flag-dark; an
+    onboarding "cook together" moment doesn't exist. Honest-advertising it without shipping households live
+    would re-introduce the PR #227 violation. Filed as an OWNER decision in PENDING_OPS. (b) **F4.1** (email
+    side-effect round-trip) stays `[ ]` — the email client sends via provider HTTP APIs (Resend/SendGrid/
+    Postmark), NOT SMTP, so Mailpit (an SMTP sink) won't intercept it without adding an SMTP transport to
+    `packages/core/src/email/index.ts` + a dep; AND the Mailpit docker image is egress-blocked here; AND the
+    CI wiring is a `.github/` change the headless loop can't make. Next focused run: add an SMTP transport path
+    (gated on a test env var), prove the waitlist double-opt-in round-trip against a local SMTP catcher, file
+    the CI-service wiring as an owner/interactive action.
+  - **DEEP AUDIT verdict:** no new CRITICAL findings beyond the landing store-compliance bug (now fixed).
+    Security/RLS: H11's admin-bypass query is aggregates-only (verified by Reviewer A). Functional reality:
+    every core surface renders its real screen or an honest on-brand empty state — zero dead-ends/error
+    boundaries across 22 captures. Remaining DoD gaps: F4.1 + H12-decision (both above) → factory is NOT yet
+    submission-ready; did NOT open the 'ready' issue. LESSON: when egress blocks the canonical infra (docker
+    images), reach for the local equivalent (apt postgres + pgvector) rather than abandoning the live run —
+    the live run is what produced the real artifacts AND found the real bug.

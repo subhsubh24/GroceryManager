@@ -339,7 +339,7 @@ mechanical gate, not a vibe.
       `docs/autonomous-loop/LOOP_MEMORY.md`, with top findings turned into value-bar-clearing work.
       Runs ~once/day (see the routine's PERIODIC DEEP AUDIT section).
       _(Deep audit 2026-06-25: 3 critical bugs fixed — PRs #119 #120 #121; lessons recorded)_
-- [ ] **F6. Visual-verification ARTIFACTS + DUAL-AXIS vision verdict (functional AND design)** —
+- [x] **F6. Visual-verification ARTIFACTS + DUAL-AXIS vision verdict (functional AND design)** —
       FACTORY_STANDARD §6/§7/§10 require the deep audit + readiness gate to VISUALLY review the journey
       screenshots on TWO axes — (1) **FUNCTIONAL REALITY** (does the screen visibly show the INTENDED
       OUTCOME — a populated working screen, the REAL produced artifact, the correct data/state — not a
@@ -368,6 +368,17 @@ mechanical gate, not a vibe.
       preflight honest-tick guard (`scripts/preflight.sh`) fails the gate if this box is `[x]` but
       `apps/web/e2e/__screenshots__/` has fewer than 5 non-zero images (completeness + the dual-axis
       verdict are enforced by the deep audit + readiness auditors; the guard just kills the fake-tick).
+      _Done (run 24, PR #243): `apps/web/e2e/screenshots.spec.ts` drives the REAL app flow (fresh signup →
+      seed the pantry via the keyless `addPantryItemAction` form → walk every core surface) and captures
+      **22 committed non-zero PNGs** at mobile (390×844) + desktop (1366×900) into
+      `apps/web/e2e/__screenshots__/`, including the core-product OUTPUT (a POPULATED pantry with real
+      run-out predictions, the activation dashboard showing real "5 items tracked", the paywall with real
+      $4.99/$39.99 pricing) + the logged-out marketing landing. Captured against a built `web` app + a
+      migrated/seeded local pgvector Postgres (2 passed, 29.8s). DUAL-AXIS VISION VERDICT recorded below in
+      this run's LOOP_MEMORY entry — all 11 surfaces × 2 widths PASS on BOTH FUNCTIONAL + DESIGN
+      (recipes/plan/discover/reorder correctly show on-brand empty states — no recipe corpus/LLM locally;
+      a real review caught + fixed a store-compliance bug, PR #244). The spec stays out of CI's
+      `journeys`-filtered e2e job (can't flake the gate). 2 Sonnet reviewers APPROVE._
 
 > **Track F evidence (2026-06-25):** F1 `apps/web/eslint.config.mjs` (`--max-warnings=0`, PR #122);
 > F2 `packages/core/vitest.config.ts` coverage thresholds (PR #123); F3 `scripts/run-evals.sh`
@@ -511,13 +522,23 @@ each platform's ToS.** This is how the app gets *tailored for success* with real
       `logExposure`/`logConversion` (`apps/web/app/lib/experiments.ts`) never block the user; results feed
       `GrowthSnapshot.experiments` via the snapshot route. Wired live (dormant) on the landing hero + waitlist
       signup. +25 test assertions._
-- [ ] **H11. Cohort-retention DATA SOURCE (feeds the H9 cohort builder).** The H9 cohort-retention *builder*
+- [x] **H11. Cohort-retention DATA SOURCE (feeds the H9 cohort builder).** The H9 cohort-retention *builder*
       ships + is unit-tested, but there is no live per-user activity datastore to feed it, so the surface
       returns honest-null today. Build the privacy-safe aggregate source: a lightweight per-user activity/
       last-active signal (or login/cook event) bucketed by signup-week cohort → weekly retention fractions,
       computed server-side as AGGREGATES ONLY (no raw per-user event logs leave the server), admin/cron-gated,
       honest-null until present. Then the H9 `cohort_retention` block reports real curves and the Growth Agent
       can diagnose retention as the binding constraint on real data.
+      _Done (run 24, PR #240): `getCohortRetention(db)` in `packages/db/src/queries/cohort-retention.ts` —
+      one bounded aggregate query (weekly signup cohorts via `date_trunc('week', users.created_at)` ×
+      per-week-offset retention from `meal_logs.cooked_at`, last 12 cohort weeks × 8 offsets). Returns
+      AGGREGATES ONLY (`cohort_week`, `cohort_size`, `retained_counts[]`) — `user_id` lives solely inside
+      CTEs for join/count, never in the projection; honest-null on pre-migration, `[]` when connected-but-empty.
+      Migration `0020_cohort_activity_index.sql` (idempotent supporting indexes) wired into `migrate.ts` after
+      0019. `apps/web/app/api/growth/analytics/route.ts` now reports the real cohort block (`connected` only
+      when data is present); admin/cron gate + 30/min limit untouched. 7 new tests; `@gm/db` stays free of
+      `@gm/core`. Gate: typecheck + 658 core tests + prod build clean; migration applied + verified against a
+      local pgvector Postgres; 2 Sonnet reviewers APPROVE._
 - [x] **H13. Pre-launch SITE GATE (never expose a half-baked app).** Env-driven middleware: the gate is ON
       whenever `SITE_GATE_PASSWORD` is set, password-protecting the deployed app but **EXEMPTING the public
       marketing routes** (the waitlist / "coming soon" landing + its server action + `/api/waitlist/confirm`
