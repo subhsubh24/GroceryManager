@@ -798,3 +798,29 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   honest output is usually ONE real fix + "the rest didn't clear the bar" — padding the batch is the failure
   mode the value bar forbids. (Within 24h of run 24's deep audit, so no fresh standalone DEEP AUDIT stamp due;
   this sweep doubled as discovery and found no new CRITICALs.)
+- **2026-06-29 (run 27) — a converged sweep can still hide a CRITICAL: the captcha had no client half.**
+  Ran the full ~5-Haiku scout sweep (deep audit folded — last standalone run 24, within 24h). Unlike the
+  prior two quiet runs, this one found a genuine **CRITICAL** plus 5 clean disjoint value-bar clears, all
+  shipped (6 PRs, each 2-Sonnet-reviewer-approved, auto-merged through the required CI checks; #257 + #255
+  merged directly once their checks went green). **The CRITICAL (#252):** signup + waitlist verify a
+  Cloudflare Turnstile `cf-turnstile-response` token server-side, but NO widget ever rendered the token —
+  so once the owner sets `CLOUDFLARE_TURNSTILE_SECRET_KEY` in prod (PENDING_OPS instructs it at launch),
+  `verifyTurnstile(null)` rejects EVERY signup/waitlist submit (self-DOS), and G5 bot protection was a
+  no-op regardless. Built a `<Turnstile>` client component (renders nothing + server fail-opens when the
+  SITE key is absent → CI/dev unaffected; renders the challenge + threads the token via a single
+  React-controlled hidden input AND an onToken callback when present). The other 5: two WCAG-Level-A
+  form-label fixes (#253 /import, #254 /capture) and three 0-test→tested pure-logic modules (#255 scheduler
+  channel guardrail — the security-relevant "never post to undisclosed channels" invariant incl. the
+  casing/whitespace bypass; #256 the FDC macro parser; #257 the LLM tier-escalation cost terminator).
+  **LESSONS:** (a) a green gate is NOT coverage of a two-sided contract — the captcha sat behind 408 unit
+  tests + a DOM-asserting E2E for many runs because every test ran key-absent (fail-open), so nothing ever
+  exercised the enforced path. When code "verifies a token/signature/nonce," check the PRODUCER exists,
+  not just that the verifier is wired — this is the BUILDS≠WORKS failure mode at the integration seam.
+  (b) Convergence is not monotonic: runs 25/26 were honestly quiet (1 fix each), but a fresh adversarial
+  security lens still turned up a launch-blocker run 27 — keep running the full sweep, don't assume "nothing
+  left." (c) When the loop builds what a doc said was an owner step, fix the doc in the SAME run
+  (PENDING_OPS turnstile-keys: "add the widget script" → reduced to "set the two env vars") — a stale
+  owner-action is a living-artifact bug. DEEP AUDIT: folded into this sweep (no new CRITICALs beyond #252,
+  now fixed); RLS/Track-G otherwise CLEAN per the security scout (rate limits, spend ceiling, headers,
+  error hygiene, double-opt-in all verified present). Still NOT submission-ready (FYI #190 floor + absent
+  QUALITY_SCORECARD).
