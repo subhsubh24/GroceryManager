@@ -59,6 +59,46 @@ test.describe("authed journeys (outcome-asserting)", () => {
     await expect(page.getByText(/getting started/i).first()).toBeVisible();
   });
 
+  test("returning user signs IN through the real /signin form → working dashboard", async ({ page }) => {
+    // The whole rest of the suite self-seeds via SIGNUP (which auto-authenticates). This exercises the
+    // DISTINCT credential SIGN-IN path (next-auth credentials → real DB) a returning user hits on every
+    // launch (LaunchGuard re-login) — a break here would otherwise sail through unnoticed.
+    //
+    // Evidence, not a guess (FACTORY_STANDARD §6): capture browser console + page errors, and on failure
+    // read the rendered auth-error banner, so ONE CI run names the cause instead of a blind URL timeout.
+    const consoleErrors: string[] = [];
+    const pageErrors: string[] = [];
+    page.on("console", (m) => {
+      if (m.type() === "error") consoleErrors.push(m.text());
+    });
+    page.on("pageerror", (e) => pageErrors.push(e.message));
+
+    const username = await signUp(page); // create the account…
+    await page.context().clearCookies(); // …then become a returning, logged-OUT user
+
+    await page.goto("/signin", { waitUntil: "domcontentloaded" });
+    await page.fill('input[name="username"]', username);
+    await page.fill('input[name="password"]', "e2e-passw0rd");
+    await page.click('button[type="submit"]');
+
+    // INTENDED OUTCOME: credential sign-in leaves /signin for the working app (never the error banner).
+    try {
+      await page.waitForURL((u) => !/\/signin/.test(u.pathname), { timeout: 15_000 });
+    } catch {
+      const body = await page.locator("body").innerText().catch(() => "");
+      const banner =
+        (body.match(/That username and password.*?again\.|Please enter your username.*?password\./i) || [])[0] ??
+        "(no auth-error banner rendered)";
+      throw new Error(
+        `sign-in did not reach the post-login screen.\n  auth-error banner: ${banner}\n` +
+          `  console errors: ${consoleErrors.join(" | ") || "(none)"}\n` +
+          `  page errors: ${pageErrors.join(" | ") || "(none)"}`,
+      );
+    }
+    await expect(page.locator("body")).not.toContainText(ERROR_SCREEN);
+    await expect(page.getByText(/sign out/i).first()).toBeVisible();
+  });
+
   test("every primary nav target resolves to its real screen", async ({ page }) => {
     await signUp(page);
     // The core product surfaces an authed user reaches from the home/nav. Each must render, not error.
