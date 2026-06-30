@@ -149,7 +149,7 @@ export default async function PlanPage({
 }) {
   const lowEnergy = (await searchParams).energy === "low";
   const data = await load(lowEnergy);
-  if (data.upgradeRequired) redirect("/upgrade");
+  if (data.upgradeRequired) redirect("/upgrade?feature=plan_week");
 
   const tab = (href: string, label: string, active: boolean) => (
     <a

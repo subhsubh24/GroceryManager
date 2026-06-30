@@ -109,7 +109,7 @@ async function loadDeck() {
 
 export default async function DiscoverPage() {
   const result = await loadDeck();
-  if (result.upgradeRequired) redirect("/upgrade");
+  if (result.upgradeRequired) redirect("/upgrade?feature=discover");
   const { deck, error } = result;
 
   return (

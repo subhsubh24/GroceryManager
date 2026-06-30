@@ -1,5 +1,5 @@
 import { getDb, householdsEnabled, loadPreferenceSignals, withTenant } from "@gm/db";
-import { isPremium, PREMIUM_PERKS } from "@gm/core/billing";
+import { isPremium, PREMIUM_FEATURES, PREMIUM_PERKS } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
 import { reconcileReferralRewards } from "@/app/lib/referral";
 import { PageHeader } from "@/app/components/page-header";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function UpgradePage({
   searchParams,
 }: {
-  searchParams: Promise<{ success?: string; canceled?: string }>;
+  searchParams: Promise<{ success?: string; canceled?: string; feature?: string }>;
 }) {
   // FEATURE_BILLING is an optional flag (default off). Off → premium is "in preview" and free.
   const billingOn = process.env.FEATURE_BILLING === "1";
@@ -43,6 +43,17 @@ export default async function UpgradePage({
   const perks = householdsLive
     ? PREMIUM_PERKS
     : PREMIUM_PERKS.filter((p) => p.feature !== "household");
+
+  // Context-aware paywall (conversion): when a gated feature redirected the user here with
+  // `?feature=`, lead with the exact thing they tried to unlock instead of a generic "Go Premium".
+  // Only honor it when the feature is real AND still visible in `perks` (so we never highlight a
+  // dark feature like household when it isn't live). High-intent traffic converts on specificity.
+  const requestedFeature =
+    params.feature && (PREMIUM_FEATURES as readonly string[]).includes(params.feature)
+      ? params.feature
+      : null;
+  const focusPerk =
+    requestedFeature != null ? (perks.find((p) => p.feature === requestedFeature) ?? null) : null;
 
   return (
     <main className="page">
@@ -90,13 +101,30 @@ export default async function UpgradePage({
         </p>
       )}
 
+      {focusPerk && !premium && (
+        <p className="notice-info mt-6 flex items-center gap-1.5">
+          <Star className="h-4 w-4 shrink-0" strokeWidth={2} />
+          <span>
+            <strong className="font-semibold">{focusPerk.title}</strong> is a Premium feature —
+            unlock it{billingOn ? " below" : " once billing is on"}, plus everything else.
+          </span>
+        </p>
+      )}
+
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        {perks.map((p) => (
-          <div key={p.feature} className="card-pad">
-            <h2 className="section-title">{p.title}</h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-ink-500">{p.blurb}</p>
-          </div>
-        ))}
+        {perks.map((p) => {
+          const focused = focusPerk?.feature === p.feature;
+          return (
+            <div
+              key={p.feature}
+              className={`card-pad${focused ? " ring-2 ring-brand-500/55" : ""}`}
+              aria-current={focused ? "true" : undefined}
+            >
+              <h2 className="section-title">{p.title}</h2>
+              <p className="mt-1.5 text-sm leading-relaxed text-ink-500">{p.blurb}</p>
+            </div>
+          );
+        })}
       </div>
 
       {!premium && (

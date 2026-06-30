@@ -52,7 +52,7 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
 
 export default async function WrappedPage() {
   const data = await load();
-  if ("upgradeRequired" in data && data.upgradeRequired) redirect("/upgrade");
+  if ("upgradeRequired" in data && data.upgradeRequired) redirect("/upgrade?feature=wrapped_plus");
   const empty = data.ready && data.stats.homeCookedMeals === 0 && data.stats.totalSpentCents === 0;
 
   return (
