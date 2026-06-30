@@ -887,3 +887,35 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   skip. Degrade-by-default (LLM/captcha/SMS/Stripe no-op without keys) means a degrade test is almost always
   possible — prefer it over needing an owner secret. LESSON: "the suite is green" ≠ "the capability is
   validated" — a skipped test is an unproven capability; make skips DECLARED + blocking, not silent.
+
+- **2026-06-30 (run 29) — DEEP AUDIT (folded, 6 lenses) + 4 file-disjoint value-bar clears.** Full
+  6-Haiku scout sweep (security/RLS+Track-G, web reliability/functional-reality, design/a11y/taste,
+  test-coverage, monetization+artifact-freshness, native mobile). Shipped #273 (vision resolve unit
+  test, 11.5%→96%), #274 (rate-limit the growth/email batch-send route — the one real Track-G gap),
+  #275 (waitlist email-input a11y label), #276 (mobile plan.tsx res.ok guard). Each gate-green + 2
+  Sonnet reviewers APPROVE; #274/#275/#276 merged on green required-check status; #273 via --auto.
+  LESSONS:
+  - **A green vitest run is NOT a green tsc.** #273's first push passed `pnpm --filter @gm/core test`
+    (vitest transpiles, doesn't strict-typecheck) but `tsc --noEmit` failed TS2554: `vi.fn(() => …)`
+    infers a ZERO-arg call signature, so every mock factory that forwards args errored. The per-change
+    verify MUST run the package typecheck on the ACTUAL branch (not just the test runner) — `pnpm -r run
+    typecheck` was run on a sibling branch, not the test branch, so the hole slipped to CI. Type each
+    mock with its real arity: `vi.fn<(a: A, b: B) => R>()`.
+  - **A boundary mock that drops an arg stops being a contract test.** Reviewer A caught that the
+    `normalizeLineItem` mock forwarded only `input`, not `ports` — a regression that stopped threading
+    the DB/embedder/llm ports into the cascade would have passed silently. Forward ALL args through the
+    spy and assert them. A mock should mirror the real signature exactly.
+  - **In a converged product the orchestrator's FILTER is load-bearing, not the fan-out.** The mobile
+    scout reported "zero accessibilityLabel → store-blocking a11y gap"; on inspection every mobile
+    Pressable has a Text child (RN exposes that to screen readers automatically) and there are no
+    icon-only buttons — a false positive that would have been churn. Cheap high-recall scouts over-report
+    in a mature repo; the Opus orchestrator dissolving false positives against real code is the value.
+    (The web design scout did find the one genuine a11y gap → #275.)
+  - **DEEP AUDIT verdict:** no new CRITICALs. RLS clean across all migrations; webhooks signature-verified;
+    timeouts + fail-loud env + ledger-only invariant clean; billing code complete. The only monetization/
+    artifact items were post-launch OWNER rituals (Family-tier listing sync when FEATURE_HOUSEHOLDS flips;
+    90-day metrics sync to keep BUSINESS_CASE living) → folded into LAUNCH.md Step 12, not code.
+  - **Still NOT submission-ready (unchanged non-buildable blockers):** quality grade is B until the
+    independent Quality Auditor re-grades the run-28 #260/#261 fixes (maker never self-awards the grade);
+    business-case floor is honestly reach-gated (FYI #190, all named buildable levers already built).
+    Did NOT open the 'ready' issue. A quiet, coherent 4-gate run is the correct converged state.
