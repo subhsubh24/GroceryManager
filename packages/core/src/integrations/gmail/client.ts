@@ -6,6 +6,10 @@ import type { GmailHeader, GmailPart } from "./parse.js";
 
 const GMAIL = "https://gmail.googleapis.com/gmail/v1/users/me";
 
+// External call timeout — must be SHORTER than the serverless function budget so a hung Gmail API
+// surfaces as a caught error the sync action can degrade on, not an uncatchable platform 504.
+const TIMEOUT_MS = 8_000;
+
 export interface GmailMessage {
   id: string;
   threadId: string;
@@ -30,14 +34,20 @@ export class GmailClient {
     if (opts.q) p.set("q", opts.q);
     if (opts.pageToken) p.set("pageToken", opts.pageToken);
     p.set("maxResults", String(opts.maxResults ?? 25));
-    const res = await fetch(`${GMAIL}/messages?${p.toString()}`, { headers: this.headers() });
+    const res = await fetch(`${GMAIL}/messages?${p.toString()}`, {
+      headers: this.headers(),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
     if (!res.ok) throw new Error(`Gmail messages.list ${res.status}: ${await res.text()}`);
     const json = (await res.json()) as { messages?: { id: string }[]; nextPageToken?: string };
     return { ids: (json.messages ?? []).map((m) => m.id), nextPageToken: json.nextPageToken };
   }
 
   async getMessage(id: string): Promise<GmailMessage> {
-    const res = await fetch(`${GMAIL}/messages/${id}?format=full`, { headers: this.headers() });
+    const res = await fetch(`${GMAIL}/messages/${id}?format=full`, {
+      headers: this.headers(),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
     if (!res.ok) throw new Error(`Gmail messages.get ${res.status}: ${await res.text()}`);
     return (await res.json()) as GmailMessage;
   }
@@ -45,7 +55,10 @@ export class GmailClient {
   /** Pull changes since a historyId (the reliable, dedup-friendly sync path). */
   async historyMessageIds(startHistoryId: string): Promise<{ ids: string[]; historyId?: string }> {
     const p = new URLSearchParams({ startHistoryId, historyTypes: "messageAdded" });
-    const res = await fetch(`${GMAIL}/history?${p.toString()}`, { headers: this.headers() });
+    const res = await fetch(`${GMAIL}/history?${p.toString()}`, {
+      headers: this.headers(),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
     if (!res.ok) throw new Error(`Gmail history.list ${res.status}: ${await res.text()}`);
     const json = (await res.json()) as {
       history?: { messagesAdded?: { message: { id: string } }[] }[];
@@ -61,6 +74,7 @@ export class GmailClient {
       method: "POST",
       headers: { ...this.headers(), "Content-Type": "application/json" },
       body: JSON.stringify({ topicName, labelIds: ["INBOX"] }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (!res.ok) throw new Error(`Gmail watch ${res.status}: ${await res.text()}`);
     return (await res.json()) as { historyId: string; expiration: string };
