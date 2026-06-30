@@ -15,9 +15,10 @@ import { canUse, isPremium } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
 
 /**
- * Server-side Family-tier entitlement check (never trust the client to have hidden the form/button).
- * Household sharing is a premium feature, so STARTING or GROWING a household requires premium —
- * existing members ride free on the owner's plan and are gated elsewhere (the page view).
+ * Server-side premium entitlement check (never trust the client to have hidden the form/button).
+ * Household sharing is a premium feature (any paid tier; marketed as the Family tier), so STARTING or
+ * GROWING a household requires premium — existing members ride free on the owner's plan and are gated
+ * elsewhere (the page view). Joining an owner's invite is intentionally ungated (see join/[token]).
  */
 async function canManageHousehold(tx: Parameters<typeof loadPreferenceSignals>[0], userId: string): Promise<boolean> {
   const billingOn = process.env.FEATURE_BILLING === "1";

@@ -77,10 +77,10 @@ async function load(): Promise<Loaded> {
       signals: await loadPreferenceSignals(tx, userId),
     }));
 
-    // Household sharing is a Family-tier (premium) feature. EXISTING members keep access — they ride
-    // on the owner's plan — but a non-premium user WITHOUT a household is sent to /upgrade instead of
-    // the create form. This closes the paywall bypass that exists once FEATURE_HOUSEHOLDS is on
-    // (creation is gated server-side in actions.ts too — never trust the client).
+    // Household sharing is a premium feature (PREMIUM_FEATURES; marketed as the Family tier). EXISTING
+    // members keep access — they ride on the owner's plan — but a non-premium user WITHOUT a household
+    // is sent to /upgrade instead of the create form. This closes the paywall bypass that exists once
+    // FEATURE_HOUSEHOLDS is on (creation is gated server-side in actions.ts too — never trust the client).
     if (!household && !canUse("household", isPremium(signals), billingOn)) return { state: "upgrade" };
     if (!household) return { state: "no_household" };
 
