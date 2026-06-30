@@ -1,11 +1,14 @@
+import { redirect } from "next/navigation";
 import {
   getAdminDb,
   getDb,
   getHouseholdForUser,
   householdsEnabled,
   listHouseholdMembers,
+  loadPreferenceSignals,
   withTenant,
 } from "@gm/db";
+import { canUse, isPremium } from "@gm/core/billing";
 import { PageHeader } from "@/app/components/page-header";
 import { Users } from "@/app/components/icons";
 import { currentUserId } from "@/app/lib/tenant";
@@ -58,6 +61,7 @@ type Loaded =
       isOwner: boolean;
       members: { id: string; name: string | null; username: string | null; email: string | null }[];
     }
+  | { state: "upgrade" }
   | { state: "error" };
 
 async function load(): Promise<Loaded> {
@@ -65,8 +69,19 @@ async function load(): Promise<Loaded> {
     const userId = await currentUserId();
     if (!userId) return { state: "signed_out" };
 
-    // Resolve the household tenant-scoped (RLS: a member reads only their own users row + household).
-    const household = await withTenant(getDb(), userId, (tx) => getHouseholdForUser(tx, userId));
+    // Resolve the household + the user's entitlement signals, tenant-scoped (RLS: a member reads only
+    // their own users row + household).
+    const billingOn = process.env.FEATURE_BILLING === "1";
+    const { household, signals } = await withTenant(getDb(), userId, async (tx) => ({
+      household: await getHouseholdForUser(tx, userId),
+      signals: await loadPreferenceSignals(tx, userId),
+    }));
+
+    // Household sharing is a premium feature (PREMIUM_FEATURES; marketed as the Family tier). EXISTING
+    // members keep access — they ride on the owner's plan — but a non-premium user WITHOUT a household
+    // is sent to /upgrade instead of the create form. This closes the paywall bypass that exists once
+    // FEATURE_HOUSEHOLDS is on (creation is gated server-side in actions.ts too — never trust the client).
+    if (!household && !canUse("household", isPremium(signals), billingOn)) return { state: "upgrade" };
     if (!household) return { state: "no_household" };
 
     // Members come from the ADMIN connection: under RLS a member can only read their OWN users row, so
@@ -88,6 +103,7 @@ export default async function HouseholdPage() {
   if (!householdsEnabled()) return <ComingSoon />;
 
   const data = await load();
+  if (data.state === "upgrade") redirect("/upgrade");
 
   return (
     <main className="page">
