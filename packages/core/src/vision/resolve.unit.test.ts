@@ -41,9 +41,13 @@ vi.mock("../ingestion/db-ports.js", () => ({
     createDbNormalizationPorts(tx, userId, deps),
 }));
 
-const normalizeLineItem = vi.fn<(input: { name: string }) => Promise<NormalizationResult>>();
+// Forward BOTH args (input, ports) so a test can assert resolve threads the ports object built by
+// createDbNormalizationPorts into normalizeLineItem — dropping `ports` here would hide a regression
+// that broke that wire (the cascade would silently lose its DB/embedder/llm access).
+const normalizeLineItem =
+  vi.fn<(input: { name: string }, ports: unknown) => Promise<NormalizationResult>>();
 vi.mock("../ingestion/normalize.js", () => ({
-  normalizeLineItem: (input: { name: string }) => normalizeLineItem(input),
+  normalizeLineItem: (input: { name: string }, ports: unknown) => normalizeLineItem(input, ports),
 }));
 
 // Import AFTER the mocks are registered.
@@ -72,6 +76,12 @@ describe("resolveScanLabels", () => {
     expect(out.get("pop")).toEqual({ canonicalItemId: "can-soda", method: "embedding" });
     expect(out.get("greek yog")).toEqual({ canonicalItemId: "can-yogurt", method: "trigram" });
     expect(out.size).toBe(2);
+    // resolve must thread the line item AND the built ports into the cascade — assert both args so
+    // a regression that stopped passing `ports` (losing DB/embedder/llm access) can't pass silently.
+    expect(normalizeLineItem).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "pop", rawText: "pop", upc: null }),
+      expect.anything(),
+    );
   });
 
   it("dedups repeated labels — one normalize call per distinct label", async () => {
