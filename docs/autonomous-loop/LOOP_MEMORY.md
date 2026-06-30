@@ -1003,3 +1003,58 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   - **Still NOT submission-ready (unchanged):** quality grade B until the independent Quality Auditor
     re-grades; business-case floor reach-gated (FYI #190, all named buildable levers already built). Did
     NOT open the 'ready' issue. A coherent 5-clear + 1-honest-abandon run is the correct converged state.
+- **2026-06-30 (run 32) — 5 file-disjoint clears (DEEP AUDIT folded): completed the run-19 "cap EVERY LLM
+  surface" sweep + the FACTORY §6 timeout convention + error-hygiene + auth a11y.** Full 6-Haiku scout
+  sweep (H12 feasibility, CI coverage holes, security/Track-G, reliability/correctness, design/a11y/taste,
+  artifact freshness). Shipped #294 (cap web /plan LLM behind checkLlmQuota — a CRITICAL uncapped wallet-drain
+  the security scout found: the force-dynamic /plan page ran planWeek's Gemini generator gated only by
+  canUse(), never the quota — degrades to the deterministic floor over quota), #297 (cap the 3 remaining
+  best-effort web LLM surfaces — capture parse, cook macros LLM fallback, cook swap long-tail), #295 (sanitize
+  the recipe-import catch-all that leaked raw e.message — error hygiene), #296 (AbortSignal.timeout on the
+  Gmail/Instacart/Google-OAuth clients + regression tests, lifting gmail 26%→cov & oauth 0%→cov), #299
+  (accessible name on the icon-only /signin + /signup logo link — WCAG 2.4.4/4.1.2). Each gate-green + 2 Sonnet
+  reviewers; #297 took a both-reviewer polish + a 3rd fresh confirm. LESSONS:
+  - **The run-19 "cap EVERY LLM surface" rule recurs on the surfaces added/triggered AFTER the first sweep.**
+    The expensive web actions (ask/make/scan/import/onboarding) were capped in run 19, but the force-dynamic
+    /plan PAGE (expensive agentic plan gen) and three best-effort web calls (capture parse on every quick-add,
+    cook macros LLM fallback, cook swap long-tail) were never gated. A page that's `dynamic = "force-dynamic"`
+    re-runs its LLM call on every refresh — an unbounded-spend surface as real as an API route. The cheap
+    flash-lite ones still matter (the bar is "cap every surface", not "cap the expensive ones"). When ticking a
+    systemic security box, re-grep EVERY surface — incl. server-component PAGES + best-effort/fallback LLM calls,
+    not just the obvious actions.
+  - **`checkLlmQuota` consumes on check — only call it when an LLM call WILL happen.** It increments the daily
+    counter on every allowed call, so the gate must sit right before the intended LLM call AND behind a key
+    check: `hasLlmKey && checkLlmQuota(...).allowed`. Both #297 reviewers caught the same nit — askSwap/cook
+    were loading preference signals + burning a quota unit even with NO key configured (wasted DB read on the
+    cook-log hot path + pointless quota depletion on keyless deploys). Fix: gate the signals-load behind
+    hasLlmKey first, matching capture + every other surface. Graceful-degrade is the right product call for all
+    of them (deterministic parse / null macros / no AI suggestion — never an error or dead-end).
+  - **A vitest-green test is NOT a tsc-green test (run-30 lesson, recurring).** #296's first push passed
+    `pnpm --filter @gm/core test` but `tsc --noEmit` failed: under `noUncheckedIndexedAccess`, `calls[0]` is
+    `T | undefined`. Fix: a `call(i)` accessor that throws if absent (narrows away undefined). Also a real test
+    bug: asserting the Gmail query via `encodeURIComponent` mismatched URLSearchParams' encoding (`+` for space,
+    `%28`/`%29` for parens) — parse the param with `new URL(...).searchParams.get("q")` instead of a brittle
+    string compare. The per-change verify (tsc on the ACTUAL branch + run the new tests) caught both before CI.
+  - **The 2-reviewer gate earns its cost even on "boring" hardening.** A Sonnet reviewer ran an adversarial
+    MUTATION test on #296 (deleted one fetch's signal, re-ran the suite, confirmed it failed, restored the
+    file) to prove the assertions aren't vacuous — and another verified #297 in an ISOLATED git worktree off
+    origin (immune to the maker's branch-switching). Process trap noted: reviewer subagents read the WORKING
+    TREE, so do NOT switch the main checkout to the next branch while a reviewer is still reading the current
+    one (it sees the wrong file). Sequential review per change, or pass the full diff + tell them to verify the
+    COMMIT via worktree (as the #297 confirmer did unprompted).
+  - **H12 (surface the Family/household tier) is genuinely BLOCKED on an owner decision, not code.** The
+    `premium_family` tier + Stripe checkout + the household feature are all BUILT; the upgrade-page Family card
+    is written but flag-gated behind FEATURE_HOUSEHOLDS (default OFF). There is NO honest store-safe slice of
+    H12 to ship — advertising a flag-dark feature is an Apple 2.3.1 risk. Already tracked
+    (PENDING_OPS decide-ship-households-family-tier). Correctly left untouched — not churned.
+  - **DEEP AUDIT: folded into this sweep** (last standalone run 30, within 24h). Security lens found the one
+    real CRITICAL (the uncapped /plan, #294) + the error-hygiene leak (#295); reliability lens found the missing
+    integration-client timeouts (#296). RLS clean across all migrations (0001→0020); the artifact scout found
+    ZERO doc-vs-reality contradictions (pricing matches billing config, store copy doesn't sell flag-dark
+    features). The design scout's recipe-`alt=""` + social-share-emoji findings were dissolved as false
+    positives (decorative thumbnails adjacent to visible titles are correctly empty-alt; share-copy emoji isn't
+    UI iconography) — the genuine design finding was the auth-logo a11y gap (#299).
+  - **Still NOT submission-ready (unchanged):** quality grade B until the independent Quality Auditor re-grades
+    (the scorecard's named ship-critical gaps were already fixed runs 28/30/31); business-case floor honestly
+    reach-gated (FYI #190, all named buildable levers built). Did NOT open the 'ready' issue. A coherent
+    5-clear, 0-abandon, 0-revert run is the correct converged state.

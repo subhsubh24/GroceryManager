@@ -4,6 +4,47 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-30 (run 32) — 5 file-disjoint clears: cap EVERY LLM surface + integration timeouts + error hygiene + auth a11y
+
+Full 6-Haiku scout sweep (H12 feasibility, CI coverage holes, security/Track-G, reliability/correctness,
+design/a11y/taste, artifact freshness; DEEP AUDIT folded — within 24h of the run-30 standalone). The security
+scout surfaced one genuine CRITICAL (an uncapped web LLM wallet-drain) + an error-hygiene leak; the reliability
+scout surfaced the missing external-call timeouts. The orchestrator dissolved the design scout's false positives
+(decorative recipe `alt=""` adjacent to visible titles; social-share-copy emoji ≠ UI iconography) and confirmed
+H12 is owner-blocked, not buildable. Shipped the 5 genuine, mutually file-disjoint clears (each gate-green + 2
+Sonnet reviewers APPROVE):
+
+- **#294 (security / Track-G G7): cap the web `/plan` LLM call behind `checkLlmQuota`.** The `force-dynamic`
+  `/plan` page ran `planWeek()`'s Gemini generator gated only by `canUse()` (the feature flag), never the
+  per-user daily quota — every refresh drove unbounded LLM spend on the most expensive (agentic plan-gen) path.
+  The run-19 "grep every surface" trap recurring on a server-component PAGE. Gated behind key + quota; degrades
+  to the existing deterministic plan floor over quota (never an error).
+- **#297 (security / Track-G G7): cap the 3 remaining best-effort web LLM surfaces.** `capture` quick-add
+  (`parseCaptureWithLLM`, runs on every submit), cook macros (`estimateMealMacros` LLM fallback — FDC stays
+  primary), and cook swap (`getSubstitutions` long-tail — static table first). Completes the run-19 sweep so
+  "every LLM surface is capped" is provably true. Both reviewers flagged the same nit (don't load signals /
+  burn quota when no key) → applied as a polish commit + a 3rd fresh confirmation reviewer.
+- **#295 (security / error hygiene): sanitize the recipe-import catch-all.** It returned raw `e.message` (which
+  can carry vendor/API bodies + parser internals) straight to the client. Added `safeImportError()` (mirrors
+  add-receipt's `friendlyError`): rate-limit/signed-out get specific hints, everything else a generic retry.
+- **#296 (reliability / coverage): request timeouts on the Gmail/Instacart/Google-OAuth clients + tests.**
+  These external clients called `fetch()` with NO timeout — on a hung upstream the serverless function is killed
+  by the platform (uncatchable 504) before the route's try/catch can degrade. Added `AbortSignal.timeout` (8s
+  Gmail, 5s Instacart/OAuth) matching the `llm/client.ts`/`sms-send.ts` convention (FACTORY §6). New unit tests
+  stub `globalThis.fetch` and assert parse + throw-with-status + the AbortSignal — lifting `gmail/client.ts`
+  (26%→covered) and `google/oauth.ts` (0%→covered) into real CI coverage.
+- **#299 (a11y / WCAG 2.4.4 + 4.1.2): accessible name on the auth logo link.** `/signin` + `/signup` rendered
+  the brand logo as an icon-only `<a href="/"><Leaf/></a>` — a screen reader announced just "link". Added
+  `aria-label="GroceryManager — home"` + `aria-hidden` on the decorative icon. No visual change.
+
+**Outcome:** 5 shipped, 0 abandoned, 0 reverts. Verify caught a vitest-green-but-tsc-red test on #296 (the run-30
+class: `noUncheckedIndexedAccess` on `calls[0]`) + a URLSearchParams-vs-encodeURIComponent assertion mismatch,
+both fixed before CI. Still NOT submission-ready (unchanged blockers): quality grade B pending the independent
+Quality Auditor re-grade (its named gaps were already fixed runs 28/30/31); business-case floor honestly
+reach-gated (FYI #190). Did NOT open the 'ready' issue.
+
+---
+
 ## 2026-06-30 (run 30) — 5 file-disjoint clears: scorecard coverage gaps + a latent paywall bypass
 
 Full 6-Haiku scout sweep (security/RLS+Track-G, web reliability/functional-reality, design/a11y/taste,
