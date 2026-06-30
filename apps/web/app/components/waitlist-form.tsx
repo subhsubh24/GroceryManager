@@ -67,6 +67,9 @@ export function WaitlistForm() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Your email"
+        aria-label="Email address"
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? "waitlist-error" : undefined}
         className="input input-lg"
         autoComplete="email"
         required
@@ -78,7 +81,11 @@ export function WaitlistForm() {
       <div className="sm:col-span-2">
         <Turnstile action="waitlist" onToken={setCaptchaToken} />
       </div>
-      {error && <p className="text-xs text-danger-ink sm:col-span-2">{error}</p>}
+      {error && (
+        <p id="waitlist-error" role="alert" className="text-xs text-danger-ink sm:col-span-2">
+          {error}
+        </p>
+      )}
     </form>
   );
 }
