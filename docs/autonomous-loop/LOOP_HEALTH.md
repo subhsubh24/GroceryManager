@@ -26,7 +26,7 @@ The `QUALITY_SCORECARD` measures the **product**; this measures the **loop itsel
 ```yaml
 LOOP_HEALTH:
   project: GroceryManager
-  as_of: 2026-06-30 (run 30)
+  as_of: 2026-06-30 (run 31)
   enforced_in_ci: true           # lint + functional E2E journeys + the capabilities tripwire are REQUIRED checks on main, enforce_admins=true
   validation:                    # capability self-validation feed — refresh every run from `node scripts/check-self-validation.mjs --readiness`
     enforced_in_ci: true         # 'self-validation (capabilities tripwire)' is a required, enforce_admins status check
@@ -34,18 +34,18 @@ LOOP_HEALTH:
     active: 5
     unmet: []                    # capabilities needing an OWNER SECRET not wired in CI (loop can't supply) — each MUST also be an urgent OWNER_ACTION 'validation-capability-<service>' in PENDING_OPS
     unmet_unsurfaced: []         # MUST stay empty — an unmet capability missing from PENDING_OPS or this list is invisible to the owner (a bug)
-  last_run: 2026-06-30 (run 30)
-  last_deep_audit: 2026-06-30 (run 29; folded into scout sweep — within 24h, so run 30 went straight to fan-out)
+  last_run: 2026-06-30 (run 31)
+  last_deep_audit: 2026-06-30 (run 30; folded into scout sweep — within 24h, so run 31 went straight to fan-out)
   this_run:
-    changes_shipped: 5           # #282 #283 #284 #285 #286 — 5 code PRs + this housekeeping PR
-    changes_abandoned: 0
-    abandoned_reasons: []        # [{change, reason}] reason ∈ gate_tsc|gate_test|gate_build|gate_mobile|review_value|review_correctness|circuit_breaker|conflict|dead_end|blocked_owner
+    changes_shipped: 5           # #288 paywall #289 add #290 waste #291 persist-polish #292 stats-sign-fix + this housekeeping PR
+    changes_abandoned: 1
+    abandoned_reasons: [{change: "stats.ts coverage test (claude/test-growth-stats)", reason: review_value}]  # Reviewer B: ~10 assertions duplicated existing experiments.test.ts coverage — net-new cases too marginal to keep; abandoned rather than churn a trimmed re-review
     verify_cycle_failures: 0
-    review_rejections: 2         # #284 + #286 each got 1 Reviewer-A REQUEST_CHANGES on cycle 1; a FRESH Reviewer A APPROVED both on cycle 2 after addressing/clarifying. The other 3 PRs APPROVED first pass.
-    review_cycles_used: 2        # #284/#286 used the 2nd of the ≤2 allowed cycles; #282/#283/#285 closed in 1
+    review_rejections: 1         # the abandoned stats-coverage change (Reviewer B value REQUEST_CHANGES). All 5 shipped PRs APPROVED by both reviewers first pass; 3 Reviewer-A polish notes (add/waste/persist) applied pre-merge.
+    review_cycles_used: 1        # no shipped change needed a 2nd cycle this run
     circuit_breaker_trips: 0
   rolling_7d:
-    merged_prs: 58
+    merged_prs: 56               # 53 squash-merges in the 7d window (git log) + #291/#292/housekeeping in flight this run
     reverts: 0
     readiness_attempts: 0
     readiness_rejected: 0
@@ -54,11 +54,15 @@ LOOP_HEALTH:
                                  #   E2E journeys are now REQUIRED status checks on main — META channel worked end-to-end.)
     harness_proposals_open: 0    # open `loop: harness improvement proposal` issues (#232 resolved by #234)
   signal: steady                 # bootstrapping | improving | steady | churning | stuck
-                                 #   run 30: 5 real value-bar clears (the 2 named ship-critical coverage gaps +
-                                 #   a latent paywall bypass + a11y + reliability), 0 abandons/reverts. 2 of 5 took a
-                                 #   2nd review cycle (1 design-model misread, 1 over-indexed mock-purity nit) — both
-                                 #   resolved within the cap, gate held (maker != certifier). Convergence stays
-                                 #   reach-gated (#190) + grade-pending (Quality Auditor re-grade), not churn.
+                                 #   run 31: 5 real value-bar clears (3 CI silent-green coverage holes on core
+                                 #   orchestration — pantry persist / waste-persist / capture add — + a context-aware
+                                 #   paywall conversion lever + a REAL prod bug a reviewer surfaced: the zFromAlpha
+                                 #   sign error under-sizing A/B experiments ~10x). 1 abandon (stats coverage test:
+                                 #   Reviewer B found it duplicated existing experiments.test.ts — value-bar reject,
+                                 #   NOT churned into a trimmed re-review). 0 reverts. The abandon is the system
+                                 #   working: maker != checker caught duplication, and the SAME change's Reviewer A
+                                 #   incidentally found the production sign bug → turned a rejected test into a fix.
+                                 #   Convergence stays reach-gated (#190) + grade-pending (Quality Auditor re-grade).
 ```
 
 ## How to read it (owner)
