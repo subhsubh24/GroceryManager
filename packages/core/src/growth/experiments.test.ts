@@ -161,6 +161,18 @@ describe("minSampleSizePerArm", () => {
   it("returns 1 for degenerate inputs (MDE=0)", () => {
     expect(minSampleSizePerArm(0.05, 0)).toBe(1);
   });
+
+  it("higher power requires MORE samples, even when 1−power is non-tabulated (sign regression)", () => {
+    // Regression guard for the zFromAlpha sign bug: power 0.85 → 1−power = 0.15 is NOT in the lookup
+    // table, so it goes through the rational approximation. With the prior inverted sign, z_beta came
+    // back negative and partially CANCELLED z_alpha, collapsing the requirement to ~241 — a ~10×
+    // under-estimate that would call experiments "done" while badly underpowered. Correctly, raising
+    // power from the tabulated 0.80 to 0.85 must only ever INCREASE the required sample size.
+    const at80 = minSampleSizePerArm(0.05, 0.02, 0.05, 0.8); // both z's tabulated (~2211)
+    const at85 = minSampleSizePerArm(0.05, 0.02, 0.05, 0.85); // 1−power approximated (~2528)
+    expect(at85).toBeGreaterThan(at80);
+    expect(at85).toBeGreaterThan(2000); // not the ~241 the inverted sign produced
+  });
 });
 
 // ---------------------------------------------------------------------------
