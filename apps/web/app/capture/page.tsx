@@ -1,10 +1,12 @@
 import { revalidatePath } from "next/cache";
 import { loadEnv } from "@gm/config/env";
-import { getActiveListView, getDb, withTenant } from "@gm/db";
+import { getActiveListView, getDb, loadPreferenceSignals, withTenant } from "@gm/db";
 import { captureToList, parseQuickCapture } from "@gm/core/capture";
 import { parseCaptureWithLLM } from "@gm/core/capture/parse-llm";
 import { GeminiClient } from "@gm/core/llm";
+import { isPremium } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
+import { checkLlmQuota } from "@/app/api/_lib/llm-quota";
 import { titleCase, humanize } from "@/app/lib/format";
 import { PageHeader } from "@/app/components/page-header";
 import { OnboardingFinish } from "@/app/components/onboarding-finish";
@@ -16,16 +18,25 @@ export const dynamic = "force-dynamic";
 async function capture(formData: FormData) {
   "use server";
   const text = String(formData.get("text") ?? "");
-  // LLM-validate the free text (fix typos, drop brands/filler, structure quantities) when a Gemini key
-  // is set; fall back to the deterministic parser on any failure or with no key, so it always works.
-  const env = loadEnv();
-  const llm = env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT ? new GeminiClient(env) : null;
-  const items = llm
-    ? await parseCaptureWithLLM(llm, text).catch(() => parseQuickCapture(text))
-    : parseQuickCapture(text);
-  if (items.length === 0) return;
   const userId = await currentUserId();
   if (!userId) return;
+  // LLM-validate the free text (fix typos, drop brands/filler, structure quantities) when a Gemini key
+  // is set AND the user is under their daily AI quota (G7 spend ceiling — gate every LLM surface, not
+  // just the expensive ones). Fall back to the deterministic parser on any failure, no key, or over
+  // quota, so quick-add always works.
+  const env = loadEnv();
+  const llm = env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT ? new GeminiClient(env) : null;
+  let items;
+  if (llm) {
+    const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+    const quota = checkLlmQuota(userId, isPremium(signals));
+    items = quota.allowed
+      ? await parseCaptureWithLLM(llm, text).catch(() => parseQuickCapture(text))
+      : parseQuickCapture(text);
+  } else {
+    items = parseQuickCapture(text);
+  }
+  if (items.length === 0) return;
   await withTenant(getDb(), userId, (tx) => captureToList(tx, userId, items));
   revalidatePath("/capture");
 }

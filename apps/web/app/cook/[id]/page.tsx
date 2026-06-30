@@ -1,12 +1,14 @@
 import { redirect } from "next/navigation";
 import { loadEnv } from "@gm/config/env";
-import { getDb, isRecipeSaved, withTenant } from "@gm/db";
+import { getDb, isRecipeSaved, loadPreferenceSignals, withTenant } from "@gm/db";
 import { findSubstitutions, splitSteps } from "@gm/core/recipe";
 import { logCook } from "@gm/core/recipe/log-cook";
 import { estimateMealMacros } from "@gm/core/nutrition";
 import { GeminiClient } from "@gm/core/llm";
 import { getSubstitutions } from "@gm/core/recipe/substitute-llm";
+import { isPremium } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
+import { checkLlmQuota } from "@/app/api/_lib/llm-quota";
 import { isPersistedRecipeId, loadRecipeAnySource } from "@/app/lib/recipe";
 import { SaveButton } from "@/app/cookbook/save-button";
 import { ArrowLeft, Check, Shuffle, UtensilsCrossed } from "@/app/components/icons";
@@ -33,8 +35,20 @@ async function askSwap(_prev: SwapState, formData: FormData): Promise<SwapState>
   "use server";
   const q = String(formData.get("q") ?? "").trim();
   if (!q) return { status: "idle" };
-  const res = await getSubstitutions(q); // static table first, LLM only for the long tail
-  return { status: "done", ingredient: q, source: res.source, subs: res.substitutions };
+  // The static table is instant + free — try it first. Only the unknown-ingredient long tail would
+  // hit the LLM, so gate THAT behind the per-user daily quota (G7 — cap every LLM surface, not just
+  // the expensive ones). Over quota or signed out → return no AI suggestions, never an uncapped call.
+  const known = findSubstitutions(q);
+  if (known.length) return { status: "done", ingredient: q, source: "known", subs: known };
+  const userId = await currentUserId();
+  if (userId) {
+    const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+    if (checkLlmQuota(userId, isPremium(signals)).allowed) {
+      const res = await getSubstitutions(q);
+      return { status: "done", ingredient: q, source: res.source, subs: res.substitutions };
+    }
+  }
+  return { status: "done", ingredient: q, source: "none", subs: [] };
 }
 
 async function logThisCook(formData: FormData) {
@@ -49,10 +63,15 @@ async function logThisCook(formData: FormData) {
   const servingsMade = Number.isFinite(servings) && servings > 0 ? servings : 1;
 
   // Best-effort macros, computed BEFORE/OUTSIDE the DB tx (FDC + LLM are network calls — they must
-  // not run inside withTenant). FDC is primary; the LLM (only when GEMINI_API_KEY is set) is the
-  // fallback. A failure resolves to undefined so the cook is still logged with null macros.
+  // not run inside withTenant). FDC is primary; the LLM is only the fallback, gated behind the
+  // per-user daily quota (G7 — cap every LLM surface) so macro estimation can't drive uncapped LLM
+  // spend. FDC still runs regardless. A failure resolves to undefined so the cook is still logged
+  // with null macros.
   const env = loadEnv();
-  const llm = env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT ? new GeminiClient(env) : null;
+  const hasLlmKey = !!(env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT);
+  const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+  const llm =
+    hasLlmKey && checkLlmQuota(userId, isPremium(signals)).allowed ? new GeminiClient(env) : null;
   const macros = await estimateMealMacros(recipe.ingredients, servingsMade, {
     fdcApiKey: env.FDC_API_KEY,
     llm,
