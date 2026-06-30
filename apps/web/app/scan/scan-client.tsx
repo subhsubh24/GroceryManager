@@ -58,9 +58,11 @@ export function ScanClient() {
               <p className="mb-3 text-xs text-ink-400">Confirm these are really there — refreshes confidence.</p>
               <ul className="space-y-2.5">
                 {ready.confirmations.map((c) => (
-                  <li key={`c-${c.canonicalItemId}`} className="flex items-center gap-2.5 text-sm text-ink-800">
-                    <input type="checkbox" name="confirm" value={JSON.stringify(c)} defaultChecked className="control-accent" />
-                    <span>{titleCase(c.matchedName ?? c.rawLabel)}</span>
+                  <li key={`c-${c.canonicalItemId}`}>
+                    <label className="flex cursor-pointer items-center gap-2.5 text-sm text-ink-800">
+                      <input type="checkbox" name="confirm" value={JSON.stringify(c)} defaultChecked className="control-accent" />
+                      <span>{titleCase(c.matchedName ?? c.rawLabel)}</span>
+                    </label>
                   </li>
                 ))}
               </ul>
@@ -132,9 +134,11 @@ export function ScanClient() {
               <p className="mb-3 text-xs text-ink-400">Spotted in the photo but not yet tracked.</p>
               <ul className="space-y-2.5">
                 {ready.newItems.map((n, i) => (
-                  <li key={`n-${i}-${n.rawLabel}`} className="flex items-center gap-2.5 text-sm text-ink-800">
-                    <input type="checkbox" name="add" value={JSON.stringify(n)} defaultChecked className="control-accent" />
-                    <span>{titleCase(n.rawLabel)}</span>
+                  <li key={`n-${i}-${n.rawLabel}`}>
+                    <label className="flex cursor-pointer items-center gap-2.5 text-sm text-ink-800">
+                      <input type="checkbox" name="add" value={JSON.stringify(n)} defaultChecked className="control-accent" />
+                      <span>{titleCase(n.rawLabel)}</span>
+                    </label>
                   </li>
                 ))}
               </ul>
