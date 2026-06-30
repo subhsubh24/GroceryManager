@@ -40,8 +40,13 @@ async function askSwap(_prev: SwapState, formData: FormData): Promise<SwapState>
   // the expensive ones). Over quota or signed out → return no AI suggestions, never an uncapped call.
   const known = findSubstitutions(q);
   if (known.length) return { status: "done", ingredient: q, source: "known", subs: known };
+  // Long-tail (unknown ingredient) would hit the LLM — but only when a key is configured. Check the
+  // key first (matching every other gated surface) so a keyless deploy never burns a quota unit on a
+  // call that's guaranteed to fail.
+  const env = loadEnv();
+  const hasLlmKey = !!(env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT);
   const userId = await currentUserId();
-  if (userId) {
+  if (hasLlmKey && userId) {
     const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
     if (checkLlmQuota(userId, isPremium(signals)).allowed) {
       const res = await getSubstitutions(q);
@@ -69,9 +74,13 @@ async function logThisCook(formData: FormData) {
   // with null macros.
   const env = loadEnv();
   const hasLlmKey = !!(env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT);
-  const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
-  const llm =
-    hasLlmKey && checkLlmQuota(userId, isPremium(signals)).allowed ? new GeminiClient(env) : null;
+  // Only touch the DB for the premium signal (and the quota) when an LLM key is actually configured —
+  // with no key there's nothing to gate, so the cook-log hot path stays a single write.
+  let llm: GeminiClient | null = null;
+  if (hasLlmKey) {
+    const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+    if (checkLlmQuota(userId, isPremium(signals)).allowed) llm = new GeminiClient(env);
+  }
   const macros = await estimateMealMacros(recipe.ingredients, servingsMade, {
     fdcApiKey: env.FDC_API_KEY,
     llm,
