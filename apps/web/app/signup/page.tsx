@@ -102,9 +102,9 @@ export default async function SignUpPage({
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-5 py-12">
       <div className="w-full max-w-md animate-fade-in-up">
-        <a href="/" className="mx-auto flex w-fit items-center gap-2">
+        <a href="/" aria-label="GroceryManager — home" className="mx-auto flex w-fit items-center gap-2">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-brand">
-            <Leaf className="h-5 w-5" strokeWidth={2} />
+            <Leaf className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
           </span>
         </a>
         <div className="mt-6 text-center">
