@@ -1703,3 +1703,41 @@ files close two gaps at once. Did NOT tick the "Independent QUALITY GRADE = A" D
 owned by the separate Quality Auditor and is only re-earned on its next run; building the fixes ≠
 self-awarding the grade. Factory remains NOT submission-ready (quality grade still B until re-graded;
 business-case floor reach-gated per FYI #190).
+
+## 2026-06-30 — run 31 (5 file-disjoint clears + 1 honest abandon)
+
+Converged-product run. Full 6-scout sweep (deep audit folded — last standalone run 30, within 24h);
+security/Track-G lens clean. Selected the maximal file-disjoint, value-bar-clearing set; shipped 5,
+abandoned 1 on value grounds.
+
+- **#288 (monetization/conversion): context-aware `/upgrade` paywall.** Premium gates redirected to a
+  generic "Go Premium" page that discarded the user's intent. Now `/upgrade` reads `?feature=`, validates
+  it against the `PREMIUM_FEATURES` allowlist (never echoed raw → no reflected-XSS), and leads with a
+  contextual banner naming the feature + rings its perk card; the six bare `redirect("/upgrade")` gates
+  (plan/spend/discover/wrapped/remix/household) now pass their feature, matching the existing gmail path.
+  FYI #190's named "tighten the /upgrade decision surface" lever — honest UX, zero pricing change.
+- **#289 (tests_evals): captureToList unit test** (4.76% → 100%) — keyless mock-boundary test of the
+  quick-capture → list trigram-reuse-else-create decision against the real NORMALIZE threshold.
+- **#290 (tests_evals): recordWaste unit test** (1.61% → 100%) — locks the spoilage-delta / negative
+  signal / par-tune-down chain; signalFromWaste + tuneParForWaste run for real.
+- **#291 (correctness_reliability): pantry persist upsert-SET assertion** — strengthens the ledger-only
+  invariant test so a regression dropping fields from the UPDATE `set` (while keeping them in the INSERT)
+  can't pass silently.
+- **#292 (correctness — FIX): zFromAlpha sign error.** A Reviewer found that the inverse-normal helper
+  returned the wrong sign for non-tabulated p ≤ 0.5, making `minSampleSizePerArm` under-size A/B
+  experiments ~10x (power 0.85 → 241 vs the correct 2528) whenever alpha/power was non-tabulated.
+  Tabulated registry defaults were silently correct, so it was latent. One-line fix + a loud
+  monotonicity regression test. An experiment would otherwise be called "fully powered" while badly
+  underpowered, shipping the wrong variant.
+
+**Abandoned (1):** a fresh `stats.ts` coverage test — Reviewer B (value-first) found it duplicated ~10
+assertions already in `experiments.test.ts`; the net-new cases were too marginal to keep. Abandoned
+rather than churn a trimmed re-review. The same change's Reviewer A is what surfaced the #292 sign bug,
+so the rejected test still paid for itself.
+
+**Lesson:** a coverage % is not proof — read WHO covers it. ~0% can mean "skipIf-gated, never runs in CI"
+(run 30's silent-green family, real gaps worth filling); a healthy 72% can mean "already covered
+elsewhere" (this run's duplication trap). And maker≠checker review earns its cost beyond gatekeeping:
+the adversarial reviewer that rejected a low-value test found a real production bug in the same file.
+Factory remains NOT submission-ready (quality grade B until the Quality Auditor re-grades; business-case
+floor reach-gated per FYI #190). Did NOT open the 'ready' issue.

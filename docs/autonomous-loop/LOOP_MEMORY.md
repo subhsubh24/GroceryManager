@@ -960,3 +960,46 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   - **Still NOT submission-ready (unchanged):** quality grade B until the independent Quality Auditor
     re-grades; business-case floor reach-gated (FYI #190). Did NOT open the 'ready' issue. A coherent
     5-gate run is the correct converged state.
+- **2026-06-30 (run 31) — 5 file-disjoint clears (DEEP AUDIT folded): 3 CI silent-green coverage holes +
+  a conversion lever + a REAL production bug a reviewer surfaced.** Full 6-Haiku scout sweep; security
+  lens CLEAN (Track G fully covered — RLS complete across 29 tables, rate limits / spend ceiling /
+  webhooks / captcha / headers / error-hygiene all present; only the non-exploitable CORS-ACAO nit + the
+  already-tracked in-memory limiter). Shipped #288 (context-aware `/upgrade` paywall — reads `?feature=`,
+  leads with the gated feature the user tried to unlock + rings its perk card; the 6 bare upgrade
+  redirects now pass their feature; FYI #190's named conversion lever, no number-gaming), #289
+  (captureToList unit test 4.76%→100%), #290 (recordWaste unit test 1.61%→100%), #291 (pantry persist.ts
+  upsert-SET assertion polish), #292 (**fix**: zFromAlpha sign error). Each gate-green + 2 Sonnet
+  reviewers, all APPROVED first pass; 3 Reviewer-A polish notes applied pre-merge.
+  LESSONS:
+  - **A coverage report at ~70-95% is NOT proof of coverage — check WHO covers it.** The stats.ts
+    "coverage gap" (72% branches) the tests-scout flagged was a TRAP: experiments.test.ts already
+    exercised every stats export, so a fresh stats.test.ts duplicated ~10 assertions. Reviewer B
+    (value-first) correctly REQUEST_CHANGES'd it as churn. The right move was ABANDON (1 of 6), not
+    churn a trimmed re-review for marginal net-new cases. The inverse of run 30's lesson: there, ~0%
+    meant "skipIf-gated, never runs"; here, 72% meant "already well-covered elsewhere." Read the
+    coverage SOURCE, not just the %.
+  - **A rejected change can still pay off — the maker≠checker reviewer found a PRODUCTION bug.** While
+    rejecting the duplicative stats test on value, Reviewer A (correctness) independently found a real
+    sign error in `zFromAlpha` (stats.ts:155): for non-tabulated p≤0.5 it returned −z instead of +z, so
+    `minSampleSizePerArm` under-sized A/B experiments ~10x (power 0.85 → 241 instead of 2528) whenever
+    alpha or power was non-tabulated. Tabulated registry defaults (0.05/0.02) were silently correct, so
+    it was latent. Turned the dead test into a one-line fix + a loud monotonicity regression test
+    (higher power must need MORE samples) that fails on the old code. Adversarial review earns its cost.
+  - **Conversion levers beat features for a converged product.** With product/security/coverage mature,
+    the highest-value user-facing change was UX plumbing the funnel already implied: the gates redirected
+    to a generic paywall and threw away the user's intent. Context-aware `/upgrade` (validate `?feature=`
+    against PREMIUM_FEATURES, never echo raw → no XSS; degrade to generic on unknown) is the exact
+    "tighten the /upgrade decision surface" lever FYI #190 named. Honest UX, zero pricing change.
+  - **Polish that catches a real false-green is worth applying; polish that doesn't is churn.** Applied
+    3 Reviewer-A notes (assert the insert TABLE + active-list args; assert the upsert SET carries the
+    projection not just updatedAt; assert the waste delta sign relationally since −0===0) because each
+    closes a path where a regression would pass silently. Declined the "extract a shared drizzle-fake"
+    suggestion (no current second caller — speculative).
+  - **DEEP AUDIT: folded into this sweep** (last standalone run 30, within 24h). No new CRITICALs. The
+    QUALITY_SCORECARD (as_of 2026-06-29) is now doubly STALE: its named ship-critical gaps (mobile IAP,
+    vision persist direct-write, vision/logCook coverage) were all fixed by runs 28/30, and this run adds
+    pantry persist/waste/capture coverage + the stats correctness fix — re-grade pending (Quality Auditor
+    owns it; the loop does not self-grade).
+  - **Still NOT submission-ready (unchanged):** quality grade B until the independent Quality Auditor
+    re-grades; business-case floor reach-gated (FYI #190, all named buildable levers already built). Did
+    NOT open the 'ready' issue. A coherent 5-clear + 1-honest-abandon run is the correct converged state.
