@@ -146,11 +146,14 @@ function zFromAlpha(p: number): number {
   const rounded = Math.round(p * 1e4) / 1e4;
   if (Object.prototype.hasOwnProperty.call(table, rounded)) return table[rounded]!;
 
-  // Rational approximation for p in (0, 0.5].
+  // Rational approximation: `z` is the POSITIVE upper-tail quantile of min(p, 1-p).
   const q = p <= 0.5 ? p : 1 - p;
   const t = Math.sqrt(-2 * Math.log(q));
   const c = [2.515517, 0.802853, 0.010328];
   const d = [1.432788, 0.189269, 0.001308];
   const z = t - (c[0]! + c[1]! * t + c[2]! * t * t) / (1 + d[0]! * t + d[1]! * t * t + d[2]! * t * t * t);
-  return p <= 0.5 ? -z : z;
+  // Match the table convention (a small upper-tail probability → a POSITIVE critical value, e.g.
+  // 0.025 → +1.96): return +z for p ≤ 0.5 and −z for p > 0.5. The prior sign was inverted, which made
+  // minSampleSizePerArm under-estimate ~10× whenever exactly one of alpha/power was non-tabulated.
+  return p <= 0.5 ? z : -z;
 }
