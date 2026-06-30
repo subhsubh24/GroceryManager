@@ -919,3 +919,44 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
     independent Quality Auditor re-grades the run-28 #260/#261 fixes (maker never self-awards the grade);
     business-case floor is honestly reach-gated (FYI #190, all named buildable levers already built).
     Did NOT open the 'ready' issue. A quiet, coherent 4-gate run is the correct converged state.
+- **2026-06-30 (run 30) — 5 file-disjoint clears (DEEP AUDIT folded): the two named scorecard coverage
+  gaps + a latent paywall bypass.** Full 6-Haiku sweep; security clean. Shipped #282 (applyVisionScan unit
+  test, 0.86%→100%), #286 (logCook unit test, 7.97%→99%/100% fns), #284 (gate household creation behind
+  premium — a latent Family-tier paywall bypass), #283 (scan checkbox a11y labels), #285 (Instacart
+  external-API try/catch). Each gate-green + 2 Sonnet reviewers; #284/#286 took a 2nd review cycle.
+  LESSONS:
+  - **A `skipIf(!TEST_DATABASE_URL)` integration test is NOT CI coverage.** persist.ts (0.86%) and
+    log-cook.ts (7.97%) were the two ship-critical gaps quality issue #261 named, yet both ALREADY had
+    integration tests — which always SKIP in CI (the var is never set). To close a CI-coverage gap, write a
+    MOCK-level UNIT test that RUNS keyless; keep the integration test as the real-DB column-mapping proof.
+    Same silent-green family as the self-validation tripwire ("a declared spec must actually RUN"). When a
+    coverage report shows ~0% on a module that "has a test", check whether that test is skipIf-gated.
+  - **Mock the boundary, replay the query SHAPES, leave the pure composition real.** Both unit tests mock
+    only the module boundaries (the ledger writer, the @gm/db helpers, the AI builders) + pass a thin
+    chainable Drizzle-shaped fake `db`; planConsumption/UnitConverter/signalFromCooked/clampMacros run for
+    real. A Sonnet reviewer correctly noted the fake ignores column aliases (so a rename wouldn't be caught)
+    — that's the inherent unit-vs-integration tradeoff, acceptable BECAUSE the integration test covers the
+    column mapping. The genuinely-actionable half of that review (the lookup→reuse dedup branch was
+    untested) was worth fixing → added the dedup-HIT case.
+  - **A security reviewer's "bypass" can be a design-model misread — resolve, don't override.** Reviewer A
+    rejected the household gate reading ungated JOIN as a bypass. But join only accepts a SECRET invite
+    minted by a now-premium-gated owner, and membership grants only the shared list (every other premium
+    feature stays independently canUse-gated) — the correct Family-plan model (Reviewer B endorsed it).
+    Gating join would BREAK the Family tier (each invited member would have to pay). Resolution: record the
+    decision in `join/[token]/actions.ts` + reword comments for accuracy (`household` is unlocked by ANY
+    paid tier via `isPremium`, not exclusively `premium_family`); a FRESH Reviewer A then APPROVED. Two A
+    bullets were outright misreads (the entitlement load IS inside the existing try/catch). The fix was to
+    make the design INTENT explicit, not to change behavior.
+  - **The household premium gate is the run-7 lesson recurring on a LATE-added surface:** "audit canUse
+    across ALL serving surfaces." `/household` (and its create/invite actions) was added after the billing
+    scaffold and never got the gate — dormant only because FEATURE_HOUSEHOLDS defaults off. Gate CREATION +
+    invite (owner actions), not membership; when FEATURE_BILLING is off canUse() fails open so dev is
+    unaffected. No new owner action (the gate is automatic once FEATURE_BILLING/FEATURE_HOUSEHOLDS are set,
+    both already in LAUNCH).
+  - **DEEP AUDIT: folded into this sweep** (last standalone run 29, within 24h). Security lens CLEAN (RLS
+    complete; rate limits / spend ceiling / webhooks / captcha / headers / error hygiene all present). The
+    scorecard (as_of 2026-06-29) is STALE: its launch_readiness gap (mobile IAP) was fixed by #266 (run 28)
+    and its correctness/coverage gaps by #263/#264/#273 + this run's #282/#286 — re-grade pending.
+  - **Still NOT submission-ready (unchanged):** quality grade B until the independent Quality Auditor
+    re-grades; business-case floor reach-gated (FYI #190). Did NOT open the 'ready' issue. A coherent
+    5-gate run is the correct converged state.

@@ -4,6 +4,66 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-30 (run 30) — 5 file-disjoint clears: scorecard coverage gaps + a latent paywall bypass
+
+Full 6-Haiku scout sweep (security/RLS+Track-G, web reliability/functional-reality, design/a11y/taste,
+test-coverage/correctness, monetization+artifact-freshness, native mobile; DEEP AUDIT folded — within 24h
+of run 29). Security scout: NO genuine findings (RLS complete, rate limits / spend ceiling / webhooks /
+captcha / headers all verified). The orchestrator dissolved two over-reported scout candidates against real
+code (a "mobile index.tsx crash" already guarded by a `.catch` fail-open; a "share/recipe missing alt"
+that's a correct decorative-hero with the title as real `<h1>` text). Shipped the 5 genuine, mutually
+file-disjoint clears (each gate-green + 2 Sonnet reviewers APPROVE):
+
+- **#282 (correctness_reliability / tests_evals): unit-cover `applyVisionScan` in CI.** The vision-scan
+  persist path shipped at **0.86%** because its only test is `skipIf(!TEST_DATABASE_URL)` and CI never sets
+  that var. Added a mock-boundary unit test (mirroring `resolve.unit.test.ts`) → **persist.ts 100%**. Locks
+  the §6 ledger-only invariant (asserts `db.update` is never called), the wasEmpty re-stock rule, learned-
+  rate preservation, and the resolve→createCanonical cascade. Closes the vision half of quality issue #261.
+- **#286 (correctness_reliability / tests_evals): unit-cover the `logCook` orchestration in CI.** Same
+  root cause — logCook ran at **7.97%** (only `clampMacros` tested) because its end-to-end exercise is a
+  skipIf integration test. Added a mock-boundary unit test with a thin chainable Drizzle fake →
+  **log-cook.ts 99% statements / 100% functions**. Locks recipe-header dedup (hit→reuse AND miss→insert),
+  the consume_recipe ledger event per delta, the empty-mealLog THROW guard, macro clamping, cuisine
+  learning, servings scaling. Closes the recipe half of quality issue #261 (Gap 2).
+- **#284 (monetization / Track-G): gate household creation behind premium (a latent paywall bypass).**
+  `household` is in `PREMIUM_FEATURES` but `/household` only checked the `FEATURE_HOUSEHOLDS` flag, never
+  `canUse()` — so the moment the owner enables the flag to sell the Family plan, any free user could
+  create/grow a household. Gated CREATION + invite-minting server-side (page redirect to /upgrade +
+  `createHouseholdAction`/`createInviteLinkAction` both enforce `canUse`); members ride free (join stays
+  ungated — the Family model) with the decision recorded in `join/[token]/actions.ts`.
+- **#283 (a11y): label the scan-review confirm/add checkboxes.** Two checkbox lists rendered a bare
+  `<input>`+`<span>` with no `<label>` → unlabeled to screen readers. Wrapped each in `<label>` (matching
+  the file's own radio groups; same pattern as #253/#254). WCAG 1.3.1/4.1.2.
+- **#285 (web reliability): handle the Instacart external-API failure.** `createShoppingListPage` (a paid
+  external call on a user-facing action) was unguarded → an uncontrolled 500 risking stack leakage. Wrapped
+  in try/catch → controlled 502 + server-side log, matching the route's existing JSON-error convention.
+
+**Lessons (run 30):**
+- **A `skipIf(!TEST_DATABASE_URL)` integration test does NOT count as CI coverage.** Both persist.ts and
+  log-cook.ts had integration tests that always SKIP in CI, so the named ship-critical modules sat at
+  ~0–8% the whole time the scorecard flagged them. To actually close a CI-coverage gap, write a MOCK-level
+  unit test that RUNS keyless — the integration test stays as the real-DB column-mapping proof. (This is
+  the same silent-green family as the self-validation tripwire's "declared spec must actually RUN.")
+- **A security reviewer's "bypass" can hinge on a design-model misread — resolve it, don't just override.**
+  Reviewer A rejected #284 reading the ungated JOIN as a paywall bypass; but join only accepts a SECRET
+  invite minted by a now-premium-gated owner, and membership grants only the shared list (every other
+  premium feature stays independently `canUse`-gated). That's the correct Family-plan model (Reviewer B
+  endorsed it). Resolution: document the decision in the join action + reword the comments for accuracy
+  (household is ANY paid tier via `isPremium`, not exclusively `premium_family`), then a FRESH Reviewer A
+  confirmed APPROVE. The gate held (maker ≠ certifier) without shipping a model-breaking change.
+- **In a converged repo the orchestrator's FILTER is the value, not the fan-out** (again): 6 scouts +
+  10 reviewers, but 2 scout candidates were false positives the Opus layer dissolved against real code,
+  and the one A-rejection on a genuine test (#286) was inherent-to-unit-mocking over-indexing — addressed
+  by adding the one genuinely-missing branch (dedup-hit) rather than abandoning.
+- **DEEP AUDIT: folded into this sweep** (last standalone run 29, within 24h). No new CRITICALs; the
+  security lens came back clean. The launch_readiness scorecard gap (mobile IAP stub) is already FIXED by
+  #266 (run 28) and the correctness gaps by #263/#264/#273 + this run's #282/#286 — the scorecard
+  (as_of 2026-06-29) is simply STALE pending the independent Quality Auditor's re-grade.
+- **Still NOT submission-ready (unchanged non-buildable blockers):** the quality grade is B until the
+  independent Quality Auditor re-grades the run-28/29/30 coverage + correctness fixes (the maker never
+  self-awards the grade); the business-case floor is honestly reach-gated (FYI #190, all named buildable
+  levers already built). Did NOT open the 'ready' issue. A coherent 5-gate run is the correct converged state.
+
 ## 2026-06-30 (run 29) — converged sweep: 4 file-disjoint value-bar clears (security + a11y + reliability + coverage)
 
 Ran a full 6-Haiku scout sweep (security/RLS+Track-G, web reliability/functional-reality, design/UX/a11y,
