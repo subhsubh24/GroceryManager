@@ -39,7 +39,18 @@ export async function POST() {
     return NextResponse.json({ error: "nothing to order" }, { status: 400 });
   }
 
-  const client = new instacart.InstacartClient(env.INSTACART_API_KEY);
-  const { url } = await client.createShoppingListPage(payload);
-  return NextResponse.redirect(url, 303);
+  // The Instacart Developer Platform call can fail (network, 4xx/5xx, rate limit). Without this guard
+  // the throw bubbles up as an uncontrolled 500 (and risks leaking driver/stack text); degrade to a
+  // controlled error matching this route's other JSON responses instead.
+  try {
+    const client = new instacart.InstacartClient(env.INSTACART_API_KEY);
+    const { url } = await client.createShoppingListPage(payload);
+    return NextResponse.redirect(url, 303);
+  } catch (err) {
+    console.error("instacart: createShoppingListPage failed", err);
+    return NextResponse.json(
+      { error: "Instacart is unavailable right now. Please try again in a moment." },
+      { status: 502 },
+    );
+  }
 }
