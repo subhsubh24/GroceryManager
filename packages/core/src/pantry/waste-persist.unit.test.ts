@@ -132,10 +132,11 @@ describe("recordWaste", () => {
 
     const res = await recordWaste(db as never, "u", "ghost");
 
-    expect(appendLedgerAndReproject).toHaveBeenCalledWith(
-      db,
-      expect.objectContaining({ baseQtyDelta: -0, ratePerDay: null }),
-    );
+    // The delta must never be POSITIVE (waste only zeroes/decrements). `-0 === 0` in JS, so assert the
+    // sign relationally rather than via an objectContaining match that couldn't distinguish them.
+    const ledgerArg = (appendLedgerAndReproject.mock.calls[0]![1] as { baseQtyDelta: number; ratePerDay: number | null });
+    expect(ledgerArg.baseQtyDelta).toBeLessThanOrEqual(0);
+    expect(ledgerArg.ratePerDay).toBeNull();
     expect(res.wastedBaseQty).toBe(0);
   });
 
@@ -149,7 +150,8 @@ describe("recordWaste", () => {
     expect(res.parLowered).toBe(true);
     expect(res.newTargetParQty).toBe(3); // 4 × 0.75
     expect(updateSet.reorderPolicies).toHaveBeenCalledWith(
-      expect.objectContaining({ targetParQty: "3" }),
+      // both par fields are written: target 4×0.75=3, reorder-point 2×0.75=1.5 (capped ≤ target)
+      expect.objectContaining({ targetParQty: "3", reorderPointQty: "1.5" }),
     );
   });
 
