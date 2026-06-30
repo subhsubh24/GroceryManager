@@ -11,6 +11,21 @@ import { checkLlmQuota } from "@/app/api/_lib/llm-quota";
 import type { ImportState } from "./import-recipe";
 
 /**
+ * Map a raw thrown error to a safe, user-facing message. NEVER surface `e.message` directly — the
+ * importer's errors can carry vendor/API response bodies, parser internals, or stack-adjacent
+ * detail (error-hygiene / no schema-or-internal leak to the client). Only the rate-limit case gets
+ * a specific, actionable hint; everything else degrades to a generic retry message.
+ */
+function safeImportError(raw: string): string {
+  const r = raw.toLowerCase();
+  if (r.includes("exceeded your current quota") || r.includes("resource_exhausted") || r.includes("429")) {
+    return "The AI is rate-limited right now — your Gemini key is out of quota. Add billing to your key (pennies per import) or try again later.";
+  }
+  if (r.includes("not signed in")) return "You're signed out — sign in again, then retry.";
+  return "Couldn't import that recipe. Check the link or paste the recipe text, then try again.";
+}
+
+/**
  * Import a recipe from a URL, pasted text, or a photo (JSON-LD first for URLs, else Gemini — vision
  * for photos) and match it against what's on hand. Pantry match is a best-effort bonus — failures
  * there never block the import.
@@ -104,7 +119,7 @@ export async function importRecipeAction(_prev: ImportState, formData: FormData)
       totalCount: ingredients.length,
     };
   } catch (e) {
-    return { status: "error", message: e instanceof Error ? e.message : String(e) };
+    return { status: "error", message: safeImportError(e instanceof Error ? e.message : String(e)) };
   }
 }
 
