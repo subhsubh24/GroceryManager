@@ -20,6 +20,7 @@ import { geminiPlanGenerator, planWeek, type PlanCandidate } from "@gm/core/agen
 import { captureToList } from "@gm/core/capture";
 import { canUse, isPremium } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
+import { checkLlmQuota } from "@/app/api/_lib/llm-quota";
 import { PageHeader } from "@/app/components/page-header";
 import { CalendarDays, Sparkles, Sprout } from "@/app/components/icons";
 
@@ -121,9 +122,14 @@ async function load(lowEnergy: boolean) {
       cuisine: annotatedById.get(r.id)?.cuisine,
     }));
 
-    // The LLM upgrades the plan when a key is configured; otherwise the deterministic floor runs.
+    // The LLM upgrades the plan when a key is configured AND the user is under their daily AI
+    // quota (G7 per-user spend ceiling — the page is force-dynamic, so an unbounded refresh would
+    // otherwise mean unbounded LLM spend). Degrades gracefully: over quota → skip the upgrade and
+    // run the deterministic floor, never an error or dead-end.
     const env = loadEnv();
-    const generate = (env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT) ? geminiPlanGenerator() : undefined;
+    const hasLlmKey = !!(env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT);
+    const generate =
+      hasLlmKey && checkLlmQuota(userId, isPremium(signals)).allowed ? geminiPlanGenerator() : undefined;
     const result = await planWeek(
       {
         candidates,
