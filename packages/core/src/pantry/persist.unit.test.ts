@@ -181,7 +181,13 @@ describe("reprojectStock", () => {
     expect(db.insert).toHaveBeenCalledWith(pantryStock);
     const conflict = conflictArgs.pantryStock!.mock.calls[0]![0] as { target: unknown[]; set: Record<string, unknown> };
     expect(conflict.target).toHaveLength(2); // [userId, canonicalItemId]
-    expect(conflict.set).toHaveProperty("updatedAt");
+    // The UPDATE side must carry the projection, not just updatedAt — else a regression that dropped
+    // fields from `set` (while keeping them in the INSERT values) would silently leave stale rows stale.
+    expect(conflict.set).toMatchObject({
+      baseQtyOnHand: expect.any(String),
+      status: expect.any(String),
+      updatedAt: expect.any(Date),
+    });
   });
 
   it("stamps `source` into the upsert when the caller asserts user_confirmed, and omits it otherwise", async () => {
