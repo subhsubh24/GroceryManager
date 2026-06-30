@@ -23,19 +23,21 @@ vi.mock("@gm/db", () => ({
   withTenant: (db: unknown, userId: string, fn: (tx: unknown) => unknown) => withTenant(db, userId, fn),
 }));
 
-const getGeminiClient = vi.fn(() => ({}) as unknown);
-const createGeminiEmbedder = vi.fn(() => ({ embed: vi.fn() }) as unknown);
+const getGeminiClient = vi.fn<() => unknown>(() => ({}));
+const createGeminiEmbedder = vi.fn<(ai: unknown) => unknown>(() => ({ embed: vi.fn() }));
 vi.mock("../llm/index.js", () => ({
   getGeminiClient: () => getGeminiClient(),
   createGeminiEmbedder: (ai: unknown) => createGeminiEmbedder(ai),
 }));
 
-const createLlmNormalizer = vi.fn(() => ({ resolve: vi.fn() }) as unknown);
+const createLlmNormalizer = vi.fn<(ai: unknown) => unknown>(() => ({ resolve: vi.fn() }));
 vi.mock("../ingestion/llm-normalizer.js", () => ({
   createLlmNormalizer: (ai: unknown) => createLlmNormalizer(ai),
 }));
 
-const createDbNormalizationPorts = vi.fn(() => ({}) as unknown);
+const createDbNormalizationPorts = vi.fn<(tx: unknown, userId: string, deps: unknown) => unknown>(
+  () => ({}),
+);
 vi.mock("../ingestion/db-ports.js", () => ({
   createDbNormalizationPorts: (tx: unknown, userId: string, deps: unknown) =>
     createDbNormalizationPorts(tx, userId, deps),
