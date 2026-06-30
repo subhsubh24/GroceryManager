@@ -4,6 +4,63 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-06-30 (run 29) — converged sweep: 4 file-disjoint value-bar clears (security + a11y + reliability + coverage)
+
+Ran a full 6-Haiku scout sweep (security/RLS+Track-G, web reliability/functional-reality, design/UX/a11y,
+test-coverage, monetization+artifact-freshness, native mobile; DEEP AUDIT folded in — the six lenses cover
+the whole repo). The orchestrator dissolved several over-reported scout candidates against real code, then
+shipped the 4 genuine, mutually file-disjoint clears (each gate-green + 2 Sonnet reviewers APPROVE):
+
+- **#274 (security/Track-G G1): rate-limit `POST /api/growth/email`.** The batch lifecycle-email send
+  route (paid external provider) had NO rate limit while its sibling growth read-APIs (snapshot/analytics)
+  both carry 30/min — admin-gating alone is not the Track-G bar. Added a low 5/min per-IP budget via the
+  existing `rateLimit`/`tooManyRequests` helpers, same before-auth placement + per-IP keying as the
+  siblings (so an attacker only exhausts their own bucket). Contains a leaked-admin-session / buggy-loop
+  fan-out → provider-billing blowout + deliverability blacklisting.
+- **#275 (a11y/design-bar): label the landing-page waitlist email input + announce errors.** The
+  highest-traffic logged-out surface had only a placeholder (not an accessible name → WCAG 1.3.1/4.1.2).
+  Added `aria-label`, tied the inline error via `aria-describedby`+`aria-invalid`, and gave it
+  `role="alert"` (WCAG 3.3.1). No visual change.
+- **#276 (mobile reliability): guard the plan response before parsing.** `apps/mobile/app/plan.tsx` was
+  the ONLY mobile screen calling `res.json()` without an `res.ok` check (8 siblings guard it); a 4xx/5xx
+  JSON body lacking the `error` key would fall through to the `plan` cast and render a malformed/empty
+  plan. Mirrored the sibling pattern → clean error+Retry state on a premium screen.
+- **#273 (correctness_reliability/tests_evals, #261 Gap-2): unit-cover `resolveScanLabels`.** The vision
+  label→canonical pre-resolution cascade shipped at ~11.5% coverage (only `isSemanticMethod` tested; the
+  DB-gated integration test skips without `TEST_DATABASE_URL`). Added a pure unit test mocking the
+  `withTenant`+`normalizeLineItem` boundaries — locks dedup, method/canonical mapping, the no-keys
+  degrade, and the load-bearing best-effort invariant that a per-label failure resolves to a harmless
+  `manual` miss instead of crashing the whole scan. resolve.ts 11.5% → 96%.
+
+**Lessons:**
+- **A green vitest run ≠ a green `tsc`.** #273's first push passed `pnpm --filter @gm/core test` (vitest,
+  no strict typecheck) but the mock factories used `vi.fn(() => …)` which infers a ZERO-arg signature →
+  `tsc --noEmit` failed TS2554 on every factory that forwards args. CI's `verify` job would have caught
+  it, but the per-change verify must run the PACKAGE typecheck on the ACTUAL branch, not just the test
+  runner — type each mock with its real arity (`vi.fn<(a,b)=>R>()`). Caught here only because a reviewer's
+  request triggered a re-verify.
+- **A mock that drops an arg hides the wire it should prove.** Reviewer A flagged that the
+  `normalizeLineItem` mock forwarded only `input`, not `ports` — so a regression that stopped threading
+  the DB/embedder/llm ports into the cascade would pass silently. Forward ALL args through a spy and
+  assert them (`toHaveBeenCalledWith(input, expect.anything())`); a boundary mock should mirror the real
+  signature exactly or it stops being a contract test.
+- **The orchestrator's filter is the load-bearing step in a converged product.** The mobile scout's
+  "zero `accessibilityLabel` → store-blocking a11y gap" dissolved on inspection: every mobile Pressable
+  has a Text child, which React Native exposes to screen readers automatically — there are no icon-only
+  buttons, so the finding was a false positive. Shipping it would have been churn. (Web design scout, by
+  contrast, found the one real a11y gap — #275.)
+- **DEEP AUDIT (folded, 2026-06-30):** no new CRITICALs. Security scout: RLS clean across all migrations,
+  webhooks signature-verified, the only gap was the growth/email rate-limit (shipped #274); the in-memory
+  rate-limit multi-instance note is the already-tracked owner Redis upgrade. Reliability scout: timeouts,
+  fail-loud env, ledger-only invariant all clean. Monetization/artifact: billing code complete; the only
+  items were post-launch owner rituals (Family-tier listing sync + 90-day metrics sync), folded into
+  LAUNCH.md Step 12 this run.
+- **Did NOT open the 'ready' issue.** Quality grade stays B until the independent Quality Auditor re-grades
+  (the run-28 fixes for #260/#261 are built but not self-awardable); business-case floor remains
+  reach-gated per FYI #190. A quiet, coherent run that closes 4 real gates is the correct converged state.
+
+---
+
 ## 2026-06-29 (run 27) — a CRITICAL launch-blocking captcha bug + 5 disjoint quality/a11y gates (6 PRs)
 
 A full ~5-Haiku scout sweep (security/RLS+Track-G, correctness/dead-code, design/a11y, mobile+coverage,

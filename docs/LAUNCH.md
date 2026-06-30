@@ -290,6 +290,29 @@ Then follow `docs/brand/LAUNCH_PLAN.md` for the sequenced go-to-market calendar.
 
 ---
 
+### Step 12 — Post-launch rituals (only when the trigger applies)
+
+These keep the **store listings** and the **business case** honest as the product evolves. Both are
+owner actions because they depend on a live decision or live data.
+
+1. **If you ship the Family tier (flip `FEATURE_HOUSEHOLDS` on).** The Family plan ($9.99/mo / $79.99/yr,
+   up to 5 members, shared list) and its billing are fully built but deliberately **hidden** from all store
+   listings while the flag is off (so the listing stays accurate per Apple 2.3.1 / Google "accurate
+   listing"). When you enable the flag, update the subscription + features sections of
+   `docs/store/ASO_READY.md`, `docs/store/app-store-metadata.md`, and `docs/store/google-play-metadata.md`
+   to surface "Family — household sharing" and the $9.99/mo tier, then resubmit the listing. Until then,
+   leaving them hidden is correct, not a gap. (BUSINESS_CASE models Family adoption as ARPU upside.)
+
+2. **Keep the business case living (≈ day 30 + day 90).** `docs/BUSINESS_CASE.md` §7 is modelled on
+   benchmarks until real data exists. After connecting analytics/billing (Step 9): **day 30** — confirm
+   Plausible is recording the funnel goals (Signup, Waitlist, Upgrade, Purchase) and pull the first
+   Stripe/RevenueCat report to verify the entitlement webhook is firing; **day 90** — replace the modelled
+   inputs (signup→paid, churn, ARPU) with actuals and recompute §7 + the `BUSINESS_CASE_SUMMARY` block
+   (stamp "last recomputed"). Only reach/conversion/retention/ARPU/margin move the number — re-derive, do
+   not re-justify.
+
+---
+
 ## 6. Go-to-market
 
 Full plan in `docs/brand/LAUNCH_PLAN.md` (dated, ordered, channel-specific).  
