@@ -14,7 +14,9 @@ const shoppingListItems = { _name: "shoppingListItems" };
 const insertedRows: Record<string, unknown>[] = [];
 function makeDb() {
   return {
-    insert: vi.fn(() => ({
+    // Keep the table arg so a test can assert the write targets shoppingListItems — a regression that
+    // swapped tables must not pass silently.
+    insert: vi.fn((_table: unknown) => ({
       values: vi.fn(async (row: Record<string, unknown>) => {
         insertedRows.push(row);
       }),
@@ -26,13 +28,16 @@ function makeDb() {
 const trigramCandidates =
   vi.fn<(name: string, limit: number) => Promise<{ id: string; score: number }[]>>();
 const createCanonical = vi.fn<(name: string) => Promise<string>>(async (n) => `new:${n}`);
-const getOrCreateActiveList = vi.fn<() => Promise<string>>(async () => "list-1");
+// Typed two-arg signature mirrors the real getOrCreateActiveList(db, userId) so a dropped arg is caught.
+const getOrCreateActiveList = vi.fn<(db: unknown, userId: string) => Promise<string>>(
+  async () => "list-1",
+);
 
 vi.mock("../ingestion/db-ports.js", () => ({
   createDbNormalizationPorts: () => ({ trigramCandidates, createCanonical }),
 }));
 vi.mock("@gm/db", () => ({
-  getOrCreateActiveList: () => getOrCreateActiveList(),
+  getOrCreateActiveList: (db: unknown, userId: string) => getOrCreateActiveList(db, userId),
   shoppingListItems,
 }));
 
@@ -60,6 +65,8 @@ describe("captureToList", () => {
     const res = await captureToList(db as never, "u", [{ name: "baby spinach" }]);
 
     expect(createCanonical).not.toHaveBeenCalled(); // matched → no new canonical minted
+    expect(db.insert).toHaveBeenCalledWith(shoppingListItems); // write targets the right table
+    expect(getOrCreateActiveList).toHaveBeenCalledWith(db, "u"); // db + userId forwarded
     expect(insertedRows[0]).toMatchObject({
       shoppingListId: "list-1",
       canonicalItemId: "spinach",
