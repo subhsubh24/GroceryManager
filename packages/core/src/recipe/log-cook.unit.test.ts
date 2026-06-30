@@ -146,6 +146,21 @@ describe("logCook", () => {
     expect(db.insert).toHaveBeenCalledTimes(1); // mealLogs only
   });
 
+  it("reuses an existing recipe header when the provider+externalId lookup HITS (no insert)", async () => {
+    seedEggsPantry();
+    ROUTES.recipes = [{ id: "r-found" }]; // lookup hits → dedupe, must not insert a second header
+    const db = makeDb();
+
+    const res = await logCook(
+      db as never,
+      "user-1",
+      { externalId: "tm-123", title: "Existing Dish", ingredients: [{ name: "eggs", measure: "1" }] },
+    );
+
+    expect(res.recipeId).toBe("r-found");
+    expect(insertValues.recipes).toBeUndefined(); // dedupe — no recipes insert happened
+  });
+
   it("upserts the recipe header when no recipeId is given and the lookup misses", async () => {
     seedEggsPantry(); // recipes route is [] → lookup misses → insert
     const db = makeDb();
