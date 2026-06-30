@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { parseJsonBody, serverError } from "../../_lib/guard";
+import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
 import { sendEmailBatch } from "@gm/core/email";
 import type { EmailPayload } from "@gm/core/email";
 
@@ -14,6 +15,15 @@ export const dynamic = "force-dynamic";
  * Body: { payloads: Array<{ to, subject, html, text }> }
  */
 export async function POST(req: Request) {
+  // 0. Rate limit (G1) — this route triggers PAID external email-provider sends, so it must be
+  // bounded even though it is admin-gated: a compromised/leaked admin session or a buggy client
+  // loop must not be able to fan out unbounded batches (provider billing + deliverability
+  // blacklisting). Low budget — lifecycle sends are infrequent and batched. Keyed per IP, same as
+  // the sibling growth read-APIs (snapshot/analytics).
+  const ip = (req.headers.get("x-forwarded-for") ?? "unknown").split(",")[0]!.trim();
+  const rl = rateLimit(`growth-email:${ip}`, 5, 60_000);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
+
   // 1. Check admin auth
   const session = await auth();
   const userEmail = (session?.user as { email?: string } | undefined)?.email;
