@@ -22,6 +22,9 @@ export async function refreshGoogleAccessToken(
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
+    // Bound the call below the serverless budget so a hung token endpoint fails fast (caught by the
+    // sync's try/catch) rather than letting the platform kill the function with an uncatchable 504.
+    signal: AbortSignal.timeout(5_000),
   });
   if (!res.ok) throw new Error(`Google token refresh ${res.status}: ${await res.text()}`);
   const json = (await res.json()) as { access_token: string; expires_in: number };

@@ -74,6 +74,11 @@ export function buildListText(
 
 const IDP_BASE = "https://connect.instacart.com/idp/v1";
 
+// External call timeout — must be SHORTER than the serverless function budget so a hung Instacart
+// API surfaces as a caught error (the route degrades to the keyless paste/search fallback) instead
+// of letting the platform kill the function (an uncatchable 504).
+const TIMEOUT_MS = 5_000;
+
 export class InstacartClient {
   constructor(
     private readonly apiKey: string,
@@ -90,6 +95,7 @@ export class InstacartClient {
       method: "POST",
       headers: this.headers(),
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (!res.ok) throw new Error(`Instacart ${res.status}: ${await res.text()}`);
     const json = (await res.json()) as { products_link_url: string };
@@ -100,7 +106,7 @@ export class InstacartClient {
   async getNearbyRetailers(postalCode: string, countryCode = "US"): Promise<unknown> {
     const res = await fetch(
       `${this.baseUrl}/retailers?postal_code=${encodeURIComponent(postalCode)}&country_code=${countryCode}`,
-      { headers: this.headers() },
+      { headers: this.headers(), signal: AbortSignal.timeout(TIMEOUT_MS) },
     );
     if (!res.ok) throw new Error(`Instacart ${res.status}: ${await res.text()}`);
     return res.json();
