@@ -46,6 +46,13 @@ export default function PlanScreen() {
     let cancelled = false;
     apiFetch("/api/mobile/plan", token!)
       .then(async (res) => {
+        // Guard the response before parsing — a 4xx/5xx body (HTML error page or a non-PlanData
+        // JSON error) must not be cast to PlanData and rendered as a plan. Every other mobile
+        // screen checks res.ok; plan was the lone omission.
+        if (!res.ok) {
+          if (!cancelled) setData({ error: "Couldn't build your plan — please try again." });
+          return;
+        }
         const d = (await res.json()) as PlanData;
         if (!cancelled) setData(d);
       })
