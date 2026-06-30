@@ -459,6 +459,17 @@ else
   fail "self-validation: a capability cannot be self-validated in CI — see above. Register its keyless validation in packages/config/capabilities.json, or surface an urgent OWNER_ACTION (validation-capability-<service>, blocks: validation) + LOOP_HEALTH.validation.unmet for the missing key"
 fi
 
+section "GTM honesty gate — no metric without a source"
+# Fails closed if any GROWTH_STATUS funnel/acquisition/pmf/channels metric is non-zero without a
+# connected source declared (a real number with no source = fabrication risk), or a malformed
+# GTM_SCORECARD. Pre-launch (all 0/null) passes. The GTM analog of the self-validation tripwire.
+if node "$ROOT/scripts/validate-gtm.mjs" > /tmp/gm-gtm.log 2>&1; then
+  pass "GTM honesty: $(tail -1 /tmp/gm-gtm.log)"
+else
+  cat /tmp/gm-gtm.log
+  fail "GTM honesty: a GROWTH_STATUS metric is reported without a connected source (or a malformed GTM_SCORECARD) — see above. Set it to 0/null until a source is connected, or declare the connected source"
+fi
+
 section "Functional E2E — runtime journeys (BUILDS ≠ WORKS)"
 JOURNEYS="$ROOT/apps/web/e2e/journeys.spec.ts"
 INVENTORY="$ROOT/apps/web/e2e/ROUTE_INVENTORY.md"

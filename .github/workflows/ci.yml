@@ -247,6 +247,29 @@ jobs:
       - name: Capability self-validation tripwire
         run: node scripts/check-self-validation.mjs
 
+  # GTM honesty gate (validate-gtm) — the GTM analog of the self-validation tripwire. Fails CLOSED so the
+  # Growth Agent can never report a growth number it cannot SOURCE: if any GROWTH_STATUS funnel/acquisition/
+  # pmf/channels metric is non-zero but no connected source is declared (channels_connected falsy + no
+  # sources/validation entry marked connected), or a GTM_SCORECARD (when present) is malformed/invalid-grade,
+  # it goes red. Pre-launch (everything 0/null) passes. Needs js-yaml (a declared devDependency, not
+  # transitive). Required + enforce_admins.
+  validate-gtm:
+    name: validate-gtm (gtm honesty gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: GTM honesty gate
+        run: node scripts/validate-gtm.mjs
+
   # Auto-apply DB migrations to PROD on every push to main, so schema drift (the root cause of the
   # signup outage — the loop adds a migration, a human forgets to run it) can never recur. Runs ONLY
   # after `verify` (build green) + `migrate` (the full chain validated against a fresh throwaway DB)
