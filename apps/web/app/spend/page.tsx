@@ -53,7 +53,7 @@ async function load() {
 
 export default async function SpendPage() {
   const data = await load();
-  if ("upgradeRequired" in data && data.upgradeRequired) redirect("/upgrade");
+  if ("upgradeRequired" in data && data.upgradeRequired) redirect("/upgrade?feature=spend_insights");
 
   return (
     <main className="page">

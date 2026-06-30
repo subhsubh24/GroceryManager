@@ -103,7 +103,7 @@ export default async function HouseholdPage() {
   if (!householdsEnabled()) return <ComingSoon />;
 
   const data = await load();
-  if (data.state === "upgrade") redirect("/upgrade");
+  if (data.state === "upgrade") redirect("/upgrade?feature=household");
 
   return (
     <main className="page">

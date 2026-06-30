@@ -73,7 +73,7 @@ export default async function RemixPage({
   const { id } = await params;
   const axis = parseAxis((await searchParams).axis);
   const result = await load(id, axis);
-  if (result.upgradeRequired) redirect("/upgrade");
+  if (result.upgradeRequired) redirect("/upgrade?feature=remix");
   const { recipe, remix, error, quotaExceeded } = result;
 
   const replacements = remix?.swaps.map((s) => s.replacement) ?? [];
