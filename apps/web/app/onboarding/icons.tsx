@@ -19,4 +19,5 @@ export {
   Check as CheckIcon,
   ChevronRight as ChevronRightIcon,
   Loader2 as SpinnerIcon,
+  Users as HouseholdIcon,
 } from "lucide-react";

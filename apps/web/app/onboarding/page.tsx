@@ -1,4 +1,5 @@
 import { loadEnv } from "@gm/config/env";
+import { householdsEnabled } from "@gm/db";
 import { OnboardingFlow } from "./onboarding-flow";
 
 export const dynamic = "force-dynamic";
@@ -16,9 +17,13 @@ export const maxDuration = 30;
  * Both write to the SAME preference ledger via the server actions in `./actions` and finish by
  * re-projecting the materialized UserModel and redirecting to "/". We only pass a boolean down so the
  * server-only LLM is never imported by the client component (it's reached solely through the actions).
+ *
+ * We also pass `householdsLive` so the Done step can surface the optional "cook together" moment
+ * (Family / household sharing) ONLY when the feature is actually on — matching the paywall's
+ * store-honesty gating (never advertise a dark feature). Owner flips `FEATURE_HOUSEHOLDS` at launch.
  */
 export default function OnboardingPage() {
   const env = loadEnv();
   const hasAi = !!(env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT);
-  return <OnboardingFlow hasAi={hasAi} />;
+  return <OnboardingFlow hasAi={hasAi} householdsLive={householdsEnabled()} />;
 }

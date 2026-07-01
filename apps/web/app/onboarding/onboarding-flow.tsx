@@ -5,6 +5,7 @@ import { unstable_rethrow } from "next/navigation";
 import type { OnboardingAnswers } from "@gm/core/personalization";
 import {
   finishOnboardingAction,
+  finishOnboardingHouseholdAction,
   onboardingTurnAction,
   saveProfileAction,
   saveTasteAction,
@@ -16,6 +17,7 @@ import {
   CheckIcon,
   ChevronRightIcon,
   DoneIcon,
+  HouseholdIcon,
   ItemsIcon,
   NextIcon,
   ProfileIcon,
@@ -65,7 +67,13 @@ const splitCsv = (v: string) =>
 
 type Profile = { name: string; age: string; gender: string };
 
-export function OnboardingFlow({ hasAi }: { hasAi: boolean }) {
+export function OnboardingFlow({
+  hasAi,
+  householdsLive = false,
+}: {
+  hasAi: boolean;
+  householdsLive?: boolean;
+}) {
   const [macro, setMacro] = useState(0); // 0 profile · 1 taste · 2 items · 3 done
   const [profile, setProfile] = useState<Profile>({ name: "", age: "", gender: "" });
   // Bumped each time we move forward so the active step gets a fresh `key` → one purposeful transition.
@@ -100,14 +108,16 @@ export function OnboardingFlow({ hasAi }: { hasAi: boolean }) {
     });
   }
 
-  // Finish (from Done): re-project + redirect("/"). The action throws NEXT_REDIRECT on success — it
-  // MUST propagate so Next navigates; `unstable_rethrow` lets it through. A genuine error surfaces.
-  function finish() {
+  // Finish (from Done): re-project + redirect. The action throws NEXT_REDIRECT on success — it MUST
+  // propagate so Next navigates; `unstable_rethrow` lets it through. A genuine error surfaces.
+  // `toHousehold` routes through the sibling action that lands on /household (the "cook together"
+  // moment) while running the exact same finish — so the user is never stranded mid-flow.
+  function finish(toHousehold = false) {
     if (finishing) return;
     setError(null);
     startFinish(async () => {
       try {
-        await finishOnboardingAction();
+        await (toHousehold ? finishOnboardingHouseholdAction() : finishOnboardingAction());
       } catch (e) {
         unstable_rethrow(e);
         setError("Couldn't wrap up just now — please try again.");
@@ -142,7 +152,12 @@ export function OnboardingFlow({ hasAi }: { hasAi: boolean }) {
           {macro === 2 && <ItemsStep onContinue={advance} onBack={back} />}
 
           {macro === 3 && (
-            <DoneStep onFinish={finish} finishing={finishing} error={error} />
+            <DoneStep
+              onFinish={finish}
+              finishing={finishing}
+              error={error}
+              householdsLive={householdsLive}
+            />
           )}
         </div>
       </div>
@@ -766,10 +781,12 @@ function DoneStep({
   onFinish,
   finishing,
   error,
+  householdsLive,
 }: {
-  onFinish: () => void;
+  onFinish: (toHousehold?: boolean) => void;
   finishing: boolean;
   error: string | null;
+  householdsLive: boolean;
 }) {
   return (
     <section className="flex flex-1 flex-col">
@@ -781,10 +798,35 @@ function DoneStep({
 
       <div className="flex-1" />
 
+      {/* "Cook together" moment — only when household sharing is actually live (matches the paywall's
+          store-honesty gating, so onboarding never sells a dark feature). Tapping it runs the SAME
+          finish (re-project + mark onboarded) but lands on /household so the user can invite their
+          people right away. Highest-intent moment to surface the Family value prop; no adoption is
+          assumed anywhere in the business case. */}
+      {householdsLive && (
+        <button
+          type="button"
+          onClick={() => onFinish(true)}
+          disabled={finishing}
+          className="mb-4 flex w-full items-center gap-3.5 rounded-2xl border border-line bg-surface p-4 text-left shadow-card transition-colors duration-150 hover:border-brand-200 hover:bg-brand-50/40 disabled:opacity-60"
+        >
+          <span className="tile-brand h-11 w-11">
+            <HouseholdIcon className="h-5 w-5" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-ink-900">Cooking with a household?</span>
+            <span className="block text-xs leading-relaxed text-ink-500">
+              Share one pantry &amp; shopping list with up to 5 people on the Family plan.
+            </span>
+          </span>
+          <ChevronRightIcon className="h-5 w-5 shrink-0 text-ink-300" aria-hidden />
+        </button>
+      )}
+
       <div className="space-y-3">
         <button
           type="button"
-          onClick={onFinish}
+          onClick={() => onFinish(false)}
           disabled={finishing}
           className="btn-primary btn-block min-h-[48px] text-base"
         >
