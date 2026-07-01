@@ -12,8 +12,36 @@ The dashboard surfaces every `open` item, urgent first.
 ```yaml
 OWNER_ACTIONS:
   project: GroceryManager
-  as_of: 2026-06-29 (run 28)
+  as_of: 2026-07-01 (GTM run 2)
   items:
+    - id: gtm-connect-waitlist
+      title: "GTM validation: connect the waitlist admin read source (ADMIN_EMAIL)"
+      priority: urgent
+      status: open
+      why: "GTM_STANDARD §4 fail-closed rule — the Growth Agent cannot report a verified waitlist count until this source resolves to connected. Full detail: see the `waitlist-migration` item below."
+      how: "Set ADMIN_EMAIL in Vercel env. See `waitlist-migration` for the full runbook."
+      blocks: gtm-validation
+    - id: gtm-connect-analytics
+      title: "GTM validation: connect the analytics source (Plausible)"
+      priority: urgent
+      status: open
+      why: "GTM_STANDARD §4 fail-closed rule — the Growth Agent cannot report visitor/conversion-rate metrics until this source resolves to connected. Full detail: see the Plausible section below ('Analytics (Plausible) — activate before store launch')."
+      how: "Set NEXT_PUBLIC_PLAUSIBLE_DOMAIN + PLAUSIBLE_API_KEY in Vercel env. See the Plausible section below for the full runbook."
+      blocks: gtm-validation
+    - id: gtm-connect-billing
+      title: "GTM validation: connect the billing source (Stripe)"
+      priority: urgent
+      status: open
+      why: "GTM_STANDARD §4 fail-closed rule — the Growth Agent cannot report MRR/churn/CAC until this source resolves to connected. Full detail: see the Stripe + RevenueCat section below."
+      how: "Set STRIPE_SECRET_KEY + FEATURE_BILLING=1 in Vercel env. See the Stripe + RevenueCat section below for the full runbook."
+      blocks: gtm-validation
+    - id: gtm-connect-email
+      title: "GTM validation: connect the email provider source"
+      priority: urgent
+      status: open
+      why: "GTM_STANDARD §4 fail-closed rule — the Growth Agent cannot report open/click rates until this source resolves to connected. Full detail: see the `track-h-activation` item below."
+      how: "Set RESEND_API_KEY (or SENDGRID_API_KEY / POSTMARK_API_KEY) + EMAIL_FROM in Vercel env. See `track-h-activation` for the full runbook."
+      blocks: gtm-validation
     - id: set-direct-database-url-prod
       title: "DONE: DIRECT_DATABASE_URL set in Vercel — signup/signin working in prod (19 users, 16 in last 7d, newest 2026-06-28)"
       priority: urgent
@@ -68,7 +96,7 @@ OWNER_ACTIONS:
       blocks: none
     - id: wire-e2e-roundtrip-ci
       title: "DONE: F4.1 email round-trip runs in the CI e2e job (EMAIL_CAPTURE_DIR wired; no longer skips)"
-      priority: medium
+      priority: normal
       status: done
       resolved: "2026-06-29 (#268) — EMAIL_CAPTURE_DIR (a temp dir, no secret) is wired into the e2e job and the job runs `e2e email-roundtrip`. The waitlist double-opt-in side-effect now VALIDATES in CI (passed green on #268) instead of skipping. Enforced going forward by the new self-validation tripwire (capabilities.json declares EMAIL_CAPTURE_DIR as a requiresCiEnv, so un-wiring it would turn the required check RED)."
       why: "F4.1's email round-trip (apps/web/e2e/email-roundtrip.spec.ts) proves the waitlist double-opt-in actually dispatches → retrieves → confirms. It needs the server AND the test to share an EMAIL_CAPTURE_DIR sink. The loop runs it green LOCALLY at the readiness gate (verified run 25), but the CI e2e job doesn't set EMAIL_CAPTURE_DIR yet, so in CI the spec SKIPS loudly (never fails, never fakes green). Wiring it makes the round-trip a permanent blocking check, not just a gate-time one. The loop can't edit .github/."
