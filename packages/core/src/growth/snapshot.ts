@@ -208,6 +208,10 @@ export function computeMrrUsd(counts: {
   annual: number;
   family: number;
 }): number {
-  const cents = counts.monthly * 499 + counts.annual * Math.round(3999 / 12) + counts.family * 999;
+  // Amortize the annual plan on the AGGREGATE, not per-subscriber: rounding 3999/12 first bakes in a
+  // 0.25¢/sub downward bias (333 vs the true 333.25) that compounds and understates MRR by a whole
+  // dollar at realistic counts (e.g. 56 annual subs → $186 instead of the correct $187).
+  const cents =
+    counts.monthly * 499 + Math.round((counts.annual * 3999) / 12) + counts.family * 999;
   return Math.round(cents / 100);
 }
