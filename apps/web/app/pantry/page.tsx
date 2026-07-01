@@ -392,12 +392,14 @@ export default async function PantryPage({
               </div>
               <div className="flex items-center gap-3">
                 <span className={s.cls}>{s.label}</span>
-                <form action={removePantryItemAction}>
+                <form action={removePantryItemAction} className="flex">
                   <input type="hidden" name="canonicalItemId" value={r.canonicalItemId} />
+                  {/* ≥44px hit target (WCAG 2.5.8 / Apple HIG); negative margins keep the row height
+                      unchanged so the larger touch area doesn't reflow the list. */}
                   <button
                     type="submit"
                     aria-label="Remove"
-                    className="text-ink-300 transition-colors hover:text-danger"
+                    className="-my-2 -mr-2 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-ink-300 transition-colors hover:text-danger"
                   >
                     <Trash2 className="h-4 w-4" strokeWidth={2} aria-hidden />
                   </button>
