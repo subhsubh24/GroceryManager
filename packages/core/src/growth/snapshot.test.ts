@@ -121,13 +121,18 @@ describe("buildGrowthSnapshot", () => {
 
 describe("computeMrrUsd", () => {
   it("sums tier prices to whole USD", () => {
-    // 2×499 + 1×333 (annual amortized: round(3999/12)) + 1×999 = 2330 cents → $23
+    // 2×499 + 1×333.25 (annual $39.99/12) + 1×999 ≈ 2330 cents → $23
     expect(computeMrrUsd({ monthly: 2, annual: 1, family: 1 })).toBe(23);
   });
   it("is 0 with no subscribers", () => {
     expect(computeMrrUsd({ monthly: 0, annual: 0, family: 0 })).toBe(0);
   });
   it("annual is amortized monthly (39.99/12 ≈ 3.33)", () => {
-    expect(computeMrrUsd({ monthly: 0, annual: 3, family: 0 })).toBe(10); // 3×3.33 = 9.99 → 10
+    expect(computeMrrUsd({ monthly: 0, annual: 3, family: 0 })).toBe(10); // 3×3.3325 = 9.9975 → 10
+  });
+  it("amortizes annual on the aggregate (no per-sub rounding bias)", () => {
+    // 56 annual subs = 56×$39.99/12 = $186.62 → $187. The old per-sub round(3999/12)=333¢ gave
+    // 56×333 = $186.48 → $186, understating MRR by a whole dollar. Guards the aggregate-rounding fix.
+    expect(computeMrrUsd({ monthly: 0, annual: 56, family: 0 })).toBe(187);
   });
 });
