@@ -173,7 +173,7 @@ export default function UpgradeScreen() {
             <Text style={styles.ctaBtnText}>Done</Text>
           </Pressable>
         ) : loading ? (
-          <ActivityIndicator color="#4a1d96" style={styles.loader} />
+          <ActivityIndicator color="#0c8a3e" style={styles.loader} />
         ) : configured ? (
           <>
             <Pressable
@@ -193,7 +193,7 @@ export default function UpgradeScreen() {
               onPress={() => onBuy("monthly")}
             >
               {busy === "monthly" ? (
-                <ActivityIndicator color="#4a1d96" />
+                <ActivityIndicator color="#0c8a3e" />
               ) : (
                 <Text style={[styles.ctaBtnText, styles.ctaBtnTextSecondary]}>
                   Start free trial — Monthly
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#4a1d96",
+    backgroundColor: "#0c8a3e",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,
@@ -261,8 +261,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   planCardFeatured: {
-    backgroundColor: "#4a1d96",
-    borderColor: "#4a1d96",
+    backgroundColor: "#0c8a3e",
+    borderColor: "#0c8a3e",
   },
   recommendedBadge: {
     backgroundColor: "rgba(255,255,255,0.2)",
@@ -313,14 +313,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  ctaBtnPrimary: { backgroundColor: "#4a1d96" },
+  ctaBtnPrimary: { backgroundColor: "#0c8a3e" },
   ctaBtnSecondary: {
     backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "#4a1d96",
+    borderColor: "#0c8a3e",
   },
   ctaBtnText: { color: "#ffffff", fontSize: 16, fontWeight: "700" },
-  ctaBtnTextSecondary: { color: "#4a1d96" },
+  ctaBtnTextSecondary: { color: "#0c8a3e" },
   ctaHint: { fontSize: 12, color: "#a3acb5", textAlign: "center", marginBottom: 16 },
   legalHint: {
     fontSize: 11,
