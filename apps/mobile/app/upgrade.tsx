@@ -265,7 +265,9 @@ const styles = StyleSheet.create({
     borderColor: "#0c8a3e",
   },
   recommendedBadge: {
-    backgroundColor: "rgba(255,255,255,0.2)",
+    // A dark-translucent pill on the green card so the white "Best value" label reads at ~5.7:1;
+    // a translucent-WHITE pill would lighten toward the green and drop white text below AA.
+    backgroundColor: "rgba(0,0,0,0.16)",
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -273,13 +275,16 @@ const styles = StyleSheet.create({
   },
   recommendedText: { color: "#ffffff", fontSize: 11, fontWeight: "700" },
   planLabel: { fontSize: 13, fontWeight: "700", color: "#a3acb5", marginBottom: 4 },
-  planLabelFeatured: { color: "rgba(255,255,255,0.75)" },
+  // On the green featured card, text is solid white — semi-transparent white composites toward the
+  // green and falls below AA. Solid white on brand-solid is the design system's readable ceiling
+  // (~4.45:1, the same white-on-green pairing the web brand-solid cards use everywhere).
+  planLabelFeatured: { color: "#ffffff" },
   planPrice: { fontSize: 28, fontWeight: "800", color: "#1d2530" },
   planPriceFeatured: { color: "#ffffff" },
   planPer: { fontSize: 12, color: "#a3acb5", marginBottom: 4 },
-  planPerFeatured: { color: "rgba(255,255,255,0.75)" },
+  planPerFeatured: { color: "#ffffff" },
   planTrial: { fontSize: 11, color: "#a3acb5", textAlign: "center" },
-  planTrialFeatured: { color: "rgba(255,255,255,0.7)" },
+  planTrialFeatured: { color: "#ffffff" },
 
   section: {
     backgroundColor: "#ffffff",
