@@ -112,7 +112,10 @@ export async function analyzeScan(_prev: AnalyzeState, formData: FormData): Prom
       unconfirmed: result.unconfirmed,
     };
   } catch (e) {
-    return { status: "error", message: e instanceof Error ? e.message : String(e) };
+    // G3 error-message hygiene: log the full context server-side; never leak the raw error
+    // (vision/Gemini SDK messages can carry provider/config internals) to the client UI.
+    console.error("[scan] analyzeScan failed:", e);
+    return { status: "error", message: "Couldn't analyze the photo. Please try again." };
   }
 }
 
