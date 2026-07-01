@@ -216,7 +216,7 @@ export function SwipeDeck({ deck }: { deck: DeckCard[] }) {
               </span>
               <span
                 aria-hidden
-                className="absolute right-4 top-4 rounded-xl border-2 border-berry-500 px-3 py-1 text-lg font-extrabold uppercase tracking-wide text-berry-600 transition-opacity"
+                className="absolute right-4 top-4 rounded-xl border-2 border-danger px-3 py-1 text-lg font-extrabold uppercase tracking-wide text-danger-ink transition-opacity"
                 style={{ opacity: dragIntent === "skip" ? 1 : 0, transform: "rotate(12deg)" }}
               >
                 Skip
@@ -273,7 +273,7 @@ export function SwipeDeck({ deck }: { deck: DeckCard[] }) {
             </a>
             <a
               href={`/remix/${last.card.id}`}
-              className="inline-flex items-center gap-1 text-xs font-medium text-grape-700"
+              className="inline-flex items-center gap-1 text-xs font-medium text-brand-700"
             >
               <Shuffle className="h-3.5 w-3.5" strokeWidth={2} /> Remix
             </a>

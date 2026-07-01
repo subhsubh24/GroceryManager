@@ -150,7 +150,7 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
             <p className="page-subtitle">Screen stays awake · tap through each step.</p>
             <a
               href={`/remix/${id}`}
-              className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-grape-700"
+              className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-brand-700"
             >
               <Shuffle className="h-4 w-4" strokeWidth={2} /> Remix this recipe
             </a>
