@@ -1058,3 +1058,34 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
     (the scorecard's named ship-critical gaps were already fixed runs 28/30/31); business-case floor honestly
     reach-gated (FYI #190, all named buildable levers built). Did NOT open the 'ready' issue. A coherent
     5-clear, 0-abandon, 0-revert run is the correct converged state.
+- **2026-07-01 (run 33) — 3 file-disjoint clears (#304 LLM-fallback tests, #305 scan G3 error hygiene,
+  #306 README drift); 1 abandoned (DEEP AUDIT folded, 5 lenses).** Highest-leverage takeaways:
+  - **The DUPLICATE-COVERAGE TRAP bit TWICE (runs 32 + 33) — the concrete fix.** Both runs abandoned a fresh
+    `growth/experiments` math test suite because the assertions already live in the AGGREGATE
+    `packages/core/src/growth/experiments.test.ts` (one level up from the per-module sources), not in adjacent
+    `stats.test.ts` / `bucketing.test.ts` / `lift.test.ts` files. Root cause: the coverage-gap check greps for
+    *adjacent* `<module>.test.ts` and reports "NONE" when an aggregate suite covers the functions. **RULE for
+    the next run:** before writing tests for `packages/core/src/growth/experiments/*` (or ANY dir with an
+    aggregate `<dir>.test.ts`), grep the whole directory's `*.test.ts` for the target function NAMES
+    (`assignVariant`, `twoProportionZTest`, `wilsonInterval`, `minSampleSizePerArm`, `computeExperimentResult`
+    are all already covered) — do not scout by adjacent filename alone. If it recurs a 3rd time, raise a
+    harness proposal.
+  - **The 2-reviewer gate keeps paying for itself.** The abandoned suite was correct (Reviewer A verified the
+    math numerically) but LOW-VALUE (Reviewer B caught the duplication). The split verdict → abandon is the
+    both-approve rule working exactly as intended; not reworking it into a trimmed re-review avoided churn.
+    The two SHIPPED test files (#304, capture-parse + shelf-life-llm) were independently confirmed genuinely
+    untested by both reviewers — so "add tests" is fine; the discipline is verifying the target isn't already
+    covered elsewhere first.
+  - **The QUALITY_SCORECARD (2026-06-29) is STALE — its named ship-critical gaps are already fixed.** Mobile
+    RevenueCat IAP (upgrade.tsx now calls a real `purchase(pkg)` → `Purchases.purchasePackage`, degrading to
+    an honest "coming soon" only when no key) landed in PR #266; the vision persist ledger-only write landed
+    in PR #263. Both `launch_readiness` and `correctness_reliability` B-gaps are closed in reality; the loop
+    can't re-grade (maker≠checker — the independent Quality Auditor owns the scorecard). Do NOT re-attempt
+    those as "gaps"; the only true blockers to 'ready' are the re-grade + the reach-gated business-case floor.
+  - **Several run-19/21 security follow-ups are already closed — verify before re-fixing.** The discover-POST
+    `discover-write` limiter, recipes-GET `recipes-read` limiter, and cook-tonight/ask `checkLlmQuota` are all
+    present. A Haiku security scout flagged them as gaps (false positives); always grep the actual route before
+    treating a scout finding as real. The one REAL find this run was the scan-action raw-`e.message` leak (#305).
+  - **Still NOT submission-ready (unchanged):** quality grade B pending the independent re-grade; business-case
+    floor honestly reach-gated (FYI #190). H12/Family stays owner-flag-blocked (advertising a FEATURE_HOUSEHOLDS
+    dark feature = Apple 2.3.1 risk — no honest store-safe slice to ship). Did NOT open the 'ready' issue.
