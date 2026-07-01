@@ -178,13 +178,23 @@ export async function saveTasteAction(answers: OnboardingAnswers): Promise<void>
 }
 
 /**
- * Finish onboarding: re-project the full ledger into the materialized UserModel (so the planner +
- * ranking read the freshest picture), then redirect to the home page. Mirrors the wizard's
- * `saveOnboarding` tail. `redirect` throws NEXT_REDIRECT, which must propagate — `unstable_rethrow`
- * lets it through any surrounding try/catch (here it's outside the tenant tx, so it's already clear,
- * but we keep the guard for parity with the established pattern).
+ * Where to land after onboarding finishes. Kept to a fixed allow-list (never a caller-supplied URL) so
+ * the redirect target can't become an open redirect. `"household"` powers the optional "cook together"
+ * moment on the Done step (Family / household sharing): it runs the SAME finish (re-project + mark
+ * onboarded), just lands on `/household` so the user can invite their people right away.
  */
-export async function finishOnboardingAction(): Promise<void> {
+const FINISH_DESTINATIONS = { home: "/", household: "/household" } as const;
+type FinishDestination = keyof typeof FINISH_DESTINATIONS;
+
+/**
+ * Re-project the full ledger into the materialized UserModel (so the planner + ranking read the
+ * freshest picture) + mark onboarding done, then redirect. Shared by every finish entrypoint so the
+ * "cook together" moment lands the user on /household while running the EXACT same completion (never
+ * stranded mid-flow). `redirect` throws NEXT_REDIRECT, which must propagate — `unstable_rethrow` lets
+ * it through the surrounding try/catch. `destination` is a fixed key, so the target is never
+ * caller-controlled; an unknown value falls back to home.
+ */
+async function completeOnboarding(destination: FinishDestination): Promise<void> {
   try {
     const userId = await currentUserId();
     if (userId) {
@@ -212,5 +222,21 @@ export async function finishOnboardingAction(): Promise<void> {
   } catch (e) {
     unstable_rethrow(e); // let NEXT_REDIRECT (if any) through; otherwise swallow so finish never blocks
   }
-  redirect("/");
+  redirect(FINISH_DESTINATIONS[destination] ?? FINISH_DESTINATIONS.home);
+}
+
+/**
+ * Finish onboarding → land on the home kitchen. No-arg so it can also be used directly as a
+ * `<form action>` (the seeding-page "Finish setup" affordance passes FormData, which this ignores).
+ */
+export async function finishOnboardingAction(): Promise<void> {
+  await completeOnboarding("home");
+}
+
+/**
+ * Finish onboarding → land on /household. Powers the Done step's "cook together" moment so a user who
+ * cooks with others goes straight to inviting them (Family / household sharing) after the same finish.
+ */
+export async function finishOnboardingHouseholdAction(): Promise<void> {
+  await completeOnboarding("household");
 }
