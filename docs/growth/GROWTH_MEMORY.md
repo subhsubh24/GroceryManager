@@ -31,6 +31,49 @@ support it; the gap speaks for itself.
 
 ## RUN LOG (newest first)
 
+### 2026-07-01 — pre_launch, awaiting_connect, RUN 2 (unchanged mode: PREPARE)
+- **Mode**: PREPARE (site_gate_up: false; no channels connected; no Supabase/analytics MCP tool
+  reachable from this routine — same as run 1). No external actions taken.
+- **Did**:
+  - Read GROWTH_STATUS, GROWTH_MEMORY, and the independent GTM_SCORECARD (graded today by the
+    separate GTM Auditor routine: overall A, ship_gate_met true) — consumed its `top_gaps` as the
+    highest-priority in-repo work per GTM_STANDARD §8, since two are directly fixable without new
+    data: (1) `self_validation_honesty` structural gap — GTM_STANDARD §4 prescribes an explicit
+    `validation:` block + `gtm-connect-<source>` owner-action ids; neither existed. (2)
+    `compliance` gap — an unsourced 'well-reviewed, large user base' claim about KitchenPal in the
+    competitor-comparison blog post.
+  - Fixed both: added a `validation:` block to GROWTH_STATUS.md (per-source status +
+    `owner_action: gtm-connect-<source>` id) and 4 matching URGENT items in PENDING_OPS.md
+    (`gtm-connect-waitlist/analytics/billing/email`, cross-referencing the existing detailed
+    runbook items rather than duplicating instructions). Removed the unsourced KitchenPal claim
+    from `apps/web/app/blog/posts.ts` (kept the factual, defensible description).
+  - Ran `scripts/preflight.sh` before committing (per this repo's gate discipline) and it caught a
+    real, pre-existing bug: PENDING_OPS.md's `wire-e2e-roundtrip-ci` item had `priority: medium`,
+    which isn't one of the schema's valid values (`urgent|high|normal`) — this was silently
+    breaking the OWNER_ACTIONS YAML parse for the WHOLE dashboard (not something my edit caused,
+    but squarely in the file this run already owns). Fixed to `priority: normal`. Independent
+    reviewer confirmed everything else in this run's diff (both new YAML blocks, the blog edit)
+    parses clean and is scope-appropriate.
+  - Outreach research (§3b): searched for a genuinely strategic press/newsletter target. Found
+    "Pantry by Hilary" (a weekly Substack) but it's a personal recipe/meal-plan newsletter, not a
+    food-tech/pantry-tooling beat — no real "why they'd care", and no published contact surfaced
+    (Substack blocked direct fetch; no contact page found via search). A second search for food
+    journalist lists also 403'd on fetch. **Decision: zero outreach drafts this run** — correct per
+    OUTREACH.md when no target clears the bar (name + why + realistic reply + real contact).
+  - Updated GROWTH_STATUS: as_of → 2026-07-01; learnings/next_actions/owner_blockers refreshed;
+    flagged a CIRCUIT BREAKER (3rd run citing the same unresolved owner actions with zero owner
+    movement — SITE_GATE_PASSWORD + ADMIN_EMAIL named as the single cheapest, highest-leverage pair
+    to unblock next).
+- **Hypothesis**: none new — no analytics connected, so no funnel/PMF hypothesis to test this run.
+- **Result**: Not measurable (still no Plausible, ADMIN_EMAIL, Stripe, or email provider). All
+  funnel/pmf: 0/null, honestly.
+- **Decision**: In-repo honesty/structure fixes shipped; outreach stays at zero (correct); no
+  ROADMAP/VISION/BUSINESS_CASE steer (no new data to justify one — same as run 1).
+- **Operational note**: This routine has no Supabase/DB MCP tool and no Vercel access — it cannot
+  itself verify whether the owner has changed any env var since run 1. Confirming site_gate_up /
+  ADMIN_EMAIL / provider keys requires either the owner updating PENDING_OPS/GROWTH_STATUS directly
+  or a future run gaining a read-only analytics/DB tool.
+
 ### 2026-06-29 — pre_launch, awaiting_connect, FIRST GROWTH AGENT RUN
 - **Mode**: PREPARE (site_gate_up: false; no channels connected). No external actions taken.
 - **Did**:

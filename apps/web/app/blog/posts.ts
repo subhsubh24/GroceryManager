@@ -254,7 +254,7 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         heading: "Dedicated pantry trackers (KitchenPal)",
         body: [
-          "KitchenPal has been focused on pantry management since 2016. It tracks inventory by item — quantities, expiry dates, storage locations — with barcode scanning so you can log items in and out as you shop and cook. The app is well-reviewed and has a large user base.",
+          "KitchenPal has been focused on pantry management since 2016. It tracks inventory by item — quantities, expiry dates, storage locations — with barcode scanning so you can log items in and out as you shop and cook.",
           "KitchenPal's strength is depth: storage location tracking, expiry alerts, and a reasonably complete inventory model. Its limitation is the same one that affects most of the category: data has to be entered manually or via barcode scan. For a household that buys the same weekly staples, this can work — scan in, scan out, track expiry. For anyone who orders groceries online, gets supermarket deliveries, or simply doesn't want to scan 40 items after every shop, the manual burden accumulates quickly.",
         ],
       },

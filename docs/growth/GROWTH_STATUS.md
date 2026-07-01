@@ -39,7 +39,7 @@ the owner sees pre-launch / launch / post-launch growth progress in one place.
 ```yaml
 GROWTH_STATUS:
   project: GroceryManager
-  as_of: 2026-06-29
+  as_of: 2026-07-01
   phase: pre_launch              # pre_launch | launching | post_launch
   engine_built: true             # MUST equal (engine_pct == 100); preflight enforces it against real anchor files
   engine_pct: 100                # % of growth-execution engine pieces shipped — DERIVED from anchor files by preflight; NEVER hand-set
@@ -55,6 +55,24 @@ GROWTH_STATUS:
     analytics: awaiting_connect
     billing: awaiting_connect
     email: awaiting_connect
+  validation:                    # GTM_STANDARD §4 explicit validation ledger — fail-closed; each
+                                 #   unconnected source gets an URGENT gtm-connect-<source> OWNER_ACTION
+    waitlist:
+      status: awaiting_connect   # own datastore write is real (funnel.waitlist_confirmed above); the
+                                 #   admin READ path (/admin/waitlist) needs ADMIN_EMAIL to verify counts
+      owner_action: gtm-connect-waitlist
+    analytics:
+      status: awaiting_connect   # NEXT_PUBLIC_PLAUSIBLE_DOMAIN + PLAUSIBLE_API_KEY unset — no visitor/
+                                 #   funnel-rate metric may be reported until this resolves to connected
+      owner_action: gtm-connect-analytics
+    billing:
+      status: awaiting_connect   # STRIPE_SECRET_KEY / FEATURE_BILLING unset — no MRR/churn/CAC may be
+                                 #   reported until this resolves to connected
+      owner_action: gtm-connect-billing
+    email:
+      status: awaiting_connect   # no RESEND_API_KEY / SENDGRID_API_KEY / POSTMARK_API_KEY set — no
+                                 #   open/click rate may be reported until this resolves to connected
+      owner_action: gtm-connect-email
   funnel:                        # REAL numbers only; 0/null until a connected source reports them
     visitors_7d: 0
     waitlist_signups_total: 0
@@ -115,10 +133,31 @@ GROWTH_STATUS:
       owner action to unlock the growth agent's execute mode."
     - "Email provider not connected — waitlist signups ARE captured in DB (confirmed from prod data)
       but double-opt-in confirmation emails are not being sent. Warm leads are not being nurtured."
+    - "RUN 2 (2026-07-01): closed the two GTM_SCORECARD top_gaps that were addressable in-repo —
+      added the explicit GTM_STANDARD §4 `validation:` block (per-source status + `gtm-connect-
+      <source>` owner_action id, cross-referenced into PENDING_OPS) and removed an unsourced
+      'well-reviewed, large user base' claim about a competitor (KitchenPal) from the comparison
+      blog post (apps/web/app/blog/posts.ts) that a fresh adversarial grader had flagged as an
+      uncited third-party claim."
+    - "RUN 2: no Supabase/analytics MCP tool is reachable from this routine — self_validation stays
+      fail-closed on all 4 sources (waitlist/analytics/billing/email); did not report any metric
+      from an unverifiable source. This is unchanged from run 1; still correct."
+    - "RUN 2 outreach research: evaluated 'Pantry by Hilary' (personal weekly meal-plan/recipe
+      Substack) as a candidate strategic target. Rejected — it's a recipe/meal-plan newsletter, not
+      a pantry-tooling or food-tech beat, so there's no genuine 'why they'd care' about a pantry-
+      tracking app, and no published contact was found. Zero outreach drafted this run (correct per
+      OUTREACH.md — no genuinely strategic, high-confidence target surfaced)."
+    - "CIRCUIT BREAKER: this is the 3rd run (of the GTM Factory + GTM Auditor combined) citing the
+      SAME unresolved owner actions (SITE_GATE_PASSWORD, ADMIN_EMAIL, an email provider key,
+      Plausible) with zero progress. Per FACTORY brakes, naming this prominently rather than
+      re-deriving it: the single highest-leverage pair is SITE_GATE_PASSWORD + ADMIN_EMAIL — both
+      are ~5-minute Vercel env-var sets with no cost, and together they (a) flip site_gate_up so
+      execute-mode outreach becomes possible once a channel is also connected, and (b) unlock the
+      real waitlist count so the funnel stops being all-null."
   next_actions:
     - "Next run: attempt to read real waitlist count from /admin/waitlist once ADMIN_EMAIL is set"
-    - "Next run: research 2-3 food-tech press/newsletter targets for outreach drafts — stage for
-      when site_gate_up flips true"
+    - "Next run: re-attempt outreach research with a narrower query (food-tech product-review beat,
+      not general food/recipe newsletters) now that 'Pantry by Hilary' is ruled out as a dead end"
     - "Next run: check if the 4th blog post ('pantry-tracker-apps-2026') was published (merged to main)"
     - "Once site_gate_up true AND a channel connects: draft 1-2 curated outreach emails (press/newsletter)"
   owner_blockers:
@@ -134,6 +173,8 @@ GROWTH_STATUS:
       blog/landing traffic or visitor-to-waitlist conversion rate."
     - "NORMAL: Pick a final app name from NAMING_CANDIDATES.md (Pantri / Mise / Larder) —
       all content assets currently use '[APP_NAME]' placeholder; this blocks final email/store copy."
+    - "REPEATED (3rd run, no movement): SITE_GATE_PASSWORD + ADMIN_EMAIL are the two cheapest,
+      highest-leverage unblocks outstanding — see the CIRCUIT BREAKER learning above."
   links:
     in_app_analytics: /admin/waitlist
     owner_doc: docs/growth/GROWTH_STATUS.md
