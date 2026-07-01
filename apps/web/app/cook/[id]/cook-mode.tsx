@@ -138,7 +138,8 @@ export function CookMode({
                 <button
                   type="button"
                   onClick={() => setRunning((r) => !r)}
-                  className="rounded-lg bg-white/15 px-3.5 py-1.5 text-sm font-semibold transition hover:bg-white/25 active:scale-[0.97]"
+                  aria-label={running ? "Pause timer" : "Start timer"}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-white/15 px-3.5 text-sm font-semibold transition hover:bg-white/25 active:scale-[0.97]"
                 >
                   {running ? "Pause" : "Start"}
                 </button>
@@ -148,7 +149,8 @@ export function CookMode({
                     setRunning(false);
                     setRemaining(suggested != null ? suggested * 60 : null);
                   }}
-                  className="rounded-lg bg-white/15 px-3.5 py-1.5 text-sm font-semibold transition hover:bg-white/25 active:scale-[0.97]"
+                  aria-label="Reset timer"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-white/15 px-3.5 text-sm font-semibold transition hover:bg-white/25 active:scale-[0.97]"
                 >
                   Reset
                 </button>
@@ -160,7 +162,7 @@ export function CookMode({
                 type="button"
                 onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
                 disabled={stepIndex === 0}
-                className="flex-1 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/25 active:scale-[0.97] disabled:opacity-40"
+                className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-white/15 px-4 text-sm font-semibold transition hover:bg-white/25 active:scale-[0.97] disabled:opacity-40"
               >
                 ← Back
               </button>
@@ -171,7 +173,7 @@ export function CookMode({
                   onClick={() =>
                     document.getElementById("log-cook")?.scrollIntoView({ behavior: "smooth", block: "center" })
                   }
-                  className="flex-1 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-[#0a6e33] shadow-sm transition hover:bg-white/95 active:scale-[0.97]"
+                  className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-[#0a6e33] shadow-sm transition hover:bg-white/95 active:scale-[0.97]"
                 >
                   ✓ Done — log it
                 </button>
@@ -179,7 +181,7 @@ export function CookMode({
                 <button
                   type="button"
                   onClick={() => setStepIndex((i) => Math.min(total - 1, i + 1))}
-                  className="flex-1 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-[#0a6e33] shadow-sm transition hover:bg-white/95 active:scale-[0.97]"
+                  className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-[#0a6e33] shadow-sm transition hover:bg-white/95 active:scale-[0.97]"
                 >
                   Next →
                 </button>
