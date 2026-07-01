@@ -1859,3 +1859,53 @@ testing). Also: a color-token swap that changes a surface's base color is NOT pu
 alpha-blended rule layered on it. Factory remains NOT submission-ready: quality grade B pending the
 independent re-grade (the 2026-06-29 scorecard is STALE — its named gaps are fixed and vision is ~100% covered),
 business-case floor reach-gated (FYI #190). Did NOT open the 'ready' issue.
+
+## Run 35 — 2026-07-01 (2 file-disjoint clears, 0 abandoned, 0 reverts)
+
+A converged, quiet run. A 5-scout Haiku sweep (security/RLS+Track-G, correctness/tests, design/a11y,
+living-artifacts, monetization/business-case-strength) doubled as the folded DEEP AUDIT and confirmed the
+codebase is genuinely clean and ahead of the stale 2026-06-29 quality scorecard — the value this run was the
+FILTER as much as the fan-out.
+
+**Shipped (2):**
+- **#316 growth MRR aggregate amortization** — `computeMrrUsd` amortized the annual plan per-subscriber
+  (`counts.annual * Math.round(3999/12)` = 333¢/sub), baking a 0.25¢/sub downward rounding bias (true value
+  333.25¢) that compounds and understates MRR by a whole dollar at realistic counts (56 annual subs reported
+  $186 vs the correct $187). Fixed to round once on the aggregate; regression test pins the 56-sub boundary.
+  A real correctness bug in a monetary aggregation feeding `/api/growth/snapshot` — no pricing/estimate touched.
+- **#315 cook-mode 44px touch targets** — the core cook loop's timer (Start/Pause, Reset) and step-nav
+  (Back, Next, Done) buttons sat at ~32–40px, below WCAG 2.5.5 / Apple HIG 44px on the app's most hands-busy
+  surface. Gave all five `min-h-[44px]` with flex-centered content + dynamic `aria-label`s on the timer
+  controls. No restyle beyond the taller hit area. Advances Track F (a11y).
+
+**Rejected on verification (the sweep's real work — 5 candidates dissolved before selection):**
+- **CORS `Access-Control-Allow-Origin` "missing"** — a false positive that would WEAKEN security: the mobile
+  app is native (CORS is a browser mechanism, N/A) and the web PWA is same-origin, so omitting ACAO is the
+  correct locked-down default; adding `ACAO: *` would let any origin read API responses (already noted as a
+  fail-closed choice in run 26).
+- **cook-mode `text-[#0a6e33]` → `text-brand-solid`** — would REGRESS contrast: `--brand-solid` is `#0c8a3e`
+  (~4.0:1 on white, fails AA for small bold text) while the hardcoded darker `#0a6e33` is ~5.5:1 (passes).
+  The hardcode is a deliberate, correct contrast choice, not drift.
+- **wrapped share-text emoji** — genre-appropriate SOCIAL SHARE copy (Spotify-Wrapped style), not UI
+  iconography; the VISION "emoji as icons" rule targets UI surfaces, not share strings.
+- **stale QUALITY_SCORECARD (mobile IAP "stub")** — real drift, but the scorecard is owned by the separate
+  Quality Auditor routine (maker≠checker); the loop must NOT write it. Already flagged in run 34.
+- **monetization buildable levers** — the scout named trial-expiry push, dunning, week-1 activation, paywall
+  frequency cap, etc. as "not built," but (a) it honestly concluded NONE closes the 2.7× reach gap (floor
+  stays ~$33K — reach-gated, owner GTM), (b) billing-lapse handling is already complete (Stripe/RevenueCat
+  webhooks revoke entitlement on `subscription.updated`→past_due/canceled + `.deleted`; Stripe Smart Retries
+  cover dunning at the owner's dashboard), and (c) these are traffic-dependent post-launch TUNING = explicitly
+  the owner's job per FACTORY_STANDARD. Building untunable conversion machinery pre-launch would be churn.
+
+**Abandoned (0). Reverts (0). Circuit breaks (0).** Both changes 2/2 first-pass (one MRR reviewer initially
+mis-read a branch-visibility artifact — the committed change was on its own branch, not the checked-out tree —
+and confirmed APPROVE on the merits once pointed at the commit).
+
+**Lesson:** in a converged product, high-recall Haiku scouts over-report; the load-bearing step is the Opus
+orchestrator dissolving false positives against the REAL code before selection (this run: 5 of 7 candidates
+were rejects, two of them would have been active REGRESSIONS — the CORS and contrast "fixes"). Also: verify
+you are on the intended commit/branch before reading state — a stale local `main` (a failed `pull` left it
+behind by 6 merges) briefly made already-fixed gaps look open; always `git fetch && reset --hard origin/main`
+at run start. Factory remains NOT submission-ready: the reach-gated business-case floor (#190) and the pending
+independent quality re-grade (the 2026-06-29 scorecard is STALE) are the only blockers. Did NOT open the
+'ready' issue.
