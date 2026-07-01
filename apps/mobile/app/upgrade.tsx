@@ -173,7 +173,7 @@ export default function UpgradeScreen() {
             <Text style={styles.ctaBtnText}>Done</Text>
           </Pressable>
         ) : loading ? (
-          <ActivityIndicator color="#4a1d96" style={styles.loader} />
+          <ActivityIndicator color="#0c8a3e" style={styles.loader} />
         ) : configured ? (
           <>
             <Pressable
@@ -193,7 +193,7 @@ export default function UpgradeScreen() {
               onPress={() => onBuy("monthly")}
             >
               {busy === "monthly" ? (
-                <ActivityIndicator color="#4a1d96" />
+                <ActivityIndicator color="#0c8a3e" />
               ) : (
                 <Text style={[styles.ctaBtnText, styles.ctaBtnTextSecondary]}>
                   Start free trial — Monthly
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#4a1d96",
+    backgroundColor: "#0c8a3e",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,
@@ -261,11 +261,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   planCardFeatured: {
-    backgroundColor: "#4a1d96",
-    borderColor: "#4a1d96",
+    backgroundColor: "#0c8a3e",
+    borderColor: "#0c8a3e",
   },
   recommendedBadge: {
-    backgroundColor: "rgba(255,255,255,0.2)",
+    // A dark-translucent pill on the green card so the white "Best value" label reads at ~5.7:1;
+    // a translucent-WHITE pill would lighten toward the green and drop white text below AA.
+    backgroundColor: "rgba(0,0,0,0.16)",
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -273,13 +275,16 @@ const styles = StyleSheet.create({
   },
   recommendedText: { color: "#ffffff", fontSize: 11, fontWeight: "700" },
   planLabel: { fontSize: 13, fontWeight: "700", color: "#a3acb5", marginBottom: 4 },
-  planLabelFeatured: { color: "rgba(255,255,255,0.75)" },
+  // On the green featured card, text is solid white — semi-transparent white composites toward the
+  // green and falls below AA. Solid white on brand-solid is the design system's readable ceiling
+  // (~4.45:1, the same white-on-green pairing the web brand-solid cards use everywhere).
+  planLabelFeatured: { color: "#ffffff" },
   planPrice: { fontSize: 28, fontWeight: "800", color: "#1d2530" },
   planPriceFeatured: { color: "#ffffff" },
   planPer: { fontSize: 12, color: "#a3acb5", marginBottom: 4 },
-  planPerFeatured: { color: "rgba(255,255,255,0.75)" },
+  planPerFeatured: { color: "#ffffff" },
   planTrial: { fontSize: 11, color: "#a3acb5", textAlign: "center" },
-  planTrialFeatured: { color: "rgba(255,255,255,0.7)" },
+  planTrialFeatured: { color: "#ffffff" },
 
   section: {
     backgroundColor: "#ffffff",
@@ -313,14 +318,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  ctaBtnPrimary: { backgroundColor: "#4a1d96" },
+  ctaBtnPrimary: { backgroundColor: "#0c8a3e" },
   ctaBtnSecondary: {
     backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "#4a1d96",
+    borderColor: "#0c8a3e",
   },
   ctaBtnText: { color: "#ffffff", fontSize: 16, fontWeight: "700" },
-  ctaBtnTextSecondary: { color: "#4a1d96" },
+  ctaBtnTextSecondary: { color: "#0c8a3e" },
   ctaHint: { fontSize: 12, color: "#a3acb5", textAlign: "center", marginBottom: 16 },
   legalHint: {
     fontSize: 11,
