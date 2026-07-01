@@ -229,7 +229,7 @@ export default async function RecipesPage({
                 <CookedItButton recipeId={r.id} />
                 <a
                   href={`/remix/${r.id}`}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-grape-700"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-brand-700"
                 >
                   <Shuffle className="h-3.5 w-3.5" strokeWidth={2} /> Remix
                 </a>
