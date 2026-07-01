@@ -1128,3 +1128,33 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
     (filed 2026-06-29, "mobile can't accept payment") is stale for the same reason. The loop CANNOT re-grade
     (maker≠checker — the independent Quality Auditor owns the scorecard); the ONLY true blockers to 'ready'
     remain the re-grade + the reach-gated business-case floor (#190). Did NOT open the 'ready' issue.
+
+- **2026-07-01 (run 35) — DEEP AUDIT (folded 5-scout sweep) + 2 file-disjoint clears; converged quiet run.**
+  Ran a full Haiku scout sweep across 5 lenses (security/RLS+Track-G, correctness/tests, design/a11y,
+  living-artifacts, monetization/business-case-strength). The run's value was the FILTER: 5 of 7 surfaced
+  candidates were rejected on verification, TWO of them would have shipped active regressions —
+  (a) "CORS Access-Control-Allow-Origin missing" (adding `ACAO:*` weakens security; native mobile ignores
+  CORS, web PWA is same-origin → the locked-down default is correct), and (b) "cook-mode hardcoded
+  `#0a6e33` → `text-brand-solid`" (brand-solid `#0c8a3e` is ~4.0:1 on white and FAILS AA for small bold text;
+  the darker hardcode is a deliberate ~5.5:1 contrast choice). Also rejected: wrapped share-text emoji
+  (genre-appropriate social copy, not UI iconography), the stale QUALITY_SCORECARD mobile-IAP drift (real, but
+  owned by the separate Quality Auditor — maker≠checker), and the monetization scout's "unbuilt levers"
+  (trial-expiry/dunning/activation/paywall-cap) — the scout HONESTLY concluded none closes the 2.7× reach gap
+  (floor stays ~$33K, reach-gated owner GTM), billing-lapse handling is already complete (Stripe/RevenueCat
+  webhooks revoke entitlement on past_due/canceled/deleted; Stripe Smart Retries = owner-dashboard dunning),
+  and these are traffic-dependent post-launch TUNING = the owner's job. **Shipped (2, both 2/2):** #316 fixed
+  a real money-math bug in `computeMrrUsd` (per-sub `Math.round(3999/12)`=333¢ baked a 0.25¢/sub bias →
+  understated MRR by $1 at 56 annual subs; now amortizes on the aggregate + regression test); #315 raised the
+  cook-mode timer + step-nav buttons to the 44px WCAG/Apple touch-target minimum + timer aria-labels on the
+  app's most hands-busy surface.
+  **DEEP AUDIT verdict:** no CRITICAL findings. Security/RLS/Track-G CLEAN (all ~35 routes auth-enforced, RLS
+  deny-by-default with correct per-table policies, rate limits + spend ceiling + captcha + OWASP headers +
+  timing-safe webhook/mobile-token verification all present). Functional/monetization reality: the full mobile
+  IAP loop is wired end-to-end (purchase → RevenueCat webhook, timing-safe + fail-closed → server entitlement →
+  isPremium gating) and the vision ledger-only invariant holds — confirming the 2026-06-29 scorecard's two
+  ship-critical B gaps remain closed in code (fixed prior in #266/#263). Artifacts consistent (pricing↔billing,
+  BUSINESS_CASE YAML valid, F4 perf-budget claim already reconciled). **LESSON:** verify you're on the intended
+  commit before reading state — a stale local `main` (a failed `git pull` left it 6 merges behind) briefly made
+  already-fixed gaps look open and already-added deps look absent; `git fetch && git reset --hard origin/main`
+  at run start is non-negotiable. Still NOT submission-ready: reach-gated floor (#190) + pending independent
+  re-grade (scorecard STALE). Did NOT open the 'ready' issue.

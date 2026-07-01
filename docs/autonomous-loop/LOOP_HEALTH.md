@@ -26,7 +26,7 @@ The `QUALITY_SCORECARD` measures the **product**; this measures the **loop itsel
 ```yaml
 LOOP_HEALTH:
   project: GroceryManager
-  as_of: 2026-07-01 (run 33)
+  as_of: 2026-07-01 (run 35)
   enforced_in_ci: true           # lint + functional E2E journeys + the capabilities tripwire are REQUIRED checks on main, enforce_admins=true
   validation:                    # capability self-validation feed — refresh every run from `node scripts/check-self-validation.mjs --readiness`
     enforced_in_ci: true         # 'self-validation (capabilities tripwire)' is a required, enforce_admins status check
@@ -34,18 +34,18 @@ LOOP_HEALTH:
     active: 5
     unmet: []                    # capabilities needing an OWNER SECRET not wired in CI (loop can't supply) — each MUST also be an urgent OWNER_ACTION 'validation-capability-<service>' in PENDING_OPS
     unmet_unsurfaced: []         # MUST stay empty — an unmet capability missing from PENDING_OPS or this list is invisible to the owner (a bug)
-  last_run: 2026-07-01 (run 34)
-  last_deep_audit: 2026-07-01 (run 33, folded into the scout sweep — 5 lenses; run 34 folded a fresh 6-lens scout sweep across security/abuse, correctness, design/a11y, artifact-freshness, tests, mobile; last standalone run 30)
+  last_run: 2026-07-01 (run 35)
+  last_deep_audit: 2026-07-01 (run 35, folded 5-lens scout sweep: security/RLS+Track-G, correctness/tests, design/a11y, living-artifacts, monetization/business-case-strength — no CRITICAL findings, 5 of 7 candidates rejected on verification incl. 2 would-be regressions; runs 33/34 folded prior sweeps; last standalone run 30)
   this_run:
-    changes_shipped: 4           # #308 mobile paywall on-brand color #309 web deprecated grape/berry palette→brand/danger #310 store-copy premium-features completeness #311 db-ports unit coverage (keyless) + this housekeeping PR
+    changes_shipped: 2           # #315 cook-mode 44px touch targets + timer aria-labels (Track F a11y) #316 growth MRR aggregate-amortization money-math fix + regression test — both file-disjoint + this housekeeping PR
     changes_abandoned: 0
     abandoned_reasons: []
-    verify_cycle_failures: 0     # all 4 shipped changes passed their local gate first try (mobile typecheck / web build / core test)
-    review_rejections: 0         # all 4 got both reviewers; 2 needed one revision cycle (see review_cycles_used) but none abandoned
-    review_cycles_used: 2        # #308 (Reviewer A found a real featured-card contrast regression from the color swap — fixed: solid-white labels at the design-system ceiling + dark-translucent 'Best value' pill) and #311 (Reviewer A's mutation test found a false-confidence guard assertion — fixed: track select() calls, assert selectCount()===0) each took a 2nd cycle, then 2/2 APPROVE. #309/#310 were 2/2 first pass.
+    verify_cycle_failures: 0     # both changes passed their local gate first try (typecheck / lint --max-warnings=0 / core test / prod build)
+    review_rejections: 0         # both got both reviewers, 2/2 APPROVE first pass (one MRR reviewer mis-read a branch-visibility artifact — the commit was on its own branch, not the checked-out tree — and confirmed APPROVE on the merits once pointed at the commit; not a real rejection)
+    review_cycles_used: 1
     circuit_breaker_trips: 0
   rolling_7d:
-    merged_prs: 68               # ~64 prior + this run's #308/#309/#310/#311 (+housekeeping in flight)
+    merged_prs: 71               # 68 prior + gtm-audit #313 + this run's #315/#316 (+housekeeping in flight)
     reverts: 0
     readiness_attempts: 0
     readiness_rejected: 0
@@ -53,7 +53,20 @@ LOOP_HEALTH:
       - "duplicate-coverage trap (runs 32–33): did NOT recur in run 34 — the coverage scout confirmed db-ports.ts is genuinely CI-uncovered by grepping the target FUNCTION NAMES across all *.test.ts (every prior reference mocks the ports), and Reviewer B independently mutation-verified it's new coverage, not a dup. The run-33 LOOP_MEMORY rule worked. Streak broken; no harness proposal needed."
     harness_proposals_open: 0    # open `loop: harness improvement proposal` issues (#232 resolved by #234)
   signal: steady                 # bootstrapping | improving | steady | churning | stuck
-                                 #   run 34: 4 real value-bar clears, 0 abandons — #308 mobile paywall off-brand
+                                 #   run 35: converged quiet run — 2 real value-bar clears, 0 abandons. #315 raised the
+                                 #   cook-mode timer + step-nav buttons to the 44px WCAG/Apple touch-target minimum
+                                 #   (+timer aria-labels) on the app's most hands-busy surface; #316 fixed a real
+                                 #   money-math bug in computeMrrUsd (per-sub round(3999/12) baked a 0.25¢/sub bias →
+                                 #   $1 MRR understatement at 56 annual subs; now amortizes on the aggregate + regression
+                                 #   test). The run's value was the FILTER: 5 of 7 scout candidates rejected on
+                                 #   verification, TWO would have been active regressions (adding CORS ACAO:* = weaker
+                                 #   security; swapping the deliberate #0a6e33 contrast hardcode to the AA-failing
+                                 #   brand-solid token). Security/RLS/Track-G CLEAN; mobile IAP loop + vision invariant
+                                 #   confirmed intact (2026-06-29 scorecard's ship-critical gaps remain closed). Monetization
+                                 #   scout confirmed the honest floor is reach-gated (owner GTM), not lever-gated. 0 reverts,
+                                 #   0 circuit breaks. Convergence stays reach-gated (#190) + grade-pending (scorecard STALE,
+                                 #   independent re-grade owed). Did NOT open the 'ready' issue.
+                                 #   -- prior (run 34): 4 real value-bar clears, 0 abandons — #308 mobile paywall off-brand
                                  #   purple→brand-green (the #1 conversion surface; design bar), #309 dropped the last
                                  #   deprecated grape/berry palette usages in apps/web for brand/danger tokens, #310
                                  #   completed the store premium-feature list (unlimited Discover + spend insights) to
