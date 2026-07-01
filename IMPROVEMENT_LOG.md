@@ -1553,3 +1553,68 @@ discovery recall but over-report; the Opus orchestrator must dissolve false posi
 selecting — this run, 4 of ~6 "candidates" were scout errors (a missed test file, hallucinated copy, an
 already-surfaced route) and shipping any of them would have been churn. The correct output of a converged sweep
 is often ONE real fix + an honest "the rest didn't clear the bar," not a padded batch.
+
+## Run 36 — 2026-07-01 — H12 completed (last unbuilt buildable revenue lever) + pantry a11y; QUALITY GRADE box closed
+Two file-disjoint value-bar clears (both 2/2 Sonnet reviewers APPROVE), plus a housekeeping tick-off that
+closes the two DoD boxes whose ONLY blocker was "the artifact didn't exist yet" — now they do.
+
+### PR #323 — feat(onboarding): the Family/household "cook together" moment (H12)
+The paywall half of H12 (gated Family card on `/upgrade`) shipped long ago (PRs #154/#244); the onboarding half
+was the last unbuilt piece. Added a "Cooking with a household?" affordance to the onboarding **Done** step that
+lands the user on `/household` to invite people — the highest-intent moment to surface the Family value prop
+(ARPU/expansion) + the shared-pantry recurring-use loop (retention). Implementation notes that mattered:
+- **No stranded mid-flow.** A raw `<a href>` on the Done step would skip `finishOnboardingAction` (re-project +
+  mark `onboarded`). Instead a sibling server action `finishOnboardingHouseholdAction` runs the EXACT same
+  completion via a shared internal `completeOnboarding(destination)` helper, differing only in the redirect
+  target. `finishOnboardingAction` keeps its zero-arg signature so the `<form action>` consumer
+  (`onboarding-finish.tsx`) is untouched — a first cut that added an optional `destination` param BROKE that
+  consumer's typecheck (a form action's first arg is `FormData`), caught by the gate before review.
+- **Store-honesty gating is the whole point.** A prior run (see the run-below-this in the log) correctly worried
+  that surfacing Family DARK re-introduces the Apple 2.3.1 risk PR #244 fixed. Resolved identically to the
+  paywall: gate on `householdsEnabled()` (`FEATURE_HOUSEHOLDS`, default OFF) so the moment renders NOTHING until
+  the owner flips the flag at launch. Reviewer B verified `/household` itself redirects a non-premium tapper to
+  `/upgrade?feature=household` — the funnel is coherent end-to-end, no dead-end.
+- **Business case UNMOVED** (anti-gaming): zero Family adoption % banked; the lever is BUILT + READY, activation
+  is owner-gated exactly like billing/reach.
+
+### PR #? — a11y(pantry): ≥44px touch target on the per-item Remove button
+The pantry list's Remove button wrapped a bare 16px trash icon with no padding → tappable area far below the
+44px WCAG 2.5.8 / Apple HIG minimum, on the most-used list surface. Expanded to `min-h-[44px] min-w-[44px]`
+centered, with `-my-2 -mr-2` negative margins so the larger hit area doesn't reflow the row (the vertical
+negatives cancel the +16px min-height; horizontal stays inside the row's `gap-3`/`px-4` so no clipping of the
+status pill). Continues the ongoing a11y-hardening track (cook-mode #315, auth #300, upgrade #250).
+
+### Housekeeping ticks (evidence-based, both blockers were "artifact absent", now present)
+- **H12** → `[x]` (paywall + onboarding both surfaced, gated; PR #323).
+- **Independent QUALITY GRADE = A/A+** → `[x]`. The box's only blocker through run 35 was that
+  `docs/quality/QUALITY_SCORECARD.md` didn't exist. It now does (PR #318, 2026-07-01): overall **A**,
+  ship_gate_met **true**, every ship-critical dim at **A**, no open ship-critical `top_gap`. Consumed, NOT
+  self-graded (the separate Quality Auditor owns it). This is the re-grade run 35's memory flagged as pending.
+
+### Scout sweep — the FILTER was the value (4 Haiku scouts; most candidates dissolved)
+- **Security/Track-G:** the 4 candidates (signup `error=exists`, mobile/v1 auth generic-credential, waitlist
+  confirm) are all either INHERENT to username-based auth (a signup MUST reject a duplicate username — that's
+  not an enumeration vuln) or already-generic responses the scout speculated a timing side-channel on. No real
+  new gap; matches the standing "security CLEAN" verdict.
+- **Correctness & artifact-freshness:** both scouts returned NO REAL GAPS (business-case pricing reconciles with
+  `billing/index.ts`; README "780+" ≤ actual 841; store docs correctly omit dark household copy).
+- **Design/a11y:** the pantry trash target was the one clean win. Bottom-nav was a MISCOUNT (its link hitbox is
+  icon 36px + label + padding ≈ 55px, already > 44px). The blog "Back" button IS `text-sm text-brand-solid` (~4:1,
+  fails AA small-text) — but the correct token `text-brand-700` flips to LIGHT green in dark mode on that
+  hardcoded `bg-white` button (a new contrast regression), so the fix is non-trivial; DEFERRED rather than ship a
+  dark-mode regression on a low-traffic surface. `.back-link`/`.nav-link` already use `brand-700` (fine) and are
+  inline text links (WCAG 2.5.8 exception). Admin pages are internal (low value).
+
+**Readiness:** did NOT open the 'ready for submission' issue. With H12 built, there are now NO remaining unbuilt
+buildable revenue levers — every conversion/retention/ARPU lever the business case names (Gmail hook, referral
+rewards H13, annual nudge H14, win-back H15, Family H12) is shipped. The SOLE remaining blocker is the
+reach-gated business-case floor (honest median ≈ $33K/yr; $100K needs ~4,000–4,500 sustained downloads/mo),
+which is owner-activated demand-gen (publish/spend) the loop is FORBIDDEN to do (Human Core + Marketing
+Autonomy Boundary). The Confidence statement box therefore correctly stays UNCHECKED, and this is the genuine
+last-resort convergence state prior runs already flagged via FYI #190 — not a buildable gap.
+
+**Lesson:** "the artifact doesn't exist yet" is a REAL, resolvable blocker distinct from "the loop can't do it."
+Two DoD boxes sat open for many runs solely because their proof-artifact (the onboarding surface; the
+independent scorecard) hadn't been produced. Once the Quality Auditor published the scorecard and this run built
+the onboarding half, both closed on evidence — the loop should re-check "absent-artifact" blockers each run
+rather than treating them as permanent, while never self-producing the ones it's forbidden to (the grade).

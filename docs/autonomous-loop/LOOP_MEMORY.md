@@ -824,3 +824,31 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   now fixed); RLS/Track-G otherwise CLEAN per the security scout (rate limits, spend ceiling, headers,
   error hygiene, double-opt-in all verified present). Still NOT submission-ready (FYI #190 floor + absent
   QUALITY_SCORECARD).
+
+- **2026-07-01 (run 36) — H12 built (last unbuilt buildable revenue lever) + pantry a11y; 2 DoD boxes closed.**
+  No DEEP AUDIT (run 35 ran one same-day, within 24h). Ran a focused 4-Haiku scout sweep (security/Track-G,
+  correctness, artifact-freshness, design/a11y). **Shipped (2, both 2/2 Sonnet):** #323 completed **H12** — the
+  onboarding "cook together" moment (a `/household` affordance on the Done step, gated on `householdsEnabled()`
+  to match the paywall's store-honesty rule, running the SAME finish via a sibling `finishOnboardingHouseholdAction`
+  so no one is stranded mid-flow; NO adoption % banked); and the pantry per-item Remove button raised to the
+  ≥44px WCAG/Apple touch-target minimum with negative margins that keep the row from reflowing.
+  **Housekeeping ticked 2 DoD boxes on evidence** — both had been blocked ONLY by an absent artifact: (H12) the
+  onboarding surface now exists; (Independent QUALITY GRADE = A/A+) `docs/quality/QUALITY_SCORECARD.md` now
+  exists (PR #318, overall A, every ship-critical dim A, no open ship-critical top_gap) — consumed, not
+  self-graded. This resolves the "scorecard STALE/absent" note run 35 recorded.
+  **Scout FILTER (the run's real value):** the 4 security candidates were all inherent-to-username-auth (a signup
+  MUST reject a duplicate username — not enumeration) or already-generic responses with speculated timing
+  side-channels → no real gap (security stays CLEAN). Correctness + artifact scouts: NO REAL GAPS. Design: the
+  bottom-nav "sub-44px" was a MISCOUNT (hitbox ≈ 55px incl. label); the blog Back button's `text-brand-solid`
+  contrast IS a real AA miss but the obvious fix (`text-brand-700`) flips to LIGHT green in dark mode on that
+  hardcoded `bg-white` button — a NEW regression — so DEFERRED rather than trade one a11y bug for another.
+  **LESSON (carry forward): a token that is theme-variable can silently break a fixed-background surface.**
+  `brand-700` is dark in light mode, light in dark mode (theme-aware for on-page text). On a hardcoded `bg-white`
+  element (blog Back button), swapping `brand-solid`→`brand-700` fixes light mode but breaks dark mode. Before
+  "fix small-text contrast by using the darker link token", check whether the SURFACE is theme-variable or a
+  fixed color — a fixed-white surface needs a token/hardcode that is dark in BOTH themes (the cook-mode `#0a6e33`
+  pattern), not the theme-flipping `brand-700`.
+  **Readiness:** did NOT open the 'ready' issue. With H12 built, NO unbuilt buildable revenue lever remains — the
+  sole blocker is the reach-gated floor (median ≈ $33K < $100K; needs owner-activated demand-gen the loop is
+  forbidden to do). Confidence statement correctly stays UNCHECKED. Genuine last-resort convergence (FYI #190),
+  not a buildable gap.

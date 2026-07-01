@@ -574,10 +574,22 @@ The monetization deep-audit (run 21) named specific, buildable, value-bar-cleari
 materially strengthen the case. Per the WEAK-CASE LOOP-BACK these are BUILD work (not a "listed lever"),
 each shipped through the normal gate + 2-reviewer path, with the business case RECOMPUTED + re-sourced only
 when a lever actually ships (never reverse-engineered to hit a number). Ordered by ROI:
-- [ ] **H12. Surface the already-built Family/household tier at the paywall + onboarding.** The
+- [x] **H12. Surface the already-built Family/household tier at the paywall + onboarding.** The
       `premium_family` tier exists in billing config but the case banks ZERO Family adoption. Make it visible
       (upgrade page comparison, an onboarding "cook together" moment) so blended ARPU can lift. Adoption % must
       be left to live experiment data — do NOT assume a % to clear the floor.
+      _Done (run 36): paywall half already shipped (gated Family card on `/upgrade`, PRs #154/#244). Onboarding
+      half added (PR #323): a "Cooking with a household?" affordance on the onboarding Done step
+      (`onboarding-flow.tsx` `DoneStep`) that lands the user on `/household` via a sibling
+      `finishOnboardingHouseholdAction` running the EXACT same completion (re-project UserModel + mark
+      `onboarded`) as the home finish — never stranded mid-flow; redirect targets are a fixed allow-list (no
+      open-redirect). Gated on `householdsEnabled()` (`FEATURE_HOUSEHOLDS`, default OFF) to MATCH the paywall's
+      store-honesty rule — renders nothing when the flag is dark, so it never advertises a feature a new user
+      can't reach (no Apple 2.3.1 risk; the owner flips the flag at launch). NO adoption % banked → business
+      case UNMOVED. Gate: typecheck + 817 core tests + prod build + self-validation all green; 2 Sonnet
+      reviewers APPROVE (A: refactor preserves the form-action consumer, no open-redirect, correct dark-gating;
+      B: completes a named ARPU/retention lever, card matches the ItemsStep visual language, copy matches the
+      paywall, no gamed number)._
 - [x] **H13. Referral-reward loop (recurring-use viral lever).** The `?ref=` attribution loop exists but has
       NO incentive. Add earned rewards (e.g. a free month / credit at referral milestones) keyed to a new
       `referral_credits` table (RLS tenant-isolation); show perks on `/upgrade` + `/invite`. Margin-bounded.
@@ -813,10 +825,16 @@ missing, and do not add scope after Done.
 - [x] Track F complete — world-class quality gates all green: F1 lint enforced (zero errors/new
       warnings), F2 coverage floor, F3 complete evals (per-stage + scheduled), F4 E2E + a11y + visual
       + performance budgets, F5 periodic deep audit running with findings worked off.
-- [ ] **Independent QUALITY GRADE = A/A+ on every ship-critical dimension** (and ≥ B elsewhere), per
+- [x] **Independent QUALITY GRADE = A/A+ on every ship-critical dimension** (and ≥ B elsewhere), per
       `docs/quality/QUALITY_SCORECARD.md` — assigned by the SEPARATE Quality Auditor routine (maker ≠ checker;
       the loop consumes the grade, never self-grades), the scorecard parsing valid + preflight-backed, with no
       open ship-critical `top_gap`.
+      _Met (consumed, not self-graded): `docs/quality/QUALITY_SCORECARD.md` as of 2026-07-01 (PR #318) grades
+      **overall A, ship_gate_met: true** — every ship-critical dimension (`functional_reality`,
+      `correctness_reliability`, `security`, `design_taste`, `launch_readiness`) at **A**, the two remaining
+      **B** dims (`tests_evals`, `performance`) non-ship-critical with named non-blocking gaps, and NO open
+      ship-critical `top_gap`. This closes the re-grade blocker that kept the box open through run 35 (the
+      scorecard now exists and is fresh). The loop neither authored nor influenced the grade._
 
 **Security & abuse 100%:**
 - [x] Track G complete — pre-launch security & abuse hardening: G1 rate limiting on every paid/expensive/
