@@ -4,6 +4,47 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-01 (run 33) — 3 file-disjoint clears (LLM-fallback tests + scan error hygiene + README drift); 1 abandoned on a duplicate-coverage catch
+
+Full 5-Haiku scout sweep (monetization/paywall, tests/eval coverage, security/Track-G, artifact freshness,
+functional/design; DEEP AUDIT folded — 5 lenses, within 24h of the run-30 standalone). Orchestrator + 2
+Sonnet reviewers per change. **Key context discovered up front:** the independent QUALITY_SCORECARD
+(2026-06-29) is STALE — its two named ship-critical B gaps were already fixed after that date (mobile
+RevenueCat IAP in PR #266; the vision ledger-only write in PR #263), and the run-21 discover-POST rate-limit
+follow-up is already closed (`discover-write` limiter). So no ship-critical product gap remained to build;
+the run advanced Track F/G hardening + living-artifacts consistency.
+
+**Shipped (3):**
+- **#304 (tests_evals / correctness): cover the best-effort LLM fallbacks.** `capture/parse-llm.ts` and
+  `pantry/shelf-life-llm.ts` — two server-only LLM-assist paths that degrade deterministically on any failure
+  — were genuinely untested (confirmed by both reviewers). 12 tests: capture normalization (lowercase/trim,
+  no invented qty, dedup, 50-cap, 1000-char truncation, throw-propagation) + shelf-life guard (distrust a
+  perishable answer with no shelf life; fall back to the REAL `estimateShelfLife`; fall back on throw).
+- **#305 (Track G / G3): sanitize the analyzeScan error.** The photo-scan server action returned raw
+  `e.message` to the client (vision/Gemini SDK internals leak). Now logs server-side + returns a generic
+  message — mirroring #295 (recipe-import). Every other error return in the action was already generic; the
+  quota + signed-out cases are intercepted before the try, so the generic catch-all is correctly scoped.
+- **#306 (living artifacts): README test-count drift.** "330 core unit tests" → "780+" (real: 789 passing).
+
+**Abandoned (1) — the review gate working, and a REPEAT dead-end:** a fresh `growth/experiments`
+math test suite (stats + bucketing + lift). Reviewer A APPROVED (numerically verified, incl. a genuine
+zFromAlpha sign-regression guard), but Reviewer B (value) found it **duplicated** the existing aggregate
+`packages/core/src/growth/experiments.test.ts` (30 tests already covering assignVariant / two-proportion
+z-test / Wilson CI / minSampleSizePerArm — including the #292 zFromAlpha regression — and computeExperimentResult).
+Split verdict → abandoned per the both-approve rule; not reworked into a churny trimmed re-review. **This is
+the SAME dead-end run 32 already hit and recorded** — root cause: the coverage scout / orchestrator grep for
+*adjacent* `*.test.ts` files missed the aggregate `experiments.test.ts` that sits one level up.
+
+**Lesson:** when scouting test-coverage gaps in a directory that has an aggregate suite (e.g.
+`growth/experiments.test.ts`), grep the WHOLE directory's test files for the target function names, not just
+files named `<module>.test.ts` adjacent to the source — an aggregate test file is invisible to an adjacent-name
+scan and produces the duplicate-coverage trap twice running. Factory remains NOT submission-ready (quality grade
+B until the independent Quality Auditor re-grades the now-fixed ship-critical gaps; business-case floor
+reach-gated per FYI #190, all named buildable levers built — H12/Family stays owner-flag-blocked). Did NOT open
+the 'ready' issue.
+
+---
+
 ## 2026-06-30 (run 32) — 5 file-disjoint clears: cap EVERY LLM surface + integration timeouts + error hygiene + auth a11y
 
 Full 6-Haiku scout sweep (H12 feasibility, CI coverage holes, security/Track-G, reliability/correctness,
