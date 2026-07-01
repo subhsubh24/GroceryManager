@@ -1823,3 +1823,39 @@ elsewhere" (this run's duplication trap). And maker≠checker review earns its c
 the adversarial reviewer that rejected a low-value test found a real production bug in the same file.
 Factory remains NOT submission-ready (quality grade B until the Quality Auditor re-grades; business-case
 floor reach-gated per FYI #190). Did NOT open the 'ready' issue.
+
+## Run 34 — 2026-07-01 (4 file-disjoint clears, 0 abandoned, 0 reverts)
+
+Advanced the design (F), security-artifact, and tests (F) surfaces of already-complete tracks with four
+mutually file-disjoint changes; a 6-lens Haiku scout sweep (security/abuse, correctness, design/a11y,
+artifact-freshness, tests, mobile) doubled as the folded DEEP AUDIT.
+
+**Shipped (4):**
+- **#308 mobile paywall on-brand color** — `/upgrade` (the #1 conversion surface) rendered its featured
+  plan card, star mark, and CTAs in an off-brand purple `#4a1d96` (absent from the design system; the same
+  file's perk checkmarks were already brand-green). Replaced all 8 with brand-solid `#0c8a3e`. Reviewer A
+  caught a genuine contrast regression the swap introduced on the featured card's semi-transparent-white
+  secondary labels (~2.95:1 on the lighter green) — fixed by lifting them to solid white (the design
+  system's white-on-green ceiling, ~4.45:1) and switching the "Best value" badge to a dark-translucent pill
+  (~5.7:1).
+- **#309 web deprecated-palette removal** — `tailwind.config.ts` marks grape/berry as back-compat only; the
+  last live usages (three `text-grape-700` Remix links + the Discover skip badge) now use `text-brand-700`
+  and the semantic `danger` token (preserving the like=green / skip=red distinction).
+- **#310 store-copy premium-feature completeness** — the App Store + Google Play subscription copy
+  under-listed the paid feature set vs `billing/index.ts`; both now enumerate the same complete set (adds
+  unlimited Discover feed + advanced spend insights). Flag-gated Family/household correctly stays out.
+- **#311 db-ports keyless unit coverage** — `createDbNormalizationPorts` (the receipt/scan→canonical
+  cascade) was CI-uncovered (only a `skipIf(!url)` integration test; every unit test mocks the ports). A
+  fake `Querier` now verifies the real branching keyless: findOverride guard, degrade short-circuits, and
+  the `createCanonical` slug-conflict REUSE fallback (the receipt-idempotency invariant). Reviewer A's
+  mutation test caught a false-confidence guard assertion → hardened to assert the DB is never queried.
+
+**Abandoned (0). Reverts (0). Circuit breaks (0).** Two changes (#308, #311) took a 2nd review cycle for a
+real reviewer finding, then passed 2/2; #309/#310 were 2/2 first pass.
+
+**Lesson:** the 2-reviewer gate earns its cost as a bug-finder, not just a gatekeeper — this run it caught a
+contrast regression a "pure style swap" hid AND a false-confidence test a green suite hid (via mutation
+testing). Also: a color-token swap that changes a surface's base color is NOT purely cosmetic — re-audit every
+alpha-blended rule layered on it. Factory remains NOT submission-ready: quality grade B pending the
+independent re-grade (the 2026-06-29 scorecard is STALE — its named gaps are fixed and vision is ~100% covered),
+business-case floor reach-gated (FYI #190). Did NOT open the 'ready' issue.

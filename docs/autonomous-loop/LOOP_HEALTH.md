@@ -34,36 +34,38 @@ LOOP_HEALTH:
     active: 5
     unmet: []                    # capabilities needing an OWNER SECRET not wired in CI (loop can't supply) — each MUST also be an urgent OWNER_ACTION 'validation-capability-<service>' in PENDING_OPS
     unmet_unsurfaced: []         # MUST stay empty — an unmet capability missing from PENDING_OPS or this list is invisible to the owner (a bug)
-  last_run: 2026-07-01 (run 33)
-  last_deep_audit: 2026-07-01 (run 33, folded into the scout sweep — 5 lenses across security/RLS+abuse, functional/design, artifact-freshness, tests, monetization; last standalone run 30)
+  last_run: 2026-07-01 (run 34)
+  last_deep_audit: 2026-07-01 (run 33, folded into the scout sweep — 5 lenses; run 34 folded a fresh 6-lens scout sweep across security/abuse, correctness, design/a11y, artifact-freshness, tests, mobile; last standalone run 30)
   this_run:
-    changes_shipped: 3           # #304 LLM-fallback tests (capture-parse + shelf-life-llm) #305 scan-error-hygiene (G3) #306 README test-count fix + this housekeeping PR
-    changes_abandoned: 1         # a fresh growth/experiments math test suite (stats+bucketing+lift) — REPEAT of run 32's dead-end
-    abandoned_reasons: [review_value]
-    verify_cycle_failures: 0     # all 3 shipped changes passed their local gate (typecheck + core tests + web build) first try
-    review_rejections: 1         # 1 of 4 candidates rejected: Reviewer B (value) found the growth/experiments tests duplicated experiments.test.ts (already covers assignVariant/z-test/Wilson/minSampleSize incl. the zFromAlpha regression). Reviewer A had APPROVED — split verdict → abandoned per the both-approve rule. The other 3 got 2/2 APPROVE first pass.
-    review_cycles_used: 1        # no shipped change needed a 2nd review cycle
+    changes_shipped: 4           # #308 mobile paywall on-brand color #309 web deprecated grape/berry palette→brand/danger #310 store-copy premium-features completeness #311 db-ports unit coverage (keyless) + this housekeeping PR
+    changes_abandoned: 0
+    abandoned_reasons: []
+    verify_cycle_failures: 0     # all 4 shipped changes passed their local gate first try (mobile typecheck / web build / core test)
+    review_rejections: 0         # all 4 got both reviewers; 2 needed one revision cycle (see review_cycles_used) but none abandoned
+    review_cycles_used: 2        # #308 (Reviewer A found a real featured-card contrast regression from the color swap — fixed: solid-white labels at the design-system ceiling + dark-translucent 'Best value' pill) and #311 (Reviewer A's mutation test found a false-confidence guard assertion — fixed: track select() calls, assert selectCount()===0) each took a 2nd cycle, then 2/2 APPROVE. #309/#310 were 2/2 first pass.
     circuit_breaker_trips: 0
   rolling_7d:
-    merged_prs: 64               # ~61 prior + this run's #304/#305/#306 (+housekeeping in flight)
+    merged_prs: 68               # ~64 prior + this run's #308/#309/#310/#311 (+housekeeping in flight)
     reverts: 0
     readiness_attempts: 0
     readiness_rejected: 0
     recurring_failures:          # short bullets: the SAME wall hit across ≥2 runs (→ harness proposal if it persists)
-      - "duplicate-coverage trap: runs 32 AND 33 each abandoned a growth/experiments math test suite already covered by the aggregate experiments.test.ts. A scouting-diligence miss (adjacent-file grep didn't see the aggregate test file), not yet a harness-level wall — recorded as a specific LOOP_MEMORY line for the next run. Escalate to a harness proposal only if it recurs a 3rd time."
+      - "duplicate-coverage trap (runs 32–33): did NOT recur in run 34 — the coverage scout confirmed db-ports.ts is genuinely CI-uncovered by grepping the target FUNCTION NAMES across all *.test.ts (every prior reference mocks the ports), and Reviewer B independently mutation-verified it's new coverage, not a dup. The run-33 LOOP_MEMORY rule worked. Streak broken; no harness proposal needed."
     harness_proposals_open: 0    # open `loop: harness improvement proposal` issues (#232 resolved by #234)
   signal: steady                 # bootstrapping | improving | steady | churning | stuck
-                                 #   run 33: 3 real value-bar clears on already-complete tracks — #304 covered two
-                                 #   genuinely-untested best-effort LLM fallbacks (capture parse + shelf-life-llm,
-                                 #   both confirmed uncovered by the reviewers), #305 closed the last raw-e.message
-                                 #   leak in the scan action (G3, mirroring #295), #306 fixed README test-count drift
-                                 #   (330→780+). 1 abandon (review_value) — the 2-reviewer gate correctly caught a
-                                 #   growth/experiments test suite duplicating experiments.test.ts, a REPEAT of run
-                                 #   32's dead-end (scouting missed the aggregate test file). 0 reverts, 0 circuit
-                                 #   breaks. NOT churning: 3 shipped / 1 abandoned, all shipped changes clean 2/2.
-                                 #   Convergence stays reach-gated (#190, business-case floor) + grade-pending (the
-                                 #   independent Quality Auditor must re-grade — the scorecard's two named ship-critical
-                                 #   B gaps, mobile IAP + vision ledger write, were fixed in PRs #266/#263). Did NOT
+                                 #   run 34: 4 real value-bar clears, 0 abandons — #308 mobile paywall off-brand
+                                 #   purple→brand-green (the #1 conversion surface; design bar), #309 dropped the last
+                                 #   deprecated grape/berry palette usages in apps/web for brand/danger tokens, #310
+                                 #   completed the store premium-feature list (unlimited Discover + spend insights) to
+                                 #   match billing/index.ts, #311 unit-covered the DB normalization ports keyless (a real
+                                 #   skipIf-gated CI hole on the ingestion cascade). The 2-reviewer gate paid for itself
+                                 #   TWICE without a single wasted change: Reviewer A caught a genuine contrast regression
+                                 #   introduced by the color swap (#308) AND a false-confidence guard test via mutation
+                                 #   testing (#311) — both fixed in a 2nd cycle, both then 2/2. 0 reverts, 0 circuit
+                                 #   breaks, duplicate-coverage trap did NOT recur. Convergence stays reach-gated (#190,
+                                 #   business-case floor) + grade-pending (the independent Quality Auditor must re-grade —
+                                 #   the scorecard (2026-06-29) is STALE: its two named ship-critical B gaps were fixed in
+                                 #   PRs #266/#263, and vision now shows ~100% coverage, not the ~0% it cites). Did NOT
                                  #   open the 'ready' issue.
 ```
 

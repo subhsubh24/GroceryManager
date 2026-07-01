@@ -1089,3 +1089,42 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   - **Still NOT submission-ready (unchanged):** quality grade B pending the independent re-grade; business-case
     floor honestly reach-gated (FYI #190). H12/Family stays owner-flag-blocked (advertising a FEATURE_HOUSEHOLDS
     dark feature = Apple 2.3.1 risk — no honest store-safe slice to ship). Did NOT open the 'ready' issue.
+- **2026-07-01 (run 34) — 4 file-disjoint clears, 0 abandons, 0 reverts (#308 mobile paywall on-brand
+  color, #309 web deprecated-palette removal, #310 store-copy premium-feature completeness, #311 db-ports
+  keyless unit coverage). DEEP AUDIT folded (6-lens scout sweep).** Highest-leverage takeaways:
+  - **A color-token swap is NOT "pure style" when other rules depend on the base color via alpha.** #308
+    replaced the paywall's off-brand purple (#4a1d96, 8×) with brand-solid green (#0c8a3e). Reviewer A caught
+    a real regression: the featured card's SECONDARY labels used semi-transparent white (rgba .7–.75) that
+    composited toward the OLD dark purple at ~8:1 but toward the new lighter green at only ~2.95:1 (sub-AA).
+    The fix: solid white for those labels (~4.45:1 — the design system's DELIBERATE ceiling for white-on-green;
+    no white value can reach 4.5 on this accent, and the web brand-solid cards accept exactly this) + a
+    DARK-translucent 'Best value' pill (white text jumps to ~5.7:1, vs ~3.2:1 on the old translucent-WHITE
+    pill — a translucent-white pill LIGHTENS toward the bg and kills white-text contrast). RULE: when a diff
+    changes a surface's base/background color, re-check every alpha-blended foreground rule layered on it —
+    those untouched rules silently inherit the new contrast.
+  - **The duplicate-coverage trap (runs 32–33) did NOT recur — the run-33 rule worked.** Before proposing a
+    coverage test, grep the target FUNCTION NAMES across ALL *.test.ts (not adjacent filenames). db-ports.ts's
+    createDbNormalizationPorts is referenced in 6 test files but every one MOCKS the ports (vi.mock / hand-rolled
+    fakePorts) or is a skipIf(!url) integration test that never runs in CI — so the real slug-conflict-reuse /
+    degrade-guard branching was genuinely CI-uncovered. Reviewer B independently mutation-verified it as new,
+    not dup, coverage. Streak broken; no harness proposal needed.
+  - **A fake that returns default-empty on the happy path gives FALSE test confidence — spy on the call, not
+    just the result.** #311's first cut asserted `findOverride(null,null)` returns null, claiming it tested the
+    `if(!rawText&&!upc) return null` short-circuit. Reviewer A's mutation test (delete the guard) still passed:
+    the fake Querier's default-empty selectResults made the malformed query ALSO resolve to null. Fix: count
+    select() calls in the fake and assert `selectCount()===0`, so removing the guard now fails loud. When a
+    test claims "does X WITHOUT doing Y", assert Y did not happen — a value check alone can be satisfied by the
+    fake's defaults.
+  - **The security scout's "add a per-request rateLimit to the web LLM actions" was correctly SKIPPED, not
+    shipped.** checkLlmQuota is fully synchronous (atomic get→check→increment, no await between) so it already
+    prevents burst within a process AND caps daily spend; the web-action rateLimit would only smooth burst
+    within an already-bounded per-user daily budget (the mobile routes' rateLimit keys per-user too, same as the
+    quota — not a multi-account/IP vector). 6 near-identical PRs for marginal defense-in-depth = padding. The
+    value bar, not the scout count, decides — shipped 0 of the 6.
+  - **Two stale artifacts confirmed (do NOT re-attempt as gaps): QUALITY_SCORECARD (2026-06-29) + issue #260.**
+    The scorecard's two ship-critical B gaps are fixed in reality — mobile RevenueCat IAP (upgrade.tsx calls a
+    real Purchases.purchasePackage, degrading to "coming soon" only when no key; PR #266) and the vision
+    ledger-only write (#263) — and vision now shows ~100% coverage, not the ~0% the scorecard cites. Issue #260
+    (filed 2026-06-29, "mobile can't accept payment") is stale for the same reason. The loop CANNOT re-grade
+    (maker≠checker — the independent Quality Auditor owns the scorecard); the ONLY true blockers to 'ready'
+    remain the re-grade + the reach-gated business-case floor (#190). Did NOT open the 'ready' issue.
