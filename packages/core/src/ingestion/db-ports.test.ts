@@ -27,10 +27,12 @@ function makeFakeDb(cfg: FakeConfig = {}) {
   let s = 0;
   let i = 0;
   let e = 0;
+  let selectCalls = 0;
   const insertValues: Record<string, unknown>[] = [];
 
   const db = {
     select() {
+      selectCalls++;
       const chain = {
         from: () => chain,
         where: () => chain,
@@ -52,14 +54,16 @@ function makeFakeDb(cfg: FakeConfig = {}) {
     execute: () => Promise.resolve(executeResults[e++] ?? []),
   };
 
-  return { db: db as unknown as Querier, insertValues };
+  return { db: db as unknown as Querier, insertValues, selectCount: () => selectCalls };
 }
 
 describe("createDbNormalizationPorts — findOverride", () => {
   it("returns null without touching the DB when neither rawText nor upc is given", async () => {
-    const { db } = makeFakeDb();
+    const { db, selectCount } = makeFakeDb();
     const ports = createDbNormalizationPorts(db, "user-1");
     expect(await ports.findOverride(null, null)).toBeNull();
+    // The guard must short-circuit BEFORE any query — otherwise a malformed where-clause runs.
+    expect(selectCount()).toBe(0);
   });
 
   it("resolves a match on the rawText branch", async () => {
