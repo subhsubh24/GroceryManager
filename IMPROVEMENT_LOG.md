@@ -1909,3 +1909,81 @@ behind by 6 merges) briefly made already-fixed gaps look open; always `git fetch
 at run start. Factory remains NOT submission-ready: the reach-gated business-case floor (#190) and the pending
 independent quality re-grade (the 2026-06-29 scorecard is STALE) are the only blockers. Did NOT open the
 'ready' issue.
+
+## Run 36 — 2026-07-01 — H12 completed (last unbuilt buildable revenue lever) + pantry a11y; QUALITY GRADE box closed
+_(Recorded in the run-37 housekeeping: run 36's own bookkeeping PR #324 hit a shared-ledger merge conflict and
+could not auto-merge; its code — #323 H12 onboarding, #325 pantry a11y — has been on `main` since it merged.
+Folding the run-36 ledger here so the history isn't lost, then closing #324 as superseded.)_
+
+### PR #323 — feat(onboarding): the Family/household "cook together" moment (H12)
+The paywall half of H12 (gated Family card on `/upgrade`) shipped long ago (PRs #154/#244); the onboarding half
+was the last unbuilt piece. Added a "Cooking with a household?" affordance to the onboarding **Done** step that
+lands the user on `/household` to invite people — the highest-intent moment to surface the Family value prop
+(ARPU/expansion) + the shared-pantry recurring-use loop (retention). No stranded mid-flow: a sibling server
+action `finishOnboardingHouseholdAction` runs the EXACT same completion (re-project + mark `onboarded`) via a
+shared `completeOnboarding(destination)` helper, differing only in redirect target. Store-honesty gated on
+`householdsEnabled()` (`FEATURE_HOUSEHOLDS`, default OFF) so the moment renders NOTHING until the owner flips
+the flag at launch — no Apple 2.3.1 risk. Business case UNMOVED (no adoption % banked).
+
+### PR #325 — a11y(pantry): ≥44px touch target on the per-item Remove button
+The pantry list's Remove button wrapped a bare 16px trash icon with no padding → tappable area below the 44px
+WCAG 2.5.8 / Apple HIG minimum on the most-used list surface. Expanded to `min-h-[44px] min-w-[44px]` centered,
+with `-my-2 -mr-2` negative margins so the larger hit area doesn't reflow the row.
+
+### Housekeeping ticks (evidence-based; both blockers were "artifact absent", now present)
+- **H12** → `[x]` (paywall + onboarding both surfaced, gated; PR #323).
+- **Independent QUALITY GRADE = A/A+** → `[x]`. `docs/quality/QUALITY_SCORECARD.md` now exists (PR #318,
+  2026-07-01): overall **A**, ship_gate_met **true**, every ship-critical dim at **A**, no open ship-critical
+  `top_gap`. Consumed, NOT self-graded (the separate Quality Auditor owns it).
+
+**Lesson:** "the artifact doesn't exist yet" is a REAL, resolvable blocker distinct from "the loop can't do it."
+Two DoD boxes sat open for many runs solely because their proof-artifact (the onboarding surface; the
+independent scorecard) hadn't been produced — the loop should re-check "absent-artifact" blockers each run
+rather than treating them as permanent, while never self-producing the ones it's forbidden to (the grade).
+
+## Run 37 — 2026-07-02 — converged run: 2 disjoint coverage clears + relanded the stuck run-36 bookkeeping
+DEEP AUDIT not due (run 35/36 folded one within 24h). Ran the full 4-Haiku scout sweep across security/abuse
+(Track G), functional-reality, design/artifact-freshness, and tests/monetization. **Three of four scouts
+returned NO REAL FINDINGS** (design/artifacts clean; Track G clean — RLS + rate limits + captcha + spend
+ceiling + error hygiene all verified present; functional-reality clean — every nav target resolves, no dead
+ends/stubs on critical paths). Monetization: NO buildable lever left (H12–H15 all shipped; floor is
+reach-gated, FYI #190). The only surviving candidates were pure-logic coverage gaps — the value this run was
+the FILTER + two genuine clears (both 2/2 Sonnet reviewers APPROVE):
+
+- **PR #330 — test(recipe): recipeHtmlToText + import prompt builders.** The recipe-import model fallback
+  (paste a URL/photo, no JSON-LD) leaned on three untested pure functions. `recipeHtmlToText` has real cheerio
+  logic (strips script/style/head/nav/footer boilerplate, collapses whitespace, drops blank lines) with ZERO
+  prior coverage on a flagship user path — added edge-case tests; plus structural regression guards that both
+  prompt builders keep the shared `IMPORT_FIELD_RULES` contract (text + photo import paths stay aligned).
+  13 → 20 tests.
+- **PR #331 — test(reorder): buildCombinedInstacartPayload one-cart seam.** The one-cart staple top-up
+  (PLAN §10) composes `mergeInstacartItems` + `buildShoppingListPayload`, but the composition seam was
+  untested. Locked the null-when-empty safety contract (never send Instacart an empty cart — `buildShoppingListPayload([])`
+  happily returns a valid empty-item payload today, so this ternary is the only guard), default title, and the
+  combined shape. 4 → 7 tests.
+
+**#319 (vision-quality eval → tests_evals B→A):** I initially judged this un-doable keyless (a real
+detection-quality eval needs real fridge/pantry photos the loop can't source copyright-clean or produce
+photorealistically). A CONCURRENT run resolved it a different way in **#332** (merged to `main` during this
+run): a `scan.eval.test.ts` that runs the real detectPantryItems→Gemini-Vision path (RUN_EVALS-gated, wired
+into the scheduled evals) against a committed synthetic labeled-shelf fixture (`shelf-bootstrap.png`). That
+closes the "no image eval / no committed image fixtures" gap #319 named and validates the image pipeline
+end-to-end; full model-fidelity on REAL photos remains a ratchet (owner adds real fridge photos over time).
+Lesson: "the loop can't source real photos" is NOT the same as "the eval can't exist" — a committed synthetic
+fixture proves plumbing keyless while real photos are added incrementally (same insight as the email
+file-capture transport). **#320 (perf B→A)** is half-blocked: its CI perf-budget gate needs a `.github/` edit
+the headless loop is forbidden to make, and the edge-middleware trim is auth-critical surgery on every request
+— deferred as out-of-proportion risk for a non-ship-critical dim.
+
+**Lesson (carry forward): the value of a converged sweep is the orchestrator FILTER, not the fan-out.** A
+4-scout sweep produced 3 clean lenses + 4 raw candidates; only 2 survived verification against real code
+(a thin wrapper's null-safety contract; genuinely-untested cheerio logic). Padding the batch with the prompt
+builders alone would have failed the value bar. **Also: a prior run's
+bookkeeping PR can get stuck on a shared-ledger conflict** (PR #324) — when it does, fold its ledger content +
+ROADMAP ticks into the current run's housekeeping (based on fresh main) and close the stuck PR, rather than
+leaving the ticks unlanded.
+
+**Readiness:** did NOT open the 'ready' issue. Unchanged converged state — the sole blocker is the reach-gated
+business-case floor (median ≈ $33K/yr < $100K; needs owner-activated demand-gen the loop is forbidden to do).
+The Confidence statement box correctly stays UNCHECKED. Genuine last-resort convergence (FYI #190), not a
+buildable gap.
