@@ -1192,3 +1192,26 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   ROADMAP ticks into the current run's housekeeping (fresh main) and close the stuck PR, don't leave ticks
   unlanded. Readiness: did NOT open the 'ready' issue — unchanged converged state; the Confidence statement
   correctly stays UNCHECKED (reach-gated floor, #190).
+- **2026-07-02 (run 38) — DEEP AUDIT (standalone, 5-Haiku lens sweep): NO CRITICAL findings; converged quiet
+  run, ZERO changes shipped.** Deep audit was due (last standalone run 35, >24h). Baseline gate green
+  (typecheck clean). Five read-only lenses over the whole repo: (1) SECURITY/RLS/Track-G — CLEAN (every public
+  table RLS-enabled with correct per-user/`app_current_user_id()` or grocery_app-scoped policy; rate limits on
+  signup/auth/user APIs + account lockout + captcha + per-user/day LLM ceiling; timing-safe secret compares on
+  all webhooks/cron; OWASP headers; no leaked secrets; entitlements server-side). (2) DESIGN/A11Y/ARTIFACTS —
+  NO REAL FINDINGS (zero raw hex in TSX, ≥44px targets, icon-buttons aria-labelled; pricing↔billing↔BUSINESS_CASE
+  consistent; privacy/store copy matches shipped features + Family tier correctly flag-gated). (3) MONETIZATION —
+  NO BUILDABLE LEVER LEFT: H12–H15 all shipped, pricing/tiers/Stripe/RevenueCat/entitlement complete; the honest
+  ~$33K median→$100K floor gap is reach-gated (~4–4.5k dl/mo, owner GTM), NOT a buildable feature. (4) COVERAGE/
+  PERF — 2 perf candidates, BOTH REJECTED on verification: parallelizing the review-bulk (`review/actions.ts`)
+  and receipt-ingest (`ingestion/ingest.ts`) loops would race on `appendLedgerAndReproject`'s per-canonical
+  read-modify-write reprojection when two items in one batch map to the SAME canonical (common: duplicate lines /
+  duplicate review groups) — the sequential design is deliberate; and ingest is an async/small-N job, not a
+  user-blocking hot path. (5) CORRECTNESS — 2 candidates, BOTH REJECTED: `auth.ts` null-token-when-`TOKEN_ENC_KEY`-
+  absent is intentional degrade-by-default and already documented REQUIRED in `docs/GMAIL_SETUP.md` (tokens stored
+  null, never plaintext — no security hole); `db-ports.ts` "seed missing base unit" throw is a deploy-seeding
+  concern caught at the batch level, not a runtime logic bug. **LESSON:** a scout's "N+1 / sequential-await" perf
+  flag must be verified against the write's concurrency semantics before shipping — where the loop body does a
+  per-key read-modify-write (ledger reprojection), parallelizing is a correctness regression, not a speedup;
+  "sequential" here is the fix, not the bug. Readiness: did NOT open the 'ready' issue — converged state unchanged,
+  Confidence statement correctly stays UNCHECKED (reach-gated floor, #190). No code PRs this run (nothing cleared
+  the value bar) — a quiet coherent run is a success.
