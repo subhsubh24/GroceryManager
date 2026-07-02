@@ -1215,3 +1215,32 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   "sequential" here is the fix, not the bug. Readiness: did NOT open the 'ready' issue — converged state unchanged,
   Confidence statement correctly stays UNCHECKED (reach-gated floor, #190). No code PRs this run (nothing cleared
   the value bar) — a quiet coherent run is a success.
+- **2026-07-02 (run 39) — converged quiet run: every QUALITY_SCORECARD-named gap was ALREADY closed on `main`;
+  the one apparent remaining fix was a REGRESSION, caught before merge. ZERO code shipped.** Selected work off
+  the independent QUALITY_SCORECARD (as_of 2026-06-29, overall B) — its three ship-critical/coverage gaps:
+  (a) direct `pantry_stock` write in `vision/persist.ts`, (b) untested vision pipeline, (c) mobile IAP "Payments
+  coming soon" stub. **All three are already resolved on `origin/main`** and verified via `git show origin/main:…`:
+  (a) `source` is threaded through `appendLedgerAndReproject`/`reprojectStock` and the confirm loop is ledger-only
+  (no direct write); (b) `vision/detect.test.ts` covers `detectPantryItems`/`scanModelFor` via a fake client;
+  (c) `apps/mobile/lib/purchases.ts` has a real `Purchases.purchasePackage`/`getOfferings`/`restore` flow with an
+  honest keyless degrade, and `upgrade.tsx` wires it. The scorecard is a LAGGING signal (runs 36–38 closed these
+  after it was graded) — the next Quality-Auditor grade should re-verify and likely lift `correctness_reliability`
+  + `launch_readiness` to A (unblocking DoD "independent QUALITY GRADE = A/A+"). **THE TRAP (carry forward): a
+  mobile change can pass `npm ci` + `tsc` and still break the native build.** A builder subagent proposed adding
+  `"react-native-purchases"` to `apps/mobile/app.json` `plugins` to "wire the native module" — it passed
+  `npm ci` + `npm run typecheck`, but `react-native-purchases` ships NO Expo config plugin (no `app.plugin.js`),
+  so `npx expo config` FAILS: `PluginError … SyntaxError: Unexpected token 'typeof'` (Expo loads the SDK's main
+  entry as if it were a plugin). RN native modules like this AUTOLINK from the dependency alone — `main` is already
+  correct (dep present at `^10.4.0`, `plugins: ["expo-router"]`, `expo config` exits 0). Adding the plugin entry is
+  a REGRESSION, not a fix. **LESSONS:** (i) validate mobile/Expo config changes with `npx expo config --type public`,
+  NOT just `tsc` — the mobile CI job only runs `npm ci` + typecheck, which is BLIND to a broken `plugins` array
+  (a BUILDS≠WORKS hole at the Expo-config seam); (ii) a dependency being autolinked ≠ needing a `plugins` entry —
+  only libraries that ship `app.plugin.js` (extra native config) belong there; (iii) a builder subagent that shares
+  the parent's git working tree can entangle branch pointers (its `checkout -B`/commit moved HEAD onto my branch) —
+  reconcile via `git reflog`/`branch -f` and re-verify, or prefer worktree isolation for parallel mutating agents.
+  CLEANUP: the subagent pushed `origin/claude/mobile-iap` (contains the regression + a cosmetic `^10.4.0→^10.4.1`
+  caret bump) — its delete-push kept hitting a proxy `send-pack: unexpected disconnect`; it has NO PR and cannot
+  auto-merge, so it's harmless — a future run should delete it when the proxy cooperates. Readiness: did NOT open
+  the 'ready' issue — DoD unchanged (quality grade still B pending re-grade; reach-gated floor #190). Deep audit
+  not due (run 38 ran one same day). Nothing cleared the value bar → shipped nothing but this memory. A quiet,
+  coherent run is a success; the load-bearing work was the orchestrator REFUSING a green-gate regression.
