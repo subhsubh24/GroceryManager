@@ -1244,3 +1244,22 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   the 'ready' issue — DoD unchanged (quality grade still B pending re-grade; reach-gated floor #190). Deep audit
   not due (run 38 ran one same day). Nothing cleared the value bar → shipped nothing but this memory. A quiet,
   coherent run is a success; the load-bearing work was the orchestrator REFUSING a green-gate regression.
+
+- **2026-07-02 (run 40) — 2 file-disjoint clears (a11y + business-case accuracy); a design-bar rework caught in
+  review; every "coverage gap" was already covered.** Deep audit not due (run 38 same day). 4-Haiku scout sweep
+  (coverage, design/a11y, living-artifacts, security/Track-G). **Shipped 2, both 2/2:** #354 (cookbook save-heart
+  → 44px, high-traffic icon-only control on every recipe card) and #355 (BUSINESS_CASE freemium split: `plan` was
+  wrongly listed FREE but `plan_week` is a hard PREMIUM feature — corrected free/premium lists to match
+  `billing/index.ts`, +Family `FEATURE_HOUSEHOLDS` gate note; NO number/YAML change). **The FILTER was the run's
+  value:** the coverage scout's 5 candidates were ALL already covered — `experiments/stats.ts` is directly tested
+  by the *barrel* `experiments.test.ts` (incl. the `zFromAlpha` sign-regression guard), `merge-order.test.ts`
+  covers the instacart merge, `par-tuning`/`bucketing` have 6 tests each — all rejected as duplication. Security
+  CLEAN. **LESSONS:** (a) the correct 44px fix for a *bordered/visible* control is negative-margin hit-slop
+  (`-my-2 -mr-2` on a BARE icon, the #325 pattern), NOT `min-h` on a `btn-ghost` box (which inflates it to a
+  visible 44px square) — Reviewer B caught this on attempt 1, reworked, then 2/2. (b) a Haiku coverage scout
+  over-claims "no test": verify sibling AND barrel test files before writing a coverage test. (c) the quality
+  scorecard re-graded to **A** (as_of 2026-07-01) → run 39's pending blocker is CLEARED, ship gate MET; the two
+  residual B dims are non-blocking (#320 perf = half-forbidden `.github/` gate; #319 tests_evals = ALREADY
+  satisfied by #332's `scan.eval.test.ts`, scorecard lags a day). **Readiness:** did NOT open 'ready' — sole DoD
+  gap is the reach-gated floor (base ≈ $33K < $100K, owner GTM, #190); no buildable lever moves the honest
+  pre-launch median. Confidence statement stays UNCHECKED. Quiet, coherent, converged run = success.
