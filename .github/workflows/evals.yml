@@ -25,6 +25,9 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       # Dummy — the evals are LLM-output-quality only (no real DB reads), but loadEnv() requires a URL.
       DATABASE_URL: postgresql://user:pass@localhost:5432/db
+      # Evals run in CI, NOT under the serverless request budget — give Gemini a generous wall-clock so a
+      # slow (but correct) call isn't scored as a failure. The 8s default is the prod Hobby limit; too tight here.
+      LLM_TIMEOUT_MS: "60000"
     steps:
       - uses: actions/checkout@v4
 
