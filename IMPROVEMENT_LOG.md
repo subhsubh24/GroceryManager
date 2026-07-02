@@ -1987,3 +1987,51 @@ leaving the ticks unlanded.
 business-case floor (median ≈ $33K/yr < $100K; needs owner-activated demand-gen the loop is forbidden to do).
 The Confidence statement box correctly stays UNCHECKED. Genuine last-resort convergence (FYI #190), not a
 buildable gap.
+
+---
+
+## Run 40 (2026-07-02) — 2 file-disjoint clears (a11y + a living-artifact accuracy fix); the run's value was the FILTER + a design-bar rework caught in review
+
+Deep audit not due (run 38 ran one same day). Full 4-Haiku scout sweep (coverage, design/a11y, living-artifacts,
+security/Track-G). **Shipped 2, both 2/2 Sonnet:**
+
+- **#354 — `a11y(cookbook)`: save-heart → 44px touch target.** The icon-only Save-to-Cookbook heart used
+  `btn-sm` (~28–30px), below the app's established 44px control minimum (cf. #325 pantry Remove, #315 cook-mode).
+  It sits on every recipe card (Discover/search/cookbook). **First attempt inflated a bordered `btn-ghost` box
+  to a visible 44px square** — Reviewer B correctly REQUESTED_CHANGES on the design bar: #325 grows the *hit
+  area* via `-my-2 -mr-2` negative-margin slop while keeping the *visible* box compact. Reworked to the exact
+  #325 bare-icon-slop pattern; both reviewers then approved.
+- **#355 — `docs(business-case)`: corrected the freemium feature split.** The funnel section listed `plan`
+  (the AI weekly planner) among the FREE features, but `plan_week` is a hard PREMIUM feature
+  (`PREMIUM_FEATURES` in `packages/core/src/billing/index.ts`, gated by `canUse`). Corrected the free list to the
+  real free core loop (pantry/cook/list/capture-scan) + the premium list 1:1 to `PREMIUM_FEATURES`, and noted the
+  Family card is `/upgrade`-surfaced behind `FEATURE_HOUSEHOLDS` (dark by default). Prose/accuracy only — NO
+  scenario number, ARPU, or `BUSINESS_CASE_SUMMARY` YAML change (base 4% free→paid is benchmark-derived).
+
+**The FILTER did the heavy lifting (converged-run discipline):** the coverage scout's TOP-5 were ALL already
+covered — `growth/experiments/stats.ts` is directly + comprehensively tested by the barrel `experiments.test.ts`
+(incl. the exact `zFromAlpha` sign-regression guard I would have added); `mergeInstacartItems` +
+`buildCombinedInstacartPayload` by `reorder/merge-order.test.ts`; `par-tuning`/`bucketing` each already have 6
+tests. All rejected as duplication. Security/Track-G scout: CLEAN (no new unprotected route/table). Two
+design-scout candidates deferred as marginal: the capture mic is an absolutely-positioned textarea overlay
+(44px risks layout), staples dosing controls are low-traffic + text-labelled.
+
+**LESSONS:**
+1. **The correct 44px fix for a *bordered/visible* control is negative-margin hit-slop, NOT `min-h` on the
+   visible box.** `min-h-[44px]` on a `btn-ghost` literally enlarges the bordered box to a 44px square; the
+   repo pattern (#325) is a BARE icon + `-my-2 -mr-2` so the tap target grows invisibly and the row doesn't
+   reflow. A "44px touch target" fix must preserve the visible footprint. Reviewer B's "no" was load-bearing.
+2. **A Haiku coverage scout will over-claim "no test."** Its 5 candidates were all covered; verify sibling AND
+   *barrel* test files (`experiments.test.ts` covers the whole `experiments/` dir directly, not just via the
+   index) before writing a "missing coverage" test — else you ship duplication.
+3. **Quality scorecard re-graded to A (as_of 2026-07-01) — run 39's pending blocker is CLEARED**; ship gate MET
+   (every ship-critical dim A). Its two remaining B dims are non-blocking: `performance` (#320 — half-forbidden,
+   the CI perf-budget gate is a `.github/` edit) and `tests_evals` (#319 — **already satisfied** by #332's
+   `llm/evals/scan.eval.test.ts`, a live-Gemini vision-quality eval on real fridge photos; the scorecard/#319
+   lag by one day, next re-grade should lift it). Neither is a buildable product gap this run.
+
+**Readiness:** did NOT open the 'ready' issue. The SOLE open DoD gap remains the reach-gated business-case floor
+(base ≈ $33K/yr < $100K; needs owner-activated demand-gen the loop is forbidden to do — FYI #190). No buildable
+lever moves the honest pre-launch median (conversion/ARPU/retention can't be re-banked without live traffic
+data). The Confidence statement correctly stays UNCHECKED. A quiet, coherent, converged run — the value was two
+genuine clears + refusing three duplicative "coverage" candidates and one off-pattern a11y implementation.
