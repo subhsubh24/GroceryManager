@@ -6,16 +6,13 @@
  * self-validates WITHOUT a live camera/upload: the image files ARE the inputs — captured once, tested
  * forever. Gated behind RUN_EVALS=1 so per-PR CI never spends; runs in the scheduled evals workflow.
  *
- * Ratchet (§8.5): whenever a REAL scan mis-detects, drop that photo into fixtures/images/ with its
- * expected items — coverage grows monotonically.
- *
- * NOTE on fidelity: `shelf-bootstrap.png` is a clearly-labeled synthetic shelf — it proves the PIPELINE
- * (image → real vision model → detections → assertions). A synthetic image is a lossy fixture for a vision
- * model; for real accuracy, add REAL fridge/pantry photos (they validate the model, not just the plumbing).
+ * The fixtures are REAL photographs of open refrigerators (open-licensed, from Wikimedia Commons — see
+ * fixtures/images/ATTRIBUTION.md). NOTHING synthetic or AI-generated. Grow coverage over time: add more
+ * real fridge/pantry photos under an open license + a matching entry below (the ratchet, §8.5).
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { dirname, join, extname } from "node:path";
 import { describe, it, expect } from "vitest";
 import { GeminiClient, type ImagePart } from "../client.js";
 import { detectPantryItems } from "../../vision/detect.js";
@@ -33,18 +30,29 @@ const DIR = dirname(fileURLToPath(import.meta.url));
 
 type ScanFixture = { name: string; file: string; expected: string[] };
 
-/** Golden scan photos. Add REAL fridge/pantry/receipt photos here as the ratchet fills in. */
+/**
+ * Golden scan photos — REAL open-licensed fridge photographs (see fixtures/images/ATTRIBUTION.md).
+ * `expected` = grocery items a human verified are clearly visible. Add more real photos here to grow it.
+ */
 const SCAN_FIXTURES: ScanFixture[] = [
   {
-    name: "labeled-shelf-bootstrap",
-    file: "fixtures/images/shelf-bootstrap.png",
-    expected: ["milk", "eggs", "bread", "bananas", "tomato sauce", "orange juice"],
+    // Real home fridge, produce-heavy (CC BY-SA 4.0, W.carter).
+    name: "fridge-home-produce",
+    file: "fixtures/images/fridge-home-produce.jpg",
+    expected: ["tomatoes", "oranges", "lemon", "carrots", "grapes", "cheese"],
+  },
+  {
+    // Real showroom fridge with staged food (CC BY 2.0, Maurizio Pesce).
+    name: "fridge-showroom",
+    file: "fixtures/images/fridge-showroom.jpg",
+    expected: ["apples", "pasta"],
   },
 ];
 
 function imagePart(file: string): ImagePart {
   const bytes = readFileSync(join(DIR, file));
-  return { mimeType: "image/png", dataBase64: bytes.toString("base64") };
+  const mimeType = extname(file).toLowerCase() === ".png" ? "image/png" : "image/jpeg";
+  return { mimeType, dataBase64: bytes.toString("base64") };
 }
 
 describe.skipIf(!RUN)("vision scan evals (live Gemini)", () => {
