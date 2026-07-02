@@ -1,11 +1,26 @@
 import { describe, expect, it } from "vitest";
 import {
   aggregate,
+  isRateLimitError,
   namePresent,
   scoreReceiptExtraction,
   scoreRecipeImport,
   type EvalCaseResult,
 } from "./harness.js";
+
+describe("isRateLimitError (transient API blips → skip, not fail)", () => {
+  it("matches rate limits AND provider overloads (429 + 503)", () => {
+    expect(isRateLimitError(new Error("got 429 RESOURCE_EXHAUSTED: quota"))).toBe(true);
+    expect(
+      isRateLimitError(new Error('{"error":{"code":503,"message":"experiencing high demand","status":"UNAVAILABLE"}}')),
+    ).toBe(true);
+    expect(isRateLimitError(new Error("The model is overloaded. Please try again later."))).toBe(true);
+  });
+  it("does NOT match a genuine failure (so real regressions still fail loud)", () => {
+    expect(isRateLimitError(new Error("400 INVALID_ARGUMENT: bad request"))).toBe(false);
+    expect(isRateLimitError(new Error("Gemini call exceeded 8000ms timeout"))).toBe(false);
+  });
+});
 
 describe("namePresent (fuzzy item matching)", () => {
   it("matches on substring or full token coverage", () => {
