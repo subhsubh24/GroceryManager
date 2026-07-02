@@ -3,8 +3,8 @@
  * personal info — referral codes, names, card/order numbers), with human-verified expected items = the
  * ground truth. A real fixture proves the model on real-world messiness (replacements, refunds, weight
  * adjustments, retailer quirks); a synthetic one only proves the pipeline. Add a real mis-parsed case
- * here whenever one is found — that's the ratchet (§8.5). (Recipe fixtures below are still synthetic —
- * swap in real recipe imports the same way.)
+ * here whenever one is found — that's the ratchet (§8.5). RECIPE_FIXTURES now leads with a REAL imported
+ * recipe (the two synthetic cases are retired as more real recipe imports are added the same way).
  */
 import type { ExpectedReceipt, ExpectedRecipe } from "./harness.js";
 
@@ -109,6 +109,60 @@ export interface RecipeFixture {
 }
 
 export const RECIPE_FIXTURES: RecipeFixture[] = [
+  {
+    // REAL — imported from a real recipe (thecozycook.com/stuffed-chicken-breast). Grow with more real
+    // recipe imports; the two synthetic cases below are retired as real ones accumulate.
+    name: "real-cozy-stuffed-chicken",
+    text: [
+      "Stuffed Chicken Breast",
+      "From The Cozy Cook · Serves 4 · Prep 20 min · Cook 25 min",
+      "",
+      "Ingredients:",
+      "Chicken & Seasoning:",
+      "- 4 boneless skinless chicken breasts",
+      "- Salt and pepper, to taste",
+      "- 1/2 teaspoon paprika",
+      "- 1 tablespoon olive oil",
+      "Filling:",
+      "- 2 teaspoons olive oil",
+      "- 3 cups packed spinach, roughly chopped",
+      "- 4 cloves garlic, minced",
+      "- 1/3 cup sun-dried tomatoes, drained and chopped",
+      "- 4 oz cream cheese, softened",
+      "- 1 cup shredded mozzarella",
+      "- 1/3 cup Parmesan, grated",
+      "- 1/2 teaspoon dried basil",
+      "- 1/2 teaspoon dried oregano",
+      "- 1/4 teaspoon onion powder",
+      "- 1 pinch red pepper flakes",
+      "",
+      "Instructions:",
+      "1. Preheat oven to 375°F.",
+      "2. Heat oil in a large skillet over medium heat. Add spinach and garlic; cook until wilted, 3-4 minutes. Let cool.",
+      "3. Combine the remaining filling ingredients, then gently stir in the spinach/garlic and tomatoes. Set aside.",
+      "4. Pat chicken dry. Use a sharp paring knife to cut a pocket in each breast (do not cut through).",
+      "5. Stuff each chicken breast with the filling. Sprinkle the tops with salt, pepper, and paprika.",
+      "6. Heat oil in a large skillet over medium-high heat. Sear 2 breasts at a time until golden, 2-3 minutes per side.",
+      "7. Bake uncovered at 375°F for 17-20 minutes, until the thickest part reaches 165°F. Rest 5 minutes.",
+    ].join("\n"),
+    expected: {
+      title: "Stuffed Chicken Breast",
+      ingredientNames: [
+        "chicken breasts",
+        "paprika",
+        "olive oil",
+        "spinach",
+        "garlic",
+        "sun-dried tomatoes",
+        "cream cheese",
+        "mozzarella",
+        "parmesan",
+        "basil",
+        "oregano",
+      ],
+      minSteps: 6,
+    },
+  },
   {
     name: "garlic-chili-pasta",
     text: [
