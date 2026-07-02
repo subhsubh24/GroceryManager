@@ -100,6 +100,7 @@ test.describe("authed journeys (outcome-asserting)", () => {
   });
 
   test("onboarding STEPS THROUGH every step to a working dashboard (no stuck/looping step)", async ({ page }) => {
+    test.setTimeout(90_000); // stepping through async AI taste turns is slower than a single-screen assert
     // Regression guard for the onboarding taste-step LOOP: a "lands on /onboarding" assertion missed it
     // entirely. This actually STEPS THROUGH each macro step (Profile → Taste → Items → Done) to the
     // dashboard. A step that dead-ends or loops never leaves /onboarding within the bound → this fails
@@ -131,7 +132,7 @@ test.describe("authed journeys (outcome-asserting)", () => {
     );
     await expect(page.locator("body")).not.toContainText(ERROR_SCREEN);
     await expect(page.getByText(/sign out/i).first()).toBeVisible();
-  }, 90_000);
+  });
 
   test("every primary nav target resolves to its real screen", async ({ page }) => {
     await signUp(page);
