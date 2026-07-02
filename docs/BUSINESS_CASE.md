@@ -69,7 +69,8 @@ base case below uses the individual-only $3.82 ARPU.** Family adoption is treate
 not a base assumption, because there is **no clean public benchmark for the share of paying users who
 choose a family/multi-seat tier** (industry data confirms family plans lift *retention* ~52 % and that
 ~37 % of consumers share subscriptions, but not a reliable adoption %). The Family card is built and
-surfaced in `/upgrade` (`CheckoutButton plan="family"`, PR #154) and the Stripe webhook maps its price
+surfaced in `/upgrade` behind the `FEATURE_HOUSEHOLDS` flag (dark by default — `CheckoutButton
+plan="family"`, PR #154) and the Stripe webhook maps its price
 ID to `premium_family`; charging it needs the owner to create the Stripe/RevenueCat product (Human
 Core). We do not bank the floor on an uncited adoption rate.
 
@@ -135,9 +136,11 @@ covered at any meaningful scale.
 Downloads → Signups → Paid (free→paid) → Retained
 ```
 
-GroceryManager is **generous-free**: pantry, cook, list, capture/scan, and plan are all free. Premium
-is an *upsell* (unlimited AI meal plans/remix, Gmail receipt import, advanced spend insights, Grocery
-Wrapped+). So the conversion that matters is the **freemium free→paid rate** — the observed share of
+GroceryManager is **generous-free**: pantry, cook, list, and capture/scan are all free (the whole core
+daily loop). Premium is an *upsell* on top of that free loop — the AI weekly planner, unlimited Discover,
+AI recipe remix, automatic Gmail receipt import, Family/household sharing, advanced spend insights, and
+Grocery Wrapped+ (the full gated set is `PREMIUM_FEATURES` in `packages/core/src/billing/index.ts`). So
+the conversion that matters is the **freemium free→paid rate** — the observed share of
 *free signups* who ever become paid — NOT a hard-paywall trial-conversion rate. Modelling it as
 `trial_start% × trial→paid%` (as the prior revision did) overstates conversion by 2.5–6× for an app
 most people can use forever without paying.
