@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildImportImagePrompt,
+  buildImportPrompt,
   cleanIngredientName,
   extractRecipeJsonLd,
   fieldsToImportedRecipe,
   isPublicHttpUrl,
+  recipeHtmlToText,
 } from "./import.js";
 
 const page = (jsonLd: unknown) =>
@@ -193,5 +196,66 @@ describe("fieldsToImportedRecipe", () => {
       { name: "beef", measure: "500 g" },
       { name: "salt", measure: undefined },
     ]);
+  });
+});
+
+describe("recipeHtmlToText (model-fallback page cleanup)", () => {
+  it("drops scripts/styles/nav/footer/head boilerplate and keeps the recipe content", () => {
+    const html = [
+      "<html><head><title>SiteName</title><style>.a{color:red}</style></head>",
+      "<body>",
+      "<nav>Home Recipes About</nav>",
+      "<h1>Fluffy Pancakes</h1>",
+      "<script>track('view')</script>",
+      "<p>Whisk the batter and cook on a griddle.</p>",
+      "<footer>Copyright 2026 SiteName</footer>",
+      "</body></html>",
+    ].join("\n");
+    const out = recipeHtmlToText(html);
+    expect(out).toContain("Fluffy Pancakes");
+    expect(out).toContain("Whisk the batter and cook on a griddle.");
+    // Removed subtrees leave nothing behind.
+    expect(out).not.toContain("Home Recipes About");
+    expect(out).not.toContain("track(");
+    expect(out).not.toContain("color:red");
+    expect(out).not.toContain("Copyright");
+    expect(out).not.toContain("SiteName");
+  });
+
+  it("collapses runs of whitespace within a line to single spaces and trims", () => {
+    expect(recipeHtmlToText("<body><p>Mix    flour\tand   eggs</p></body>")).toBe(
+      "Mix flour and eggs",
+    );
+  });
+
+  it("drops blank lines produced by removed elements", () => {
+    const out = recipeHtmlToText(
+      "<body>\n<script>x</script>\n<p>Only real content</p>\n<style>y</style>\n</body>",
+    );
+    expect(out).toBe("Only real content");
+  });
+
+  it("returns empty string for empty or whitespace-only markup", () => {
+    expect(recipeHtmlToText("")).toBe("");
+    expect(recipeHtmlToText("   \n  \t ")).toBe("");
+  });
+});
+
+describe("buildImportPrompt / buildImportImagePrompt", () => {
+  it("wraps the recipe text in delimiters and carries the shared field rules", () => {
+    const p = buildImportPrompt("2 eggs\n1 cup flour");
+    expect(p).toContain("2 eggs\n1 cup flour");
+    expect(p).toContain("--- RECIPE ---");
+    expect(p).toContain("--- END ---");
+    // The shared IMPORT_FIELD_RULES contract (the two import entry points must stay aligned).
+    expect(p).toContain("set servings to null");
+    expect(p).toContain("instructions:");
+  });
+
+  it("targets the photo path but reuses the exact same field rules", () => {
+    const p = buildImportImagePrompt();
+    expect(p).toContain("photo");
+    expect(p).toContain("set servings to null");
+    expect(p).toContain("instructions:");
   });
 });
