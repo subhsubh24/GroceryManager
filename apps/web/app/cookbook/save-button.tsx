@@ -42,7 +42,7 @@ export function SaveButton({
       aria-pressed={saved}
       aria-label={saved ? "Remove from My Cookbook" : "Save to My Cookbook"}
       title={saved ? "Saved — tap to remove" : "Save to My Cookbook"}
-      className="btn-ghost btn-sm shrink-0 disabled:opacity-50"
+      className="-my-2 -mr-2 flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-ink-50 disabled:opacity-50"
     >
       <Heart
         aria-hidden
