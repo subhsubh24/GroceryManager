@@ -108,26 +108,30 @@ test.describe("authed journeys (outcome-asserting)", () => {
     await signUp(page); // asserts redirect to /onboarding (step 1: Profile)
 
     const forward = /^(continue|i.?ll do this later|go to my kitchen|next)$/i;
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 20; i++) {
       if (!new URL(page.url()).pathname.startsWith("/onboarding")) break; // left onboarding → done
+      // The AI taste turn is async — let any in-flight turn settle (the "One sec…" spinner clears) so the
+      // step is interactive and each Continue actually SUBMITS (otherwise clicks land on a disabled button
+      // and the question cap is never reached).
+      await page.getByText(/one sec/i).waitFor({ state: "hidden", timeout: 12_000 }).catch(() => {});
       // Taste needs a selection to enable Continue — tap a chip or type one; harmless on other steps.
       const chip = page.locator(".chip-tap, [aria-pressed]").first();
       const custom = page.getByPlaceholder(/add your own/i);
       if (await chip.isVisible().catch(() => false)) await chip.click().catch(() => {});
       else if (await custom.isVisible().catch(() => false)) await custom.fill("Indian").catch(() => {});
       const fwd = page.getByRole("button", { name: forward }).last();
-      if (!(await fwd.isVisible().catch(() => false))) break;
-      await fwd.click().catch(() => {});
-      await page.waitForTimeout(500);
+      if (await fwd.isEnabled().catch(() => false)) await fwd.click().catch(() => {});
+      await page.waitForTimeout(700);
     }
 
     // INTENDED OUTCOME: onboarding COMPLETED to the working dashboard — not stuck/looping on a step.
     await expect(page, "onboarding must complete to the dashboard, not loop on a step").not.toHaveURL(
       /\/onboarding/,
+      { timeout: 15_000 },
     );
     await expect(page.locator("body")).not.toContainText(ERROR_SCREEN);
     await expect(page.getByText(/sign out/i).first()).toBeVisible();
-  });
+  }, 90_000);
 
   test("every primary nav target resolves to its real screen", async ({ page }) => {
     await signUp(page);

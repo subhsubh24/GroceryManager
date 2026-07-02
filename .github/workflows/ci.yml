@@ -182,6 +182,9 @@ jobs:
       # loop bug once hid) and PROVES they DEGRADE gracefully instead of trapping/erroring the user. Every
       # LLM call must be try/catch-degraded (CLAUDE.md); this exercises that convention end-to-end.
       GEMINI_API_KEY: ci-invalid-dummy-key-degrade-path-only
+      # Fail the (always-failing) dummy-key LLM calls FAST so the AI onboarding turns resolve quickly and
+      # the journey doesn't crawl. Short here on purpose; prod uses the real per-request budget.
+      LLM_TIMEOUT_MS: "2500"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
