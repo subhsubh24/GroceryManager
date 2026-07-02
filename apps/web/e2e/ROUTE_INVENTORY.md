@@ -26,6 +26,7 @@ BASE_URL=http://localhost:3000 pnpm --filter @gm/web e2e
 | **signup → onboarding** | new account redirects into `/onboarding` (not /signup, not error) |
 | **signup → dashboard** | `/` renders the real dashboard (sign-out control + "Getting started"); **never** the "Couldn't load your dashboard" error boundary — *the exact break that "compiles + passes" hid* |
 | **returning sign-IN** | a returning user signs in through the real `/signin` form (next-auth credentials → real DB) and lands on the working dashboard; on failure the test surfaces the auth-error banner + console/page errors (evidence, not a blind timeout) — covers the LaunchGuard re-login path distinct from signup |
+| **onboarding step-through** | STEPS THROUGH every macro step (Profile → Taste → Items → Done) to the working dashboard — a step that dead-ends or LOOPS never leaves `/onboarding` and fails loud. The e2e job sets a dummy `GEMINI_API_KEY` so the AI taste path renders + its fail-degrade is exercised (the taste-loop bug this catches) |
 | **primary nav** | `/`, `/pantry`, `/list`, `/recipes`, `/plan`, `/discover`, `/profile` each render their real screen — not the error boundary, not a bounce to /signin |
 | **paywall** | `/upgrade` renders a real price (`$…`) + upgrade affordance |
 | **settings** | `/profile` renders for the user |

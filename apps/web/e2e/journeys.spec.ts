@@ -99,6 +99,36 @@ test.describe("authed journeys (outcome-asserting)", () => {
     await expect(page.getByText(/sign out/i).first()).toBeVisible();
   });
 
+  test("onboarding STEPS THROUGH every step to a working dashboard (no stuck/looping step)", async ({ page }) => {
+    // Regression guard for the onboarding taste-step LOOP: a "lands on /onboarding" assertion missed it
+    // entirely. This actually STEPS THROUGH each macro step (Profile → Taste → Items → Done) to the
+    // dashboard. A step that dead-ends or loops never leaves /onboarding within the bound → this fails
+    // LOUD instead of the user being trapped. (The e2e job sets a dummy GEMINI_API_KEY so the AI taste
+    // path — where the loop lived — actually renders + exercises its fail-degrade path in CI.)
+    await signUp(page); // asserts redirect to /onboarding (step 1: Profile)
+
+    const forward = /^(continue|i.?ll do this later|go to my kitchen|next)$/i;
+    for (let i = 0; i < 12; i++) {
+      if (!new URL(page.url()).pathname.startsWith("/onboarding")) break; // left onboarding → done
+      // Taste needs a selection to enable Continue — tap a chip or type one; harmless on other steps.
+      const chip = page.locator(".chip-tap, [aria-pressed]").first();
+      const custom = page.getByPlaceholder(/add your own/i);
+      if (await chip.isVisible().catch(() => false)) await chip.click().catch(() => {});
+      else if (await custom.isVisible().catch(() => false)) await custom.fill("Indian").catch(() => {});
+      const fwd = page.getByRole("button", { name: forward }).last();
+      if (!(await fwd.isVisible().catch(() => false))) break;
+      await fwd.click().catch(() => {});
+      await page.waitForTimeout(500);
+    }
+
+    // INTENDED OUTCOME: onboarding COMPLETED to the working dashboard — not stuck/looping on a step.
+    await expect(page, "onboarding must complete to the dashboard, not loop on a step").not.toHaveURL(
+      /\/onboarding/,
+    );
+    await expect(page.locator("body")).not.toContainText(ERROR_SCREEN);
+    await expect(page.getByText(/sign out/i).first()).toBeVisible();
+  });
+
   test("every primary nav target resolves to its real screen", async ({ page }) => {
     await signUp(page);
     // The core product surfaces an authed user reaches from the home/nav. Each must render, not error.
