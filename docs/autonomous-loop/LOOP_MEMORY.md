@@ -1158,3 +1158,37 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   already-fixed gaps look open and already-added deps look absent; `git fetch && git reset --hard origin/main`
   at run start is non-negotiable. Still NOT submission-ready: reach-gated floor (#190) + pending independent
   re-grade (scorecard STALE). Did NOT open the 'ready' issue.
+
+- **2026-07-01 (run 36) — H12 built (last unbuilt buildable revenue lever) + pantry a11y; 2 DoD boxes closed.**
+  (Recorded via run-37 housekeeping — run 36's bookkeeping PR #324 hit a shared-ledger merge conflict and never
+  auto-merged; its code #323/#325 is on `main`.) No DEEP AUDIT (run 35 ran one same-day). Shipped #323 (H12
+  onboarding "cook together" moment, gated on `householdsEnabled()`, sibling `finishOnboardingHouseholdAction`
+  so no one is stranded mid-flow; NO adoption % banked) and #325 (pantry Remove button → ≥44px touch target).
+  Ticked 2 DoD boxes on evidence — both blocked ONLY by an absent artifact: H12's onboarding surface now exists;
+  the independent QUALITY_SCORECARD now exists (PR #318, overall A). **LESSON (carry forward): a token that is
+  theme-variable can silently break a fixed-background surface.** `brand-700` is dark in light mode, light in
+  dark mode; on a hardcoded `bg-white` element (the blog Back button) swapping `brand-solid`→`brand-700` fixes
+  light mode but breaks dark mode — a fixed-white surface needs a token dark in BOTH themes (the cook-mode
+  `#0a6e33` pattern), not the theme-flipping `brand-700`. That contrast fix was DEFERRED rather than trade one
+  a11y bug for another.
+- **2026-07-02 (run 37) — converged run: 2 disjoint coverage clears + relanded the stuck run-36 bookkeeping.**
+  DEEP AUDIT not due (folded run 35/36, within 24h). Full 4-Haiku scout sweep: design/artifacts, Track-G
+  security/abuse, and functional-reality ALL returned NO REAL FINDINGS; monetization confirmed NO buildable
+  lever left (H12–H15 shipped; floor reach-gated, #190). Shipped 2 pure-logic coverage clears (both 2/2 Sonnet):
+  #330 (`recipeHtmlToText` real cheerio logic + import prompt-builder contract, 13→20 tests) and #331
+  (`buildCombinedInstacartPayload` null-when-empty one-cart safety contract, 4→7 tests). **LESSONS:**
+  (a) **the value of a converged sweep is the orchestrator FILTER, not the fan-out** — 4 scouts, 3 clean lenses,
+  4 raw candidates, only 2 survived verification against real code; padding the batch would have failed the bar.
+  (b) **#319 (vision-quality eval) — I judged it un-doable keyless, but a CONCURRENT run shipped it (#332)** via a
+  RUN_EVALS-gated `scan.eval.test.ts` over the real detectPantryItems→Gemini path against a committed SYNTHETIC
+  labeled-shelf fixture (`shelf-bootstrap.png`); real-photo fidelity remains a ratchet. Lesson: "the loop can't
+  source real photos" ≠ "the eval can't exist" — a committed synthetic fixture proves the image pipeline keyless
+  (same insight as the email file-capture transport); don't declare an eval impossible before trying a synthetic
+  fixture. (Also a concurrency lesson: check `git log origin/main` for concurrent merges before writing ledger
+  claims — I nearly shipped a stale "can't be done" note the same hour #332 did it.)
+  (c) **#320 (perf B→A) is half-forbidden** — its CI perf-budget gate is a `.github/` edit + the edge-middleware
+  trim is auth-critical surgery on every request; out-of-proportion risk for a non-ship-critical dim → deferred.
+  (d) **a prior run's bookkeeping PR can get stuck on a shared-ledger conflict (PR #324)** — fold its ledger +
+  ROADMAP ticks into the current run's housekeeping (fresh main) and close the stuck PR, don't leave ticks
+  unlanded. Readiness: did NOT open the 'ready' issue — unchanged converged state; the Confidence statement
+  correctly stays UNCHECKED (reach-gated floor, #190).
