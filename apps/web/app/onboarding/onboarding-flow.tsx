@@ -433,10 +433,15 @@ function TasteStepAI({ onDone, onBack }: { onDone: () => void; onBack: () => voi
         setCustom("");
         setAnswered(answeredNow);
       } catch {
-        // The server action self-bounds the LLM call and normally returns a graceful fallback, so a
-        // hard reject here is rare (e.g. a network blip). Don't dead-end onboarding: advance with a
-        // generic question + tappable chips and clear the inputs so the user can always keep going
-        // (or Skip). Onboarding is best-effort — never trap the user on a model hiccup.
+        // NEVER trap the user: honor the question cap here too, exactly like the success path above. The
+        // old code checked the cap ONLY in the try, so a persistently-rejecting turn re-rendered this same
+        // fallback forever ("keeps repeating the same thing"). Once we've hit the cap, advance out.
+        if (answeredNow >= MAX_AI_QUESTIONS) {
+          onDone();
+          return;
+        }
+        // Otherwise degrade gracefully: a generic question + tappable chips + cleared inputs so the user
+        // can keep going (or Skip). Onboarding is best-effort — never dead-end on a model/network hiccup.
         setTranscript((t) => [
           ...t,
           { role: "assistant", content: "Got it! What kinds of food do you usually love to eat?" },

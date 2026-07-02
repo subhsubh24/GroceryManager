@@ -176,6 +176,15 @@ jobs:
       # because GitHub Actions sets CI=true. Declared in capabilities.json → the self-validation tripwire
       # asserts it stays wired (else the round-trip would silently SKIP and go green-but-unvalidated).
       EMAIL_CAPTURE_DIR: /tmp/gm-email-sink
+      # TEST/CI ONLY — a DUMMY (invalid) Gemini key. NOT a secret and never valid: it exists so the app runs
+      # in "LLM CONFIGURED but every call fails" mode — the realistic prod condition (a real key that rate-
+      # limits/errors). This forces the AI code paths to render (e.g. the AI onboarding taste step, where a
+      # loop bug once hid) and PROVES they DEGRADE gracefully instead of trapping/erroring the user. Every
+      # LLM call must be try/catch-degraded (CLAUDE.md); this exercises that convention end-to-end.
+      GEMINI_API_KEY: ci-invalid-dummy-key-degrade-path-only
+      # Fail the (always-failing) dummy-key LLM calls FAST so the AI onboarding turns resolve quickly and
+      # the journey doesn't crawl. Short here on purpose; prod uses the real per-request budget.
+      LLM_TIMEOUT_MS: "2500"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
