@@ -116,6 +116,11 @@ OWNER_ACTIONS:
           EMAIL_FROM_NAME=GroceryManager  (optional sender display name)
           EMAIL_UNSUBSCRIBE_SECRET=<random 32+ char secret>  (HMAC for unsubscribe tokens)
           WAITLIST_OPTIN_SECRET=<random 32+ char secret>  (HMAC for waitlist double-opt-in confirm links)
+          NOTE (PR #378): these two HMAC secrets are now REQUIRED in a prod runtime. The
+          email-unsubscribe (/api/email/unsubscribe) and waitlist-confirm (/api/waitlist/confirm)
+          paths FAIL CLOSED (throw) rather than sign with the public dev fallback (which would make
+          tokens forgeable). Signup/login are unaffected — they never use these. Set both before
+          going live; the email lifecycle + waitlist double-opt-in flows will error until they are set.
           PLAUSIBLE_API_KEY=<Plausible Stats API key>  (lets GET /api/growth/snapshot pull real visitors)
           X_API_KEY=<X/Twitter Bearer token>  (for publishItem to X — optional, skip if not using X)
           BUFFER_ACCESS_TOKEN=<token>  (for Buffer scheduling — optional)
@@ -191,7 +196,7 @@ OWNER_ACTIONS:
       title: Create Cloudflare Turnstile site + set CLOUDFLARE_TURNSTILE_SECRET_KEY + NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY
       priority: high
       status: open
-      why: The Turnstile captcha is now wired BOTH server-side (verifyTurnstile on waitlist + signup) AND client-side (PR #252 renders the <Turnstile> widget on both forms when NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY is set; it renders nothing — and the server fail-opens — when the key is absent). So the ONLY remaining work is owner config: set the two keys. NOTE: once the SECRET key is set in prod, the SITE key MUST also be set, or the widget won't render a token and verifyTurnstile will reject every signup/waitlist submission (PR #252 fixed the missing widget; setting only the secret would re-break it).
+      why: The Turnstile captcha is now wired BOTH server-side (verifyTurnstile on waitlist + signup) AND client-side (PR #252 renders the <Turnstile> widget on both forms when NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY is set; it renders nothing — and the server fail-opens — when the key is absent). So the ONLY remaining work is owner config: set the two keys. NOTE: once the SECRET key is set in prod, the SITE key MUST also be set, or the widget won't render a token and verifyTurnstile will reject every signup/waitlist submission (PR #252 fixed the missing widget; setting only the secret would re-break it). As of PR #380, if the SECRET key is absent in a prod runtime the server still fail-opens (so signup is never hard-blocked, per §32) but now logs a LOUD `[captcha] ... MISSING in a PRODUCTION runtime` error every request — so the gap is visible in prod logs until you set the keys.
       how: "Create a site at dash.cloudflare.com → Turnstile. Set BOTH env vars in Vercel: CLOUDFLARE_TURNSTILE_SECRET_KEY (server) and NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY (client). No code change needed — the widget is already rendered in apps/web/app/components/turnstile.tsx. Verify: load /signup in prod and confirm the Turnstile challenge appears, then complete a test signup."
       blocks: launch-safety
     - id: llm-quota-redis-upgrade

@@ -1316,3 +1316,30 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   floor (base ≈ $33K < $100K at median inputs, #190), which the monetization lens re-confirmed is owner-GTM,
   not a buildable lever. Confidence statement correctly stays UNCHECKED. Validation 5/5 active, 0 unmet. A
   coherent converged run with 2 real clears + a full 5-lens deep audit = success.
+
+- **2026-07-03 (run 42) — 3 file-disjoint synthetic-green / fail-open hardening clears from the open backlog
+  (issue #359), all 2/2, 0 abandons. No deep audit (run 41 ran one same day, <24h).** Worked the filed
+  backlog rather than re-scouting: #359 named three real §28 gaps, split into three DISJOINT PRs, each
+  reviewed by 2 Sonnet reviewers (A correctness/security + B value), auto-merged through green CI.
+  **#378** — the unsubscribe + waitlist double-opt-in HMAC secrets fell back to a PUBLIC repo constant when
+  their env var was unset → forgeable tokens in prod. Extracted `resolveUnsubscribeSecret`/`resolveOptinSecret`
+  as pure env-injected classifiers mirroring the `isProdRuntime` guard (`rate-limit-guard.ts`,
+  `resolveEmailCaptureDir`): throw in a real prod runtime, keep the dev/CI fallback (CI carve-out). +10 keyless
+  tests. **#379** — `vision-scan`/`predict-recompute` BullMQ queues were wired to a no-op `stub()` (jobs marked
+  COMPLETED doing nothing; a nightly cron even enqueued `predict-recompute` — a LIVE nightly synthetic-green).
+  Replaced with `notImplemented()` that THROWS (job → FAILED, visible) and dropped the false cron. **#380** —
+  `verifyTurnstile` fail-opened SILENTLY without the captcha key → invisible prod bot-protection bypass. Added a
+  keyless `captchaEnforcement` classifier in `@gm/core`; a missing key in prod now logs LOUDLY, still fail-OPEN
+  per §32 (never hard-block signup). LIVING-ARTIFACT touch in the same housekeeping: PENDING_OPS now flags
+  `EMAIL_UNSUBSCRIBE_SECRET`/`WAITLIST_OPTIN_SECRET` as REQUIRED (fail-closed) in prod, and the turnstile-keys
+  action notes the new loud-in-prod log.
+  **LESSONS:** (1) canonical fix for a "silent public fallback" hole = a pure env-injected `isProdRuntime`
+  classifier in `packages/core/src/security/` + keyless test; mirror the `CI=true` carve-out or the
+  e2e-under-`next start` job breaks. (2) fail-closed vs §32: a security key guarding a CORE action (captcha →
+  signup) fails LOUD-but-OPEN; only BYPASS flags whose presence IS the misconfig boot-throw. (3) `apps/web` +
+  `services/workers` have NO unit-test runner — testable decision logic goes in `packages/core` to earn
+  coverage. (4) reviewer nit (non-blocking, pre-launch moot): deleting a BullMQ `add({repeat})` doesn't
+  deregister an already-persisted repeatable; the worker isn't deployed, so `predict-nightly` was never in a
+  prod Redis — if ever deployed, `removeJobScheduler("predict-nightly")` once. **Readiness:** did NOT open the
+  'ready' issue — the sole DoD gap is unchanged (reach-gated floor #190, owner-GTM). Confidence statement stays
+  UNCHECKED. Validation 5/5, 0 unmet. A focused backlog-clearing run = success.
