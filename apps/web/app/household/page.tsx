@@ -132,6 +132,7 @@ export default async function HouseholdPage() {
             <input
               type="text"
               name="name"
+              aria-label="Household name"
               placeholder="Household name (e.g. The Smiths)"
               className="input min-w-[16rem] flex-1"
             />
