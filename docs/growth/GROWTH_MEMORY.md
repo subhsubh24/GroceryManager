@@ -31,6 +31,58 @@ support it; the gap speaks for itself.
 
 ## RUN LOG (newest first)
 
+### 2026-07-03 — pre_launch, awaiting_connect, RUN 3 (unchanged mode: PREPARE)
+- **Mode**: PREPARE (site_gate_up: false; no channels connected; ListConnectors confirms only Gmail +
+  Google Drive are connected — no Supabase/Plausible/Stripe MCP tool reachable, same as runs 1-2). No
+  external actions taken.
+- **Did**:
+  - Read GROWTH_STATUS, GROWTH_MEMORY, GTM_SCORECARD, PENDING_OPS. Confirmed PENDING_OPS is byte-for-byte
+    unchanged on all 4 `gtm-connect-*` items and `site-gate-prelaunch` since run 2 (2026-07-01) — zero
+    owner movement across 2 days / multiple other-track commits (quality/bookkeeping runs touched
+    unrelated files).
+  - Noticed GTM_STANDARD gained two new sections since run 2: **§10 pre-launch demand validation**
+    (added 2026-07-02, PR #344) and **§11 marketing creative** (added 2026-07-02, PR #352/#353/#361).
+    §11 requires a connected posting channel to matter (none connected — correctly out of scope this
+    run). §10 is pure research, doable in PREPARE mode — did it this run.
+  - **§10 demand validation**: ran 9 WebSearch queries (Reddit-scoped phrasing x6, competitor-review
+    x3) + 2 WebFetch calls against review aggregators. Reddit-scoped queries returned zero citable
+    exact-quote threads (a tool/method limitation, logged honestly — not "no Reddit pain exists").
+    Competitor App/Play Store review aggregators (ComplaintsBoard for Paprika, grand-screen.com for
+    KitchenPal) DID surface real, quoted, sourced complaints. Two of three themes found are DURABLE
+    (recur across a recipe-first app AND a barcode-first app: "the pantry is never up-to-date," "purchases
+    don't automatically flow into the pantry") and squarely match this product's receipt/Gmail-import +
+    depletion-tracking core loop — corroborates LESSON-0 with a second, independent evidence type. The
+    third theme (barcode/UPC scanning is tedious/unreliable) is only PARTIALLY solved by this product,
+    since `/barcode` is itself a manual per-item flow — logged as an honest gap, not a win. Wrote the full
+    synthesis + citations to `GROWTH_STATUS.demand_signal`.
+  - Added ONE citation-only footnote to `docs/BUSINESS_CASE.md` §3 (the signup→paid input table) noting
+    this real-review corroboration for the Gmail-import-hook justification of the base 4% rate. **No
+    number was changed** — per §10's hard bound, qualitative demand signal never becomes a fabricated
+    figure. Not a ROADMAP/VISION/BUSINESS_CASE-number steer (§3): this reinforces an existing bet with a
+    second evidence type, it doesn't introduce new information that would redirect the roadmap, so no
+    steer authority was exercised.
+  - Ran an independent reviewer subagent (fresh context, told to adversarially refute) against this run's
+    full diff before committing — see its verdict below.
+  - Outreach research (§3b): per run 2's next_action, searched for a food-tech beat journalist/newsletter
+    (narrower than run 2's general food/recipe query). Surfaced Food Dive, Grocery Dive, FoodTech Weekly,
+    DigitalFoodLab — all are B2B/funding-round trade press covering deals and enterprise grocery-tech, not
+    consumer app launches, so there's no genuine "why they'd care" about a pre-traction consumer waitlist
+    and no realistic reply to anticipate. **Decision: zero outreach drafts this run** — correct per
+    OUTREACH.md.
+  - Updated GROWTH_STATUS: as_of -> 2026-07-03; added `demand_signal` block; refreshed
+    learnings/next_actions/owner_blockers; escalated the circuit-breaker language (3+ runs / 5 days now,
+    with an explicit re-check that PENDING_OPS is unchanged, not just "presumed unchanged").
+- **Hypothesis**: none new on the funnel (still no analytics connected). The demand-signal work is a
+  qualitative confidence-raise on an EXISTING hypothesis (LESSON-0 / the Gmail-import conversion hook),
+  not a new funnel hypothesis.
+- **Result**: Not measurable on the funnel (still no Plausible/ADMIN_EMAIL/Stripe/email provider). The
+  demand-signal synthesis itself is the deliverable this run — real, cited, and honest about its limits.
+- **Decision**: Ship the demand_signal block + the BUSINESS_CASE footnote (reviewer-cleared); outreach
+  stays at zero (correct); no ROADMAP/VISION/BUSINESS_CASE-number steer.
+- **Operational note**: confirmed via `ListConnectors` that this routine has exactly Gmail + Google Drive
+  connected (no analytics/DB/billing MCP) — same conclusion as runs 1-2's "no Supabase/DB tool" note, now
+  backed by an explicit tool call instead of an assumption.
+
 ### 2026-07-01 — pre_launch, awaiting_connect, RUN 2 (unchanged mode: PREPARE)
 - **Mode**: PREPARE (site_gate_up: false; no channels connected; no Supabase/analytics MCP tool
   reachable from this routine — same as run 1). No external actions taken.

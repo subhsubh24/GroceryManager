@@ -39,7 +39,7 @@ the owner sees pre-launch / launch / post-launch growth progress in one place.
 ```yaml
 GROWTH_STATUS:
   project: GroceryManager
-  as_of: 2026-07-01
+  as_of: 2026-07-03
   phase: pre_launch              # pre_launch | launching | post_launch
   engine_built: true             # MUST equal (engine_pct == 100); preflight enforces it against real anchor files
   engine_pct: 100                # % of growth-execution engine pieces shipped — DERIVED from anchor files by preflight; NEVER hand-set
@@ -147,18 +147,31 @@ GROWTH_STATUS:
       a pantry-tooling or food-tech beat, so there's no genuine 'why they'd care' about a pantry-
       tracking app, and no published contact was found. Zero outreach drafted this run (correct per
       OUTREACH.md — no genuinely strategic, high-confidence target surfaced)."
-    - "CIRCUIT BREAKER: this is the 3rd run (of the GTM Factory + GTM Auditor combined) citing the
-      SAME unresolved owner actions (SITE_GATE_PASSWORD, ADMIN_EMAIL, an email provider key,
-      Plausible) with zero progress. Per FACTORY brakes, naming this prominently rather than
-      re-deriving it: the single highest-leverage pair is SITE_GATE_PASSWORD + ADMIN_EMAIL — both
-      are ~5-minute Vercel env-var sets with no cost, and together they (a) flip site_gate_up so
-      execute-mode outreach becomes possible once a channel is also connected, and (b) unlock the
-      real waitlist count so the funnel stops being all-null."
+    - "CIRCUIT BREAKER (now 3+ runs / 5 days, 2026-06-29 -> 2026-07-03, zero owner movement): the SAME
+      unresolved owner actions (SITE_GATE_PASSWORD, ADMIN_EMAIL, an email provider key, Plausible) are
+      still open — confirmed by re-reading PENDING_OPS.md this run: all four are still `status: open`,
+      identical to run 2. No Supabase/Plausible/Stripe MCP connector is available to this routine either
+      (checked via ListConnectors: only Gmail + Google Drive are connected). Per FACTORY brakes, naming
+      this prominently rather than re-deriving it: the single highest-leverage pair is still
+      SITE_GATE_PASSWORD + ADMIN_EMAIL — both are ~5-minute Vercel env-var sets with no cost."
+    - "RUN 3 (2026-07-03): did the NEW GTM_STANDARD §10 pre-launch demand-validation work (added
+      2026-07-02, after run 2) — see the `demand_signal` block. Found real, dated competitor-review
+      evidence (Paprika + KitchenPal) that independently corroborates LESSON-0 from a second evidence
+      type (user reviews, not just feature-matrix research). Added a citation-only footnote to
+      BUSINESS_CASE.md §3 (no number changed) reflecting the qualitative confidence-raise per §10's hard
+      bound. No ROADMAP/VISION/BUSINESS_CASE-figure steer taken — this corroborates the existing bet, it
+      doesn't introduce new information that would redirect it."
+    - "RUN 3 outreach research: searched for a food-tech beat journalist/newsletter per run 2's
+      next_action. Surfaced Food Dive / Grocery Dive / FoodTech Weekly / DigitalFoodLab — all are
+      B2B/funding-round trade press, not consumer-app-launch coverage, so there's no genuine 'why
+      they'd care' about a pre-traction consumer waitlist. Zero outreach drafted this run (correct per
+      OUTREACH.md — still no genuinely strategic, high-confidence target with a real reason + published
+      contact)."
   next_actions:
     - "Next run: attempt to read real waitlist count from /admin/waitlist once ADMIN_EMAIL is set"
-    - "Next run: re-attempt outreach research with a narrower query (food-tech product-review beat,
-      not general food/recipe newsletters) now that 'Pantry by Hilary' is ruled out as a dead end"
-    - "Next run: check if the 4th blog post ('pantry-tracker-apps-2026') was published (merged to main)"
+    - "Next run: try Reddit's native search (or a Reddit-specific tool if one becomes available) for the
+      demand-signal work — this run's generic WebSearch could not surface citable Reddit threads despite
+      6 attempts; App/Play Store review aggregators are a real but partial substitute"
     - "Once site_gate_up true AND a channel connects: draft 1-2 curated outreach emails (press/newsletter)"
   owner_blockers:
     - "CRITICAL: Set SITE_GATE_PASSWORD in Vercel env to flip site_gate_up: true — this is the
@@ -173,8 +186,75 @@ GROWTH_STATUS:
       blog/landing traffic or visitor-to-waitlist conversion rate."
     - "NORMAL: Pick a final app name from NAMING_CANDIDATES.md (Pantri / Mise / Larder) —
       all content assets currently use '[APP_NAME]' placeholder; this blocks final email/store copy."
-    - "REPEATED (3rd run, no movement): SITE_GATE_PASSWORD + ADMIN_EMAIL are the two cheapest,
+    - "REPEATED (3+ runs / 5 days, no movement): SITE_GATE_PASSWORD + ADMIN_EMAIL are the two cheapest,
       highest-leverage unblocks outstanding — see the CIRCUIT BREAKER learning above."
+  demand_signal:                 # GTM_STANDARD §10 — pre-launch demand validation (leading indicator, NOT PMF)
+    as_of: 2026-07-03
+    method: "WebSearch + WebFetch against competitor App/Play Store review aggregators. 6 targeted
+      Reddit-scoped WebSearch queries (r/mealprep-style phrasing, quoted frustration strings) returned
+      NO citable exact-quote threads this run — see limitations below; this is an honest method gap,
+      not a claim that Reddit pain doesn't exist."
+    themes:
+      - theme: "Manual pantry entry never stays current"
+        durability: durable        # recurs across structurally different competitor apps
+        solved_by_product: true
+        evidence:
+          - quote: "the pantry is a cumbersome place that's never up-to-date"
+            source: "Paprika Recipe Manager 3 user review (C. Moen), via ComplaintsBoard"
+            url: "https://www.complaintsboard.com/paprika-recipe-manager-3-b149019"
+            date: not_shown_by_source
+          - quote: "the additional Pantry and Groceries features I find are mediocre"
+            source: "Paprika Recipe Manager 3 user review (P. Kerluke), via ComplaintsBoard"
+            url: "https://www.complaintsboard.com/paprika-recipe-manager-3-b149019"
+            date: not_shown_by_source
+        note: "Corroborates LESSON-0 (2026-06-29, feature-matrix research) with a SECOND, independent
+          evidence type — real user reviews — and shows the pain recurs in a recipe-first app (Paprika),
+          not only in barcode-first trackers."
+      - theme: "Purchases don't automatically flow into the tracked pantry"
+        durability: durable
+        solved_by_product: true
+        evidence:
+          - quote: "marking an item in Grocery as purchased can be added to the pantry, but it doesn't appear to increase"
+            source: "Paprika Recipe Manager 3 user review (D. Bogan), via ComplaintsBoard"
+            url: "https://www.complaintsboard.com/paprika-recipe-manager-3-b149019"
+            date: not_shown_by_source
+        note: "This is exactly the receipt/Gmail auto-fill + depletion-projection gap the product is built around."
+      - theme: "Barcode/UPC scanning is unreliable and tedious"
+        durability: recent
+        solved_by_product: partial
+        evidence:
+          - quote: "Many UPC come up with the wrong info or no info at all, requiring the user to manually input data."
+            source: "KitchenPal: Pantry Inventory user review (DAH), via grand-screen.com aggregator"
+            url: "https://grand-screen.com/apps/kitchenpal-pantry-inventory/reviews/"
+            date: "aggregator-displayed 2025-10-17 (see dating caveat below)"
+          - quote: "it locked up my whole phone when I tried to scan barcodes"
+            source: "KitchenPal user review (Maria Veen), via grand-screen.com aggregator"
+            url: "https://grand-screen.com/apps/kitchenpal-pantry-inventory/reviews/"
+            date: "aggregator-displayed 2025-10-17 (see dating caveat below)"
+          - quote: "Slow when creating a new item, slow during item search."
+            source: "KitchenPal user review (Jane Sanders), via grand-screen.com aggregator"
+            url: "https://grand-screen.com/apps/kitchenpal-pantry-inventory/reviews/"
+            date: "aggregator-displayed 2025-10-17 (see dating caveat below)"
+        note: "GroceryManager's receipt/Gmail path avoids this for shop-triggered updates, but its OWN
+          /barcode manual-add path shares this exact friction class for non-receipt items — an HONEST
+          partial-solve, not a claimed full win."
+    disconfirming_or_limitations:
+      - "No citable exact-quote Reddit thread surfaced this run across 6 targeted WebSearch queries.
+        Read as a search-tool/method gap (try Reddit's native search or a Reddit-specific tool next
+        run), NOT as evidence that Reddit pain doesn't exist."
+      - "All 3 KitchenPal review quotes carry the identical aggregator-displayed date (2025-10-17) across
+        3 different reviewer names — almost certainly the page's scrape/cache date, not each review's true
+        post date. Treated as 'recent, roughly within the last year,' not a precise per-review timestamp."
+    synthesis: >
+      2 of 3 surfaced themes are DURABLE (recurring across a recipe-manager AND a dedicated barcode
+      tracker — structurally different apps making the identical complaint) and both are precisely the
+      gap this product's receipt/Gmail auto-fill + depletion tracking targets. This corroborates LESSON-0
+      with a second, independent evidence type (real dated user reviews, not just feature-matrix
+      research). The third theme (barcode tedium) is only PARTIALLY solved today, since /barcode is
+      itself a manual per-item flow. CONFIDENCE: raises confidence in the EXISTING positioning bet; per
+      §10's hard bound this stays qualitative — no adoption-rate or CAC number was invented or moved, and
+      no ROADMAP/VISION/BUSINESS_CASE-number steer was taken this run (added one citation-only footnote
+      to BUSINESS_CASE.md §3, not a figure change).
   links:
     in_app_analytics: /admin/waitlist
     owner_doc: docs/growth/GROWTH_STATUS.md
