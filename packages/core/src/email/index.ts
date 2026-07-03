@@ -26,8 +26,39 @@ export interface EmailResult {
 
 // ─── Unsubscribe tokens ────────────────────────────────────────────────────
 
+/**
+ * Resolves the HMAC signing secret for unsubscribe tokens.
+ *
+ * FAILS CLOSED in a real production runtime: the dev fallback below is a PUBLIC constant (it lives
+ * in this open-source repo), so signing with it in prod would make every unsubscribe token forgeable.
+ * When `EMAIL_UNSUBSCRIBE_SECRET` is absent in production we throw rather than silently sign with the
+ * public fallback (§28: never a synthetic-green). Mirrors the `isProdRuntime` guard in
+ * `security/rate-limit-guard.ts`. CI (`CI=true`) and non-production runtimes keep the dev fallback so
+ * local/test signing never needs a secret.
+ */
+export function resolveUnsubscribeSecret(
+  env: {
+    EMAIL_UNSUBSCRIBE_SECRET?: string;
+    CI?: string;
+    VERCEL_ENV?: string;
+    NODE_ENV?: string;
+  } = process.env,
+): string {
+  const secret = env.EMAIL_UNSUBSCRIBE_SECRET?.trim();
+  if (secret) return secret;
+  const isCI = env.CI === "true" || env.CI === "1";
+  const isProdRuntime = env.VERCEL_ENV === "production" || (env.NODE_ENV === "production" && !isCI);
+  if (isProdRuntime) {
+    throw new Error(
+      "EMAIL_UNSUBSCRIBE_SECRET is required in production — refusing to sign unsubscribe tokens with " +
+        "the public dev fallback (they would be forgeable). Set it in the environment (see PENDING_OPS.md).",
+    );
+  }
+  return "gm-unsub-fallback-secret-do-not-use-in-prod";
+}
+
 function getUnsubscribeSecret(): string {
-  return process.env["EMAIL_UNSUBSCRIBE_SECRET"] ?? "gm-unsub-fallback-secret-do-not-use-in-prod";
+  return resolveUnsubscribeSecret(process.env);
 }
 
 /**
