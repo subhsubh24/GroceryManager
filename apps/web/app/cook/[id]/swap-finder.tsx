@@ -22,6 +22,7 @@ export function SwapFinder({
       <form action={formAction} className="flex gap-2">
         <input
           name="q"
+          aria-label="Ingredient to substitute"
           placeholder="Out of something? e.g. buttermilk"
           className="min-w-0 flex-1 rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink-900 shadow-xs transition placeholder:text-ink-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20"
         />
