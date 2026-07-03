@@ -20,7 +20,6 @@ import { dietExclusions, projectUserModel } from "@gm/core/personalization";
 import { canUse, isPremium } from "@gm/core/billing";
 import { verifyMobileToken } from "../_lib";
 import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
-import { checkLlmQuota } from "../../_lib/llm-quota";
 import { parseJsonBody } from "../../_lib/guard";
 
 export const runtime = "nodejs";
@@ -51,14 +50,8 @@ export async function GET(req: Request) {
       return Response.json({ upgradeRequired: true });
     }
 
-    const quota = checkLlmQuota(userId, isPremium(signals));
-    if (!quota.allowed) {
-      return Response.json(
-        { error: "Daily AI limit reached. Upgrade for more.", upgradeRequired: !isPremium(signals) },
-        { status: 429 },
-      );
-    }
-
+    // Discovery is fully deterministic (TheMealDB + local ranking — no LLM call), so it is NOT
+    // gated by the daily AI quota; abuse is bounded by the per-minute rateLimit above.
     const inStock = pantry.filter(
       (p) => p.status === "in_stock" || p.status === "low" || p.status === "expired_likely",
     );

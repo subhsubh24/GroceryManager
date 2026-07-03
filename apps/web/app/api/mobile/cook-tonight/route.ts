@@ -8,10 +8,8 @@ import {
   TheMealDBProvider,
 } from "@gm/core/recipe";
 import { dietExclusions, projectUserModel } from "@gm/core/personalization";
-import { isPremium } from "@gm/core/billing";
 import { verifyMobileToken } from "../_lib";
 import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
-import { checkLlmQuota } from "../../_lib/llm-quota";
 
 export const runtime = "nodejs";
 
@@ -31,14 +29,8 @@ export async function GET(req: Request) {
       signals: await loadPreferenceSignals(tx, userId),
     }));
 
-    const quota = checkLlmQuota(userId, isPremium(signals));
-    if (!quota.allowed) {
-      return Response.json(
-        { error: "Daily AI limit reached. Upgrade for more.", upgradeRequired: !isPremium(signals) },
-        { status: 429 },
-      );
-    }
-
+    // Cook-tonight is fully deterministic (TheMealDB + local ranking — no LLM call), so it is NOT
+    // gated by the daily AI quota; abuse is bounded by the per-minute rateLimit above.
     const inStock = pantry.filter(
       (p) => p.status === "in_stock" || p.status === "low" || p.status === "expired_likely",
     );
