@@ -7,6 +7,7 @@ import { BottomNav } from "./components/bottom-nav";
 import { ThemeToggle } from "./components/theme-toggle";
 import { InstallPrompt } from "./components/install-prompt";
 import { LaunchGuard } from "./components/launch-guard";
+import { normalizePlausibleDomain } from "./lib/plausible";
 
 // Runs before paint to set the theme class — prevents a flash of the wrong theme on load.
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();`;
@@ -68,6 +69,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   // NOTE: deliberately NOT calling auth()/cookies() here — doing so in the root layout makes the
   // static /404 un-generatable and breaks the production build. The LaunchGuard checks the session
   // server-side (in its action) instead, only when it fires on a fresh launch.
+  // Normalize to the bare host — a full-URL env value would make Plausible reject every event.
+  const plausibleDomain = normalizePlausibleDomain(process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN);
   return (
     <html
       lang="en"
@@ -79,10 +82,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         {/* Privacy-first analytics (Plausible) — activates only when NEXT_PUBLIC_PLAUSIBLE_DOMAIN
             is set. No cookies, no cross-site tracking, GDPR-compliant. See PENDING_OPS.md. */}
-        {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
+        {plausibleDomain && (
           <Script
             strategy="afterInteractive"
-            data-domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
+            data-domain={plausibleDomain}
             src="https://plausible.io/js/script.js"
           />
         )}
