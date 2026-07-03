@@ -166,6 +166,9 @@ export function CookMode({
               >
                 ← Back
               </button>
+              {/* Green text on the white primary button uses `brand-solid-hover` (the darker deep
+                  green), NOT `brand-solid` — brand-solid (12 138 62) fails WCAG AA (4.5:1) as text on
+                  white, while brand-solid-hover (10 110 51) clears it. Keep the hover-shade token here. */}
               {stepIndex >= total - 1 ? (
                 // Post-cook prompt: at the last step, point straight at the "I cooked this" logger.
                 <button
@@ -173,7 +176,7 @@ export function CookMode({
                   onClick={() =>
                     document.getElementById("log-cook")?.scrollIntoView({ behavior: "smooth", block: "center" })
                   }
-                  className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-[#0a6e33] shadow-sm transition hover:bg-white/95 active:scale-[0.97]"
+                  className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-brand-solid-hover shadow-sm transition hover:bg-white/95 active:scale-[0.97]"
                 >
                   ✓ Done — log it
                 </button>
@@ -181,7 +184,7 @@ export function CookMode({
                 <button
                   type="button"
                   onClick={() => setStepIndex((i) => Math.min(total - 1, i + 1))}
-                  className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-[#0a6e33] shadow-sm transition hover:bg-white/95 active:scale-[0.97]"
+                  className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-brand-solid-hover shadow-sm transition hover:bg-white/95 active:scale-[0.97]"
                 >
                   Next →
                 </button>
