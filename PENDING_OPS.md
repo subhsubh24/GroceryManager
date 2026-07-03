@@ -12,7 +12,7 @@ The dashboard surfaces every `open` item, urgent first.
 ```yaml
 OWNER_ACTIONS:
   project: GroceryManager
-  as_of: 2026-07-01 (GTM run 2)
+  as_of: 2026-07-03 (GTM run 5)
   items:
     - id: gtm-connect-waitlist
       title: "GTM validation: connect the waitlist admin read source (ADMIN_EMAIL)"
@@ -129,12 +129,20 @@ OWNER_ACTIONS:
         Full step-by-step: docs/growth/CONNECT.md (the ~20-min owner activation runbook).
       blocks: growth-execution
     - id: site-gate-prelaunch
-      title: "Pre-launch SITE GATE: set SITE_GATE_PASSWORD=deepster now; UNSET it at launch"
+      title: "DONE: SITE_GATE_PASSWORD is set — site is gated pre-launch; UNSET it at actual public launch"
       priority: high
-      status: open
-      why: "The deployed app must NOT be publicly reachable until it is launch-ready — we never expose a half-baked app, and pre-launch we want WAITLIST-ONLY traffic. The code-level gate is built (env-driven middleware; public waitlist/landing + legal pages exempt so people can still join), but the password VALUE is human-applied and must never be committed. This is also the HARD precondition that flips GROWTH_STATUS.site_gate_up to true and lets the Growth Agent leave PREPARE mode."
-      how: "Pre-launch: set SITE_GATE_PASSWORD=deepster in Vercel env (gate turns ON whenever the var is set); confirm the deployed app shows the password prompt while the home/waitlist page stays open; then set GROWTH_STATUS.site_gate_up: true. At launch (every ship-critical QUALITY_SCORECARD dim A/A+ + readiness passed): UNSET SITE_GATE_PASSWORD to open the app. Never commit the value. (Mobile pre-launch is gated via TestFlight / internal track.)"
-      blocks: growth-execution
+      status: done
+      resolved: "2026-07-03 (GTM run 5) — verified via direct curl against the live deployed URL
+        (https://grocery-manager-web.vercel.app): home/blog/privacy return HTTP 200 (site-gate-exempt) while
+        /signup and /admin/waitlist return HTTP 401 (gated) — exactly the exempt-vs-gated split
+        apps/web/middleware.ts implements, which is only possible with SITE_GATE_PASSWORD set. This is
+        real, reproducible public-HTTP evidence (no secret read). GROWTH_STATUS.site_gate_up flipped to
+        true this run. REMAINING: this item's `at-launch` step (UNSET SITE_GATE_PASSWORD) is a distinct,
+        FUTURE owner action — do NOT unset it now; the app is not launch-ready (mobile store submission +
+        RevenueCat + a connected marketing channel are all still open elsewhere in this file)."
+      why: "The deployed app must NOT be publicly reachable until it is launch-ready — we never expose a half-baked app, and pre-launch we want WAITLIST-ONLY traffic. The code-level gate is built (env-driven middleware; public waitlist/landing + legal pages exempt so people can still join), but the password VALUE is human-applied and must never be committed. This is also the HARD precondition that flips GROWTH_STATUS.site_gate_up to true and lets the Growth Agent leave PREPARE mode (the SECOND precondition — a connected marketing channel — is still open; see connect-channels / track-h-activation below)."
+      how: "DONE: SITE_GATE_PASSWORD is set in Vercel env (gate is ON; confirmed via live HTTP behavior above). At ACTUAL public launch (every ship-critical QUALITY_SCORECARD dim A/A+ + readiness passed + store submission complete): UNSET SITE_GATE_PASSWORD to open the app, then announce to the waitlist. Never commit the value. (Mobile pre-launch is gated via TestFlight / internal track.)"
+      blocks: none
     - id: spend-caps
       title: Set HARD daily API spend caps + alerts in every provider dashboard
       priority: urgent
