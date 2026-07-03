@@ -5,6 +5,50 @@ new grade against the last entry. Append-only; newest entry on top.
 
 ---
 
+## 2026-07-03 — tests_evals B → A; 8/9 dims at A (overall A, ship gate MET)
+
+**Overall: A. Ship gate: MET.** Mechanical gate this run: typecheck PASS (exit 0), `@gm/core` tests
+PASS (93 files pass / 10 skipped; 844 tests pass / 26 skipped; coverage lines 86.82 / branches 87.46
+/ functions 90.39 — thresholds met), production `next build` PASS (no missing-export warnings, 102 kB
+shared first-load; middleware reported 88.5 kB = gzip of an unchanged 279,931-byte raw edge bundle).
+Graded by 9 fresh adversarial per-dimension subagents, none having written the code.
+
+**tests_evals B → A — the one dimension that moved.** Last cycle's SOLE named gap (no vision-quality
+eval on the scan-detection stage) is genuinely CLOSED by `scan.eval.test.ts` (#386, commit ff20651).
+Adversarially verified: it calls the REAL `detectPantryItems` (live Gemini, `detect.ts:76`) against two
+committed genuine JPEG fridge photos (`fixtures/images/*.jpg`, Wikimedia CC BY-SA/BY — not synthetic),
+asserting BOTH recall (passRate≥0.8) AND a separate anti-hallucination precision bar over conservative
+`absent` items — the exact failure mode `detect.ts`'s per-item bounding-box prompt suppresses. Wired
+into the nightly `evals.yml` → `run-evals.sh` (RUN_EVALS=1), `describe.skipIf(!RUN)` gated, transient
+429/503 → `ctx.skip()` not a false pass. That was the last first-order gap → B → A. Issue #319 closed.
+
+**Grades:** functional_reality **A**, correctness_reliability **A**, security **A**, design_taste **A**,
+launch_readiness **A** (all SC), tests_evals **A** (↑from B), artifact_integrity **A**, business_case
+**A**, performance **B**. **8 of 9 at A — the highest the product has held.**
+
+**The sole remaining B — performance (non-ship-critical, ≥ B, doesn't block the gate) — is UNCHANGED
+from #320:** still no CI perf-budget gate (grep of `.github/workflows/*.yml` for
+`bundlesize|lighthouse|size-limit|budget` = 0 real matches) and the edge middleware is still 279,931
+bytes raw (`middleware.ts:1,6` next-auth/jose on the edge, broad matcher `:114`). The grader re-confirmed
+the apparent 88.5 kB is only the Next 15.5 gzip figure of the SAME bundle — no trim happened. Held at B.
+It is now the ONLY dimension below A and the only thing keeping overall off A+.
+
+**Grader nits kept at A (second-order, not first-order for their dimension):** security — two parallel
+mobile-token schemes (`AUTH_SECRET` HMAC vs `NEXTAUTH_SECRET` jose), avoidable surface area, no
+exploitable hole; design_taste — dead legacy gradient/`shine`/`aurora` tokens + stale `.empty-emoji`
+class name, none render slop; launch_readiness — RevenueCat event→tier map still unit-untested (the
+carried A→A+ polish gap); correctness — escalate-loop only indirectly tested. All non-blocking.
+
+**Issues this run:** closed #319 (tests_evals, gap verified closed by #386). #320 (performance) left
+open + accurate. #190 (honest revenue FYI) unchanged. No ship-critical regression → no owner
+notification (dashboard reflects the improvement).
+
+**What "raise to A+" looks like next run:** the perf-budget gate + edge-middleware trim (#320) closes
+`performance` → overall A+ within reach. Two bounded A→A+ polish tests on already-A ship-critical dims
+(RevenueCat event-map, direct escalate-loop) remain optional gold-avoidance.
+
+---
+
 ## 2026-07-01 — SHIP GATE NOW MET (overall B → A)
 
 **Overall: A. Ship gate: MET (was NOT met at baseline).** Mechanical gate this run: typecheck PASS,
