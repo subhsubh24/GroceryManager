@@ -203,7 +203,7 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
                   <UtensilsCrossed className="h-5 w-5" strokeWidth={2} />
                 </div>
                 <div>
-                  <div className="section-title">Made it?</div>
+                  <h2 className="section-title">Made it?</h2>
                   <div className="text-xs text-ink-400">
                     Logs the meal, learns your taste, and draws down what you used.
                   </div>
