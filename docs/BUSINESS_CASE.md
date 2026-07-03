@@ -154,6 +154,14 @@ most people can use forever without paying.
 | Monthly churn (blended) | 6.5 % | 3.7 % | 3.0 % | Baremetrics Subscription Benchmarks 2024 (consumer SaaS ~5 % median; utility/productivity 4–6 %). Base blends 72 % monthly @ 4.5 % + 28 % annual @ (20 %/12). |
 | Net ARPU | $3.82 | $3.82 | $4.32 | §1. Optimistic includes 10 % Family-tier adoption (upside lever). |
 
+> **Qualitative corroboration (2026-07-03, GTM demand-signal research — see `GROWTH_STATUS.demand_signal`):**
+> real, dated competitor reviews (Paprika Recipe Manager, KitchenPal) independently confirm "the pantry
+> never stays current" as the dominant unsolved pain across two structurally different apps (a
+> recipe-manager and a barcode-first tracker) — the same gap LESSON-0 identified from feature-matrix
+> research alone. This raises qualitative confidence that the Gmail-import trial moment is a genuine
+> conversion lever, per GTM_STANDARD §10's hard bound this does **not** change the modelled 4 % base rate
+> or any other figure above — it is directional corroboration of an existing assumption, not a new number.
+
 **Blended churn derivation (base):**
 
 ```
