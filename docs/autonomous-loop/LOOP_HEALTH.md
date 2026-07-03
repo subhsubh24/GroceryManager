@@ -34,16 +34,17 @@ LOOP_HEALTH:
     active: 5
     unmet: []                    # capabilities needing an OWNER SECRET not wired in CI (loop can't supply) — each MUST also be an urgent OWNER_ACTION 'validation-capability-<service>' in PENDING_OPS
     unmet_unsurfaced: []         # MUST stay empty — an unmet capability missing from PENDING_OPS or this list is invisible to the owner (a bug)
-  last_run: 2026-07-03 (run 44)
-  last_deep_audit: 2026-07-03 (run 41, standalone 5-Haiku lens sweep: security/RLS+Track-G, correctness/functional, perf/coverage, design/a11y+artifacts, monetization/business-case-strength — no CRITICAL findings; 3 perf candidates rejected on verification (ingest N+1/inserts = <2% on an LLM-bound path + core-path regression risk), 1 a11y churn skipped; 2 design/artifact clears shipped #371/#372; runs 33/34/35 folded prior sweeps; last standalone run 38). Runs 42/43/44 same-day, <24h — not due.
+  last_run: 2026-07-03 (run 45)
+  last_deep_audit: 2026-07-03 (run 45, standalone 5-Haiku lens sweep: security/RLS+Track-G, correctness/functional, monetization/business-case-strength, design/a11y, artifacts/coverage — NO CRITICAL findings; security + artifacts CLEAN; 1 correctness finding REJECTED on verification (ewmaConsumptionRate "3.3× inflation" misreads the deliberate repurchase-cadence model — the exact on-hand already subtracts every logged −delta, the learned rate only projects forward; switching to logged-deltas-only would REGRESS the under-logging case); monetization re-confirmed reach-gated (~5 "levers" all speculative/owner-dependent/scope-creep, stacked ~$50–68K still below floor — no buildable floor-mover); 2 a11y heading-semantics findings shipped as #390. Prior standalone run 41; runs 42/43/44 same-day folded; this is the 4th run since 41.)
   this_run:
-    changes_shipped: 1           # #386 anti-hallucination (precision) metric added to the vision scan eval — a plausible-but-absent list per golden fixture + a no-hallucination pass-rate>=0.8 live-Gemini eval (Track F / #319 precision half). File-disjoint (scan.eval.test.ts) + this housekeeping PR.
+    changes_shipped: 1           # #390 a11y heading semantics — 3 visually-present section titles that were <p>/<div> promoted to real headings (WCAG 1.3.1 Level A): landing pricing Free/Premium tiers → <h3>, cook Made-it? → <h2>. Zero visual change (same .section-title class); brings the 3 remaining outliers in line with ~30+ already-<h2> usages. File-disjoint (page.tsx + cook/[id]/page.tsx) + this housekeeping PR.
     changes_abandoned: 0
     abandoned_reasons: []
-    verify_cycle_failures: 0     # typecheck + full core suite green first try; eval collects + skips cleanly without RUN_EVALS
-    review_rejections: 0         # both Sonnet reviewers 2/2 APPROVE first pass; both READ the fixture images to confirm the absent lists are truthful + the precision math (div-by-zero guarded, no false-phantom namePresent match)
+    verify_cycle_failures: 0     # typecheck clean + production build clean (no missing-export warnings); pure JSX tag swap, no logic/imports touched
+    review_rejections: 0         # both Sonnet reviewers 2/2 APPROVE first pass; A verified valid JSX + correct non-skipping heading levels + no p./div.-specific CSS/test regression; B confirmed genuine Level-A value on the 2 highest-traffic surfaces + zero visual regression
     review_cycles_used: 1
     circuit_breaker_trips: 0
+    findings_rejected: 2         # correctness scout's ewmaConsumptionRate "inflation" (misreads a deliberate model) + monetization "quarterly/lifetime/Instacart levers" (speculative/owner-dependent/scope-creep, not a floor-mover)
   rolling_7d:
     merged_prs: 50               # git log --since=2026-06-26 main = 50 squashes (incl. many FACTORY/GTM standard meta-commits + runs 41-43 #371-#385) + this run's #386 (housekeeping in flight)
     reverts: 0
@@ -55,7 +56,15 @@ LOOP_HEALTH:
       - "recurring #0a6e33 re-flag (runs 35, 41): a design scout keeps proposing `brand-solid` for the deep-green-on-white hardcode (an AA regression). RESOLVED in #372 by moving to the byte-exact `brand-solid-hover` token + an in-code contrast comment at each site — the re-flag can't recur. No harness proposal needed."
     harness_proposals_open: 0    # open `loop: harness improvement proposal` issues (#232 resolved by #234)
   signal: steady                 # bootstrapping | improving | steady | churning | stuck
-                                 #   run 44: converged quiet run — 1 real value-bar clear, 0 abandons, 2/2 first pass.
+                                 #   run 45: converged quiet run + a full 5-lens DEEP AUDIT (due since run 41). 1 real
+                                 #   value-bar clear (#390 a11y heading semantics on landing pricing + cook loop, WCAG
+                                 #   1.3.1), 0 abandons, both reviewers 2/2 first pass. 2 scout findings correctly
+                                 #   REJECTED: the ewmaConsumptionRate "inflation" bug (misreads a deliberate
+                                 #   repurchase-cadence model) + the monetization "unbuilt levers" (all speculative/
+                                 #   owner-dependent/scope-creep, stacked still below the $100K floor). Security/RLS/
+                                 #   Track-G + artifacts re-confirmed CLEAN. Closed #359 (all 3 §28 fixes on main).
+                                 #   Convergence stays reach-gated (#190); did NOT open 'ready'; Confidence stays UNCHECKED.
+                                 #   -- prior run 44: converged quiet run — 1 real value-bar clear, 0 abandons, 2/2 first pass.
                                  #   #386 added the missing PRECISION/anti-hallucination half of the vision scan eval
                                  #   (it only measured recall; a phantom detection silently pollutes a real user's
                                  #   pantry — the exact failure detect.ts's presence+2D-box design targets), Track F /
