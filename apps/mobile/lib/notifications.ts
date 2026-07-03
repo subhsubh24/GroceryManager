@@ -12,6 +12,7 @@ import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { API_BASE } from "./config";
+import { fetchWithTimeout } from "./api";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -52,7 +53,7 @@ export async function registerForPushNotifications(authToken: string): Promise<v
 
     const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
 
-    await fetch(`${API_BASE}/api/mobile/push-token`, {
+    await fetchWithTimeout(`${API_BASE}/api/mobile/push-token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -75,7 +76,7 @@ export async function deregisterPushNotifications(authToken: string): Promise<vo
 
   try {
     const token = await Notifications.getExpoPushTokenAsync({ projectId });
-    await fetch(`${API_BASE}/api/mobile/push-token`, {
+    await fetchWithTimeout(`${API_BASE}/api/mobile/push-token`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
