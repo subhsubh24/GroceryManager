@@ -112,8 +112,10 @@ GROWTH_STATUS:
     open_rate: null
     click_rate: null
   content:
-    published_7d: 0
-    scheduled_next_7d: 1         # "pantry tracker apps 2026" comparison post staged this run
+    published_7d: 1              # "pantry-tracker-apps-2026" (apps/web/app/blog/posts.ts:223) published
+                                  #   2026-06-29 — within the last 7 days as of this run (2026-07-03)
+    scheduled_next_7d: 0          # nothing new staged this run (prior value was stale: the run-1 post
+                                  #   had already published, so it belonged in published_7d, not here)
     organic_sessions_7d: 0
   outreach:                      # STRATEGIC OUTREACH — curated, human-reviewed Gmail DRAFTS (docs/growth/OUTREACH.md).
                                  #   DRAFT-ONLY: the agent never sends; the OWNER reviews + sends. REAL numbers only.
@@ -167,11 +169,34 @@ GROWTH_STATUS:
       they'd care' about a pre-traction consumer waitlist. Zero outreach drafted this run (correct per
       OUTREACH.md — still no genuinely strategic, high-confidence target with a real reason + published
       contact)."
+    - "RUN 4 (2026-07-03, same day as run 3 — a later scheduled cycle): CLOSED run 3's next_action.
+      Confirmed via 2 direct WebSearch calls with allowed_domains:[reddit.com] that Reddit is
+      categorically UNREACHABLE to this routine's search tool ('domains are not accessible to our
+      user agent' — a crawler-access block, not a query-phrasing problem). This is a durable tool
+      limitation, not a dead end to keep re-trying: future runs should stop attempting Reddit-scoped
+      queries and instead broaden to other public review/complaint sources. Attempted one such
+      broadening (AnyList app reviews via justuseapp.com aggregator) but WebFetch got HTTP 403 on
+      that specific aggregator — recorded honestly rather than fabricating a quote/URL from the
+      search-summary text alone (no new demand_signal evidence added this run; the run-3 themes stand
+      unchanged)."
+    - "RUN 4: fixed a stale metric in `content` — published_7d was 0 and scheduled_next_7d was 1,
+      still describing the pantry-tracker-apps-2026 post as 'staged' 4+ days after it actually
+      published (apps/web/app/blog/posts.ts:223, publishedAt 2026-06-29, confirmed by reading the
+      file). Corrected to published_7d:1 / scheduled_next_7d:0 — a real, code-derived, honest
+      correction (artifact-freshness fix), not a new claim. No new blog post drafted this run: with no
+      analytics feedback yet and no newly-identified content gap, writing a 5th post would be padding,
+      not value-bar-clearing work."
+    - "RUN 4 outreach research: one more search angle (general food-tech/grocery-app 2026 landscape,
+      broader than runs 2-3's press/newsletter-specific queries) surfaced only SEO/listicle content
+      and funding-news aggregators, zero named journalists/curators with a real reason to care about a
+      pre-traction, gated waitlist. Zero outreach drafted this run (correct per OUTREACH.md)."
   next_actions:
     - "Next run: attempt to read real waitlist count from /admin/waitlist once ADMIN_EMAIL is set"
-    - "Next run: try Reddit's native search (or a Reddit-specific tool if one becomes available) for the
-      demand-signal work — this run's generic WebSearch could not surface citable Reddit threads despite
-      6 attempts; App/Play Store review aggregators are a real but partial substitute"
+    - "Reddit is a CLOSED dead end for this routine's WebSearch tool (confirmed run 4: explicit
+      domain-access block, not a phrasing issue) — do NOT re-attempt Reddit-scoped queries. Instead try
+      other citable aggregators (Trustpilot, Google Play review pages directly, ComplaintsBoard-style
+      sites) for App Store review evidence beyond Paprika/KitchenPal; note some aggregators (e.g.
+      justuseapp.com) 403 on WebFetch even when they surface in WebSearch snippets."
     - "Once site_gate_up true AND a channel connects: draft 1-2 curated outreach emails (press/newsletter)"
   owner_blockers:
     - "CRITICAL: Set SITE_GATE_PASSWORD in Vercel env to flip site_gate_up: true — this is the
@@ -186,8 +211,12 @@ GROWTH_STATUS:
       blog/landing traffic or visitor-to-waitlist conversion rate."
     - "NORMAL: Pick a final app name from NAMING_CANDIDATES.md (Pantri / Mise / Larder) —
       all content assets currently use '[APP_NAME]' placeholder; this blocks final email/store copy."
-    - "REPEATED (3+ runs / 5 days, no movement): SITE_GATE_PASSWORD + ADMIN_EMAIL are the two cheapest,
-      highest-leverage unblocks outstanding — see the CIRCUIT BREAKER learning above."
+    - "REPEATED (4+ runs across 5 days, no movement — re-confirmed run 4 via ListConnectors [still only
+      Gmail + Google Drive connected] and a fresh PENDING_OPS re-read [all 4 gtm-connect-* items +
+      site-gate-prelaunch still status:open, byte-identical to run 3]): SITE_GATE_PASSWORD + ADMIN_EMAIL
+      are the two cheapest, highest-leverage unblocks outstanding — both are ~5-minute Vercel env-var
+      sets with zero cost. Naming this prominently again per the FACTORY_STANDARD circuit-breaker rule
+      rather than re-deriving it every run."
   demand_signal:                 # GTM_STANDARD §10 — pre-launch demand validation (leading indicator, NOT PMF)
     as_of: 2026-07-03
     method: "WebSearch + WebFetch against competitor App/Play Store review aggregators. 6 targeted
@@ -239,9 +268,11 @@ GROWTH_STATUS:
           /barcode manual-add path shares this exact friction class for non-receipt items — an HONEST
           partial-solve, not a claimed full win."
     disconfirming_or_limitations:
-      - "No citable exact-quote Reddit thread surfaced this run across 6 targeted WebSearch queries.
-        Read as a search-tool/method gap (try Reddit's native search or a Reddit-specific tool next
-        run), NOT as evidence that Reddit pain doesn't exist."
+      - "UPDATE (run 4, 2026-07-03): confirmed Reddit is categorically unreachable to this routine's
+        WebSearch tool (explicit 'domain not accessible to our user agent' error on 2 direct
+        allowed_domains:[reddit.com] queries) — a hard tool-access limitation, not a phrasing gap as
+        run 3 guessed. Closed as a dead end; future runs should not re-attempt Reddit-scoped search.
+        Still NOT evidence that Reddit pain doesn't exist — just that this routine cannot observe it."
       - "All 3 KitchenPal review quotes carry the identical aggregator-displayed date (2025-10-17) across
         3 different reviewer names — almost certainly the page's scrape/cache date, not each review's true
         post date. Treated as 'recent, roughly within the last year,' not a precise per-review timestamp."
