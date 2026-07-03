@@ -34,27 +34,43 @@ LOOP_HEALTH:
     active: 5
     unmet: []                    # capabilities needing an OWNER SECRET not wired in CI (loop can't supply) — each MUST also be an urgent OWNER_ACTION 'validation-capability-<service>' in PENDING_OPS
     unmet_unsurfaced: []         # MUST stay empty — an unmet capability missing from PENDING_OPS or this list is invisible to the owner (a bug)
-  last_run: 2026-07-03 (run 41)
-  last_deep_audit: 2026-07-03 (run 41, standalone 5-Haiku lens sweep: security/RLS+Track-G, correctness/functional, perf/coverage, design/a11y+artifacts, monetization/business-case-strength — no CRITICAL findings; 3 perf candidates rejected on verification (ingest N+1/inserts = <2% on an LLM-bound path + core-path regression risk), 1 a11y churn skipped; 2 design/artifact clears shipped #371/#372; runs 33/34/35 folded prior sweeps; last standalone run 38)
+  last_run: 2026-07-03 (run 44)
+  last_deep_audit: 2026-07-03 (run 41, standalone 5-Haiku lens sweep: security/RLS+Track-G, correctness/functional, perf/coverage, design/a11y+artifacts, monetization/business-case-strength — no CRITICAL findings; 3 perf candidates rejected on verification (ingest N+1/inserts = <2% on an LLM-bound path + core-path regression risk), 1 a11y churn skipped; 2 design/artifact clears shipped #371/#372; runs 33/34/35 folded prior sweeps; last standalone run 38). Runs 42/43/44 same-day, <24h — not due.
   this_run:
-    changes_shipped: 2           # #371 README design-description → reality (LIVING ARTIFACTS) #372 4 raw-hex #0a6e33 → text-brand-solid-hover token + contrast comment (design bar; 100% TSX token discipline) — both file-disjoint + this housekeeping PR
+    changes_shipped: 1           # #386 anti-hallucination (precision) metric added to the vision scan eval — a plausible-but-absent list per golden fixture + a no-hallucination pass-rate>=0.8 live-Gemini eval (Track F / #319 precision half). File-disjoint (scan.eval.test.ts) + this housekeeping PR.
     changes_abandoned: 0
     abandoned_reasons: []
-    verify_cycle_failures: 0     # both passed their local gate first try (web typecheck / prod build + missing-export grep; #371 docs-only)
-    review_rejections: 0         # both got both Sonnet reviewers, 2/2 APPROVE first pass; reviewers independently verified README claims vs code + the byte-exact color/6.38:1 contrast + valid token
+    verify_cycle_failures: 0     # typecheck + full core suite green first try; eval collects + skips cleanly without RUN_EVALS
+    review_rejections: 0         # both Sonnet reviewers 2/2 APPROVE first pass; both READ the fixture images to confirm the absent lists are truthful + the precision math (div-by-zero guarded, no false-phantom namePresent match)
     review_cycles_used: 1
     circuit_breaker_trips: 0
   rolling_7d:
-    merged_prs: 52               # ≈50 merged in the 7d window (git log --since=2026-06-26, incl. many FACTORY/GTM standard meta-commits) + this run's #371/#372 (housekeeping #373 in flight)
+    merged_prs: 50               # git log --since=2026-06-26 main = 50 squashes (incl. many FACTORY/GTM standard meta-commits + runs 41-43 #371-#385) + this run's #386 (housekeeping in flight)
     reverts: 0
     readiness_attempts: 0
     readiness_rejected: 0
     recurring_failures:          # short bullets: the SAME wall hit across ≥2 runs (→ harness proposal if it persists)
+      - "STALE local origin/main (run 44): the env cloned + checked out the run-43 tip (d48c0dd/#385) as a DETACHED HEAD, but local `origin/main`/`main` refs still pointed at #369 (14 commits behind). Branching from `main` cut the feature branch off stale #369, which made #379's merged worker-stub fix APPEAR reverted (the pre-#379 `stub()` was on the stale base, not real main). RESOLVED: `git fetch origin main` fast-forwarded origin/main to #385, confirmed #379 IS merged (no regression), then `git branch -f main origin/main` + rebased the feature branch onto real main (clean — file-disjoint). LESSON: ALWAYS `git fetch origin main && git branch -f main origin/main` (or branch from `origin/main`, not `main`) at run start BEFORE trusting local main / diagnosing a 'missing fix' — a stale ref manufactures phantom regressions. First occurrence; watch for recurrence."
       - "branch-entanglement (runs 39, 41): a review/build subagent sharing the parent git working tree ran a checkout that left the tree a MIX on top of the correct pushed commit. HARMLESS both times — commits were already pushed; verify origin/<branch> via `git show` (not the shared tree) + `git reset --hard HEAD` to recover. Persistent-but-benign; mitigation = worktree isolation for mutating parallel agents. No harness proposal (no lost work, no red merge)."
       - "recurring #0a6e33 re-flag (runs 35, 41): a design scout keeps proposing `brand-solid` for the deep-green-on-white hardcode (an AA regression). RESOLVED in #372 by moving to the byte-exact `brand-solid-hover` token + an in-code contrast comment at each site — the re-flag can't recur. No harness proposal needed."
     harness_proposals_open: 0    # open `loop: harness improvement proposal` issues (#232 resolved by #234)
   signal: steady                 # bootstrapping | improving | steady | churning | stuck
-                                 #   run 41: converged run + a full 5-lens DEEP AUDIT (due since run 38). 2 real
+                                 #   run 44: converged quiet run — 1 real value-bar clear, 0 abandons, 2/2 first pass.
+                                 #   #386 added the missing PRECISION/anti-hallucination half of the vision scan eval
+                                 #   (it only measured recall; a phantom detection silently pollutes a real user's
+                                 #   pantry — the exact failure detect.ts's presence+2D-box design targets), Track F /
+                                 #   #319. Full 3-Haiku scout sweep (reliability, security/Track-G, design/a11y+mobile):
+                                 #   3 candidates PASSED on judgment, not padding — CSP unsafe-inline/eval removal
+                                 #   (needs a nonce migration + real-browser verify; hydration-break risk too high
+                                 #   headless), mobile color centralization (18-file cosmetic churn + native BUILDS!=WORKS
+                                 #   risk), and 3 server-action raw-throws (scout's "silent data loss/inconsistent state"
+                                 #   framing was FALSE — app/error.tsx boundaries + withTenant transactions handle them
+                                 #   gracefully; the inline-friendly-error pattern exists only for receipt parse because
+                                 #   IT fails often). The run's load-bearing work was git hygiene: a STALE local origin/main
+                                 #   (#369, 14 behind) manufactured a phantom "#379 worker-stub reverted" regression —
+                                 #   fetch + rebase confirmed no regression. Security/RLS/Track-G re-confirmed CLEAN.
+                                 #   Convergence stays reach-gated (#190); did NOT open 'ready'; Confidence stays UNCHECKED.
+                                 #   -- prior run 41: converged run + a full 5-lens DEEP AUDIT (due since run 38). 2 real
                                  #   value-bar clears, 0 abandons, both 2/2 first pass. #371 corrected a stale README
                                  #   design-system bullet (dead Inter/Fraunces/aurora/bento/accent-themes/frosted-nav
                                  #   description → the shipped Hanken-Grotesk/single-accent/solid-nav reality; LIVING

@@ -2189,3 +2189,46 @@ file-DISJOINT changes, each 2/2 (Sonnet reviewers A+B), auto-merged through CI:
 **Readiness:** did NOT open the 'ready' issue — the sole open DoD gap is unchanged (reach-gated business-case
 floor, base ≈ $33K < $100K, owner-GTM #190). No deep audit due. Confidence statement stays UNCHECKED. A focused,
 coherent backlog-clearing run (3 real security/honesty clears, 0 abandons) = success.
+
+## Run 44 — 2026-07-03 — 1 file-disjoint clear (#386 vision anti-hallucination eval); load-bearing work was a git-hygiene catch + refusing padding
+
+**Shipped (1, 2/2 Sonnet, 0 abandons):**
+- **#386** — the vision scan eval (`packages/core/src/llm/evals/scan.eval.test.ts`) measured only RECALL (did we
+  detect the items that ARE in the photo). It never measured PRECISION — whether the detector reports PHANTOM
+  items that aren't there — even though suppressing exactly that failure mode is the entire design rationale of
+  `vision/detect.ts` (per-item presence + 2D grounding boxes: "it can't box something that isn't there"). A
+  hallucinated item silently pollutes a real user's pantry, so the eval was blind to a real quality regression.
+  Added a conservative, human-verified `absent` list per golden fixture (large produce that cannot be occluded in
+  a drawer, so any detection is a TRUE phantom — I read both committed fixture jpgs to author the lists, skipping
+  ambiguous items like the door-shelf white ovals that could be eggs and the pale bottles that could be milk) +
+  a second live-Gemini `it` asserting the no-hallucination pass-rate >= 0.8, mirroring the recall test + harness.
+  RUN_EVALS-gated like every other eval (runs in the scheduled evals workflow, never per-PR CI). Advances Track F
+  and the precision half of issue #319.
+
+**The run's real value was JUDGMENT + git hygiene, not volume:**
+1. **A STALE local `origin/main` manufactured a phantom "#379 reverted" regression.** The env checked out the
+   run-43 tip (`d48c0dd`/#385) as a detached HEAD while local `main`/`origin/main` still pointed at `#369` (14
+   commits behind). Branching from `main` based the feature branch on stale #369; reading the workers file on it
+   showed the pre-#379 `stub()`, looking exactly like the merged fail-loud fix had been reverted (a scary
+   synthetic-green). `git fetch origin main` + `--is-ancestor` confirmed #379 IS on main (no regression);
+   `git branch -f main origin/main` + rebase fixed the base cleanly. **RULE: `git fetch origin main && git branch
+   -f main origin/main` (or branch from `origin/main`) at run start BEFORE trusting local main or diagnosing any
+   "merged fix is missing"; confirm a suspected revert with `--is-ancestor <commit> origin/main` after fetch, not
+   by reading a file on a possibly-stale-based branch.**
+2. **3 scout candidates PASSED on judgment, not padding.** (a) 3 server-action raw-throws (capture/applyScan/
+   addNamesToList) — scout's "silent data loss / inconsistent pantry" framing is FALSE: `app/error.tsx`
+   boundaries surface a graceful error page, and `applyVisionScan` runs inside a `withTenant` transaction that
+   rolls back cleanly. The inline-`{status:"error"}` pattern exists only in `add-receipt/actions.ts` because
+   receipt PARSING fails often; deterministic capture + a rare DB-write failure make the error-boundary fallback
+   a deliberate, reasonable choice, not a defect. (b) CSP `script-src 'unsafe-inline' 'unsafe-eval'` — a real
+   hardening gap, but a nonce migration + middleware rework + real-browser hydration verify is too break-risky
+   headless. (c) Mobile hex-color centralization (18 StyleSheet files) — real maintainability but large cosmetic
+   churn on the native app (CI only typechecks — the run-39 BUILDS≠WORKS Expo trap). All three are legit future
+   scoped work; none a clean unattended clear.
+
+**Security/RLS/Track-G re-confirmed CLEAN** (scout re-verified RLS on all user tables, rate limits, validation,
+error hygiene, captcha fail-loud, LLM spend ceiling, server-side entitlements). Web UI a11y/design CLEAN.
+
+**Readiness:** did NOT open the 'ready' issue — the sole open DoD gap is unchanged (reach-gated business-case
+floor, base ≈ $33K < $100K, owner-GTM #190). No deep audit due (run 41 <24h). Confidence statement stays
+UNCHECKED. A quiet, coherent, converged run (1 real clear + a real regression-scare correctly resolved) = success.
