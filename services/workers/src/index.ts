@@ -11,7 +11,6 @@ import {
   RECEIPT_JOB_OPTS,
   connection,
   gmailPollQueue,
-  predictRecomputeQueue,
   receiptParseQueue,
   watchRenewQueue,
 } from "./queues.js";
@@ -20,9 +19,19 @@ import { parseReceiptForUser, pollGmailForUser, renewGmailWatch } from "./jobs/g
 const env = loadEnv();
 const db = getDb();
 
-function stub(name: string) {
-  return async (job: Job) => {
-    console.log(`[${name}] processing job ${job.id}`, job.data);
+/**
+ * Handler for a queue whose real work is not built yet. It THROWS so BullMQ marks the job FAILED
+ * (visible, retried, alertable) instead of the old no-op that logged and marked it COMPLETED — a
+ * synthetic-green that made a queue look like it was doing work it never did (§28). No queue is
+ * wired to auto-enqueue these, so this never fires in normal operation; if something does enqueue
+ * one, it fails loudly rather than silently succeeding.
+ */
+function notImplemented(name: string) {
+  return async (job: Job): Promise<never> => {
+    throw new Error(
+      `[${name}] queue is not implemented yet — refusing to silently complete job ${job.id}. ` +
+        `Build the real handler before enqueuing work here.`,
+    );
   };
 }
 
@@ -61,8 +70,8 @@ const workers = [
     { connection, concurrency: 4 },
   ),
 
-  new Worker(QUEUES.visionScan, stub("vision-scan"), { connection, concurrency: 2 }),
-  new Worker(QUEUES.predictRecompute, stub("predict-recompute"), { connection }),
+  new Worker(QUEUES.visionScan, notImplemented("vision-scan"), { connection, concurrency: 2 }),
+  new Worker(QUEUES.predictRecompute, notImplemented("predict-recompute"), { connection }),
 
   new Worker(
     QUEUES.watchRenew,
@@ -90,7 +99,9 @@ const workers = [
 async function registerCron() {
   await watchRenewQueue.add("renew", {}, { repeat: { pattern: "0 6 * * *" }, jobId: "watch-renew-daily" });
   await gmailPollQueue.add("poll", {}, { repeat: { pattern: "0 * * * *" }, jobId: "gmail-poll-hourly" });
-  await predictRecomputeQueue.add("nightly", {}, { repeat: { pattern: "0 3 * * *" }, jobId: "predict-nightly" });
+  // NOTE: no predict-recompute cron. That queue has no real handler yet (predictions are computed
+  // on-read, per-request), so scheduling a nightly job here would only enqueue guaranteed failures
+  // against `notImplemented`. Re-add this schedule in the same change that builds the real handler.
 }
 
 async function main() {
