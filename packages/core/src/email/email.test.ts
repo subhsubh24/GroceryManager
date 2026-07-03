@@ -7,6 +7,7 @@ import {
   getFromEmail,
   getFromName,
   resolveEmailCaptureDir,
+  resolveUnsubscribeSecret,
 } from "./index.js";
 import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -260,6 +261,34 @@ describe("resolveEmailCaptureDir — test/CI only, fails closed in prod", () => 
     expect(() =>
       resolveEmailCaptureDir({ EMAIL_CAPTURE_DIR: "/sink", NODE_ENV: "production" }),
     ).toThrow(/PRODUCTION runtime/);
+  });
+});
+
+describe("resolveUnsubscribeSecret — required in prod, dev fallback elsewhere", () => {
+  it("uses the configured secret when present (any runtime)", () => {
+    expect(resolveUnsubscribeSecret({ EMAIL_UNSUBSCRIBE_SECRET: "s3cret", VERCEL_ENV: "production" })).toBe(
+      "s3cret",
+    );
+    expect(resolveUnsubscribeSecret({ EMAIL_UNSUBSCRIBE_SECRET: "  s3cret  " })).toBe("s3cret");
+  });
+
+  it("returns the dev fallback in a non-production runtime", () => {
+    expect(resolveUnsubscribeSecret({ NODE_ENV: "test" })).toMatch(/do-not-use-in-prod/);
+    expect(resolveUnsubscribeSecret({ NODE_ENV: "development" })).toMatch(/do-not-use-in-prod/);
+  });
+
+  it("allows the fallback in CI even when NODE_ENV=production (next start under CI)", () => {
+    expect(resolveUnsubscribeSecret({ NODE_ENV: "production", CI: "true" })).toMatch(/do-not-use-in-prod/);
+  });
+
+  it("THROWS in a Vercel production runtime (never sign with the public fallback)", () => {
+    expect(() => resolveUnsubscribeSecret({ VERCEL_ENV: "production" })).toThrow(
+      /required in production/,
+    );
+  });
+
+  it("THROWS in NODE_ENV=production outside CI", () => {
+    expect(() => resolveUnsubscribeSecret({ NODE_ENV: "production" })).toThrow(/required in production/);
   });
 });
 
