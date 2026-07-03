@@ -4,6 +4,62 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-03 (run 43) — 3 file-disjoint clears (non-AI quota bug + a11y input labels + mobile fetch timeouts)
+
+Full 5-Haiku scout sweep (security/Track-G, reliability/correctness, design/a11y/taste, quality/coverage,
+mobile+artifact-freshness). Deep audit NOT due (run 41 ran one same day, <24h). Baseline gate green up front
+(typecheck + core tests exit 0). Two scouts returned CLEAN (security — no genuine Track-G gap remains;
+quality/coverage — no genuine untested branch, and the aggregate-test-file trap was avoided). Orchestrator
+dissolved two reliability-scout false positives before selecting: (a) "#6 discover/cook-tonight don't pass
+`allergens` to rankRecipes" — FALSE, both routes pass `allergens: model.allergens`; (b) "#4 quota is an
+admission gate not a consumption meter" — REJECTED as by-design abuse protection (moving the increment to
+after LLM success would WEAKEN the rate limit). Shipped the 3 genuine, mutually file-disjoint clears (each
+gate-green + 2 Sonnet reviewers APPROVE, 0 abandons):
+
+- **#382 (reliability / free-tier + monetization honesty): stop charging the daily AI quota on the two
+  deterministic recipe endpoints.** `/api/mobile/discover` and `/api/mobile/cook-tonight` build suggestions
+  purely from TheMealDB (free external API) + local `rankRecipes` — no Gemini/LLM call in any config — yet
+  both were gated by `checkLlmQuota` (10/day free), so a free user hit "Daily AI limit reached. Upgrade for
+  more." on a non-AI feature after ~10 loads: a falsely-blocked core free journey + a misleading upgrade
+  prompt on the wrong signal. Removed the AI-quota gate from both (plus the now-unused `checkLlmQuota` import
+  from both and `isPremium` from cook-tonight). Per-user abuse still bounded by the existing per-minute
+  `rateLimit` (30/min discover, 20/min cook-tonight); discover's real premium gate (`canUse("discover", …)`)
+  is untouched; the AI quota stays on every genuine LLM surface. Reviewer B confirmed: corrects a false
+  double-gate, does NOT remove a legitimate paywall lever (cook-tonight is core free-tier; discover's paywall
+  is `canUse`, not the quota).
+- **#383 (a11y / WCAG 1.3.1 + 4.1.2): accessible names on two placeholder-only inputs.** The household-name
+  input (`/household`) and the ingredient-substitution input (`/cook/[id]` swap-finder) relied on placeholder
+  text alone, so a screen reader announced each as an unlabeled "edit text". Added `aria-label` to each
+  ("Household name" / "Ingredient to substitute"); no visual change. Matches the established repo convention
+  (pantry/import/waitlist/barcode inputs already use this pattern) — these were two stragglers.
+- **#384 (reliability / web↔mobile parity): network timeouts on all mobile fetch call sites.** `apiFetch`
+  (every authed data call), the login POST, and the push-token register/deregister used bare `fetch()` with
+  no timeout — on a flaky mobile link a hung upstream left the app spinning with no way to degrade (the web
+  analogue was fixed in #296). Added a shared `fetchWithTimeout` helper (AbortController + setTimeout, 15s
+  default — deliberately NOT `AbortSignal.timeout`, which is not universally supported on Hermes) and routed
+  all four sites through it; a caller-supplied `signal` opts out. Timeout rejects with AbortError, which each
+  site's existing try/catch already handles (same path as a network failure) — no new unhandled-throw surface.
+  No circular import (DAG: auth.tsx → notifications.ts → api.ts → config.ts). Mobile gate green (`npm ci` +
+  `tsc --noEmit`).
+
+**Deferred (verified-real but out of scope this run, noted for a future run):**
+- **Reorder `minIntervalDays` throttle is inert in production.** `packages/db/src/queries.ts:1574` hardcodes
+  `lastSuggestedAt: null` because there is no `reorder_policies.last_suggested_at` column, so the
+  `predict.ts:81` re-suggest throttle never fires. Real, but (a) user-facing severity is unclear (if reorder
+  suggestions are computed on-demand for display rather than pushed as notifications, the throttle is
+  cosmetic) and (b) the fix needs a migration + write-path wiring (deciding WHEN to stamp `last_suggested_at`)
+  that warrants its own scoped run. Not a false positive — flagged for follow-up.
+- **`/api/mobile/plan` charges the AI quota before checking whether Gemini keys exist** (vs makeMeals which
+  checks keys first). Only wastes a quota hit in the keys-absent degrade path, which does NOT occur in
+  production (keys are configured for the LLM to work at all) — so not a production bug. Low value; skipped.
+
+**Convergence status (unchanged):** product/security/marketing/monetization tracks complete; all named
+buildable revenue levers (H12–H15) built; the sole open DoD box (Confidence statement) stays UNCHECKED —
+the honest business-case median (~$33K/yr) is reach-gated below the $100K floor and reach/downloads is the
+one remaining lever the loop CANNOT build (owner-activated demand-gen, FYI #190). This run advanced Track-F
+reliability + Track-G/free-tier correctness + a11y; it did not (and cannot this run) move the median. Did NOT
+open the 'ready' issue.
+
 ## 2026-07-01 (run 33) — 3 file-disjoint clears (LLM-fallback tests + scan error hygiene + README drift); 1 abandoned on a duplicate-coverage catch
 
 Full 5-Haiku scout sweep (monetization/paywall, tests/eval coverage, security/Track-G, artifact freshness,

@@ -4,6 +4,32 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-03 (run 43) — 3 file-disjoint clears (non-AI quota bug #382 + a11y labels #383 + mobile fetch
+  timeouts #384), all 2/2 Sonnet, 0 abandons. No deep audit (run 41 ran one <24h ago).** Lessons worth
+  keeping:
+  - **A daily-*AI*-quota gate on a *non-AI* endpoint is a real bug, not a paywall.** discover + cook-tonight
+    call only TheMealDB + deterministic ranking, yet `checkLlmQuota` was charging them and returning "Daily
+    AI limit reached. Upgrade" — falsely blocking a free journey. When auditing quota/spend gates, verify the
+    gated path ACTUALLY invokes the expensive resource (grep the handler body for the LLM client / generator);
+    a gate that protects nothing but blocks the user is a bug. The per-minute `rateLimit` is the correct tool
+    for bounding a fan-out of free external calls — the daily AI quota is not.
+  - **Don't move a rate-limit increment to "after success" to make it a consumption meter.** A scout proposed
+    it; rejected — charging on admission is the abuse protection. Moving it after the LLM call lets an attacker
+    hammer the endpoint and only be charged on success. Admission-gating is by-design, not a bug.
+  - **Verify every scout claim against the code before building — Haiku scouts mix real finds with false
+    positives.** The same reliability scout that surfaced the genuine #382 bug also claimed "discover/cook-
+    tonight don't pass allergens to rankRecipes" (FALSE — line 107/87 pass `allergens: model.allergens`). One
+    clear false positive in a report is a signal to independently re-verify ALL of its claims, not to trust
+    the rest.
+  - **On mobile (Hermes), prefer AbortController + setTimeout over `AbortSignal.timeout()`.** The static
+    `AbortSignal.timeout` has spotty Hermes support and typecheck won't catch a runtime gap; the manual
+    controller+timer pattern is universally supported. Default a caller-supplied `signal` to opt out, and
+    `clearTimeout` in `finally`.
+  - **Deferred, verified-real for a future run:** the reorder `minIntervalDays` throttle is inert in prod —
+    `queries.ts:1574` hardcodes `lastSuggestedAt: null` (no `reorder_policies.last_suggested_at` column), so
+    `predict.ts:81` never throttles. Needs a migration + a decision on WHEN to stamp the column; unclear
+    user-facing severity (cosmetic if suggestions are on-demand display, real spam if they drive push). Its
+    own scoped run.
 - **2026-06-23 — Never edit `.claude/` or `.github/` in an unattended run.** Files under those
   paths are treated as "sensitive" and trigger a permission prompt a headless cron run can't
   answer, which hangs the whole run. Keep loop memory at `docs/autonomous-loop/LOOP_MEMORY.md`
