@@ -42,7 +42,8 @@
     "./growth/analytics": "./src/growth/analytics.ts",
     "./security/site-gate": "./src/security/site-gate.ts",
     "./security/uuid": "./src/security/uuid.ts",
-    "./security/rate-limit-guard": "./src/security/rate-limit-guard.ts"
+    "./security/rate-limit-guard": "./src/security/rate-limit-guard.ts",
+    "./security/captcha-guard": "./src/security/captcha-guard.ts"
   },
   "scripts": {
     "lint": "echo \"(lint) @gm/core\"",
