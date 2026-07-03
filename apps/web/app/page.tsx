@@ -610,7 +610,7 @@ export default async function HomePage({
             <div className="grid gap-4 sm:grid-cols-2">
               {/* Free tier */}
               <div className="card-pad flex flex-col">
-                <p className="section-title">Free</p>
+                <h3 className="section-title">Free</h3>
                 <p className="mt-1 text-3xl font-semibold tracking-tight text-ink-900">$0</p>
                 <p className="mt-1 text-sm text-ink-400">forever</p>
                 <ul className="mt-5 flex-1 space-y-2">
@@ -628,7 +628,7 @@ export default async function HomePage({
               {/* Premium Monthly — the primary paid option shown on the landing */}
               <div className="card-pad flex flex-col border-brand-200 bg-brand-50/40">
                 <div className="flex items-center justify-between">
-                  <p className="section-title">Premium</p>
+                  <h3 className="section-title">Premium</h3>
                   <span className="pill-brand">Recommended</span>
                 </div>
                 <p className="mt-1 text-3xl font-semibold tracking-tight text-ink-900">
