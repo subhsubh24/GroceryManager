@@ -2035,3 +2035,50 @@ design-scout candidates deferred as marginal: the capture mic is an absolutely-p
 lever moves the honest pre-launch median (conversion/ARPU/retention can't be re-banked without live traffic
 data). The Confidence statement correctly stays UNCHECKED. A quiet, coherent, converged run — the value was two
 genuine clears + refusing three duplicative "coverage" candidates and one off-pattern a11y implementation.
+
+---
+
+## Run 41 — 2026-07-03 — DEEP AUDIT (5 lenses) + 2 disjoint clears (README accuracy + 100% TSX token discipline)
+
+Deep audit was due (last folded/standalone run 38, >24h). Five read-only Haiku lenses over the whole repo;
+2 real findings shipped, both 2/2 first pass, 0 abandons.
+
+**Shipped (file-disjoint):**
+1. **#371 — README design-system description → reality (LIVING ARTIFACTS).** The "Design & experience" bullet
+   still advertised a dead visual direction (Inter + Fraunces, animated aurora hero, bento landing,
+   accent-themed pages, frosted mobile tab bar). The code ships one typeface (Hanken Grotesk; hierarchy via
+   weight/size/tracking), `aurora: none`, a single sparingly-used brand-green accent (PageHeader ignores the
+   `accent` prop — no per-page themes), and a solid `bg-cream` mobile nav. Both reviewers grep-verified every
+   new claim 1:1 against layout.tsx / tailwind.config.ts / globals.css / bottom-nav.tsx / page-header.tsx.
+2. **#372 — last 4 raw-hex `text-[#0a6e33]` → `text-brand-solid-hover` token + contrast comment.** These CTA
+   buttons (Cook Mode Next/Done ×2, share recipe/cookbook "Try it free") were the ONLY raw hex left in the
+   app's TSX → now 100% token discipline. `#0a6e33` = `rgb(10 110 51)` = exactly `--brand-solid-hover`, the
+   DELIBERATE darker green (brand-solid `rgb 12 138 62` fails WCAG AA on white: 4.45:1 vs 6.38:1). Swap is
+   byte-exact (zero visual change) and each site now carries a comment stating the 4.5:1 rationale.
+
+**The value was also the FILTER (nothing sub-bar shipped):**
+- **Security/RLS/Track-G — CLEAN** (29 tables RLS-correct; full abuse-hardening matrix verified).
+- **Correctness/functional — CLEAN** (all critical journeys try/catch + degrade; timeouts < serverless budget;
+  fail-loud required envs; no dead ends).
+- **Monetization — reach-gated RE-CONFIRMED.** Adversarial re-test found one buildable lever (premium-collections
+  one-time add-on, ~$1-3K/yr) that both fails to move the floor AND collides with the owner's locked
+  subscription-only v1 decision → scope creep, not shipped. Floor gap = downloads/mo = owner GTM (#190).
+- **Perf — 3 candidates, all rejected.** ingest.ts N+1 baseUnitId read + sequential line/list inserts:
+  real round-trips, but the path is dominated by multi-second Gemini vision + per-line normalize cascade, so
+  batching shaves <2% while restructuring a correctness-sensitive core path (per-canonical ledger reprojection
+  must stay sequential — run-38 lesson). Poor risk/reward. Coverage clean (102 test files; sibling+barrel
+  verified before any "no test" claim).
+- Skipped the redundant `disabled`+`aria-disabled` on upgrade/page.tsx as churn.
+
+**Lessons carried forward:**
+1. **When an audit keeps re-flagging a deliberate hardcode, encode the rationale AT THE SITE** (token + comment)
+   rather than re-arguing it each run — #0a6e33 was mis-flagged in runs 35 AND 41; #372 makes the re-flag
+   impossible (byte-exact `brand-solid-hover` token + a 4.5:1 comment).
+2. **Branch-entanglement recurred (run-39):** a review subagent sharing the parent working tree ran a checkout
+   that mixed the two changes' files in the tree. Harmless — verify `origin/<branch>` via `git show` (not the
+   shared tree), `git reset --hard HEAD` to recover; prefer worktree isolation for mutating parallel agents.
+
+**Readiness:** did NOT open the 'ready' issue. The SOLE open DoD gap remains the reach-gated business-case floor
+(base ≈ $33K/yr < $100K; owner-activated demand-gen the loop is forbidden to do — FYI #190). No buildable lever
+moves the honest pre-launch median. Confidence statement stays UNCHECKED. A coherent converged run + a full
+deep audit = success.

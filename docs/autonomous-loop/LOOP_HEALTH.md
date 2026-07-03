@@ -26,7 +26,7 @@ The `QUALITY_SCORECARD` measures the **product**; this measures the **loop itsel
 ```yaml
 LOOP_HEALTH:
   project: GroceryManager
-  as_of: 2026-07-01 (run 35)
+  as_of: 2026-07-03 (run 41)
   enforced_in_ci: true           # lint + functional E2E journeys + the capabilities tripwire are REQUIRED checks on main, enforce_admins=true
   validation:                    # capability self-validation feed — refresh every run from `node scripts/check-self-validation.mjs --readiness`
     enforced_in_ci: true         # 'self-validation (capabilities tripwire)' is a required, enforce_admins status check
@@ -34,26 +34,42 @@ LOOP_HEALTH:
     active: 5
     unmet: []                    # capabilities needing an OWNER SECRET not wired in CI (loop can't supply) — each MUST also be an urgent OWNER_ACTION 'validation-capability-<service>' in PENDING_OPS
     unmet_unsurfaced: []         # MUST stay empty — an unmet capability missing from PENDING_OPS or this list is invisible to the owner (a bug)
-  last_run: 2026-07-01 (run 35)
-  last_deep_audit: 2026-07-01 (run 35, folded 5-lens scout sweep: security/RLS+Track-G, correctness/tests, design/a11y, living-artifacts, monetization/business-case-strength — no CRITICAL findings, 5 of 7 candidates rejected on verification incl. 2 would-be regressions; runs 33/34 folded prior sweeps; last standalone run 30)
+  last_run: 2026-07-03 (run 41)
+  last_deep_audit: 2026-07-03 (run 41, standalone 5-Haiku lens sweep: security/RLS+Track-G, correctness/functional, perf/coverage, design/a11y+artifacts, monetization/business-case-strength — no CRITICAL findings; 3 perf candidates rejected on verification (ingest N+1/inserts = <2% on an LLM-bound path + core-path regression risk), 1 a11y churn skipped; 2 design/artifact clears shipped #371/#372; runs 33/34/35 folded prior sweeps; last standalone run 38)
   this_run:
-    changes_shipped: 2           # #315 cook-mode 44px touch targets + timer aria-labels (Track F a11y) #316 growth MRR aggregate-amortization money-math fix + regression test — both file-disjoint + this housekeeping PR
+    changes_shipped: 2           # #371 README design-description → reality (LIVING ARTIFACTS) #372 4 raw-hex #0a6e33 → text-brand-solid-hover token + contrast comment (design bar; 100% TSX token discipline) — both file-disjoint + this housekeeping PR
     changes_abandoned: 0
     abandoned_reasons: []
-    verify_cycle_failures: 0     # both changes passed their local gate first try (typecheck / lint --max-warnings=0 / core test / prod build)
-    review_rejections: 0         # both got both reviewers, 2/2 APPROVE first pass (one MRR reviewer mis-read a branch-visibility artifact — the commit was on its own branch, not the checked-out tree — and confirmed APPROVE on the merits once pointed at the commit; not a real rejection)
+    verify_cycle_failures: 0     # both passed their local gate first try (web typecheck / prod build + missing-export grep; #371 docs-only)
+    review_rejections: 0         # both got both Sonnet reviewers, 2/2 APPROVE first pass; reviewers independently verified README claims vs code + the byte-exact color/6.38:1 contrast + valid token
     review_cycles_used: 1
     circuit_breaker_trips: 0
   rolling_7d:
-    merged_prs: 71               # 68 prior + gtm-audit #313 + this run's #315/#316 (+housekeeping in flight)
+    merged_prs: 52               # ≈50 merged in the 7d window (git log --since=2026-06-26, incl. many FACTORY/GTM standard meta-commits) + this run's #371/#372 (housekeeping #373 in flight)
     reverts: 0
     readiness_attempts: 0
     readiness_rejected: 0
     recurring_failures:          # short bullets: the SAME wall hit across ≥2 runs (→ harness proposal if it persists)
-      - "duplicate-coverage trap (runs 32–33): did NOT recur in run 34 — the coverage scout confirmed db-ports.ts is genuinely CI-uncovered by grepping the target FUNCTION NAMES across all *.test.ts (every prior reference mocks the ports), and Reviewer B independently mutation-verified it's new coverage, not a dup. The run-33 LOOP_MEMORY rule worked. Streak broken; no harness proposal needed."
+      - "branch-entanglement (runs 39, 41): a review/build subagent sharing the parent git working tree ran a checkout that left the tree a MIX on top of the correct pushed commit. HARMLESS both times — commits were already pushed; verify origin/<branch> via `git show` (not the shared tree) + `git reset --hard HEAD` to recover. Persistent-but-benign; mitigation = worktree isolation for mutating parallel agents. No harness proposal (no lost work, no red merge)."
+      - "recurring #0a6e33 re-flag (runs 35, 41): a design scout keeps proposing `brand-solid` for the deep-green-on-white hardcode (an AA regression). RESOLVED in #372 by moving to the byte-exact `brand-solid-hover` token + an in-code contrast comment at each site — the re-flag can't recur. No harness proposal needed."
     harness_proposals_open: 0    # open `loop: harness improvement proposal` issues (#232 resolved by #234)
   signal: steady                 # bootstrapping | improving | steady | churning | stuck
-                                 #   run 35: converged quiet run — 2 real value-bar clears, 0 abandons. #315 raised the
+                                 #   run 41: converged run + a full 5-lens DEEP AUDIT (due since run 38). 2 real
+                                 #   value-bar clears, 0 abandons, both 2/2 first pass. #371 corrected a stale README
+                                 #   design-system bullet (dead Inter/Fraunces/aurora/bento/accent-themes/frosted-nav
+                                 #   description → the shipped Hanken-Grotesk/single-accent/solid-nav reality; LIVING
+                                 #   ARTIFACTS). #372 swapped the last 4 raw-hex #0a6e33 buttons → the byte-exact
+                                 #   text-brand-solid-hover token + a WCAG-AA contrast comment at each site (100% TSX
+                                 #   token discipline; PERMANENTLY ends the recurring "use brand-solid" mis-flag, which
+                                 #   would regress contrast 6.38:1→4.45:1). Deep audit: Security/RLS/Track-G CLEAN (29
+                                 #   tables), correctness/functional CLEAN, monetization RE-CONFIRMED reach-gated (the
+                                 #   sole buildable lever — a collections add-on — is ~$1-3K/yr + collides with the locked
+                                 #   subscription-only v1 decision), perf 3-of-3 rejected (ingest batching = <2% on an
+                                 #   LLM-bound path + core-path regression risk), coverage clean. 0 reverts, 0 circuit
+                                 #   breaks. The branch-entanglement trap recurred (run-39) but was harmless (pushed
+                                 #   commits verified correct + disjoint; tree reset). Convergence stays reach-gated
+                                 #   (#190); did NOT open the 'ready' issue; Confidence statement stays UNCHECKED.
+                                 #   -- prior (run 35): converged quiet run — 2 real value-bar clears, 0 abandons. #315 raised the
                                  #   cook-mode timer + step-nav buttons to the 44px WCAG/Apple touch-target minimum
                                  #   (+timer aria-labels) on the app's most hands-busy surface; #316 fixed a real
                                  #   money-math bug in computeMrrUsd (per-sub round(3999/12) baked a 0.25¢/sub bias →

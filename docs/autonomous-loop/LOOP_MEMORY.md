@@ -1263,3 +1263,56 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   satisfied by #332's `scan.eval.test.ts`, scorecard lags a day). **Readiness:** did NOT open 'ready' — sole DoD
   gap is the reach-gated floor (base ≈ $33K < $100K, owner GTM, #190); no buildable lever moves the honest
   pre-launch median. Confidence statement stays UNCHECKED. Quiet, coherent, converged run = success.
+
+- **2026-07-03 (run 41) — DEEP AUDIT (5-Haiku lens sweep, due since run 38) + 2 file-disjoint clears
+  (README design-accuracy #371 + raw-hex→token discipline #372). Both 2/2. Zero abandons.** Deep audit was
+  due (last standalone/folded run 38, >24h). Baseline gate green (typecheck clean, tree clean, scorecard A
+  as_of 2026-07-01). Five read-only lenses over the whole repo:
+  (1) **SECURITY/RLS/Track-G — CLEAN.** All 29 public tables RLS-enabled with correct per-user
+  (`app_current_user_id()`), transitive-child, household command-specific, or grocery_app-scoped policies;
+  full Track-G matrix verified (rate limits on signup/auth/mobile/growth/confirm, 32KB body + field caps,
+  generic-500 error hygiene, 10-fail/15-min lockout + timing-safe compare, Turnstile captcha, Stripe
+  `constructEvent` + timing-safe Gmail/unsub/confirm HMAC, per-user/day LLM quota 10-free/100-premium);
+  secrets env-only + AES-256-GCM at rest; entitlements server-side; CSP/HSTS/X-Frame/nosniff headers.
+  (2) **CORRECTNESS/FUNCTIONAL — CLEAN.** Signup→working dashboard (no email-verify gate, EMPTY_HOME_DATA
+  fallback), receipt→pantry, cook-log, paywall→Stripe all try/catch + degrade; LLM calls `withTimeout(8s)`
+  < Vercel budget; DATABASE_URL required/fails-loud; `.optional()` envs degrade cleanly; no dead branches /
+  bare throws on critical paths; household "coming soon" is intentional + flag-gated.
+  (3) **MONETIZATION — REACH-GATED CONFIRMED, no buildable lever.** Adversarial re-test of the floor gap:
+  pricing/tiers (Free / $4.99 mo / $39.99 yr / $9.99 Family) good-better-best + annual discount; paywall
+  context-aware + trial-eligibility + referral bonus-trial-days (H13); retention loops H14 annual-nudge /
+  H15 win-back / streaks / experiments all built; the ONE buildable lever found (premium-collections
+  one-time add-on) is ~$1-3K/yr AND collides with the owner's locked subscription-only v1 decision → scope
+  creep, not a floor-mover. Floor gap = ~4-4.5k downloads/mo = **owner GTM**, not code.
+  (4) **PERF/COVERAGE — 3 perf candidates, ALL REJECTED; coverage clean.** ingest.ts N+1 (per-line
+  `baseUnitId` read) + sequential line inserts + capture/add.ts sequential inserts: real round-trips, but the
+  ingest path is dominated by multi-second Gemini vision + per-line normalize cascade (trigram→embed→LLM), so
+  batching shaves <2% off an LLM-bound flow while restructuring a correctness-sensitive core path (the
+  per-canonical `appendLedgerAndReproject` read-modify-write must stay sequential — the run-38 lesson). Poor
+  risk/reward. capture/add is trigram-bound per item; insert-batching marginal. 102 test files, no real gaps
+  (verified sibling+barrel before rejecting).
+  (5) **DESIGN/A11Y/ARTIFACTS — 2 real findings shipped, 1 churn skipped.** #371 README "Design & experience"
+  bullet described a dead visual direction (Inter+Fraunces, aurora hero, bento, accent-themed pages, frosted
+  tab bar) — the code ships Hanken Grotesk single family, `aurora: none`, `bg-cream` solid nav, PageHeader
+  ignores `accent`; corrected to reality (LIVING ARTIFACTS). #372 the 4 raw-hex `text-[#0a6e33]` buttons (the
+  ONLY raw hex left in TSX) → `text-brand-solid-hover` token + a contrast comment at each site. Skipped the
+  redundant `disabled`+`aria-disabled` on upgrade/page.tsx as churn.
+  **THE RECURRING #0a6e33 TRAP — now documented in-code to STOP the churn:** `#0a6e33` = `rgb(10 110 51)` =
+  exactly `--brand-solid-hover`, deliberately the DARKER green because `--brand-solid` (`rgb 12 138 62`) fails
+  WCAG AA as text on white (4.45:1 vs 6.38:1). A design scout has now flagged "use brand-solid" in runs 35 AND
+  41; run 35 correctly rejected it as a contrast regression. #372 resolves it permanently by using
+  `brand-solid-hover` (byte-exact color, contrast preserved) + inline comments stating the 4.5:1 rationale, so
+  a future "simplify to brand-solid" pass is pre-empted. LESSON: when an audit keeps re-flagging a deliberate
+  hardcode, the fix isn't to argue it down each run — encode the rationale AT THE SITE (token + comment) so the
+  re-flag can't recur.
+  **BRANCH-ENTANGLEMENT trap RECURRED (run-39 lesson):** a review subagent sharing the parent working tree ran
+  a `git checkout` of the OTHER change's branch, leaving my working tree a MIX (readme-branch README + reverted
+  token-branch hex) on top of the correct pushed commit. Harmless because both commits were already committed +
+  pushed (origin branches verified correct + disjoint before any merge); `git reset --hard HEAD` restored the
+  tree. LESSON (reinforced): verify `origin/<branch>` contents via `git show`, NOT the shared working tree,
+  before trusting review state; prefer worktree isolation for parallel agents that might checkout. Both
+  reviewers independently caught the dirty tree and correctly reviewed the COMMITTED diff, not the tree.
+  **Readiness:** did NOT open the 'ready' issue — the sole DoD gap is unchanged: the reach-gated business-case
+  floor (base ≈ $33K < $100K at median inputs, #190), which the monetization lens re-confirmed is owner-GTM,
+  not a buildable lever. Confidence statement correctly stays UNCHECKED. Validation 5/5 active, 0 unmet. A
+  coherent converged run with 2 real clears + a full 5-lens deep audit = success.
