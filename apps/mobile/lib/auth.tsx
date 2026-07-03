@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { API_BASE } from "./config";
+import { fetchWithTimeout } from "./api";
 import { deregisterPushNotifications, registerForPushNotifications } from "./notifications";
 
 const STORAGE_KEY = "@gm/auth";
@@ -43,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
   ): Promise<{ ok: boolean; error?: string }> {
     try {
-      const res = await fetch(`${API_BASE}/api/mobile/auth`, {
+      const res = await fetchWithTimeout(`${API_BASE}/api/mobile/auth`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
