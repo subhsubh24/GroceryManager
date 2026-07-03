@@ -45,11 +45,13 @@ GROWTH_STATUS:
   engine_pct: 100                # % of growth-execution engine pieces shipped — DERIVED from anchor files by preflight; NEVER hand-set
   channels_connected: []         # owner-authorized channels actually wired (e.g. [x, instagram, email])
   awaiting_connect: true         # true => agent only prepares creative; takes NO external action
-  site_gate_up: false            # HARD precondition for pre_launch execute-mode: true ONLY once the owner
-                                 #   has applied the pre-launch SITE GATE (SITE_GATE_PASSWORD set on the
-                                 #   deployment). While phase==pre_launch, the Growth Agent must NOT do
-                                 #   execute-mode public outreach unless this is true (see ANALYSIS_PLAYBOOK
-                                 #   marketing maturity gate). Lifts only at launch.
+  site_gate_up: true             # VERIFIED THIS RUN (2026-07-03, run 5) via direct curl against the live
+                                 #   deployed URL: home/blog/privacy return 200 (exempt), /signup and
+                                 #   /admin/waitlist return 401 (gated) — the exact exempt-vs-gated split
+                                 #   the code (apps/web/middleware.ts) implements. This is real, reproducible,
+                                 #   public-HTTP evidence (no secret read, no auth used) that SITE_GATE_PASSWORD
+                                 #   is now set. Still only ONE of the two HARD-BLOCK preconditions — see
+                                 #   channels_connected below (still empty) — so PREPARE mode continues.
   sources:                       # per-source pull status (H7 snapshot): connected | awaiting_connect
     waitlist: awaiting_connect
     analytics: awaiting_connect
@@ -62,8 +64,14 @@ GROWTH_STATUS:
                                  #   admin READ path (/admin/waitlist) needs ADMIN_EMAIL to verify counts
       owner_action: gtm-connect-waitlist
     analytics:
-      status: awaiting_connect   # NEXT_PUBLIC_PLAUSIBLE_DOMAIN + PLAUSIBLE_API_KEY unset — no visitor/
-                                 #   funnel-rate metric may be reported until this resolves to connected
+      status: awaiting_connect   # PARTIAL PROGRESS verified this run: NEXT_PUBLIC_PLAUSIBLE_DOMAIN is now
+                                 #   confirmed SET (curl of the live deployed HTML shows a real Plausible
+                                 #   script tag with data-domain="grocery-manager-web.vercel.app" — the
+                                 #   owner's same-day commit #396 normalized it to a bare host). PLAUSIBLE_API_KEY
+                                 #   (needed for the Stats API READ that GET /api/growth/snapshot uses) is
+                                 #   still unverifiable headlessly (the endpoint requires CRON_SECRET/admin
+                                 #   session, both absent to this routine) — stays awaiting_connect, fail-closed,
+                                 #   until a real visitors_7d number can be pulled.
       owner_action: gtm-connect-analytics
     billing:
       status: awaiting_connect   # STRIPE_SECRET_KEY / FEATURE_BILLING unset — no MRR/churn/CAC may be
@@ -190,33 +198,62 @@ GROWTH_STATUS:
       broader than runs 2-3's press/newsletter-specific queries) surfaced only SEO/listicle content
       and funding-news aggregators, zero named journalists/curators with a real reason to care about a
       pre-traction, gated waitlist. Zero outreach drafted this run (correct per OUTREACH.md)."
+    - "RUN 5 (2026-07-03, later cycle): the CIRCUIT BREAKER named in runs 2-4 is PARTIALLY RESOLVED — the
+      owner made real, verifiable moves since run 4. (1) Commit 53b1834 (18:25 CDT, authored by the owner
+      directly, not the product factory) fixed NEXT_PUBLIC_PLAUSIBLE_DOMAIN normalization — evidence they
+      set that env var (with a full-URL value that needed the fix). (2) Verified via direct `curl` against
+      the live deployed URL (https://grocery-manager-web.vercel.app): home/blog/privacy return HTTP 200
+      (site-gate-exempt routes) while /signup and /admin/waitlist return HTTP 401 (gated routes) — this
+      exact split is only possible if SITE_GATE_PASSWORD is now set in Vercel, so site_gate_up flips to
+      true this run, verified by real public HTTP behavior (no secret read, no auth needed). (3) The
+      deployed HTML confirms a live Plausible tracking script with data-domain set to the bare host
+      'grocery-manager-web.vercel.app' (matching the just-shipped normalization) — the tracking half of
+      analytics is real and live. NOT yet confirmed: PLAUSIBLE_API_KEY (the Stats API read
+      `GET /api/growth/snapshot` needs it; it returned a Forbidden error without a CRON_SECRET/admin
+      session, which this routine does not hold) and ADMIN_EMAIL (the /admin/waitlist 401 is fully
+      explained by the site gate alone, so it is
+      NOT evidence ADMIN_EMAIL is set — stays unverified). No channel (email provider / social) is
+      confirmed connected either — PENDING_OPS `track-h-activation` / `connect-channels` are still open, and
+      ListConnectors still shows only Gmail + Google Drive. Per the ANALYSIS_PLAYBOOK hard block, BOTH a
+      connected channel AND site_gate_up must be true to leave PREPARE mode — only one is met, so the
+      agent stays in PREPARE mode this run. But this is genuine, verified owner progress after 4+ runs of
+      zero movement — worth flagging clearly rather than re-stating the circuit breaker unchanged."
+    - "RUN 5 outreach research: no new search angle attempted this run (runs 2-4 already covered
+      press/newsletter/food-tech-beat/general-landscape queries with the same negative, correctly-zero
+      result) — re-running the identical queries again would be padding, not new evidence. Zero outreach
+      drafted this run."
   next_actions:
-    - "Next run: attempt to read real waitlist count from /admin/waitlist once ADMIN_EMAIL is set"
+    - "Next run: re-check GET /api/growth/snapshot behavior and whether ADMIN_EMAIL / PLAUSIBLE_API_KEY /
+      an email provider key have been set — site_gate_up flipping true this run shows the owner is
+      actively connecting things, so re-verify rather than assuming the circuit-breaker items are still
+      static."
     - "Reddit is a CLOSED dead end for this routine's WebSearch tool (confirmed run 4: explicit
       domain-access block, not a phrasing issue) — do NOT re-attempt Reddit-scoped queries. Instead try
       other citable aggregators (Trustpilot, Google Play review pages directly, ComplaintsBoard-style
       sites) for App Store review evidence beyond Paprika/KitchenPal; note some aggregators (e.g.
       justuseapp.com) 403 on WebFetch even when they surface in WebSearch snippets."
-    - "Once site_gate_up true AND a channel connects: draft 1-2 curated outreach emails (press/newsletter)"
+    - "Once a channel (email provider or social) connects on top of the now-true site_gate_up: draft 1-2
+      curated outreach emails (press/newsletter) — the HARD BLOCK needs both, and only site_gate_up is
+      met so far."
   owner_blockers:
-    - "CRITICAL: Set SITE_GATE_PASSWORD in Vercel env to flip site_gate_up: true — this is the
-      HARD gate blocking all execute-mode outreach. Without it the growth agent stays in PREPARE
-      mode indefinitely. (Docs: PENDING_OPS.md 'site-gate-prelaunch')"
-    - "HIGH: Set ADMIN_EMAIL in Vercel env to access /admin/waitlist — the growth agent cannot
-      pull real waitlist signup counts without it. Funnel stays 0 until this is set."
+    - "RESOLVED THIS RUN (verified 2026-07-03 via live HTTP behavior, not self-reported): SITE_GATE_PASSWORD
+      is now set — site_gate_up: true. No further owner action needed on this item; PENDING_OPS
+      'site-gate-prelaunch' marked done below. (Remember to UNSET it at actual public launch.)"
+    - "HIGH: Set ADMIN_EMAIL in Vercel env to access /admin/waitlist — still unverified (the site gate
+      alone explains the current 401; ADMIN_EMAIL's own effect can't be observed until the gate is
+      opened or an admin session is used). Funnel stays 0 until this is set AND verified."
     - "HIGH: Connect an email provider (RESEND_API_KEY or SENDGRID_API_KEY) — waitlist signups are
-      being captured in the DB but confirmation emails are not being sent. Real signups are not
-      being nurtured. (Docs: PENDING_OPS.md 'track-h-activation')"
-    - "HIGH: Connect NEXT_PUBLIC_PLAUSIBLE_DOMAIN — without analytics the agent cannot measure
-      blog/landing traffic or visitor-to-waitlist conversion rate."
+      being captured in the DB but confirmation emails are not confirmed being sent. Real signups are
+      not being nurtured. (Docs: PENDING_OPS.md 'track-h-activation')"
+    - "HIGH: Set PLAUSIBLE_API_KEY — the tracking script is confirmed live (data-domain verified in the
+      deployed HTML this run) but the Stats API READ that the Growth Agent depends on for visitors_7d /
+      funnel rates needs this key too; without it visitor metrics stay 0 even though tracking fires."
     - "NORMAL: Pick a final app name from NAMING_CANDIDATES.md (Pantri / Mise / Larder) —
       all content assets currently use '[APP_NAME]' placeholder; this blocks final email/store copy."
-    - "REPEATED (4+ runs across 5 days, no movement — re-confirmed run 4 via ListConnectors [still only
-      Gmail + Google Drive connected] and a fresh PENDING_OPS re-read [all 4 gtm-connect-* items +
-      site-gate-prelaunch still status:open, byte-identical to run 3]): SITE_GATE_PASSWORD + ADMIN_EMAIL
-      are the two cheapest, highest-leverage unblocks outstanding — both are ~5-minute Vercel env-var
-      sets with zero cost. Naming this prominently again per the FACTORY_STANDARD circuit-breaker rule
-      rather than re-deriving it every run."
+    - "Connect a channel (email provider and/or a social API token) to clear the SECOND half of the
+      pre-launch execute-mode HARD BLOCK (ANALYSIS_PLAYBOOK marketing maturity gate) — site_gate_up is
+      now true, but channels_connected is still empty, so the agent stays in PREPARE mode until at least
+      one channel connects."
   demand_signal:                 # GTM_STANDARD §10 — pre-launch demand validation (leading indicator, NOT PMF)
     as_of: 2026-07-03
     method: "WebSearch + WebFetch against competitor App/Play Store review aggregators. 6 targeted

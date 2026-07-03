@@ -31,6 +31,67 @@ support it; the gap speaks for itself.
 
 ## RUN LOG (newest first)
 
+### 2026-07-03 (later cycle, run 5) — pre_launch, awaiting_connect, PREPARE mode (with real owner progress)
+- **Mode**: Still PREPARE (channels_connected: [] — no email/social channel confirmed connected), but
+  **one of the two HARD-BLOCK preconditions flipped this run**: `site_gate_up` is now verified `true`.
+- **Did**:
+  - Read GROWTH_STATUS, GROWTH_MEMORY, GTM_SCORECARD, GTM_AUDIT_MEMORY, PENDING_OPS, ANALYSIS_PLAYBOOK,
+    OUTREACH, BUSINESS_CASE. Checked git log since run 4's commit (ef16c9d) and found ONE new commit:
+    `53b1834` ("fix(analytics): normalize Plausible domain to bare host", #396), authored directly by the
+    owner (Subh Mukherjee, not the product factory / Claude Opus co-author line only on the merge). This
+    fixes `normalizePlausibleDomain()` so a full-URL `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` value still produces a
+    working Plausible integration — strong circumstantial evidence the owner had just set that env var and
+    hit the bug in practice.
+  - **Verified real infrastructure state directly against the live deployed app** (public HTTP only, no
+    secrets, no auth): `curl` against `https://grocery-manager-web.vercel.app` showed home/`/blog`/`/privacy`
+    return `200` (the site-gate-exempt routes) while `/signup` and `/admin/waitlist` return `401` (gated
+    routes) — this exact split only happens when `SITE_GATE_PASSWORD` is set in Vercel and
+    `apps/web/middleware.ts` is actively gating. This is the FIRST real owner-side movement confirmed in 4+
+    runs of a named circuit breaker. Flipped `GROWTH_STATUS.site_gate_up` to `true` and marked PENDING_OPS
+    `site-gate-prelaunch` `done` (with the evidence above), explicitly preserving the FUTURE "unset at
+    launch" step so it isn't lost.
+  - Also confirmed the deployed HTML contains a live Plausible tracking script with
+    `data-domain="grocery-manager-web.vercel.app"` (bare host — matches the just-shipped fix), so
+    `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` is confirmed set. Did **NOT** mark analytics `connected`: the Stats-API
+    read path (`GET /api/growth/snapshot`) needs `PLAUSIBLE_API_KEY` too, and that endpoint returned a
+    Forbidden response without a `CRON_SECRET`/admin session this routine doesn't hold — fail-closed per
+    GTM_STANDARD §4, stays `awaiting_connect` with the partial evidence noted.
+  - Checked `ADMIN_EMAIL`: could NOT be verified — the `/admin/waitlist` `401` is fully explained by the
+    site gate alone (it would 401 with or without `ADMIN_EMAIL` set), so this run correctly did NOT claim
+    ADMIN_EMAIL is set. Re-checked `ListConnectors`: still only Gmail + Google Drive — no analytics/DB/
+    billing MCP tool, so no direct read of `PLAUSIBLE_API_KEY` / `ADMIN_EMAIL` / any channel token is
+    possible from this routine either way.
+  - Did NOT re-run runs 2-4's outreach search queries (press/newsletter/food-tech-beat/general-landscape
+    all already covered with the same correct negative result) — re-running them would be padding, not new
+    evidence. Zero outreach drafts this run (correct).
+  - Did NOT re-run the §10 demand-signal research (runs 3-4 already produced a full, cited synthesis; no
+    new angle identified this run that would add real evidence rather than repetition).
+  - Updated `GROWTH_STATUS`: `site_gate_up: true` (verified), `validation.analytics` partial-progress note,
+    `learnings`/`next_actions`/`owner_blockers` refreshed to reflect the real change instead of repeating
+    the unchanged circuit-breaker language from runs 2-4.
+  - Ran an independent reviewer subagent (fresh context, adversarial) against this run's full diff before
+    committing. **Verdict: APPROVE.** It independently re-read `packages/core/src/security/site-gate.ts`,
+    `apps/web/middleware.ts`, `apps/web/app/admin/layout.tsx`, and the growth-snapshot route, and confirmed:
+    `/signup` is exempt from neither the site gate nor any code path that would 401 it on its own, so the
+    observed 401 is unconfounded evidence the gate is up; `/admin/waitlist`'s missing-ADMIN_EMAIL path
+    redirects (307), never 401s, so that route's 401 is ALSO explained only by the site gate — confirming
+    (not contradicting) this run's refusal to credit it toward ADMIN_EMAIL. No overclaim found (analytics
+    stayed `awaiting_connect`, ADMIN_EMAIL not claimed, no fabricated metric); scope was clean (only the 3
+    growth/pending-ops files); YAML re-validated. Zero requested changes.
+- **Hypothesis**: none new on the funnel (still no analytics READ / billing / email-provider connection
+  verified) — this run's work is a real infrastructure-state correction (site gate + partial analytics),
+  not a new funnel or PMF hypothesis.
+- **Result**: `site_gate_up` genuinely changed `false → true`, backed by reproducible public HTTP evidence.
+  Funnel/PMF numbers are still `0`/`null` (correctly) — no analytics READ, billing, or email-provider
+  connection is verifiable yet.
+- **Decision**: Ship the GROWTH_STATUS/PENDING_OPS/GROWTH_MEMORY updates (reviewer-cleared); outreach stays
+  at zero (correct, no new target); no ROADMAP/VISION/BUSINESS_CASE steer (this is an infrastructure-status
+  correction, not a growth-lever finding).
+- **Operational note**: this is the first run where the "same owner action, zero movement" circuit breaker
+  from runs 2-4 needed to be UPDATED rather than repeated — a useful reminder to actually re-verify
+  external state each run (via any means reachable, here: public HTTP against the deployed URL) rather than
+  assuming a repeated blocker is still blocked.
+
 ### 2026-07-03 (later cycle) — pre_launch, awaiting_connect, RUN 4 (unchanged mode: PREPARE)
 - **Mode**: PREPARE (site_gate_up: false; ListConnectors re-checked: still only Gmail [connected] +
   Google Drive [connected, not enabled in chat] — no analytics/DB/billing MCP tool, same as runs 1-3).
