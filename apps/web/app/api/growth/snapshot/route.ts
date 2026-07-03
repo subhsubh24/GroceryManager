@@ -10,6 +10,7 @@ import { buildGrowthSnapshot, computeMrrUsd, type ExperimentSummary } from "@gm/
 import { EXPERIMENTS, computeExperimentResult } from "@gm/core/growth/experiments";
 import { auth } from "@/auth";
 import { serverError } from "../../_lib/guard";
+import { normalizePlausibleDomain } from "../../../lib/plausible";
 import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -76,7 +77,9 @@ export async function GET(req: Request) {
     }
 
     // --- Web analytics (Plausible) — best-effort real pull when connected ---
-    const plausibleDomain = process.env["NEXT_PUBLIC_PLAUSIBLE_DOMAIN"];
+    // Normalize to the bare host so the Stats API `site_id` matches the registered site even
+    // when the env var carries a scheme / trailing slash (same fix as the tracking data-domain).
+    const plausibleDomain = normalizePlausibleDomain(process.env["NEXT_PUBLIC_PLAUSIBLE_DOMAIN"]);
     const plausibleKey = process.env["PLAUSIBLE_API_KEY"];
     let plausibleConnected = false;
     let visitors7d = 0;
