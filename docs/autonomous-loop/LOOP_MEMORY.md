@@ -4,6 +4,46 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-03 (run 44) — 1 file-disjoint clear (#386 vision anti-hallucination eval); the load-bearing
+  work was a git-hygiene catch + refusing a padding change. No deep audit (run 41 <24h).** Lessons:
+  - **STALE local `origin/main` manufactures phantom regressions — always `git fetch origin main` FIRST.**
+    The env cloned the repo and checked out the run-43 tip (`d48c0dd`/#385) as a DETACHED HEAD, but the local
+    `main`/`origin/main` refs still pointed at `#369` (14 commits behind, pre-runs-42/43). I branched my feature
+    branch from `main` → it was based on stale #369. Reading `services/workers/src/index.ts` on that branch showed
+    the OLD `stub()` (pre-#379), which looked EXACTLY like #379's merged "fail-loud notImplemented()" fix had been
+    reverted — a scary phantom "synthetic-green regression." The tell: `git merge-base --is-ancestor 7dcabe9 main`
+    = NO and `git branch -a --contains d48c0dd` = EMPTY (a dangling detached tip no branch contained). `git fetch
+    origin main` fast-forwarded origin/main #369→#385, `--is-ancestor` then confirmed #379 IS on main (no
+    regression); `git branch -f main origin/main` + `git rebase main <branch>` fixed the base (clean — file-disjoint).
+    **RULE: at run start, `git fetch origin main && git branch -f main origin/main` (or cut branches from
+    `origin/main`, never local `main`) BEFORE trusting local main or diagnosing any "a merged fix is missing" —
+    a stale ref fabricates the regression. Confirm a suspected revert with `--is-ancestor <commit> origin/main`
+    (after fetch), NOT by reading a file on a possibly-stale-based branch.**
+  - **A Haiku scout's severity framing must be re-verified, not trusted (the run-43 lesson, again).** The
+    reliability scout flagged 3 server actions (capture, applyScan, addNamesToList) that call `captureToList` /
+    `applyVisionScan` without a try/catch as "silent data loss / leaves the pantry inconsistent." Both framings
+    are FALSE: (a) `apps/web/app/error.tsx` (+ per-route `error.tsx`) is a graceful boundary — a throw surfaces a
+    friendly error page, never silent loss; (b) `applyVisionScan` runs inside `withTenant(...tx...)`, so a mid-way
+    throw ROLLS BACK the whole apply — no partial/inconsistent state. The deliberate inline-`{status:"error"}`
+    pattern exists ONLY in `add-receipt/actions.ts` because receipt PARSING fails often (LLM/photo quality) and
+    earns a rich `friendlyError` mapper; deterministic capture + a transactional DB write fail rarely, so the
+    error-boundary fallback is a reasonable, deliberate choice — NOT a defect. Passed as modest polish with
+    core-flow regression risk (headless, no browser verify). VERIFY the boundary/transaction context before
+    treating a "no try/catch" as a bug.
+  - **Two more scout candidates PASSED on judgment (not padding, not scarcity):** (i) CSP `script-src`
+    `'unsafe-inline' 'unsafe-eval'` (`next.config.mjs`) — a real hardening gap, but removing it needs a
+    nonce-based CSP + middleware rework + a REAL-BROWSER hydration check; the break-the-whole-site risk is too
+    high for an unattended run with no e2e verify. Legit future work (own scoped run w/ browser verification).
+    (ii) mobile hex-color centralization (18 `StyleSheet.create` files → a `colors.ts` theme) — real
+    maintainability, but a large cosmetic churn touching the native app, whose CI only typechecks (the run-39
+    BUILDS≠WORKS Expo-config trap). Not a clean unattended clear. Web UI + Track-G both re-confirmed CLEAN.
+  - **The shipped clear (#386):** the vision scan eval measured only RECALL; it never measured PRECISION, even
+    though `detect.ts`'s whole design (per-item presence + 2D bounding boxes: "it can't box something that isn't
+    there") exists to suppress hallucination, and a phantom item silently pollutes a real user's pantry. Added a
+    conservative human-verified `absent` list per golden fixture (large produce that can't be occluded in a
+    drawer, so a detection is a true phantom — I READ both fixture jpgs to author it; skipped ambiguous items like
+    the door-shelf eggs / pale bottles that could be milk) + a second live-Gemini `it` asserting no-hallucination
+    pass-rate>=0.8, mirroring the recall test + harness. RUN_EVALS-gated (scheduled evals workflow).
 - **2026-07-03 (run 43) — 3 file-disjoint clears (non-AI quota bug #382 + a11y labels #383 + mobile fetch
   timeouts #384), all 2/2 Sonnet, 0 abandons. No deep audit (run 41 ran one <24h ago).** Lessons worth
   keeping:
