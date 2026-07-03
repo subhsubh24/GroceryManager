@@ -58,9 +58,11 @@ function SignupCta() {
             all in one place.
           </p>
         </div>
+        {/* `brand-solid-hover` (deep green) — brand-solid fails WCAG AA as text on white; the
+            hover-shade token clears 4.5:1. */}
         <a
           href="/signup"
-          className="btn inline-flex shrink-0 bg-white px-5 py-3 text-base text-[#0a6e33] shadow-lift hover:bg-white/95"
+          className="btn inline-flex shrink-0 bg-white px-5 py-3 text-base text-brand-solid-hover shadow-lift hover:bg-white/95"
         >
           Try it free →
         </a>
