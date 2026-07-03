@@ -4,6 +4,53 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-03 (run 45) — DEEP AUDIT (5-lens sweep) + 1 file-disjoint a11y clear; 2 scout findings correctly rejected
+
+Full 5-Haiku scout sweep over the whole repo (security/RLS+Track-G, correctness/functional, monetization/
+business-case-strength, design/a11y, artifacts/coverage) — the standalone DEEP AUDIT (due since run 41).
+Baseline gate green up front (typecheck clean, tree clean, quality scorecard **A** as_of 2026-07-03, ship gate
+MET, self-validation 5/5 with 0 unmet).
+
+**Shipped 1, both reviewers 2/2 first pass:**
+
+1. **#390 — a11y heading semantics (WCAG 2.1 Level A, 1.3.1 Info and Relationships).** Three visually-present
+   section titles rendered as non-heading elements, so assistive tech skipped them in the heading outline on
+   two of the highest-traffic surfaces: the landing pricing/conversion block (`Free`/`Premium` tiers were
+   `<p className="section-title">` → `<h3>`, nested under the pricing `<h2>`) and the core cook loop (`Made it?`
+   log-cook title was `<div className="section-title">` → `<h2>`, matching its sibling `<h2>` "Out of something?").
+   Zero visual change (`.section-title` is a plain typographic utility with no element selector); brings the 3
+   remaining outliers in line with ~30+ `.section-title` usages that are already `<h2>`. Files:
+   `apps/web/app/page.tsx`, `apps/web/app/cook/[id]/page.tsx`.
+
+**2 findings correctly REJECTED on verification (not padding, not scarcity — the FILTER was real value):**
+
+- **Correctness scout's "ewmaConsumptionRate inflates 3.3× when a cook is logged"** — FALSE. Misreads a
+  deliberate, in-code-documented model (`depletion.ts:88`, `persist.ts:94-97`): the forward-projection rate is
+  intentionally learned from **repurchase cadence** (which captures the large unlogged-consumption tail), while
+  the EXACT on-hand (`estimateOnHand`) already subtracts every logged −delta and the rate is applied ONLY to
+  project forward after the last event — no double-count, no inflation. Switching to logged-deltas-only would
+  regress the common under-logging case. (Recurring pattern, runs 42/43/44: Haiku correctness scouts produce
+  plausible "bugs" against deliberate modeling choices — verify the design intent before trusting.)
+- **Monetization scout's ~5 "unbuilt revenue levers"** (Instacart Impact affiliate, higher-freq expiry nudge,
+  quarterly tier, lifetime deal, per-serving cost) — none cleared the value bar. The scout's own honest math
+  stacks them at ~$50–68K (still below the $100K floor), and each is speculative pre-launch AND either
+  owner-dependent (Impact account, Stripe price IDs, Appsumo campaign) or scope-creep against the locked
+  subscription-only v1. Re-confirms the standing conclusion (runs 38–42): the ~$67K gap is downloads/mo =
+  owner GTM (#190), NOT a buildable code lever.
+
+**Security/RLS/Track-G + artifacts re-confirmed CLEAN** (33+ tables RLS-enabled with correct policies, timing-safe
+webhook sigs, server-side entitlements, captcha fail-closed, no schema/stack leakage, CSP/HSTS headers; pricing
+docs match billing config; ~828 core test cases). **Housekeeping:** closed #359 (all three §28 fixes #378/#379/#380
+verified on main). **Non-blocking follow-up recorded:** `admin/growth`, `admin/waitlist`, `help/page.tsx:378`
+still have `<p className="section-title">` outliers — low-value internal/tertiary surfaces, out of scope for the
+high-traffic PR.
+
+**Readiness:** did NOT open the 'ready' issue — the sole open DoD gap is unchanged (reach-gated business-case
+floor, base ≈ $33K < $100K, owner-GTM #190). Confidence statement stays UNCHECKED. A quiet, coherent, converged
+run (full 5-lens deep audit + 1 real a11y clear + 2 findings correctly rejected) = success.
+
+---
+
 ## 2026-07-03 (run 43) — 3 file-disjoint clears (non-AI quota bug + a11y input labels + mobile fetch timeouts)
 
 Full 5-Haiku scout sweep (security/Track-G, reliability/correctness, design/a11y/taste, quality/coverage,

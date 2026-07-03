@@ -4,6 +4,54 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-03 (run 45) — DEEP AUDIT (5-scout lens sweep, due since run 41 >~24h) + 1 file-disjoint a11y
+  clear (#390 heading semantics). Both Sonnet reviewers 2/2 first pass; 0 abandons. 2 scout findings
+  correctly REJECTED on verification.** Deep audit due (last run 41; runs 42/43/44 same-day folded, this
+  is the 4th run since). Baseline gate green (typecheck clean, tree clean, scorecard **A** as_of 2026-07-03,
+  self-validation 5/5, 0 unmet). Five read-only Haiku lenses over the whole repo:
+  (1) **SECURITY/RLS/Track-G — CLEAN (NO REAL FINDINGS).** Scout re-verified: all 33+ public tables
+  RLS-enabled with correct policies (0002/0010/0016_rls); rate limits on auth/signup/mobile/growth;
+  timing-safe webhook sig verification (Stripe `constructEvent`, RevenueCat, Gmail HMAC); server-side
+  entitlements via `isPremium(signals)` (DB-written by webhooks only, never client-supplied); mobile JWT
+  HMAC-SHA256 timing-safe + expiry; captcha fail-closed in prod; no schema/stack leakage; CSP/HSTS/X-Frame/
+  nosniff headers; parameterized queries throughout. Prior #378/#379/#380 fixes confirmed still on main.
+  (2) **CORRECTNESS/FUNCTIONAL — 1 finding, REJECTED (plausible-but-wrong on a deliberate model).** Scout
+  claimed `ewmaConsumptionRate` (depletion.ts:76-92 + persist.ts:98) "inflates the rate 3.3× when a recipe
+  consumption is logged, because it learns from purchase intervals and ignores the explicit −delta consumption
+  events." FALSE — this misreads the intended design, documented at persist.ts:94-97 + depletion.ts:88: the
+  forward-projection rate is DELIBERATELY learned from **repurchase cadence** (qty bought ÷ days to next
+  purchase) because it captures TOTAL consumption incl. the large unlogged tail (users under-log cooks); the
+  EXACT on-hand (`estimateOnHand`, `onHandAtLast = events.reduce(+delta)`) ALREADY subtracts every logged −delta,
+  and the learned rate is applied ONLY to project forward AFTER the last event — so there is no double-count and
+  no inflation in the actual on-hand. Switching the rate to "logged −deltas only" would REGRESS the common
+  under-logging case. **LESSON (recurring, runs 42/43/44): a Haiku correctness scout will produce a plausible
+  "bug" against a deliberate, commented modeling choice — VERIFY the design intent (read the doc-comment at the
+  site + trace how the value is actually USED) before treating it as real. The repurchase-cadence-as-consumption
+  assumption is intentional here, not a defect.**
+  (3) **MONETIZATION — REACH-GATED re-confirmed (no buildable floor-mover), consistent with runs 38–42.** The
+  scout surfaced ~5 "unbuilt levers" (Instacart Impact affiliate, higher-freq expiry nudge, quarterly tier,
+  lifetime deal, per-serving cost) but its OWN honest math lands them at ~$50–68K stacked — still below the
+  $100K floor — and each is speculative pre-launch AND either owner-dependent (Instacart Impact account, Stripe
+  price IDs, Appsumo campaign) or scope-creep against the owner's locked subscription-only v1 (lifetime/add-on).
+  The built levers (good-better-best + annual, context paywall, trial-eligibility, referral trial-days,
+  H14/H15 retention, experiments) are complete; the ~$67K gap is downloads/mo = owner GTM (#190), NOT code.
+  No lever cleared the value bar this run.
+  (4) **DESIGN/A11Y — 2 findings, BOTH shipped as one coherent PR #390.** Three visually-present section titles
+  were non-heading elements (WCAG 1.3.1 Level A): landing pricing `Free`/`Premium` tiers were `<p>` → `<h3>`
+  (nested under the pricing `<h2>`); cook-page `Made it?` log-cook title was `<div>` → `<h2>` (sibling of the
+  already-`<h2>` `Out of something?`). Reviewer A confirmed ~30+ other `.section-title` usages are ALREADY
+  `<h2>` — these 3 were the remaining outliers on the two highest-traffic surfaces (conversion landing + core
+  cook loop); zero visual change (`.section-title` is a plain typographic utility, no element selector).
+  (5) **ARTIFACTS/COVERAGE — CLEAN (NO REAL FINDINGS).** Pricing strings match billing config (499/3999/999/7999
+  == BUSINESS_CASE == upgrade page); feature-gating docs match `PREMIUM_FEATURES`; ~828 core test cases; only
+  genuinely-untested files are a thin LLM wrapper (logic tested via a fake generator) + a types-only module.
+  **Non-blocking follow-up (recorded, not shipped):** Reviewer B noted `admin/growth`, `admin/waitlist`, and
+  `help/page.tsx:378` still have `<p className="section-title">` outliers — low-value (internal admin panels +
+  tertiary help), reasonably out of scope for the high-traffic PR; a future fast-follow if a design pass revisits.
+  **Readiness:** did NOT open the 'ready' issue — the sole open DoD gap is unchanged (reach-gated business-case
+  floor, base ≈ $33K < $100K, owner-GTM #190); the monetization lens re-confirmed no buildable lever moves it.
+  Confidence statement stays UNCHECKED. Closed #359 (all three §28 fixes #378/#379/#380 verified on main). A
+  quiet, coherent, converged run (full 5-lens deep audit + 1 real a11y clear + 2 findings correctly rejected) = success.
 - **2026-07-03 (run 44) — 1 file-disjoint clear (#386 vision anti-hallucination eval); the load-bearing
   work was a git-hygiene catch + refusing a padding change. No deep audit (run 41 <24h).** Lessons:
   - **STALE local `origin/main` manufactures phantom regressions — always `git fetch origin main` FIRST.**
