@@ -31,6 +31,52 @@ support it; the gap speaks for itself.
 
 ## RUN LOG (newest first)
 
+### 2026-07-03 (later cycle) — pre_launch, awaiting_connect, RUN 4 (unchanged mode: PREPARE)
+- **Mode**: PREPARE (site_gate_up: false; ListConnectors re-checked: still only Gmail [connected] +
+  Google Drive [connected, not enabled in chat] — no analytics/DB/billing MCP tool, same as runs 1-3).
+  No external actions taken. Noted the product factory shipped 5 more commits since run 3's commit
+  (b38c3b5, 12:18 CDT) including wiring live Vercel crons for the h14 annual-nudge / h15 winback
+  lifecycle-email routes (a3bfbbb, 17:50 CDT) — real retention infra, but inert pre-launch (no active
+  subscribers yet), so no GROWTH_STATUS metric changes from it.
+- **Did**:
+  - Re-read GROWTH_STATUS, GROWTH_MEMORY, GTM_SCORECARD (still as_of 2026-07-01, not yet re-graded by
+    the independent GTM Auditor since run 2's fixes — nothing for me to act on there, I only consume it).
+  - **Closed run 3's next_action**: ran 2 direct `WebSearch` calls with `allowed_domains:["reddit.com"]`
+    and got an explicit API error both times — "domains are not accessible to our user agent:
+    ['reddit.com']" — confirming this is a hard crawler-access block, NOT a query-phrasing problem as
+    run 3 speculated. Recorded this as a closed dead end in `next_actions` so future runs stop
+    re-attempting Reddit-scoped queries.
+  - Attempted to broaden demand-signal sourcing beyond Paprika/KitchenPal: WebSearch surfaced candidate
+    AnyList complaint quotes via a justuseapp.com review aggregator, but `WebFetch` on that exact URL
+    returned HTTP 403 — could not verify the quote/URL/reviewer precisely, so did NOT add it as a cited
+    theme (would have been an unverified quote lifted from a search-engine summary, which the honesty
+    bar forbids). No new demand_signal evidence this run; the run-3 themes (2 durable, 1 partial) stand
+    unchanged.
+  - **Fixed a real stale metric**: `GROWTH_STATUS.content.published_7d` was `0` and `scheduled_next_7d`
+    was `1`, still describing the "pantry-tracker-apps-2026" post as staged — but
+    `apps/web/app/blog/posts.ts:223` shows `publishedAt: "2026-06-29"`, which is inside the 7-day window
+    as of today (2026-07-03). Corrected to `published_7d: 1` / `scheduled_next_7d: 0` — a code-derived,
+    honest correction, not a new claim. Did NOT draft a 5th blog post: with zero analytics feedback and
+    no newly-identified content gap, a new post this run would be padding, not value-bar-clearing work.
+  - Outreach research (§3b): one more search angle (general 2026 food-tech/grocery-app landscape,
+    broader than runs 2-3's press-specific queries) surfaced only SEO listicles and funding-news
+    aggregators — zero named journalists/curators with a genuine reason to care about a pre-traction,
+    gated waitlist. **Zero outreach drafts this run** — correct per OUTREACH.md.
+  - Updated GROWTH_STATUS: learnings/next_actions/owner_blockers refreshed; re-escalated the circuit
+    breaker (now 4+ runs / 5 days, re-confirmed via a fresh ListConnectors call + a fresh PENDING_OPS
+    re-read showing all 5 relevant items byte-identical to run 3's `status: open`).
+  - Ran an independent reviewer subagent (fresh context, adversarial) against this run's diff before
+    committing.
+- **Hypothesis**: none new on the funnel (still no analytics connected). This run's work is
+  housekeeping/honesty (closing a dead-end search method, fixing a stale metric) plus a repeated,
+  correctly-negative outreach check — not a new funnel or PMF hypothesis.
+- **Result**: Not measurable on the funnel (still no Plausible/ADMIN_EMAIL/Stripe/email provider). The
+  content-metric fix and the closed Reddit dead-end are the real, if modest, deliverables this run.
+- **Decision**: Ship the GROWTH_STATUS/GROWTH_MEMORY updates (reviewer-cleared); outreach stays at zero
+  (correct); no ROADMAP/VISION/BUSINESS_CASE steer (no new data since run 3's citation-only footnote).
+- **Operational note**: same conclusion as runs 1-3 — this routine has no Supabase/Plausible/Stripe MCP
+  tool; PENDING_OPS + GROWTH_STATUS remain the only way to detect an owner-side env change.
+
 ### 2026-07-03 — pre_launch, awaiting_connect, RUN 3 (unchanged mode: PREPARE)
 - **Mode**: PREPARE (site_gate_up: false; no channels connected; ListConnectors confirms only Gmail +
   Google Drive are connected — no Supabase/Plausible/Stripe MCP tool reachable, same as runs 1-2). No
