@@ -2082,3 +2082,54 @@ Deep audit was due (last folded/standalone run 38, >24h). Five read-only Haiku l
 (base ≈ $33K/yr < $100K; owner-activated demand-gen the loop is forbidden to do — FYI #190). No buildable lever
 moves the honest pre-launch median. Confidence statement stays UNCHECKED. A coherent converged run + a full
 deep audit = success.
+
+---
+
+## Run 42 — 2026-07-03 — 3 file-disjoint synthetic-green / fail-open hardening clears (issue #359), all 2/2
+
+Deep audit NOT due (run 41 ran a full 5-lens sweep same day, <24h). Baseline gate green. This run worked the
+open backlog: issue #359 (filed 2026-07-02) named three real synthetic-green / fail-open gaps. Split into three
+file-DISJOINT changes, each 2/2 (Sonnet reviewers A+B), auto-merged through CI:
+
+**Shipped (file-disjoint):**
+1. **#378 fix(security): HMAC token secrets fail closed in prod.** `getUnsubscribeSecret` / `getOptinSecret`
+   fell back to a PUBLIC repo constant when their env var was unset → forgeable unsubscribe + waitlist
+   double-opt-in tokens in prod (the attacker knows the fallback). Extracted `resolveUnsubscribeSecret` /
+   `resolveOptinSecret` as pure env-injected classifiers mirroring the repo's `isProdRuntime` guard
+   (`security/rate-limit-guard.ts`, `email/index.ts` `resolveEmailCaptureDir`): throw in a real prod runtime
+   when absent, keep the dev/CI fallback (CI carve-out) so tests never need a secret. +10 keyless unit tests.
+2. **#379 fix(workers): unimplemented queues fail loud.** `vision-scan` + `predict-recompute` were wired to a
+   `stub()` that logged and returned → BullMQ marked jobs COMPLETED doing zero work, and a nightly cron
+   enqueued `predict-recompute` (a LIVE synthetic-green firing every night). Replaced with `notImplemented()`
+   that THROWS (job → FAILED, visible/retried) and dropped the false nightly cron (predictions are computed
+   on-read; no batch handler exists to schedule). Nothing enqueues these queues, so it never fires normally.
+3. **#380 fix(security): captcha missing-key is loud in prod.** `verifyTurnstile` fail-opened SILENTLY when
+   `CLOUDFLARE_TURNSTILE_SECRET_KEY` was absent → invisible bot-protection bypass on public forms in prod.
+   Added a pure `captchaEnforcement` classifier in `@gm/core` (keyless-tested) so a missing key in a prod
+   runtime is logged LOUDLY. Still fail-OPEN (never rejects the submission) per §32 — a signup outage would be
+   strictly worse than a logged gap the owner then closes.
+
+**LESSONS:**
+1. **The repo's `isProdRuntime` fail-closed pattern is the canonical fix for a "silent public fallback" hole** —
+   extract a pure, env-injected classifier next to `rate-limit-guard.ts`, mirror the CI carve-out (`CI=true`
+   keeps the fallback so the e2e-under-`next start` job isn't broken), register a keyless unit test. Both
+   A-reviewers independently confirmed the byte-for-byte match; self-validation tripwire stayed green.
+2. **Fail-closed vs §32:** a missing SECURITY key that guards a CORE action (signup) must fail LOUD-but-OPEN,
+   not closed — hard-rejecting every signup on a config gap is a worse outage than the gap. Reserve
+   boot-throwing fail-closed for BYPASS flags (`RATE_LIMIT_DISABLED`, `EMAIL_CAPTURE_DIR`) whose mere presence
+   IS the misconfiguration. Token-signing secrets (#378) sit in between: they guard non-core email/waitlist
+   side-effects, so throwing there is fine (degrades a non-core flow, never signup).
+3. **`services/workers` + `apps/web` have no unit-test runner** (only `packages/core` does) — put testable
+   security/decision logic in `packages/core/src/security/` (the `rate-limit-guard` precedent) so it gets
+   keyless coverage; the app/worker file becomes a thin caller validated by typecheck + e2e. Both the captcha
+   classifier (#380) and the token resolvers (#378) followed this to earn real tests.
+4. **BullMQ repeatable-job cleanup (reviewer nit, non-blocking, pre-launch moot):** deleting a `queue.add(...,
+   {repeat})` registration does NOT deregister an already-scheduled repeatable from Redis. `services/workers`
+   is not currently deployed (no deploy config / PENDING_OPS entry), so `predict-nightly` was never persisted
+   to a prod Redis — moot now. If the worker is ever deployed against a Redis that once held it, call
+   `removeJobScheduler`/`removeRepeatableByKey("predict-nightly")` once; worst case today is the intended
+   fail-loud (bounded by `removeOnFail: 50`, no retries).
+
+**Readiness:** did NOT open the 'ready' issue — the sole open DoD gap is unchanged (reach-gated business-case
+floor, base ≈ $33K < $100K, owner-GTM #190). No deep audit due. Confidence statement stays UNCHECKED. A focused,
+coherent backlog-clearing run (3 real security/honesty clears, 0 abandons) = success.
