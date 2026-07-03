@@ -1,5 +1,9 @@
 {
   "git": {
     "deploymentEnabled": false
-  }
+  },
+  "crons": [
+    { "path": "/api/cron/h14-annual-nudge", "schedule": "0 9 * * *" },
+    { "path": "/api/cron/h15-winback", "schedule": "0 10 * * *" }
+  ]
 }
