@@ -1,19 +1,24 @@
 /**
  * G5: Cloudflare Turnstile captcha verification.
  *
- * Fail-open when CLOUDFLARE_TURNSTILE_SECRET_KEY is not set (dev/staging).
- * In production, set the key to enforce bot protection on public forms.
+ * Enforced only when CLOUDFLARE_TURNSTILE_SECRET_KEY is set. When the key is ABSENT we fail open
+ * (skip) so dev/staging never needs a secret — BUT if the key is missing in a real PRODUCTION
+ * runtime that is a live bot-protection gap, so we log it LOUDLY rather than skipping silently (§28:
+ * never a synthetic-green). We deliberately do NOT reject the submission in that case: captcha guards
+ * account creation, and per FACTORY_STANDARD §32 a non-essential side-effect must never hard-block a
+ * core user action — a total signup outage would be strictly worse than a logged hardening gap. The
+ * classifier `captchaEnforcement` lives in @gm/core so its keyless logic is unit-tested.
  *
- * A verify-call FAILURE (network error / timeout) is handled by environment: in production we FAIL
- * CLOSED (reject) so an attacker can't bypass bot protection by inducing a timeout against the
- * siteverify endpoint; in dev/staging we fail open so a flaky local network never blocks testing.
- * This mirrors the repo's fail-closed-in-prod posture for other security guards (cron secret,
- * email-capture transport, billing webhooks).
+ * A verify-call FAILURE (network error / timeout) — key IS configured — is handled by environment: in
+ * production we FAIL CLOSED (reject) so an attacker can't bypass bot protection by inducing a timeout
+ * against the siteverify endpoint; in dev/staging we fail open so a flaky local network never blocks
+ * testing. This mirrors the repo's fail-closed-in-prod posture for other security guards.
  *
  * Human Core: The owner must create a free Cloudflare account, add a Turnstile site,
  * and set CLOUDFLARE_TURNSTILE_SECRET_KEY + NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY
  * — see PENDING_OPS.md.
  */
+import { captchaEnforcement } from "@gm/core/security/captcha-guard";
 
 const VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
@@ -28,8 +33,21 @@ export interface TurnstileResult {
  */
 export async function verifyTurnstile(token: string | null | undefined): Promise<TurnstileResult> {
   const secretKey = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
+  const enforcement = captchaEnforcement(process.env);
 
-  // Fail-open when key is absent — dev/staging only
+  // Key absent → fail open (skip). In a real production runtime that is a live bot-protection gap,
+  // so log LOUDLY (never a silent bypass) — but still fail open, so signup is never hard-blocked (§32).
+  if (!enforcement.enforced) {
+    if (enforcement.missingInProd) {
+      console.error(
+        "[captcha] CLOUDFLARE_TURNSTILE_SECRET_KEY is MISSING in a PRODUCTION runtime — bot protection " +
+          "on public forms (signup/waitlist) is DISABLED. Set it now to close the gap (see PENDING_OPS.md).",
+      );
+    }
+    return { success: true, skipped: true };
+  }
+
+  // `enforcement.enforced` is true only when a non-empty key is set; narrow it for the type checker.
   if (!secretKey) {
     return { success: true, skipped: true };
   }
