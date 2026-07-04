@@ -4,6 +4,42 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-04 (run 46) — 3 file-disjoint clears (open-issue backlog + a lean 3-Haiku scout sweep), all
+  2/2 first-pass, 0 abandons. No deep audit (run 45 <24h).** Converged repo; worked the highest-value
+  concrete candidates rather than a full 8-scout sweep (run 45 deep-audited same-day-1). Baseline gate green
+  (scorecard A, self-validation 5/5).
+  **#404 (closes #370) — made the §32 signup guarantee TESTABLE.** Run 45's deep audit had already found the
+  §32 failure mode absent-by-construction on the signup path, but named the one gap: no regression test,
+  because the best-effort referral attribution was inline in a server action and `apps/web` has no unit-test
+  runner. Fix = the pattern the issue itself prescribed: extract the contract into `@gm/core`
+  (`attributeReferralBestEffort`, packages/core/src/personalization/referral.ts) with the DB I/O
+  DEPENDENCY-INJECTED (core must not import @gm/db), so the never-throw guarantee is provable by 8 unit tests
+  that force each injected dep to reject AND throw synchronously → helper resolves `{attributed:false,
+  reason:"error"}`, never propagates. LESSON (reusable): to earn a regression guard for an app-layer
+  best-effort/side-effect contract that `apps/web` can't test, move the PURE contract into `@gm/core` with
+  injected I/O closures — the app passes the real `getAdminDb()` closures, core stays DB-free + covered. A
+  discriminated-union result (`no-code`/`invalid-code`/`unknown-referrer`/`error`/attributed) the caller
+  IGNORES is still worth it: it lets the test assert WHICH branch fired, not just "didn't throw."
+  **#406 — a11y file-input labels (WCAG 3.3.2 Level A).** `/add-receipt` + `/scan` file inputs had sibling
+  `<label>`s with no htmlFor/id → unlabeled file picker for SR users on the two first-value capture surfaces.
+  Explicit htmlFor/id (not wrapping) preserves the exact CSS box model. Same calibrated class as #383/#385/#390.
+  **#407 — §28 Stripe-webhook fail-loud on an unrecognized price.** The webhook matched FAMILY→ANNUAL then
+  SILENTLY defaulted every other active price to `premium_monthly` — so if STRIPE_PRICE_ANNUAL/FAMILY were
+  unset (`.optional()` env) or a sub hit the webhook against an unknown price, an annual/family buyer was
+  mislabeled monthly with the misconfig hidden. Now matches all 3 prices explicitly + LOUD `console.error`s
+  the anomaly (userId/priceId/which envs set — booleans, no secret values), still grants base premium (§32:
+  paid → never deny) at the lowest tier (never over-grant). NOT impossible-case: the Customer-Portal
+  plan-switch path (Reviewer B found this) bypasses the checkout price-guard entirely. Mirrors #380
+  captcha-fail-loud / #378 HMAC-fail-closed — the standing §28 "unrecognized → visible, never silent".
+  **Gate value:** #404 Reviewer A raised a conditional REQUEST_CHANGES ("is `referrerUserId` read after the
+  extracted block?") — resolved by pasting the VERBATIM source (it was `const`, block-scoped, discarded; the
+  only following code is `signIn`, which reads username/password only). LESSON (reinforced): when a reviewer
+  flags a possible extraction regression, answer with the real source, not an argument. Also added A's suggested
+  recordReferral sync-throw test. Both #407 reviewers independently confirmed no secret leakage + fail-safe
+  entitlement direction.
+  **Readiness:** did NOT open the 'ready' issue — the sole open DoD gap is unchanged (reach-gated business-case
+  floor, base ≈ $33K < $100K, owner-GTM #190). Confidence statement stays UNCHECKED. Validation 5/5, 0 unmet.
+  A focused, coherent, converged run (3 real clears, all reviewed) = success.
 - **2026-07-03 (run 45) — DEEP AUDIT (5-scout lens sweep, due since run 41 >~24h) + 1 file-disjoint a11y
   clear (#390 heading semantics). Both Sonnet reviewers 2/2 first pass; 0 abandons. 2 scout findings
   correctly REJECTED on verification.** Deep audit due (last run 41; runs 42/43/44 same-day folded, this

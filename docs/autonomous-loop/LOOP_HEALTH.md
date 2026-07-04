@@ -26,7 +26,7 @@ The `QUALITY_SCORECARD` measures the **product**; this measures the **loop itsel
 ```yaml
 LOOP_HEALTH:
   project: GroceryManager
-  as_of: 2026-07-03 (run 41)
+  as_of: 2026-07-04 (run 46)
   enforced_in_ci: true           # lint + functional E2E journeys + the capabilities tripwire are REQUIRED checks on main, enforce_admins=true
   validation:                    # capability self-validation feed — refresh every run from `node scripts/check-self-validation.mjs --readiness`
     enforced_in_ci: true         # 'self-validation (capabilities tripwire)' is a required, enforce_admins status check
@@ -34,19 +34,19 @@ LOOP_HEALTH:
     active: 5
     unmet: []                    # capabilities needing an OWNER SECRET not wired in CI (loop can't supply) — each MUST also be an urgent OWNER_ACTION 'validation-capability-<service>' in PENDING_OPS
     unmet_unsurfaced: []         # MUST stay empty — an unmet capability missing from PENDING_OPS or this list is invisible to the owner (a bug)
-  last_run: 2026-07-03 (run 45)
+  last_run: 2026-07-04 (run 46)
   last_deep_audit: 2026-07-03 (run 45, standalone 5-Haiku lens sweep: security/RLS+Track-G, correctness/functional, monetization/business-case-strength, design/a11y, artifacts/coverage — NO CRITICAL findings; security + artifacts CLEAN; 1 correctness finding REJECTED on verification (ewmaConsumptionRate "3.3× inflation" misreads the deliberate repurchase-cadence model — the exact on-hand already subtracts every logged −delta, the learned rate only projects forward; switching to logged-deltas-only would REGRESS the under-logging case); monetization re-confirmed reach-gated (~5 "levers" all speculative/owner-dependent/scope-creep, stacked ~$50–68K still below floor — no buildable floor-mover); 2 a11y heading-semantics findings shipped as #390. Prior standalone run 41; runs 42/43/44 same-day folded; this is the 4th run since 41.)
   this_run:
-    changes_shipped: 1           # #390 a11y heading semantics — 3 visually-present section titles that were <p>/<div> promoted to real headings (WCAG 1.3.1 Level A): landing pricing Free/Premium tiers → <h3>, cook Made-it? → <h2>. Zero visual change (same .section-title class); brings the 3 remaining outliers in line with ~30+ already-<h2> usages. File-disjoint (page.tsx + cook/[id]/page.tsx) + this housekeeping PR.
+    changes_shipped: 3           # 3 file-disjoint clears, each 2/2 first-pass. #404 (closes #370): extract the best-effort signup referral attribution into a DI'd @gm/core helper `attributeReferralBestEffort` + 8 tests forcing each injected dep to reject/throw — the §32 never-throw regression guard the audit called for (apps/web has no test runner, so the contract had to move to core). #406: associate the /add-receipt + /scan file-input labels via htmlFor/id (WCAG 3.3.2 Level A). #407 (§28): the Stripe webhook silently defaulted an unrecognized/unconfigured active price to premium_monthly — now matches all 3 price IDs explicitly + LOUD-logs the anomaly (still base-premium grant, lowest tier, no over-grant). No deep audit this run (run 45 <24h). All 3 merged to main (#404/#406/#407); the Vercel rate-limit commit-status is informational/non-blocking (same as #404) — the required Actions gate is what merges.
     changes_abandoned: 0
     abandoned_reasons: []
-    verify_cycle_failures: 0     # typecheck clean + production build clean (no missing-export warnings); pure JSX tag swap, no logic/imports touched
-    review_rejections: 0         # both Sonnet reviewers 2/2 APPROVE first pass; A verified valid JSX + correct non-skipping heading levels + no p./div.-specific CSS/test regression; B confirmed genuine Level-A value on the 2 highest-traffic surfaces + zero visual regression
+    verify_cycle_failures: 0     # every branch: typecheck clean across 6 packages + production `next build` clean (no missing-export warnings); #404 also +7 (then +2 folded) core tests, full suite 850 passed
+    review_rejections: 0         # 6 Sonnet reviewers total, all APPROVE. #404 Reviewer A raised a conditional REQUEST_CHANGES (was `referrerUserId` read after the extracted block?) — resolved by the verbatim source (it was `const`, block-scoped, discarded; no downstream consumer) → APPROVE; added the reviewer's suggested recordReferral sync-throw test. #407 Reviewer B independently found an ADDITIONAL real path (Customer Portal plan-switch bypasses the checkout price-guard) confirming it's not impossible-case.
     review_cycles_used: 1
     circuit_breaker_trips: 0
-    findings_rejected: 2         # correctness scout's ewmaConsumptionRate "inflation" (misreads a deliberate model) + monetization "quarterly/lifetime/Instacart levers" (speculative/owner-dependent/scope-creep, not a floor-mover)
+    findings_rejected: 0         # 3 lean scouts (artifact-freshness NO DRIFT, correctness → the #407 webhook finding SHIPPED, a11y → the #406 finding SHIPPED); nothing rejected this run
   rolling_7d:
-    merged_prs: 50               # git log --since=2026-06-26 main = 50 squashes (incl. many FACTORY/GTM standard meta-commits + runs 41-43 #371-#385) + this run's #386 (housekeeping in flight)
+    merged_prs: 56               # git log --since=2026-06-27 origin/main = 54 at snapshot + this run's #406/#407 now merged (56); many are FACTORY/GTM/growth meta-commits + runs 42-45 + this run's #404/#406/#407 (#bookkeeping in flight)
     reverts: 0
     readiness_attempts: 0
     readiness_rejected: 0
@@ -56,7 +56,16 @@ LOOP_HEALTH:
       - "recurring #0a6e33 re-flag (runs 35, 41): a design scout keeps proposing `brand-solid` for the deep-green-on-white hardcode (an AA regression). RESOLVED in #372 by moving to the byte-exact `brand-solid-hover` token + an in-code contrast comment at each site — the re-flag can't recur. No harness proposal needed."
     harness_proposals_open: 0    # open `loop: harness improvement proposal` issues (#232 resolved by #234)
   signal: steady                 # bootstrapping | improving | steady | churning | stuck
-                                 #   run 45: converged quiet run + a full 5-lens DEEP AUDIT (due since run 41). 1 real
+                                 #   run 46: 3 file-disjoint clears, 0 abandons, all 6 reviewers APPROVE. Worked the
+                                 #   open-issue backlog + a lean 3-Haiku scout sweep (no deep audit — run 45 <24h). #404
+                                 #   closed the §32 signup-referral audit (#370) by making the never-throw contract
+                                 #   testable (DI helper in @gm/core + 8 guard tests); #406 a11y file-input labels (WCAG
+                                 #   3.3.2); #407 a §28 Stripe-webhook fail-loud on an unrecognized subscription price
+                                 #   (mirrors the #380 captcha / #378 HMAC hardenings). The 2-reviewer gate earned its
+                                 #   keep: #404-A's conditional block was resolved by the real source, #407-B surfaced an
+                                 #   extra real bypass path. Convergence stays reach-gated (#190, base ≈ $33K < $100K,
+                                 #   owner-GTM); did NOT open 'ready'; Confidence stays UNCHECKED. Validation 5/5, 0 unmet.
+                                 #   -- prior run 45: converged quiet run + a full 5-lens DEEP AUDIT (due since run 41). 1 real
                                  #   value-bar clear (#390 a11y heading semantics on landing pricing + cook loop, WCAG
                                  #   1.3.1), 0 abandons, both reviewers 2/2 first pass. 2 scout findings correctly
                                  #   REJECTED: the ewmaConsumptionRate "inflation" bug (misreads a deliberate
