@@ -4,6 +4,47 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-04 (run 47) — DEEP AUDIT (6-Haiku lens sweep, due since run 45 ~24h) + 3 file-disjoint clears
+  (#418 a11y contrast / #419 experiment-stats sign-bug guard / #420 mobile cook-log parity); all 7 Sonnet
+  reviews (incl. 1 re-review) APPROVE; 0 abandons.** Baseline gate green (scorecard **A**, self-validation
+  5/5, 0 unmet). Six read-only lenses over the whole repo — security/RLS+Track-G **CLEAN**,
+  correctness/functional **CLEAN**, artifacts **NO DRIFT**, monetization **REACH-GATED reconfirmed** (no
+  buildable floor-mover; base ≈ $33K < $100K = downloads/mo = owner GTM #190), design/a11y 1 real finding
+  (→ #418), mobile+perf+test 2 real findings (→ #419, #420) + 2 false positives rejected.
+  **#418 — the brand-solid-on-white AA sweep is now complete.** `text-brand-solid` (4.45:1 on white, UNDER
+  AA 4.5:1) → `text-brand-solid-hover` (6.4:1) on the last four white-bg CTA outliers (onboarding finish, two
+  home CTAs, blog CTA). Same calibrated class as #372/#390/#406; cook-mode + share/recipe already used the
+  fixed token. Reviewer B independently recomputed 4.448:1 (a genuine FAIL, not borderline). Remaining bare
+  `text-brand-solid` are admin stat-numbers/links (not bg-white CTAs) — correctly out of scope.
+  **#419 — earn a regression guard for previously-buggy pure math via a PROPERTY, not just point values.**
+  stats.ts had a documented past inverted-sign bug in zFromAlpha's non-tabulated quantile path but zero tests.
+  The load-bearing guard is `minSampleSizePerArm` MONOTONICITY (higher statistical power ⇒ MORE samples), with
+  power 0.85 chosen deliberately to force the approximation path (1−0.85=0.15 ∉ the lookup table). Under the
+  old sign the buggy n85≈75 < n80=684, so the monotonicity assertion fails deterministically. LESSON (reusable):
+  when guarding numeric code with a history of a subtle bug, assert an INVARIANT the bug violates (monotonicity,
+  symmetry Φ(z)+Φ(−z)=1, clamp bounds) in addition to pinned point values — a point value can accidentally
+  match a bug, an invariant can't. Reviewer A reimplemented the module + simulated the bug to confirm.
+  **#420 — mobile cook-log parity: the app-layer side-effect endpoint mirrors the proven web action.** Mobile
+  had cook-mode (view) but no way to LOG a cook, while cooked.tsx promised the button — a broken promise on a
+  ticked-[x] "full parity" track (Track B). The fix reuses the SAME core `logCook` inside `withTenant` that the
+  web `logCookedRecipe` server action uses, wrapped in the established mobile-route pattern (verifyMobileToken +
+  rateLimit + parseJsonBody/requireString + serverError). LESSON: a "full parity" aggregate box can hide an
+  action-level gap inside an existing screen — a deep-audit functional lens catches these; the fix is cheap
+  because the core engine is shared (`@gm/core`), so the new transport is thin glue over already-tested logic.
+  **Two Reviewer-B design catches worth keeping:** (a) placement matters for irreversible side-effects — web
+  deliberately gates "I cooked this" at the BOTTOM (after the step-through) because a tap writes an
+  append-only ledger drawdown that's unrecoverable in the UI; the first cut put it under the title, removing
+  that friction gate. Mirror the sibling web surface's *interaction design*, not just its data call. (b) a
+  server param the client never sends is a silent-wrong scope gap — the route clamped `servings` but the client
+  hardcoded 1, so batch macros were always wrong; wire the real input (a 1–12 stepper) OR drop the param.
+  **Two false positives rejected (recurring Haiku-scout failure modes):** (1) recipe `alt=""` next to an
+  adjacent title is the CORRECT decorative choice — `alt={title}` would be redundant SR noise, NOT a WCAG fix.
+  (2) mobile "771 TS errors" was deps-not-installed — a scout ran `tsc` without `npm ci` (mobile is out of the
+  pnpm workspace); the CI mobile job installs first + is green on main. ALWAYS `cd apps/mobile && npm ci` before
+  trusting a mobile typecheck, and let a green CI mobile job on main override a phantom "hundreds of errors."
+  **Readiness:** did NOT open the 'ready' issue — the sole open DoD gap is unchanged (reach-gated business-case
+  floor, owner-GTM #190); monetization lens re-confirmed no buildable floor-mover. Confidence statement stays
+  UNCHECKED. A full 6-lens deep audit + 3 real, reviewed clears = a coherent, converged run.
 - **2026-07-04 (run 46) — 3 file-disjoint clears (open-issue backlog + a lean 3-Haiku scout sweep), all
   2/2 first-pass, 0 abandons. No deep audit (run 45 <24h).** Converged repo; worked the highest-value
   concrete candidates rather than a full 8-scout sweep (run 45 deep-audited same-day-1). Baseline gate green

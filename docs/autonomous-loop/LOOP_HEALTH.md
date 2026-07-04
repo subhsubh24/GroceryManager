@@ -26,7 +26,7 @@ The `QUALITY_SCORECARD` measures the **product**; this measures the **loop itsel
 ```yaml
 LOOP_HEALTH:
   project: GroceryManager
-  as_of: 2026-07-04 (run 46)
+  as_of: 2026-07-04 (run 47)
   enforced_in_ci: true           # lint + functional E2E journeys + the capabilities tripwire are REQUIRED checks on main, enforce_admins=true
   validation:                    # capability self-validation feed — refresh every run from `node scripts/check-self-validation.mjs --readiness`
     enforced_in_ci: true         # 'self-validation (capabilities tripwire)' is a required, enforce_admins status check
@@ -34,19 +34,19 @@ LOOP_HEALTH:
     active: 5
     unmet: []                    # capabilities needing an OWNER SECRET not wired in CI (loop can't supply) — each MUST also be an urgent OWNER_ACTION 'validation-capability-<service>' in PENDING_OPS
     unmet_unsurfaced: []         # MUST stay empty — an unmet capability missing from PENDING_OPS or this list is invisible to the owner (a bug)
-  last_run: 2026-07-04 (run 46)
-  last_deep_audit: 2026-07-03 (run 45, standalone 5-Haiku lens sweep: security/RLS+Track-G, correctness/functional, monetization/business-case-strength, design/a11y, artifacts/coverage — NO CRITICAL findings; security + artifacts CLEAN; 1 correctness finding REJECTED on verification (ewmaConsumptionRate "3.3× inflation" misreads the deliberate repurchase-cadence model — the exact on-hand already subtracts every logged −delta, the learned rate only projects forward; switching to logged-deltas-only would REGRESS the under-logging case); monetization re-confirmed reach-gated (~5 "levers" all speculative/owner-dependent/scope-creep, stacked ~$50–68K still below floor — no buildable floor-mover); 2 a11y heading-semantics findings shipped as #390. Prior standalone run 41; runs 42/43/44 same-day folded; this is the 4th run since 41.)
+  last_run: 2026-07-04 (run 47)
+  last_deep_audit: 2026-07-04 (run 47, standalone 6-Haiku lens sweep: security/RLS+Track-G, correctness/functional, artifacts/freshness, monetization/business-case-strength, design/a11y, mobile+perf+test-coverage — NO CRITICAL findings; security + correctness + artifacts CLEAN; monetization re-confirmed REACH-GATED (no buildable floor-mover; base ≈ $33K < $100K = downloads/mo = owner GTM #190); 3 real findings SHIPPED — #418 a11y contrast, #419 experiment-stats sign-bug guard, #420 mobile cook-log parity; 2 false positives REJECTED on verification — recipe alt="" next to an adjacent title is the CORRECT decorative WCAG choice (alt={title} = redundant SR noise), and mobile "771 TS errors" was a deps-not-installed scout artifact (mobile is out of the pnpm workspace; the CI mobile job npm-ci's first + is green on main); 1 marginal N+1 micro-opt on ≤8-element arrays skipped. Prior standalone run 45; this is the 2nd run since (run 46 folded, no audit).)
   this_run:
-    changes_shipped: 3           # 3 file-disjoint clears, each 2/2 first-pass. #404 (closes #370): extract the best-effort signup referral attribution into a DI'd @gm/core helper `attributeReferralBestEffort` + 8 tests forcing each injected dep to reject/throw — the §32 never-throw regression guard the audit called for (apps/web has no test runner, so the contract had to move to core). #406: associate the /add-receipt + /scan file-input labels via htmlFor/id (WCAG 3.3.2 Level A). #407 (§28): the Stripe webhook silently defaulted an unrecognized/unconfigured active price to premium_monthly — now matches all 3 price IDs explicitly + LOUD-logs the anomaly (still base-premium grant, lowest tier, no over-grant). No deep audit this run (run 45 <24h). All 3 merged to main (#404/#406/#407); the Vercel rate-limit commit-status is informational/non-blocking (same as #404) — the required Actions gate is what merges.
+    changes_shipped: 3           # 3 file-disjoint clears. #418: brand-solid→brand-solid-hover on the last 4 white-bg CTA outliers (onboarding/2 home/blog) — 4.45:1→6.4:1, completes the #372 AA sweep. #419: 15 tests for the previously-untested experiment stats module + a sign-bug MONOTONICITY guard (higher power ⇒ more samples; the old inverted sign made n85≈75 < n80=684) — full suite 850→865, coverage held. #420: mobile "I cooked this" native parity — new POST /api/mobile/cook mirrors the web logCookedRecipe (JWT+rate-limit+validate → core logCook in withTenant) + a bottom "Made it?" section w/ servings stepper; closes a broken cooked.tsx promise on the core cook-macros flow. All 3 merged to main (#418/#419/#420). Deep audit ran (6-lens, due since run 45).
     changes_abandoned: 0
     abandoned_reasons: []
-    verify_cycle_failures: 0     # every branch: typecheck clean across 6 packages + production `next build` clean (no missing-export warnings); #404 also +7 (then +2 folded) core tests, full suite 850 passed
-    review_rejections: 0         # 6 Sonnet reviewers total, all APPROVE. #404 Reviewer A raised a conditional REQUEST_CHANGES (was `referrerUserId` read after the extracted block?) — resolved by the verbatim source (it was `const`, block-scoped, discarded; no downstream consumer) → APPROVE; added the reviewer's suggested recordReferral sync-throw test. #407 Reviewer B independently found an ADDITIONAL real path (Customer Portal plan-switch bypasses the checkout price-guard) confirming it's not impossible-case.
-    review_cycles_used: 1
+    verify_cycle_failures: 0     # every branch: typecheck clean across 6 packages + production `next build` clean (no missing-export warnings) + web eslint --max-warnings=0; #419 +15 core tests (full suite 865 pass, coverage thresholds held); #420 also mobile `npm ci && tsc --noEmit` clean + self-validation 5/5.
+    review_rejections: 1         # 7 Sonnet reviews (incl. 1 re-review), all APPROVE net. #420 Reviewer B REQUEST_CHANGES (button placed under the title not the bottom → removed web's friction gate before an irreversible ledger write; client hardcoded servings=1 → batch macros silently wrong) → both fixed (bottom "Made it?" + a real 1–12 servings stepper that's sent) → APPROVE. #418/#419 both reviewers 2/2 first pass; #419 Reviewer A independently reimplemented stats.ts + simulated the sign bug to confirm the guard is load-bearing.
+    review_cycles_used: 2        # #420 used 2 cycles (1 re-review after Reviewer B's design catch); #418/#419 used 1.
     circuit_breaker_trips: 0
-    findings_rejected: 0         # 3 lean scouts (artifact-freshness NO DRIFT, correctness → the #407 webhook finding SHIPPED, a11y → the #406 finding SHIPPED); nothing rejected this run
+    findings_rejected: 2         # recipe alt="" (correct decorative pattern, not a WCAG bug) + mobile "771 TS errors" (deps-not-installed false positive). Also skipped 1 marginal cook-tonight N+1 micro-opt.
   rolling_7d:
-    merged_prs: 56               # git log --since=2026-06-27 origin/main = 54 at snapshot + this run's #406/#407 now merged (56); many are FACTORY/GTM/growth meta-commits + runs 42-45 + this run's #404/#406/#407 (#bookkeeping in flight)
+    merged_prs: 59               # 56 at run-46 snapshot + this run's #418/#419/#420 now merged (59); many are FACTORY/GTM/growth meta-commits + runs 42-47 (#bookkeeping in flight)
     reverts: 0
     readiness_attempts: 0
     readiness_rejected: 0
@@ -54,9 +54,23 @@ LOOP_HEALTH:
       - "STALE local origin/main (run 44): the env cloned + checked out the run-43 tip (d48c0dd/#385) as a DETACHED HEAD, but local `origin/main`/`main` refs still pointed at #369 (14 commits behind). Branching from `main` cut the feature branch off stale #369, which made #379's merged worker-stub fix APPEAR reverted (the pre-#379 `stub()` was on the stale base, not real main). RESOLVED: `git fetch origin main` fast-forwarded origin/main to #385, confirmed #379 IS merged (no regression), then `git branch -f main origin/main` + rebased the feature branch onto real main (clean — file-disjoint). LESSON: ALWAYS `git fetch origin main && git branch -f main origin/main` (or branch from `origin/main`, not `main`) at run start BEFORE trusting local main / diagnosing a 'missing fix' — a stale ref manufactures phantom regressions. First occurrence; watch for recurrence."
       - "branch-entanglement (runs 39, 41): a review/build subagent sharing the parent git working tree ran a checkout that left the tree a MIX on top of the correct pushed commit. HARMLESS both times — commits were already pushed; verify origin/<branch> via `git show` (not the shared tree) + `git reset --hard HEAD` to recover. Persistent-but-benign; mitigation = worktree isolation for mutating parallel agents. No harness proposal (no lost work, no red merge)."
       - "recurring #0a6e33 re-flag (runs 35, 41): a design scout keeps proposing `brand-solid` for the deep-green-on-white hardcode (an AA regression). RESOLVED in #372 by moving to the byte-exact `brand-solid-hover` token + an in-code contrast comment at each site — the re-flag can't recur. No harness proposal needed."
+      - "Haiku-scout false positives keep needing re-verification (runs 42,43,44,45,47): a cheap scout produces a plausible 'bug' against a deliberate design (ewmaConsumptionRate; server-action raw throws; recipe alt='') or an environment artifact (mobile '771 TS errors' = deps-not-installed). MITIGATION already in the loop: the orchestrator VERIFIES every scout finding before selecting (design intent at the site; `npm ci` before a mobile typecheck; adjacent-text check before an alt='' 'fix'). Working as intended — the verify step catches them; NOT a harness proposal (the model split expects cheap scouts to over-report; the maker's verification is the guard)."
     harness_proposals_open: 0    # open `loop: harness improvement proposal` issues (#232 resolved by #234)
   signal: steady                 # bootstrapping | improving | steady | churning | stuck
-                                 #   run 46: 3 file-disjoint clears, 0 abandons, all 6 reviewers APPROVE. Worked the
+                                 #   run 47: 3 file-disjoint clears, 0 abandons, 7 Sonnet reviews (incl. 1 re-review) all
+                                 #   APPROVE. Full 6-lens DEEP AUDIT (due since run 45): security/RLS+Track-G, correctness,
+                                 #   artifacts, monetization, design/a11y, mobile+perf+test — NO CRITICAL findings; security +
+                                 #   correctness + artifacts CLEAN; monetization RE-CONFIRMED reach-gated (no buildable
+                                 #   floor-mover). #418 completed the #372 brand-solid-on-white AA sweep (last 4 CTA outliers,
+                                 #   4.45:1→6.4:1). #419 gave the previously-untested experiment-stats module 15 tests + a
+                                 #   sign-bug MONOTONICITY guard (Reviewer A reimplemented + simulated the bug to confirm it's
+                                 #   load-bearing). #420 closed a real mobile parity gap — the cook screen promised an "I cooked
+                                 #   this" button that didn't exist; new POST /api/mobile/cook mirrors the proven web logCook
+                                 #   path; Reviewer B's design catch (bottom placement + real servings) made it right. 2 scout
+                                 #   false positives correctly rejected (recipe alt="" decorative-correct; mobile "771 errors" =
+                                 #   deps-not-installed). Convergence stays reach-gated (#190, base ≈ $33K < $100K, owner-GTM);
+                                 #   did NOT open 'ready'; Confidence stays UNCHECKED. Validation 5/5, 0 unmet.
+                                 #   -- prior run 46: 3 file-disjoint clears, 0 abandons, all 6 reviewers APPROVE. Worked the
                                  #   open-issue backlog + a lean 3-Haiku scout sweep (no deep audit — run 45 <24h). #404
                                  #   closed the §32 signup-referral audit (#370) by making the never-throw contract
                                  #   testable (DI helper in @gm/core + 8 guard tests); #406 a11y file-input labels (WCAG

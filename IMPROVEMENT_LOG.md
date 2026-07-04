@@ -4,6 +4,60 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-04 (run 47) — DEEP AUDIT (6-lens) + 3 file-disjoint clears; all reviewed, 0 abandons
+
+DEEP AUDIT due (last standalone run 45, ~24h). Six read-only Haiku lenses over the whole repo:
+**security/RLS+Track-G — CLEAN** (all public tables RLS+policy, rate limits on paid/auth/mobile routes,
+timing-safe webhook sigs, server-side entitlements, captcha fail-closed, CSP/HSTS headers, no secret/injection
+leak); **correctness/functional — CLEAN** (critical journeys awaited + tenant-scoped, no fake success);
+**artifacts/freshness — NO DRIFT** (pricing 499/3999/999/7999 matches billing config + BUSINESS_CASE + upgrade
+page; README/store/CLAUDE conventions match code); **monetization/business-case-strength — REACH-GATED
+reconfirmed** (no buildable floor-mover; base ≈ $33K < $100K is downloads/mo = owner GTM #190; all buildable
+levers built); **design/a11y — 1 real finding** (→ #418); **mobile+perf+test-coverage** (mobile cook-log gap →
+#420, stats-module test gap → #419; 2 false positives rejected). Baseline gate green (scorecard **A**,
+self-validation 5/5, 0 unmet).
+
+**Shipped 3, all reviewers APPROVE (6 Sonnet reviews + 1 re-review):**
+1. **#418 — a11y contrast.** `text-brand-solid` (rgb 12 138 62 on white = **4.45:1**, under WCAG AA 4.5:1 for
+   normal text) → `text-brand-solid-hover` (rgb 10 110 51 = **6.4:1**) on the four remaining white-bg CTA button
+   outliers: onboarding finish, two home-dashboard CTAs, blog→signup CTA. `brand-solid-hover` is the repo's
+   already-established fixed token (#372; cook-mode + share/recipe already use it). High-traffic conversion
+   surfaces; zero visual change beyond a marginally darker green.
+2. **#419 — test(growth): experiment stats + sign-bug guard.** `packages/core/src/growth/experiments/stats.ts`
+   (normalCdf, twoProportionZTest, wilsonInterval, minSampleSizePerArm — the H10 A/B decision math feeding
+   lift.ts) had ZERO direct tests despite an in-code comment documenting a PAST inverted-sign bug in zFromAlpha's
+   non-tabulated quantile path (~10× sample-size under-estimate). 15 tests pin textbook Φ/Wilson values + every
+   degenerate branch, and guard the sign bug via `minSampleSizePerArm` MONOTONICITY: power 0.85 forces the
+   approximation path, and higher power must need MORE samples (n85=782 > n80=684), which the bug inverted
+   (buggy n85≈75). Reviewer A independently reimplemented the module + simulated the bug to confirm the guard
+   is load-bearing. Full suite 850→865; coverage thresholds still met.
+3. **#420 — feat(mobile): "I cooked this" native parity.** The mobile cook screen could VIEW a recipe but had
+   NO way to log a cook — yet `cooked.tsx`'s empty state told users to "tap 'I cooked this'" (a broken promise /
+   dead-end on the core "track cook macros" value). New `POST /api/mobile/cook` mirrors the web `logCookedRecipe`
+   exactly (JWT auth + `verifyMobileToken`, per-user rate limit 30/min, `requireString` + servings clamp, load
+   from shared catalog, best-effort macros OUTSIDE the tx, core `logCook` INSIDE `withTenant` so a mid-way
+   failure rolls back — same ledger, one source of truth on both platforms). The screen gets a bottom "Made it?"
+   section with a servings stepper; the button awaits + CHECKS `res.ok` before "Logged ✓" (no optimistic
+   success). Reviewer A confirmed tenant isolation (belt-and-suspenders with RLS), no injection/SSRF, error
+   hygiene. Reviewer B REQUEST_CHANGES (button was under the title, not the bottom → removed web's friction gate
+   before an unrecoverable ledger write; and the client never sent `servings` → batch macros silently wrong) →
+   fixed (bottom "Made it?" placement mirroring web + a real 1–12 servings stepper that's sent) → APPROVE.
+
+**Rejected on verification (2 false positives + 1 marginal):**
+- **recipe `alt=""`** (7 files) — NOT a bug: the recipe title renders directly adjacent to each thumbnail, so
+  decorative `alt=""` is the CORRECT WCAG choice; `alt={title}` would create redundant screen-reader
+  announcements. LESSON: `alt=""` next to adjacent title text is correct, not a violation.
+- **mobile "771 TS errors"** — deps-not-installed false positive: a Haiku scout ran `tsc` without `npm ci`
+  (mobile is excluded from the pnpm workspace), producing phantom "Cannot find global value 'Promise'" errors.
+  The CI `mobile` job runs `npm ci` first and is green on main. LESSON: always `cd apps/mobile && npm ci` before
+  trusting a mobile typecheck verdict; a green CI mobile job on main disproves a "hundreds of errors" claim.
+- **cook-tonight N+1** — a micro-opt (two `.find()` per recipe on ≤8-element arrays); negligible, marginal churn.
+
+**Readiness:** did NOT open the 'ready' issue — the sole open DoD gap is unchanged (reach-gated business-case
+floor, base ≈ $33K < $100K, owner-GTM #190); this run's monetization lens re-confirmed no buildable floor-mover.
+Confidence statement stays UNCHECKED. A full 6-lens deep audit + 3 real clears (a11y / test-guard / mobile
+parity) all reviewed = a coherent, converged run.
+
 ## 2026-07-04 (run 46) — 3 file-disjoint clears (backlog + lean scout sweep); all 2/2 first-pass; 0 abandons
 
 Converged repo. No deep audit (run 45 ran a full 5-lens sweep <24h ago). Worked the open-issue backlog +
