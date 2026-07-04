@@ -2373,3 +2373,30 @@ error hygiene, captcha fail-loud, LLM spend ceiling, server-side entitlements). 
 **Readiness:** did NOT open the 'ready' issue — the sole open DoD gap is unchanged (reach-gated business-case
 floor, base ≈ $33K < $100K, owner-GTM #190). No deep audit due (run 41 <24h). Confidence statement stays
 UNCHECKED. A quiet, coherent, converged run (1 real clear + a real regression-scare correctly resolved) = success.
+
+## Run 48 — 2026-07-04 — 2 file-disjoint clears (fetch timeouts + mobile README freshness); 1 marginal candidate abandoned on an adversarial reviewer catch
+
+4-Haiku scout sweep (design/a11y, correctness/coverage, mobile+artifacts, security/Track-G+monetization); no deep
+audit (run 47 same day). Baseline gate green (typecheck clean, 865 tests, scorecard A, self-validation 5/5).
+Security **CLEAN**, monetization **reach-gated reconfirmed** (#190 owner-GTM, no buildable floor-mover).
+
+- **#422 — bounded the LAST bare external `fetch()` calls with `AbortSignal.timeout`.** Four modules
+  (`nutrition/fdc.ts`, `recipe/provider.ts`, `email/index.ts`, `content/scheduler.ts`) called `fetch()` with no
+  timeout — a hung upstream could stall the serverless fn / job past the platform budget, the exact failure the
+  repo rule forbids ("every external call needs a timeout SHORTER than the serverless budget"). Added the signal
+  to each (5s user paths, 8s background) + 2 keyless guard tests. Reviewer B confirmed every `fetch(` site in the
+  repo now carries a timeout. **Reviewer-caught, load-bearing:** the value must be UNDER the smallest serverless
+  budget, not AT it — first cut's 10s raced Vercel Hobby's 10s on the no-`maxDuration` send paths; dropped to 8s
+  to match `llm/client.ts`'s `DEFAULT_LLM_TIMEOUT_MS`. Both approve after the fix.
+- **#423 — corrected the stale `apps/mobile/README.md`.** It described the native app as a "typecheckable
+  skeleton" with "placeholder" screens; reality is 18 real API-backed RN screens (Track B, 2026-06-24). Rewrote
+  to match reality (LIVING ARTIFACTS); both reviewers verified no over-claim (IAP framed as degrade-to-coming-soon).
+- **#424 — ABANDONED (the run's discipline).** Two `text-sm text-brand-solid` admin links fail AA in light mode
+  (4.45:1); the `text-brand-solid-hover` swap fixes light but Reviewer A caught a DARK-mode regression —
+  `brand-solid`/`-hover` are SURFACE tokens (correct as darker `bg-*`, wrong as darker `text-*` foreground on the
+  dark near-black page bg: 2.94:1 vs 3.82:1, both already fail AA there). Trades a light fix for a dark regression;
+  a mode-aware fix over-scopes two internal admin links. Closed, clean tree. **Extends the #0a6e33 trap lesson:
+  a `text-brand-solid*` contrast fix must be validated in BOTH themes.**
+
+**Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated floor #190). Confidence
+statement stays UNCHECKED. 2 real clears + a correct abandon on an adversarial catch = a coherent converged run.

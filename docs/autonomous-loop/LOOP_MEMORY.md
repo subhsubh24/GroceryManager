@@ -4,6 +4,51 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-04 (run 48) — 4-Haiku scout sweep + 2 file-disjoint clears merged (#422 fetch timeouts /
+  #423 mobile README freshness); 1 candidate (admin contrast #424) correctly ABANDONED on an adversarial
+  reviewer catch. No deep audit (run 47 same day).** Baseline gate green (typecheck clean, 865 tests,
+  scorecard A, self-validation 5/5). Four lenses (design/a11y, correctness/coverage, mobile+artifacts,
+  security/Track-G+monetization). Security **CLEAN**, monetization **reach-gated reconfirmed** (no
+  buildable floor-mover, #190 owner-GTM), design mostly clean.
+  **#422 — the LAST bare external `fetch()` calls got timeouts (documented hard rule).** The correctness
+  scout found four modules calling `fetch()` with NO `AbortSignal.timeout`: `nutrition/fdc.ts` (FDC macro
+  lookup, cook-log request path), `recipe/provider.ts` (TheMealDB discovery), `email/index.ts`
+  (Resend/SendGrid/Postmark), `content/scheduler.ts` (Twitter/Buffer/Typefully). A hung upstream could
+  stall the serverless fn / job past the platform budget — the exact failure the repo rule ("every
+  external call needs a timeout SHORTER than the serverless budget") forbids. Added
+  `signal: AbortSignal.timeout(N)` to each (5s user paths, 8s background) + 2 keyless guard tests
+  asserting the signal is passed. Reviewer B verified EVERY `fetch(` site in the repo now carries a
+  timeout — this closes the invariant. **LESSON (reviewer-caught, load-bearing): a timeout value must be
+  UNDER the smallest serverless budget, not AT it.** First cut used 10_000ms for the background paths —
+  Reviewer A (correctly) blocked it: Vercel Hobby is 10s and `sendEmail` has call paths with NO
+  `maxDuration` override (growth/email route, the landing waitlist action), so a 10s in-process abort
+  RACES the platform's uncatchable 504 and may lose. Dropped to 8_000ms to match the codebase's own
+  standard (`llm/client.ts` `DEFAULT_LLM_TIMEOUT_MS = 8_000`, "comfortably under the smallest function
+  limit"). Fix → 2/2 approve. When adding a fetch timeout, copy the 5s/8s tier from the existing
+  `integrations/*` + `llm/client.ts` constants; never pick the raw budget number.
+  **#423 — mobile README was a stale living-artifact.** `apps/mobile/README.md` still said "typecheckable
+  skeleton" whose "screens below are placeholders" + an `index.tsx` that "demonstrates scaleMeasure" + a
+  "Placeholder pantry screen" — all false since Track B shipped 2026-06-24 (18 real API-backed RN screens;
+  index.tsx no longer imports scaleMeasure; pantry.tsx is a full screen). Rewrote to reality (real
+  status, lib/ layout, `/api/mobile/*` + RevenueCat IAP, npm/own-lockfile note). Both reviewers verified
+  the NEW text doesn't over-claim (IAP correctly framed as degrade-to-"coming-soon", not live payments).
+  **#424 — the ABANDON was the run's discipline.** Admin `/admin/growth` had two `text-sm text-brand-solid`
+  "View all" links at 4.45:1 (< AA 4.5:1 on 14px). Swapping to `text-brand-solid-hover` fixes LIGHT mode
+  (→6.4:1) but Reviewer A caught a DARK-mode REGRESSION: `--brand-solid`/`-hover` are documented SURFACE
+  tokens (darker = correct as a *background* under white text). Used as `text-*` FOREGROUND on the dark
+  near-black page bg, darker = LESS contrast — `brand-solid-hover` computes 2.94:1 vs `brand-solid`'s
+  3.82:1 (both already fail AA in dark). So the swap trades a light-mode fix for a dark-mode regression;
+  a proper mode-aware foreground token over-scopes two internal admin links. Closed #424, clean tree.
+  **LESSON (extends the recurring #0a6e33 trap): `brand-solid`/`brand-solid-hover` are SURFACE tokens —
+  correct for `bg-*` (button/badge) where hover=darker, WRONG as `text-*` foreground in dark mode where
+  darker=worse. A `text-brand-solid*` contrast "fix" must be checked in BOTH themes (the `.dark` var set
+  + near-black bg), not light-only. Dark-mode brand-text contrast is a real app-wide question for a
+  dedicated pass, not a per-link hack.** Also: the marginal candidate of a run is exactly where an
+  adversarial reviewer earns its keep — abandoning it (partial batch) is a SUCCESS, not a miss.
+  **Readiness:** did NOT open 'ready' — sole open DoD gap unchanged (reach-gated floor #190, owner-GTM);
+  confidence statement stays UNCHECKED. **Housekeeping note:** the proxy `git push --delete` is still
+  flaky ("Everything up-to-date" no-op) — `origin/claude/admin-link-contrast-aa` (+ ~14 older merged
+  branches) linger with CLOSED/merged PRs; harmless (cannot auto-merge), delete when the proxy cooperates.
 - **2026-07-04 (run 47) — DEEP AUDIT (6-Haiku lens sweep, due since run 45 ~24h) + 3 file-disjoint clears
   (#418 a11y contrast / #419 experiment-stats sign-bug guard / #420 mobile cook-log parity); all 7 Sonnet
   reviews (incl. 1 re-review) APPROVE; 0 abandons.** Baseline gate green (scorecard **A**, self-validation
