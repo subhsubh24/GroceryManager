@@ -120,4 +120,16 @@ describe("fetchFdcPer100g", () => {
     expect(calledUrl).toContain("query=olive%20oil%20%26%20salt");
     expect(calledUrl).toContain(`api_key=${KEY}`);
   });
+
+  it("passes an AbortSignal so a hung FDC endpoint can't stall the request past the serverless budget", async () => {
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ foods: [{ foodNutrients: [{ nutrientNumber: "208", value: 1 }] }] }),
+    })) as unknown as typeof fetch;
+    await fetchFdcPer100g("x", KEY, fetchImpl);
+    const init = (fetchImpl as unknown as { mock: { calls: unknown[][] } }).mock.calls[0]![1] as
+      | RequestInit
+      | undefined;
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
+  });
 });

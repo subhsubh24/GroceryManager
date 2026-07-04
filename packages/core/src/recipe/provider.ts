@@ -43,11 +43,17 @@ export function mapMealDbMeal(meal: Record<string, unknown>): ProviderRecipe {
   };
 }
 
+// Bound each TheMealDB request so a hung provider can't stall recipe discovery past the serverless
+// budget. On timeout the abort throws, which callers already treat as "no recipes / degrade to LLM".
+const TIMEOUT_MS = 5_000;
+
 export class TheMealDBProvider implements RecipeProvider {
   constructor(private readonly base = "https://www.themealdb.com/api/json/v1/1") {}
 
   async searchByIngredient(ingredient: string): Promise<ProviderRecipe[]> {
-    const res = await fetch(`${this.base}/filter.php?i=${encodeURIComponent(ingredient)}`);
+    const res = await fetch(`${this.base}/filter.php?i=${encodeURIComponent(ingredient)}`, {
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
     if (!res.ok) return [];
     const json = (await res.json()) as { meals: Record<string, unknown>[] | null };
     return (json.meals ?? []).map((m) => ({
@@ -59,7 +65,9 @@ export class TheMealDBProvider implements RecipeProvider {
   }
 
   async getById(id: string): Promise<ProviderRecipe | null> {
-    const res = await fetch(`${this.base}/lookup.php?i=${encodeURIComponent(id)}`);
+    const res = await fetch(`${this.base}/lookup.php?i=${encodeURIComponent(id)}`, {
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
     if (!res.ok) return null;
     const json = (await res.json()) as { meals: Record<string, unknown>[] | null };
     const meal = json.meals?.[0];
