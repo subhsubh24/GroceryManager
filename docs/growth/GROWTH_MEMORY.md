@@ -31,6 +31,79 @@ support it; the gap speaks for itself.
 
 ## RUN LOG (newest first)
 
+### 2026-07-04 (later cycle, run 7) — pre_launch, awaiting_connect, PREPARE mode (no owner movement since run 6)
+- **Mode**: Still PREPARE (channels_connected: [] — no email/social channel; site_gate_up stays `true`,
+  unchanged from run 6).
+- **Did**:
+  - Read GROWTH_STATUS, GROWTH_MEMORY, PENDING_OPS, GTM_SCORECARD, ANALYSIS_PLAYBOOK, OUTREACH,
+    GTM_STANDARD, FACTORY_STANDARD. `git fetch origin main` found ONE new commit since run 6 (2560cd4,
+    #399, "gtm: outbound doctrine — launch-gated 2-lane") — but it only edits `GTM_STANDARD.md` (the §6
+    outbound-doctrine rewrite, already reflected in this run's read of that file), not app code or infra.
+  - **Re-verified infra state directly** (no self-report): `curl` against the live deployed URL
+    reproduced runs 5-6's exact split (home 200, `/signup`+`/admin/waitlist` 401,
+    `GET /api/growth/snapshot` still `{"error":"Forbidden."}` — no CRON_SECRET/admin session held).
+    `ListConnectors` unchanged: Gmail (connected, chat-enabled) + Google Drive (connected, chat-disabled)
+    + Google Calendar (unknown/not connected) — still no analytics/DB/billing/email/social MCP tool.
+    `site_gate_up` stays correctly `true`; ADMIN_EMAIL / PLAUSIBLE_API_KEY / an email provider / any
+    channel remain unverified — 2 straight runs now with zero owner movement.
+  - **Demand-signal (§10)**: closed run 6's next_action — fetched grand-screen.com's other listed
+    pantry/grocery apps (Grocery AI, Our Groceries, Wonder Fridge, CookBook Recipe Manager). **Caught and
+    corrected a real mistake this run**: my first pass used guessed/truncated URL slugs for Wonder Fridge
+    and CookBook, got 404s, and wrongly logged that as "no reviews exist" — the independent adversarial
+    reviewer (below) re-fetched the correct slugs directly and found real review pages with a genuine
+    on-theme complaint I'd missed. Corrected result: Grocery AI: Shop, Cook, Pantry carries a real,
+    verbatim barcode-scanning complaint (Bill Garner: "Tried a dozen items in my pantry and none of the
+    barcodes registered. Even Walmart brands.") — this extends the "barcode/UPC scanning is unreliable
+    and tedious" theme to a THIRD independent barcode-capable app (KitchenPal + My Pantry Tracker from
+    run 6, now + Grocery AI). Our Groceries' review page is genuinely empty (this part of the original
+    finding held up); Wonder Fridge and CookBook's reviews are real but not clearly on-theme (recipe/
+    grocery-list/sharing gripes, not barcode/pantry) — correctly not cited. Logged the URL-slug lesson in
+    `disconfirming_or_limitations` so a future run verifies slugs via search before treating a 404 as a
+    negative result.
+  - **Outreach research (§3b)**: closed run 6's next_action — searched the LAST untried angle from
+    OUTREACH.md's target-type list, integration/distribution partners (receipt/email-parsing tool makers,
+    budgeting apps). Surfaced only B2B receipt-OCR API vendors (Veryfi, Klippa, Mindee, Tabscanner —
+    developer/enterprise tooling, not consumer distribution partners) and consumer grocery-budgeting apps
+    (Out of Milk, GroceryBudget, Plateful, Banktrack — direct/adjacent competitors, not partners). None
+    has a genuine "why they'd care about a pre-traction, zero-user, gated-waitlist app" — a credible
+    integration ask needs traction this product doesn't have yet. **Zero outreach drafted this run**
+    (correct — 6th consecutive run at zero, each for a genuine checked reason). This closes every
+    target-type category OUTREACH.md names; a future run needs a genuinely NEW reason (an actual launch,
+    a press hook, a newly-surfaced named contact) rather than re-running exhausted search angles.
+  - Did NOT touch ROADMAP/VISION/BUSINESS_CASE — no new causal, significant data this run.
+  - Ran an independent reviewer subagent (fresh context, adversarial) against this run's full diff before
+    committing. **First verdict: REQUEST_CHANGES** — it independently re-fetched the grand-screen.com
+    URLs and caught exactly the URL-slug mistake described above (wrong claim that Grocery AI/Wonder
+    Fridge/CookBook had no on-theme reviews or 404'd), citing the real Bill Garner barcode complaint I'd
+    missed. Corrected the demand_signal block, GROWTH_STATUS learnings/next_actions, and this entry
+    accordingly before committing — everything else in the reviewer's pass (commit-history claim,
+    file scope, YAML validity, outreach-rejection reasoning, no padding) checked out clean on the first
+    pass.
+- **Hypothesis**: none new on the funnel (still no analytics READ / billing / email-provider connection).
+  This run's work is (a) an honest re-verification that nothing changed, (b) closing two dead-end search
+  angles from run 6's next_actions — one genuinely negative (outreach), one that turned out to have a
+  real positive finding the maker initially missed due to a URL bug (demand-signal), (c) confirming no
+  new commit affects product/infra state.
+- **Result**: Infra state unchanged (confirmed, not assumed). ONE new citable demand-signal quote found
+  (Bill Garner / Grocery AI, corrected in after adversarial review); no new outreach target. Funnel/PMF
+  numbers stay `0`/`null` (correct — still no connected source).
+- **Decision**: Ship the GROWTH_STATUS/GROWTH_MEMORY/PENDING_OPS updates (reviewer's REQUEST_CHANGES
+  addressed, not just reviewer-cleared on the first pass); outreach stays at zero (correct, all
+  OUTREACH.md target-type categories now searched); no ROADMAP/VISION/BUSINESS_CASE steer (one more
+  qualitative confirming citation, not a new causal, significant finding).
+- **Operational note (maker≠checker actually caught something this run)**: the adversarial reviewer is
+  not theater — it caught a real research error (wrong URL slugs mistaken for "app has no reviews")
+  before it shipped a false negative into the dashboard. LESSON for future runs: when a grand-screen.com
+  (or any aggregator) fetch 404s, verify the exact slug via a targeted WebSearch ("site:grand-screen.com
+  <app name>") before concluding the app has no reviews — a 404 means the URL is wrong, not that the
+  content doesn't exist. Both of run 6's `next_actions` items are now closed: demand-signal with a
+  genuine new citation (Grocery AI's barcode complaint), outreach with an honest negative result
+  (integration/distribution partners don't have a real "why they'd care" for a pre-traction app yet).
+  Outreach has now searched every OUTREACH.md target-type category with zero qualifying targets — future
+  runs should wait for a genuinely NEW reason rather than re-running exhausted angles. Demand-signal is
+  NOT exhausted (Out of Milk's correct slug was never retried; grand-screen.com may list more apps) — a
+  future run can keep mining it, just always verify slugs first.
+
 ### 2026-07-04 (run 6) — pre_launch, awaiting_connect, PREPARE mode (no owner movement since run 5)
 - **Mode**: Still PREPARE (channels_connected: [] — no email/social channel; site_gate_up stays `true`,
   unchanged from run 5). First run of a new day; re-verified rather than assumed the run-5 state held.
