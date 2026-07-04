@@ -81,7 +81,14 @@ export async function POST(req: Request) {
       ) {
         const isActive = sub.status === "active" || sub.status === "trialing";
 
-        // Determine tier from the price ID on the first subscription item
+        // Determine tier from the price ID on the first subscription item, matching against ALL three
+        // configured price IDs. An ACTIVE subscription whose price matches NONE of them means the
+        // STRIPE_PRICE_* envs are misconfigured (e.g. STRIPE_PRICE_ANNUAL unset) or the sub was created
+        // out-of-band against an unknown price. Previously that case SILENTLY recorded the customer as
+        // premium_monthly — so an annual/family buyer could be mislabeled with the misconfiguration hidden.
+        // Now we fail LOUD (§28: swallow the block, not the signal): still grant BASE premium (they paid —
+        // never deny access, §32) but log the anomaly explicitly and default to the LOWEST tier so no tier
+        // is ever over-granted. The loud log makes the env gap visible in prod instead of invisible.
         const priceId = sub.items?.data?.[0]?.price?.id;
         let tier: "premium_annual" | "premium_monthly" | "premium_family" | null = null;
         if (isActive) {
@@ -89,8 +96,23 @@ export async function POST(req: Request) {
             tier = "premium_family";
           } else if (env.STRIPE_PRICE_ANNUAL && priceId === env.STRIPE_PRICE_ANNUAL) {
             tier = "premium_annual";
-          } else {
+          } else if (env.STRIPE_PRICE_MONTHLY && priceId === env.STRIPE_PRICE_MONTHLY) {
             tier = "premium_monthly";
+          } else {
+            tier = "premium_monthly"; // safest (lowest) premium tier — never over-grant an unknown price
+            console.error(
+              "[stripe-webhook] Active subscription price matched no configured STRIPE_PRICE_* — " +
+                "recording base premium tier; verify STRIPE_PRICE_MONTHLY/ANNUAL/FAMILY are set correctly",
+              {
+                userId,
+                priceId,
+                configured: {
+                  monthly: Boolean(env.STRIPE_PRICE_MONTHLY),
+                  annual: Boolean(env.STRIPE_PRICE_ANNUAL),
+                  family: Boolean(env.STRIPE_PRICE_FAMILY),
+                },
+              },
+            );
           }
         }
 
