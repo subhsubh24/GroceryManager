@@ -39,7 +39,7 @@ the owner sees pre-launch / launch / post-launch growth progress in one place.
 ```yaml
 GROWTH_STATUS:
   project: GroceryManager
-  as_of: 2026-07-03
+  as_of: 2026-07-04
   phase: pre_launch              # pre_launch | launching | post_launch
   engine_built: true             # MUST equal (engine_pct == 100); preflight enforces it against real anchor files
   engine_pct: 100                # % of growth-execution engine pieces shipped — DERIVED from anchor files by preflight; NEVER hand-set
@@ -222,23 +222,66 @@ GROWTH_STATUS:
       press/newsletter/food-tech-beat/general-landscape queries with the same negative, correctly-zero
       result) — re-running the identical queries again would be padding, not new evidence. Zero outreach
       drafted this run."
+    - "RUN 6 (2026-07-04): RE-VERIFIED infra state — zero owner movement since run 5. `git fetch origin
+      main` shows no new commits past d21076f (run 5's merge); direct curl against the live deployed URL
+      reproduces the identical split (home/blog 200, /signup + /admin/waitlist 401, `GET
+      /api/growth/snapshot` still `{\"error\":\"Forbidden.\"}` with no CRON_SECRET); `ListConnectors`
+      still shows only Gmail (connected) + Google Drive (connected, not chat-enabled) — no
+      analytics/DB/billing/social MCP tool. `site_gate_up` stays `true` (unchanged, still correctly the
+      only precondition met); `channels_connected` stays empty."
+    - "RUN 6 demand-signal expansion: found ONE new citable, verbatim-verified review quote broadening
+      the existing 'barcode/UPC scanning is unreliable and tedious' theme to a SECOND independent
+      barcode-first tracker (previously only KitchenPal): grand-screen.com/apps/my-pantry-tracker/reviews/
+      — Steven Wilshire: 'it will not scan QR codes. Can this be added PLEASE???'. Also attempted
+      AnyList (grand-screen.com/apps/anylist-grocery-shopping-list/reviews/ — page has ZERO reviews
+      despite showing a 4.8/26,785 Play Store rating elsewhere, so no citable AnyList quote exists there)
+      and Trustpilot/ComplaintsBoard searches for AnyList/Mealime/SuperCook/Fridgely pantry complaints —
+      every WebSearch-summarized 'complaint' for those (SuperCook 'can't add multiple items', Fridgely
+      'lost 70 items after Facebook connect', Mealime Play Store gripes) could NOT be verified verbatim
+      by direct WebFetch of the actual source page (403/404/summary-only, or the underlying page simply
+      doesn't contain the quoted text) — correctly NOT added as evidence per the honesty bar (a
+      search-engine paraphrase is not a citable quote). This confirms runs 2-4's finding that this
+      routine's search layer sometimes surfaces plausible-sounding but unverifiable paraphrases; only
+      grand-screen.com and complaintsboard.com have proven directly fetchable this run and prior runs."
+    - "RUN 6 outreach research: tried a NEW angle (frugal-living / anti-food-waste / grocery-budgeting
+      Substack newsletters, not yet searched in runs 2-5) and surfaced 'Front Yard Veggies' (Amy Bauer) —
+      a real, active newsletter that does share grocery-spending data and food-waste reduction content.
+      REJECTED after checking its /about page: no published email or contact form exists (only
+      Instagram/TikTok/YouTube handles, which OUTREACH.md does not accept as a substitute for a real
+      email/contact-form target), and its actual content center of gravity is gardening/homesteading/
+      chicken-keeping, not pantry-tracking or receipt-based grocery management — a weak 'why they'd care'
+      fit. Zero outreach drafted this run (correct per OUTREACH.md — no target clearing all three bars:
+      name + why + real contact)."
   next_actions:
     - "Next run: re-check GET /api/growth/snapshot behavior and whether ADMIN_EMAIL / PLAUSIBLE_API_KEY /
-      an email provider key have been set — site_gate_up flipping true this run shows the owner is
-      actively connecting things, so re-verify rather than assuming the circuit-breaker items are still
-      static."
-    - "Reddit is a CLOSED dead end for this routine's WebSearch tool (confirmed run 4: explicit
-      domain-access block, not a phrasing issue) — do NOT re-attempt Reddit-scoped queries. Instead try
-      other citable aggregators (Trustpilot, Google Play review pages directly, ComplaintsBoard-style
-      sites) for App Store review evidence beyond Paprika/KitchenPal; note some aggregators (e.g.
-      justuseapp.com) 403 on WebFetch even when they surface in WebSearch snippets."
+      an email provider key have been set — re-verify via public HTTP / ListConnectors rather than
+      assuming the circuit-breaker items are still static (RUN 6 re-checked and confirmed: still zero
+      owner movement since run 5)."
+    - "Aggregator reliability (updated run 6): grand-screen.com and complaintsboard.com are PROVEN
+      directly-fetchable citation sources (used successfully runs 3, 6). Trustpilot 403s on WebFetch;
+      Google Play's own review pages return no review content to WebFetch; WebSearch summaries of
+      SuperCook/Fridgely/AnyList/Mealime complaints could NOT be verified verbatim this run — do NOT cite
+      a WebSearch summary alone, only a WebFetch-confirmed exact quote. Untried citable sources for a
+      future run: grand-screen.com pages for other pantry/grocery apps it lists (Grocery AI, Wonder
+      Fridge, Our Groceries, CookBook) — try those before re-attempting Trustpilot/Google-Play direct."
+    - "Outreach: press/newsletter/food-tech-beat/general-landscape/frugal-living angles are ALL now
+      searched (runs 2-6) with zero qualifying targets (either no real audience fit or no published
+      email/contact-form). Untried angle for a future run: integration/distribution partners named in
+      OUTREACH.md's target-type list (recipe platforms, receipt/email-parsing tool makers, budgeting
+      apps) — none of runs 2-6 have searched THAT category yet."
     - "Once a channel (email provider or social) connects on top of the now-true site_gate_up: draft 1-2
       curated outreach emails (press/newsletter) — the HARD BLOCK needs both, and only site_gate_up is
       met so far."
   owner_blockers:
-    - "RESOLVED THIS RUN (verified 2026-07-03 via live HTTP behavior, not self-reported): SITE_GATE_PASSWORD
-      is now set — site_gate_up: true. No further owner action needed on this item; PENDING_OPS
-      'site-gate-prelaunch' marked done below. (Remember to UNSET it at actual public launch.)"
+    - "RESOLVED run 5 (verified 2026-07-03 via live HTTP behavior, not self-reported): SITE_GATE_PASSWORD
+      is set — site_gate_up: true. Re-confirmed unchanged run 6 (2026-07-04, identical curl behavior).
+      No further owner action needed on this item; PENDING_OPS 'site-gate-prelaunch' marked done below.
+      (Remember to UNSET it at actual public launch.)"
+    - "CIRCUIT BREAKER (re-confirmed run 6, 2026-07-04): the 3 items below (ADMIN_EMAIL, an email
+      provider key, PLAUSIBLE_API_KEY) plus channel connection are UNCHANGED since run 5 — zero owner
+      movement in the last 24h (`git fetch` shows no new commits; ListConnectors unchanged; live HTTP
+      behavior identical). Still the single highest-leverage pair to unblock: ADMIN_EMAIL +
+      PLAUSIBLE_API_KEY (both ~5-minute Vercel env-var sets, unlock the funnel/analytics READ path)."
     - "HIGH: Set ADMIN_EMAIL in Vercel env to access /admin/waitlist — still unverified (the site gate
       alone explains the current 401; ADMIN_EMAIL's own effect can't be observed until the gate is
       opened or an admin session is used). Funnel stays 0 until this is set AND verified."
@@ -246,8 +289,9 @@ GROWTH_STATUS:
       being captured in the DB but confirmation emails are not confirmed being sent. Real signups are
       not being nurtured. (Docs: PENDING_OPS.md 'track-h-activation')"
     - "HIGH: Set PLAUSIBLE_API_KEY — the tracking script is confirmed live (data-domain verified in the
-      deployed HTML this run) but the Stats API READ that the Growth Agent depends on for visitors_7d /
-      funnel rates needs this key too; without it visitor metrics stay 0 even though tracking fires."
+      deployed HTML) but the Stats API READ that the Growth Agent depends on for visitors_7d / funnel
+      rates needs this key too; without it visitor metrics stay 0 even though tracking fires (re-confirmed
+      run 6: GET /api/growth/snapshot still returns {\"error\":\"Forbidden.\"})."
     - "NORMAL: Pick a final app name from NAMING_CANDIDATES.md (Pantri / Mise / Larder) —
       all content assets currently use '[APP_NAME]' placeholder; this blocks final email/store copy."
     - "Connect a channel (email provider and/or a social API token) to clear the SECOND half of the
@@ -286,7 +330,7 @@ GROWTH_STATUS:
             date: not_shown_by_source
         note: "This is exactly the receipt/Gmail auto-fill + depletion-projection gap the product is built around."
       - theme: "Barcode/UPC scanning is unreliable and tedious"
-        durability: recent
+        durability: durable        # UPGRADED run 6: now recurs across 2 independent barcode-first trackers
         solved_by_product: partial
         evidence:
           - quote: "Many UPC come up with the wrong info or no info at all, requiring the user to manually input data."
@@ -301,9 +345,15 @@ GROWTH_STATUS:
             source: "KitchenPal user review (Jane Sanders), via grand-screen.com aggregator"
             url: "https://grand-screen.com/apps/kitchenpal-pantry-inventory/reviews/"
             date: "aggregator-displayed 2025-10-17 (see dating caveat below)"
+          - quote: "it will not scan QR codes. Can this be added PLEASE???"
+            source: "My Pantry Tracker user review (Steven Wilshire), via grand-screen.com aggregator"
+            url: "https://grand-screen.com/apps/my-pantry-tracker/reviews/"
+            date: "aggregator-displayed 2025-10-17 (same aggregator-cache-date pattern as the KitchenPal quotes above; see dating caveat below)"
         note: "GroceryManager's receipt/Gmail path avoids this for shop-triggered updates, but its OWN
           /barcode manual-add path shares this exact friction class for non-receipt items — an HONEST
-          partial-solve, not a claimed full win."
+          partial-solve, not a claimed full win. RUN 6: added a SECOND independent barcode-first tracker
+          (My Pantry Tracker) making the same class of complaint (scan-format gaps) as KitchenPal —
+          upgraded durability from 'recent' (1 app) to 'durable' (2 structurally-similar apps)."
     disconfirming_or_limitations:
       - "UPDATE (run 4, 2026-07-03): confirmed Reddit is categorically unreachable to this routine's
         WebSearch tool (explicit 'domain not accessible to our user agent' error on 2 direct
@@ -313,16 +363,26 @@ GROWTH_STATUS:
       - "All 3 KitchenPal review quotes carry the identical aggregator-displayed date (2025-10-17) across
         3 different reviewer names — almost certainly the page's scrape/cache date, not each review's true
         post date. Treated as 'recent, roughly within the last year,' not a precise per-review timestamp."
+      - "UPDATE (run 6, 2026-07-04): WebSearch summaries repeatedly surfaced plausible-sounding
+        complaint paraphrases for AnyList/Mealime/SuperCook/Fridgely that could NOT be verified by
+        directly fetching the underlying page (403, 404, or the page simply not containing the quoted
+        text). None were added as evidence — a search-engine summary is not a citable quote. Only
+        grand-screen.com and complaintsboard.com have proven directly fetchable across runs 3-6; treat
+        any future WebSearch-only 'finding' from another aggregator as unverified until WebFetch confirms
+        the exact text on the source page."
     synthesis: >
       2 of 3 surfaced themes are DURABLE (recurring across a recipe-manager AND a dedicated barcode
       tracker — structurally different apps making the identical complaint) and both are precisely the
       gap this product's receipt/Gmail auto-fill + depletion tracking targets. This corroborates LESSON-0
       with a second, independent evidence type (real dated user reviews, not just feature-matrix
       research). The third theme (barcode tedium) is only PARTIALLY solved today, since /barcode is
-      itself a manual per-item flow. CONFIDENCE: raises confidence in the EXISTING positioning bet; per
-      §10's hard bound this stays qualitative — no adoption-rate or CAC number was invented or moved, and
-      no ROADMAP/VISION/BUSINESS_CASE-number steer was taken this run (added one citation-only footnote
-      to BUSINESS_CASE.md §3, not a figure change).
+      itself a manual per-item flow; RUN 6 upgraded it to DURABLE too (now 2 independent barcode-first
+      trackers, KitchenPal + My Pantry Tracker, make the same class of complaint). CONFIDENCE: raises
+      confidence in the EXISTING positioning bet; per §10's hard bound this stays qualitative — no
+      adoption-rate or CAC number was invented or moved, and no ROADMAP/VISION/BUSINESS_CASE-number steer
+      has been taken from this demand_signal block on any run to date (run 3 added one citation-only
+      footnote to BUSINESS_CASE.md §3 from the original 2 themes, not a figure change; run 6's additional
+      barcode-theme evidence did not warrant a further BUSINESS_CASE edit).
   links:
     in_app_analytics: /admin/waitlist
     owner_doc: docs/growth/GROWTH_STATUS.md
