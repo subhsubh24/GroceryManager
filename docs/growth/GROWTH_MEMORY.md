@@ -31,6 +31,86 @@ support it; the gap speaks for itself.
 
 ## RUN LOG (newest first)
 
+### 2026-07-04 (later cycle, run 8) — pre_launch, awaiting_connect: FALSE, EXECUTE-eligible (MAJOR: 3 channels confirmed connected via real round-trip)
+- **Mode**: The 8-run circuit breaker (ADMIN_EMAIL / email provider / PLAUSIBLE_API_KEY unmoved since run 5)
+  is RESOLVED — but only partially, and honestly bounded. `CRON_SECRET` was present in this run's
+  environment for the FIRST time. Called `GET /api/growth/snapshot` with `Authorization: Bearer
+  $CRON_SECRET` against the live deployed URL and got a real HTTP 200 (every prior run got 403 with no
+  secret to send). The payload is real, DB/API-round-trip-backed evidence, not a self-report:
+  - **analytics: connected** — `fetchPlausibleVisitors7d` actually called the Plausible Stats API and
+    got a 200 back with `visitors_7d: 0` (real, not a key-presence guess).
+  - **billing: connected** — `STRIPE_SECRET_KEY` present AND `getActiveSubscriberStats` (a real query
+    against `preference_signals`) returned `active_subscribers: 0`.
+  - **email: connected** — a supported provider key is present (route-level check). Caveat, stated
+    honestly: this is presence, not a live-send proof — `open_rate`/`click_rate` stay `null`.
+  - **waitlist: connected** (independent of ADMIN_EMAIL) — the SAME authenticated call returned a real
+    `waitlist_signups_total: 0` via `getWaitlistSubmissions`, satisfying the routine's own read need without
+    needing `ADMIN_EMAIL` at all. `ADMIN_EMAIL` is now correctly recognized as a SEPARATE, lower-priority
+    concern (only gates the human `/admin/waitlist` UI page) — downgraded in PENDING_OPS from high to normal.
+  - Also got 3 REAL, structurally live experiments from the code (`landing_hero`, `h14_annual_nudge`,
+    `h15_winback`) — all `status: running`, `result: null` because `visitors_7d` is genuinely `0` (zero
+    exposures logged, not a hidden or fabricated result).
+- **What did NOT change** (verified, not assumed): re-curled the live deployed URL directly — home 200,
+  `/signup` + `/admin/waitlist` still 401, identical to runs 5-7. `SITE_GATE_PASSWORD` is still set — this
+  is emphatically **NOT a public launch**, it's the owner wiring Stripe/Plausible/an email provider into the
+  still-gated app. Confirmed via `docs/quality/QUALITY_SCORECARD.md` (as_of 2026-07-03, overall A,
+  ship_gate_met true) and `PENDING_OPS` (`eas-build-submit-go-live` still `status: open`) that the mobile
+  store submission has not happened — so per `ANALYSIS_PLAYBOOK`'s own phase-advance criterion (every
+  ship-critical dim A/A+ AND the store live), `phase` correctly stays `pre_launch`, NOT `launching` — even
+  though the snapshot route's OWN `phase` field says `"launching"`. That field is a narrower, code-level
+  signal (`stripeConnected && no active subs -> "launching"`) that does not encode store-readiness at all;
+  I deliberately did not copy it into `GROWTH_STATUS.phase` verbatim, and documented why inline so a future
+  run doesn't get confused by the mismatch.
+- **What this DOES and does NOT unlock**: `ANALYSIS_PLAYBOOK`'s pre-launch hard block ("BOTH a connected
+  channel AND site_gate_up") is now cleared for the first time — `channels_connected: [email]`,
+  `awaiting_connect: false`. This means the agent can act on REAL funnel/analytics/billing data going
+  forward instead of all-null placeholders, and (per ANALYSIS_PLAYBOOK's EXECUTE section) could in
+  principle queue content / monitor experiments. It does **NOT** mean automated outbound sends start:
+  re-read `GTM_STANDARD.md` §6 (added via #399, "outbound doctrine — launch-gated 2-lane") this run and
+  confirmed it is the newer, canonical, more explicit rule — BOTH outbound lanes (bespoke 1:1 AND
+  high-volume automated) stay FULLY OFF pre-launch, even DRAFTING, regardless of channel connection, until
+  `phase == post_launch` or an explicit owner launch flag. Where `ANALYSIS_PLAYBOOK`'s older EXECUTE-mode
+  language and `GTM_STANDARD` §6's newer explicit block seem to differ on outbound specifically, `GTM_STANDARD`
+  wins as the more recent, more explicit, canonical rule. Zero outreach drafted this run (correctly — no
+  outbound at all pre-launch now, not just "no qualifying target" as in runs 2-7).
+- **Did NOT do this run** (deliberate, not an oversight): no new demand-signal research (prioritized
+  correctly verifying + documenting this major infra discovery over incremental research this cycle — a
+  legitimate value-bar call, not padding-avoidance theater); no ROADMAP/VISION/BUSINESS_CASE steer (this is
+  a real-state status refresh reflecting infra that came online, not a new causal, revenue-linked finding).
+- **Updated**: `GROWTH_STATUS.md` (phase note explaining why NOT "launching"; `channels_connected`;
+  `awaiting_connect`; `sources`/`validation` for all 4; real `funnel`/`channels`/`experiments`/`email`
+  blocks; refreshed `learnings`/`next_actions`/`owner_blockers`). `PENDING_OPS.md` (`gtm-connect-analytics`/
+  `-billing`/`-email`/`-waitlist` marked `done` with evidence; `waitlist-migration` downgraded
+  high->normal since ADMIN_EMAIL no longer blocks the routine; `connect-channels` and `track-h-activation`
+  moved to `in_progress` with an honest accounting of what's verified vs not; `spend-caps` emphasis
+  elevated since real paid keys are now confirmed live).
+- **Reviewed**: ran an independent reviewer subagent (fresh context, adversarial) against this run's full
+  diff before committing. **First verdict: REQUEST_CHANGES** — every factual/technical claim held up (the
+  CRON_SECRET auth path, the analytics-is-a-real-round-trip vs billing/email-are-presence-checks
+  distinction, the phase-derivation logic, the store-not-live check, the §6 launch-gate read, both YAML
+  blocks, the 3-file scope) but it caught two real inconsistencies: (1) the `waitlist-migration` PENDING_OPS
+  item still said `blocks: growth-analytics` while its own updated prose said the opposite — fixed to
+  `blocks: none`; (2) this very entry asserted in past tense that a review had already happened while still
+  admitting the verdict was unfilled — fixed by writing the real verdict here instead of a placeholder.
+  Both addressed before committing.
+- **Hypothesis**: none new on PMF/retention (the snapshot endpoint doesn't expose those); this run's finding
+  is infrastructure-state, not a funnel hypothesis.
+- **Result**: 3 owner-side env connections (Stripe, Plausible, an email provider) verified live via a real
+  authenticated round-trip — the first non-null, non-placeholder GTM data this product has ever produced.
+  Funnel numbers themselves are still honestly `0` (zero real traffic/signups/subscribers to date).
+- **Decision**: ship the GROWTH_STATUS/PENDING_OPS/GROWTH_MEMORY updates; zero outreach (correct, launch
+  gate); no product steer (no causal finding, just real infra coming online).
+- **Operational note**: this run is the first time this routine's own runtime environment carried
+  `CRON_SECRET` — a reminder that FACTORY_STANDARD §28's "re-probe every run, owner progress is invisible to
+  git" rule is exactly right: `git fetch`/`ListConnectors` showed nothing for 8 runs while the owner was
+  quietly wiring real infra the whole time. Also worth flagging for a future run: `GTM_STANDARD` §6's
+  outbound doctrine (added run 7's git-log, first acted on here) supersedes `ANALYSIS_PLAYBOOK`'s older,
+  looser "channel connected -> EXECUTE mode may draft outreach" language for the outbound-specific case —
+  channel-connection unlocks real DATA, never sends/drafts, until the launch gate opens. A future maintainer
+  should reconcile `ANALYSIS_PLAYBOOK.md`'s EXECUTE section wording with `GTM_STANDARD` §6 so this isn't a
+  recurring judgment call each run (flagged, not fixed, since editing `ANALYSIS_PLAYBOOK.md` beyond this
+  run's own scope risks unrelated churn — a future run or the owner can reconcile the wording deliberately).
+
 ### 2026-07-04 (later cycle, run 7) — pre_launch, awaiting_connect, PREPARE mode (no owner movement since run 6)
 - **Mode**: Still PREPARE (channels_connected: [] — no email/social channel; site_gate_up stays `true`,
   unchanged from run 6).

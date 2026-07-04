@@ -39,49 +39,90 @@ the owner sees pre-launch / launch / post-launch growth progress in one place.
 ```yaml
 GROWTH_STATUS:
   project: GroceryManager
-  as_of: 2026-07-04 (run 7)
-  phase: pre_launch              # pre_launch | launching | post_launch
+  as_of: 2026-07-04 (run 8)
+  phase: pre_launch              # pre_launch | launching | post_launch — NOT "launching" despite the
+                                 #   snapshot API's own `phase` field (see below): ANALYSIS_PLAYBOOK's phase
+                                 #   definition requires EVERY ship-critical QUALITY_SCORECARD dim A/A+ AND
+                                 #   the store live. QUALITY_SCORECARD is A/ship_gate_met (as_of 2026-07-03),
+                                 #   but PENDING_OPS `eas-build-submit-go-live` is still `status: open` — the
+                                 #   mobile store submission has NOT happened, so the store isn't live. The
+                                 #   snapshot route's `phase` field (see GROWTH_STATUS.sources note) is a
+                                 #   narrower code-level signal (stripeConnected && no active subs ->
+                                 #   "launching") that does NOT encode store-readiness — do not confuse the two.
   engine_built: true             # MUST equal (engine_pct == 100); preflight enforces it against real anchor files
   engine_pct: 100                # % of growth-execution engine pieces shipped — DERIVED from anchor files by preflight; NEVER hand-set
-  channels_connected: []         # owner-authorized channels actually wired (e.g. [x, instagram, email])
-  awaiting_connect: true         # true => agent only prepares creative; takes NO external action
-  site_gate_up: true             # VERIFIED THIS RUN (2026-07-03, run 5) via direct curl against the live
-                                 #   deployed URL: home/blog/privacy return 200 (exempt), /signup and
-                                 #   /admin/waitlist return 401 (gated) — the exact exempt-vs-gated split
-                                 #   the code (apps/web/middleware.ts) implements. This is real, reproducible,
-                                 #   public-HTTP evidence (no secret read, no auth used) that SITE_GATE_PASSWORD
-                                 #   is now set. Still only ONE of the two HARD-BLOCK preconditions — see
-                                 #   channels_connected below (still empty) — so PREPARE mode continues.
+  channels_connected: [email]    # REAL, VERIFIED THIS RUN (run 8) via authenticated GET /api/growth/snapshot
+                                 #   (Bearer $CRON_SECRET, which was present in this run's environment for the
+                                 #   FIRST time in 8 runs): emailConnected:true (a RESEND_API_KEY-class key is
+                                 #   set in the deployed app). Analytics + billing are real too but are
+                                 #   MEASUREMENT/MONETIZATION infra, not marketing "channels" in the
+                                 #   ANALYSIS_PLAYBOOK/§9 sense — tracked in `sources` below, not here.
+  awaiting_connect: false        # FLIPPED false this run — BOTH ANALYSIS_PLAYBOOK hard-block preconditions
+                                 #   are now met for the first time: (a) a real channel (email) is connected,
+                                 #   AND (b) site_gate_up is true. This does NOT mean automated outbound sends
+                                 #   start: GTM_STANDARD §6's LAUNCH GATE separately keeps BOTH outbound lanes
+                                 #   FULLY OFF until phase==post_launch / an explicit owner launch flag — that
+                                 #   gate is UNCHANGED and still blocks (see learnings). What DOES open: the
+                                 #   agent may act on real (not assumed) funnel/analytics/billing data instead
+                                 #   of all-null placeholders.
+  site_gate_up: true             # RE-VERIFIED THIS RUN via direct curl: home 200, /signup + /admin/waitlist
+                                 #   401 (identical split to runs 5-7) — SITE_GATE_PASSWORD still set, unchanged.
   sources:                       # per-source pull status (H7 snapshot): connected | awaiting_connect
-    waitlist: awaiting_connect
-    analytics: awaiting_connect
-    billing: awaiting_connect
-    email: awaiting_connect
+    waitlist: connected          # REAL THIS RUN: the authenticated snapshot (CRON_SECRET, NOT ADMIN_EMAIL)
+                                 #   returned a genuine DB-derived total (0) via getWaitlistSubmissions — the
+                                 #   routine's OWN read need is satisfied independent of ADMIN_EMAIL, which is
+                                 #   a separate, human-UI-only concern (the /admin/waitlist page) — see owner_blockers.
+    analytics: connected         # REAL THIS RUN: the route's fetchPlausibleVisitors7d call SUCCEEDED (a live
+                                 #   Plausible Stats API round-trip, not just a key-presence check) and returned
+                                 #   a real value (0) — PLAUSIBLE_API_KEY + NEXT_PUBLIC_PLAUSIBLE_DOMAIN are both
+                                 #   confirmed live and reachable, not merely set.
+    billing: connected           # REAL THIS RUN: STRIPE_SECRET_KEY is present AND a real DB query
+                                 #   (getActiveSubscriberStats, the preference_signals ledger) executed and
+                                 #   returned a genuine count (0 active subscribers) — not a key-presence guess.
+                                 #   Whether the Stripe key is TEST or LIVE mode is NOT observable externally;
+                                 #   flagged as a next_action to confirm with the owner.
+    email: connected             # REAL THIS RUN: a supported provider key (RESEND_API_KEY / SENDGRID_API_KEY /
+                                 #   POSTMARK_API_KEY) is present in the deployed app (route-level presence
+                                 #   check, per the app's own definition of "connected"). CAVEAT (honest,
+                                 #   fail-closed on the UNVERIFIED part): this does NOT itself prove a real
+                                 #   email has been delivered — open_rate/click_rate stay null below until a
+                                 #   real send+open/click is observed. Key-present != deliverability-proven.
   validation:                    # GTM_STANDARD §4 explicit validation ledger — fail-closed; each
                                  #   unconnected source gets an URGENT gtm-connect-<source> OWNER_ACTION
     waitlist:
-      status: awaiting_connect   # own datastore write is real (funnel.waitlist_confirmed above); the
-                                 #   admin READ path (/admin/waitlist) needs ADMIN_EMAIL to verify counts
-      owner_action: gtm-connect-waitlist
+      status: connected          # RESOLVED run 8: CRON_SECRET was present in this run's environment for the
+                                 #   FIRST time; GET /api/growth/snapshot (Bearer $CRON_SECRET) returned 200
+                                 #   with a real DB-derived waitlist total (0). This satisfies the routine's
+                                 #   own read need WITHOUT needing ADMIN_EMAIL — ADMIN_EMAIL only gates the
+                                 #   human-facing /admin/waitlist UI, tracked separately below.
+      owner_action: gtm-connect-waitlist (RESOLVED — see PENDING_OPS)
     analytics:
-      status: awaiting_connect   # PARTIAL PROGRESS verified this run: NEXT_PUBLIC_PLAUSIBLE_DOMAIN is now
-                                 #   confirmed SET (curl of the live deployed HTML shows a real Plausible
-                                 #   script tag with data-domain="grocery-manager-web.vercel.app" — the
-                                 #   owner's same-day commit #396 normalized it to a bare host). PLAUSIBLE_API_KEY
-                                 #   (needed for the Stats API READ that GET /api/growth/snapshot uses) is
-                                 #   still unverifiable headlessly (the endpoint requires CRON_SECRET/admin
-                                 #   session, both absent to this routine) — stays awaiting_connect, fail-closed,
-                                 #   until a real visitors_7d number can be pulled.
-      owner_action: gtm-connect-analytics
+      status: connected          # RESOLVED run 8: the snapshot route's fetchPlausibleVisitors7d call
+                                 #   succeeded (res.ok, real JSON parsed) and returned visitors_7d:0 — a real
+                                 #   Plausible Stats API round-trip, not a key-presence guess. Both
+                                 #   NEXT_PUBLIC_PLAUSIBLE_DOMAIN (verified run 5) and PLAUSIBLE_API_KEY (new
+                                 #   this run) are confirmed live.
+      owner_action: gtm-connect-analytics (RESOLVED — see PENDING_OPS)
     billing:
-      status: awaiting_connect   # STRIPE_SECRET_KEY / FEATURE_BILLING unset — no MRR/churn/CAC may be
-                                 #   reported until this resolves to connected
-      owner_action: gtm-connect-billing
+      status: connected          # RESOLVED run 8: STRIPE_SECRET_KEY is present in the deployed app AND
+                                 #   getActiveSubscriberStats (a real DB query against the preference_signals
+                                 #   ledger) executed and returned a genuine 0-active-subscribers count.
+                                 #   Whether the key is Stripe TEST or LIVE mode is not externally observable —
+                                 #   flagged in next_actions.
+      owner_action: gtm-connect-billing (RESOLVED — see PENDING_OPS)
     email:
-      status: awaiting_connect   # no RESEND_API_KEY / SENDGRID_API_KEY / POSTMARK_API_KEY set — no
-                                 #   open/click rate may be reported until this resolves to connected
-      owner_action: gtm-connect-email
-  funnel:                        # REAL numbers only; 0/null until a connected source reports them
+      status: connected          # RESOLVED (partial honesty caveat) run 8: a supported provider key
+                                 #   (RESEND_API_KEY / SENDGRID_API_KEY / POSTMARK_API_KEY) is present — this
+                                 #   is the app's own definition of "connected" (route-level presence check,
+                                 #   not a live send). Deliverability itself is UNCONFIRMED: open_rate /
+                                 #   click_rate stay null below until a real send + open/click round-trips.
+      owner_action: gtm-connect-email (RESOLVED — see PENDING_OPS; deliverability still unverified)
+  funnel:                        # REAL numbers, VERIFIED THIS RUN via authenticated GET /api/growth/snapshot
+                                 #   (all 4 sources now genuinely connected — see `sources` above). Every
+                                 #   value below is a real pull, not an honest placeholder: it happens to be
+                                 #   identical to the old placeholder because real traffic is genuinely 0 —
+                                 #   correctly so, since this routine has driven zero external traffic to date
+                                 #   (still pre_launch / WAITLIST-ONLY) and no owner-side campaign has launched.
     visitors_7d: 0
     waitlist_signups_total: 0
     waitlist_signups_7d: 0
@@ -94,10 +135,10 @@ GROWTH_STATUS:
     mrr_usd: 0
     churn_rate_30d: null
   acquisition:
-    cac_usd: null
-    ltv_usd: null
+    cac_usd: null                 # still null: zero spend, zero paid channel approved (§9 Tier B untouched)
+    ltv_usd: null                 # still null: zero paid conversions to compute LTV from
     ltv_cac_ratio: null
-    top_channel: null
+    top_channel: null              # still null: zero signups from any channel yet
   pmf:                           # PRODUCT-MARKET FIT — the leading indicator (FACTORY_STANDARD §9). Pre-PMF
                                  #   the recommendation is a PRODUCT/retention fix, NOT scaling acquisition.
                                  #   REAL data only; 0/null until a connected analytics source reports.
@@ -111,13 +152,53 @@ GROWTH_STATUS:
     retention_curve_flattening: null  # true once the weekly curve levels off on a committed cohort (the PMF signal)
     organic_share_rate: null     # non-paid + referral share of signups (is it spreading on its own?)
     signal: none                 # none | weak | emerging | strong  — GOVERNS the recommendation
-  channels: []                   # [{name, status, reach_7d, clicks_7d, signups_7d, ctr, notes}]
-  experiments: []                # [{id, hypothesis, status, result, lift_pct, started, decided}]
+  channels:                      # [{name, status, reach_7d, clicks_7d, signups_7d, ctr, notes}]
+    - name: email
+      status: connected           # REAL, verified run 8 (provider key present; see `sources.email` caveat)
+      reach_7d: 0
+      clicks_7d: 0
+      signups_7d: 0
+      ctr: null
+      notes: "Provider key connected this run (first observation). list_size is 0 (no confirmed waitlist
+        signups yet to mail), and GTM_STANDARD §6's LAUNCH GATE keeps automated lifecycle sends OFF
+        regardless of connection until phase==post_launch / an explicit owner launch flag — so zero sends
+        this run is CORRECT, not a gap."
+  experiments:                   # REAL, VERIFIED THIS RUN — the H10 experiment engine (packages/core/src/
+                                 #   growth/experiments) is live in code and the snapshot exposed 3 real,
+                                 #   currently-registered experiments. All show status:running / result:null /
+                                 #   lift_pct:null because visitors_7d is 0 — zero exposures logged yet, not a
+                                 #   fabricated or hidden result. Structure/ids/hypotheses are real (from
+                                 #   packages/core/src/growth/experiments), not authored by this routine.
+    - id: landing_hero
+      hypothesis: "Variant B ('Stop guessing at dinner') and C ('Your kitchen, finally in sync') increase
+        waitlist signup rate vs current variant A ('Always know what to cook') by at least 2pp."
+      status: running
+      result: null
+      lift_pct: null
+      started: null
+      decided: null
+    - id: h14_annual_nudge
+      hypothesis: "For active monthly subscribers at month 3, leading the nudge with the dollar saving
+        ('savings') converts more monthly->annual switches than the routine framing ('control')."
+      status: running
+      result: null
+      lift_pct: null
+      started: null
+      decided: null
+    - id: h15_winback
+      hypothesis: "For churned-but-active free users, leading win-back with what Premium adds ('value')
+        reactivates more than the warm welcome framing ('control')."
+      status: running
+      result: null
+      lift_pct: null
+      started: null
+      decided: null
   email:
-    list_size: 0
+    list_size: 0                  # real: waitlist_confirmed (0) gated on emailConnected (true) — still 0
+                                 #   because zero real confirmed signups exist yet, not because of the gate
     double_opt_in: true
     last_stage_sent: null
-    open_rate: null
+    open_rate: null                # UNCONFIRMED per the sources.email caveat — no real send has occurred
     click_rate: null
   content:
     published_7d: 1              # "pantry-tracker-apps-2026" (apps/web/app/blog/posts.ts:223) published
@@ -127,7 +208,10 @@ GROWTH_STATUS:
     organic_sessions_7d: 0
   outreach:                      # STRATEGIC OUTREACH — curated, human-reviewed Gmail DRAFTS (docs/growth/OUTREACH.md).
                                  #   DRAFT-ONLY: the agent never sends; the OWNER reviews + sends. REAL numbers only.
-    drafted_7d: 0                # 0: site_gate_up false — PREPARE mode only; no outreach drafted this run
+    drafted_7d: 0                # 0: GTM_STANDARD §6 LAUNCH GATE keeps BOTH outbound lanes fully off until
+                                 #   phase==post_launch / an explicit launch flag (still pre_launch) — this
+                                 #   is now the operative reason, not site_gate_up (which flipped true in run
+                                 #   5). No outreach drafted this run regardless.
     owner_sent_7d: 0             # how many the OWNER actually sent (owner-reported)
     replies_7d: 0                # replies received (OWNER-reported — NEVER fabricated)
     signal: none                 # none | weak | emerging | strong  (0/none pre-launch)
@@ -283,7 +367,40 @@ GROWTH_STATUS:
       traction this product doesn't have yet. Zero outreach drafted this run (correct per OUTREACH.md -
       no target clearing name + why + real contact). This closes the LAST untried angle from OUTREACH.md's
       target-type list; runs 2-7 have now searched every category it names with zero qualifying targets."
+    - "RUN 8 (2026-07-04, later cycle) — MAJOR CIRCUIT-BREAKER RESOLUTION: for the FIRST time in 8 runs,
+      CRON_SECRET was present in this routine's environment. Called `GET /api/growth/snapshot` with
+      `Authorization: Bearer $CRON_SECRET` directly against the live deployed app and got a real HTTP 200
+      (every prior run got 403/Forbidden with no CRON_SECRET to send). The payload proves, with real
+      round-trip evidence (not key-presence guesses): analytics CONNECTED (Plausible Stats API call
+      succeeded, visitors_7d:0 returned), billing CONNECTED (STRIPE_SECRET_KEY present + a real DB query
+      returned active_subscribers:0), email CONNECTED (a supported provider key is present — deliverability
+      itself still unconfirmed, open/click stay null), and waitlist reads now work via CRON_SECRET
+      independent of ADMIN_EMAIL (real total:0). Re-verified via curl that `site_gate_up` is UNCHANGED
+      (still true; /signup + /admin/waitlist still 401) — so this is NOT a public launch, it is the owner
+      wiring Stripe/Plausible/an email provider into the already-gated app. Also pulled 3 REAL, structurally
+      live experiments from the H10 engine (landing_hero, h14_annual_nudge, h15_winback), all status:running
+      with null results (0 visitors -> 0 exposures, honestly). Flipped `awaiting_connect` to false and
+      `channels_connected` to [email] (email is the one genuine marketing channel among the three; analytics
+      + billing are measurement/monetization infra, not outreach channels). Deliberately did NOT flip `phase`
+      to 'launching' despite the snapshot route's own narrower phase field saying so — ANALYSIS_PLAYBOOK's
+      phase definition requires the STORE to be live too, and PENDING_OPS `eas-build-submit-go-live` is still
+      open (mobile submission hasn't happened). Deliberately did NOT start any outbound send or draft any
+      new outreach: GTM_STANDARD §6 (added via #399, read fresh this run) keeps BOTH outbound lanes FULLY OFF
+      pre-launch regardless of channel connection — a real but narrower unlock (real data instead of
+      all-null) than a license to start sending. No demand-signal research this run (prioritized correctly
+      verifying + documenting this major infra change over incremental research). Did not touch
+      ROADMAP/VISION/BUSINESS_CASE — this is a real-state status refresh, not a new causal finding."
   next_actions:
+    - "STRIPE_SECRET_KEY mode (test vs live) is not observable from outside the app — ask the owner to
+      confirm which mode is live before any business-case revenue claim relies on it (currently moot:
+      active_subscribers is 0 either way)."
+    - "Email deliverability is UNCONFIRMED (key-presence only) — once GTM_STANDARD §6's launch gate opens
+      (post_launch / an explicit launch flag), the first real lifecycle send should be checked for actual
+      delivery (open_rate/click_rate moving off null) before trusting the channel for volume."
+    - "The single remaining blocker to genuine launch (which would open the §6 outbound gate) is
+      `eas-build-submit-go-live` (mobile store submission, Human-Core) — the biggest lever now is the owner
+      completing that step, not further GTM-side polishing; PMF-critical waitlist/analytics infra is now live
+      and just needs real traffic + a launch decision."
     - "Next run: re-check GET /api/growth/snapshot behavior and whether ADMIN_EMAIL / PLAUSIBLE_API_KEY /
       an email provider key have been set — re-verify via public HTTP / ListConnectors rather than
       assuming the circuit-breaker items are still static (RUN 7 re-checked and confirmed: still zero
@@ -312,28 +429,38 @@ GROWTH_STATUS:
       is set — site_gate_up: true. Re-confirmed unchanged run 6 and run 7 (2026-07-04, identical curl
       behavior both times). No further owner action needed on this item; PENDING_OPS 'site-gate-
       prelaunch' marked done below. (Remember to UNSET it at actual public launch.)"
-    - "CIRCUIT BREAKER (re-confirmed run 7, 2026-07-04): the 3 items below (ADMIN_EMAIL, an email
-      provider key, PLAUSIBLE_API_KEY) plus channel connection are UNCHANGED since run 5 — zero owner
-      movement in 2 straight runs now (`git fetch` shows one new commit since run 6, #399, but it only
-      touches GTM_STANDARD.md, not app/infra; ListConnectors unchanged; live HTTP behavior identical).
-      Still the single highest-leverage pair to unblock: ADMIN_EMAIL + PLAUSIBLE_API_KEY (both ~5-minute
-      Vercel env-var sets, unlock the funnel/analytics READ path)."
-    - "HIGH: Set ADMIN_EMAIL in Vercel env to access /admin/waitlist — still unverified (the site gate
-      alone explains the current 401; ADMIN_EMAIL's own effect can't be observed until the gate is
-      opened or an admin session is used). Funnel stays 0 until this is set AND verified."
-    - "HIGH: Connect an email provider (RESEND_API_KEY or SENDGRID_API_KEY) — waitlist signups are
-      being captured in the DB but confirmation emails are not confirmed being sent. Real signups are
-      not being nurtured. (Docs: PENDING_OPS.md 'track-h-activation')"
-    - "HIGH: Set PLAUSIBLE_API_KEY — the tracking script is confirmed live (data-domain verified in the
-      deployed HTML) but the Stats API READ that the Growth Agent depends on for visitors_7d / funnel
-      rates needs this key too; without it visitor metrics stay 0 even though tracking fires (re-confirmed
-      run 7: GET /api/growth/snapshot still returns {\"error\":\"Forbidden.\"})."
-    - "NORMAL: Pick a final app name from NAMING_CANDIDATES.md (Pantri / Mise / Larder) —
+    - "CIRCUIT BREAKER RESOLVED run 8 (2026-07-04): the 3 items below (email provider key, PLAUSIBLE_API_KEY,
+      STRIPE_SECRET_KEY) that were stuck since run 5 are now CONFIRMED CONNECTED — verified via a real
+      authenticated `GET /api/growth/snapshot` round-trip (CRON_SECRET was present in this run's environment
+      for the first time), not a self-report. See `sources`/`validation` above + GROWTH_MEMORY run 8 for the
+      full evidence. ADMIN_EMAIL remains unverified but is now LOW priority (see below) since it only gates
+      the human /admin/waitlist UI — the routine's own read need is already satisfied via CRON_SECRET."
+    - "LOW (downgraded from HIGH, run 8): ADMIN_EMAIL — still unverified (site gate alone still fully
+      explains the /admin/waitlist 401), but no longer blocks the Growth Agent's own analytics: the
+      CRON_SECRET-authenticated snapshot already returns real waitlist/funnel numbers. Only worth setting
+      for the OWNER's own convenience browsing the human /admin/waitlist dashboard page directly."
+    - "RESOLVED run 8: email provider key (RESEND_API_KEY-class) is connected — confirmed via the real
+      snapshot pull (emailConnected:true). CAVEAT: deliverability itself is still unconfirmed (open_rate/
+      click_rate null) since GTM_STANDARD §6 keeps automated sends off pre-launch — first real send won't
+      happen until the launch gate opens."
+    - "RESOLVED run 8: PLAUSIBLE_API_KEY is connected — the Stats API round-trip in `GET
+      /api/growth/snapshot` succeeded and returned a real visitors_7d value (0, correctly, since no traffic
+      has been driven yet)."
+    - "RESOLVED (new discovery) run 8: STRIPE_SECRET_KEY is also connected — not previously confirmed by any
+      prior run. A real DB query for active subscribers succeeded and returned 0 (no paid conversions yet).
+      Whether the key is Stripe TEST or LIVE mode is not observable externally — worth an owner confirmation
+      before this feeds any revenue claim (currently moot at 0 subscribers)."
+    - "NORMAL (unchanged): Pick a final app name from NAMING_CANDIDATES.md (Pantri / Mise / Larder) —
       all content assets currently use '[APP_NAME]' placeholder; this blocks final email/store copy."
-    - "Connect a channel (email provider and/or a social API token) to clear the SECOND half of the
-      pre-launch execute-mode HARD BLOCK (ANALYSIS_PLAYBOOK marketing maturity gate) — site_gate_up is
-      now true, but channels_connected is still empty, so the agent stays in PREPARE mode until at least
-      one channel connects."
+    - "URGENT (elevated emphasis, run 8): now that Stripe + Plausible + an email provider are confirmed LIVE
+      in the deployed app, PENDING_OPS `spend-caps` (HARD daily API spend caps in each provider dashboard)
+      is materially more urgent than when it was purely hypothetical — real paid surfaces are now active.
+      Still `status: open`; this routine cannot set spend caps itself (provider-dashboard, Human-Core)."
+    - "HIGH (real remaining blocker to genuine launch): `eas-build-submit-go-live` (mobile store submission)
+      is the ONE thing still standing between 'infra connected' and 'genuinely launched' — until it's done,
+      the store isn't live (ANALYSIS_PLAYBOOK's own phase-advance criterion), so `phase` correctly stays
+      `pre_launch` and GTM_STANDARD §6 keeps outbound off. This is now the single highest-leverage owner
+      action — everything GTM-side that doesn't need it is already done or honestly blocked on real traffic."
   demand_signal:                 # GTM_STANDARD §10 — pre-launch demand validation (leading indicator, NOT PMF)
     as_of: 2026-07-04
     method: "WebSearch + WebFetch against competitor App/Play Store review aggregators. 6 targeted

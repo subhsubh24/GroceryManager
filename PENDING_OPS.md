@@ -12,36 +12,54 @@ The dashboard surfaces every `open` item, urgent first.
 ```yaml
 OWNER_ACTIONS:
   project: GroceryManager
-  as_of: 2026-07-04 (GTM run 7) — no owner-side changes since run 6; all items below re-verified unchanged
+  as_of: "2026-07-04 (GTM run 8) — MAJOR: CRON_SECRET reachable for the first time; authenticated snapshot
+    pull confirms analytics/billing/email all genuinely connected in the deployed app (real round-trip
+    evidence, not self-report) — see docs/growth/GROWTH_STATUS.md + GROWTH_MEMORY.md run 8 for full detail."
   items:
     - id: gtm-connect-waitlist
-      title: "GTM validation: connect the waitlist admin read source (ADMIN_EMAIL)"
-      priority: urgent
-      status: open
-      why: "GTM_STANDARD §4 fail-closed rule — the Growth Agent cannot report a verified waitlist count until this source resolves to connected. Full detail: see the `waitlist-migration` item below."
-      how: "Set ADMIN_EMAIL in Vercel env. See `waitlist-migration` for the full runbook."
-      blocks: gtm-validation
+      title: "DONE: waitlist source connected — the Growth Agent's own read need is satisfied via CRON_SECRET"
+      priority: normal
+      status: done
+      resolved: "2026-07-04 (GTM run 8) — GET /api/growth/snapshot with Authorization: Bearer $CRON_SECRET
+        returned HTTP 200 with a real DB-derived waitlist total (0), via getWaitlistSubmissions. This
+        satisfies the routine's own fail-closed read requirement WITHOUT needing ADMIN_EMAIL. ADMIN_EMAIL
+        remains open as a SEPARATE, lower-priority item purely for human /admin/waitlist UI access — see
+        `waitlist-migration` below, downgraded to normal priority."
+      why: "GTM_STANDARD §4 fail-closed rule — the Growth Agent cannot report a verified waitlist count until this source resolves to connected. RESOLVED: it now does, via the authenticated snapshot route."
+      how: "No further action needed for the Growth Agent's own analytics. ADMIN_EMAIL (human UI convenience only) tracked separately in `waitlist-migration`."
+      blocks: none
     - id: gtm-connect-analytics
-      title: "GTM validation: connect the analytics source (Plausible)"
-      priority: urgent
-      status: open
-      why: "GTM_STANDARD §4 fail-closed rule — the Growth Agent cannot report visitor/conversion-rate metrics until this source resolves to connected. Full detail: see the Plausible section below ('Analytics (Plausible) — activate before store launch')."
-      how: "Set NEXT_PUBLIC_PLAUSIBLE_DOMAIN + PLAUSIBLE_API_KEY in Vercel env. See the Plausible section below for the full runbook."
-      blocks: gtm-validation
+      title: "DONE: analytics source connected (Plausible Stats API round-trip verified)"
+      priority: normal
+      status: done
+      resolved: "2026-07-04 (GTM run 8) — the snapshot route's live Plausible Stats API call succeeded
+        (not just a key-presence check) and returned a real visitors_7d value (0). Both
+        NEXT_PUBLIC_PLAUSIBLE_DOMAIN (verified run 5) and PLAUSIBLE_API_KEY (new this run) are confirmed live."
+      why: "GTM_STANDARD §4 fail-closed rule — the Growth Agent cannot report visitor/conversion-rate metrics until this source resolves to connected. RESOLVED."
+      how: "No further action needed."
+      blocks: none
     - id: gtm-connect-billing
-      title: "GTM validation: connect the billing source (Stripe)"
-      priority: urgent
-      status: open
-      why: "GTM_STANDARD §4 fail-closed rule — the Growth Agent cannot report MRR/churn/CAC until this source resolves to connected. Full detail: see the Stripe + RevenueCat section below."
-      how: "Set STRIPE_SECRET_KEY + FEATURE_BILLING=1 in Vercel env. See the Stripe + RevenueCat section below for the full runbook."
-      blocks: gtm-validation
+      title: "DONE: billing source connected (Stripe key present + a real DB query for active subscribers succeeded)"
+      priority: normal
+      status: done
+      resolved: "2026-07-04 (GTM run 8) — STRIPE_SECRET_KEY is present in the deployed app and
+        getActiveSubscriberStats (real DB query) returned a genuine 0-active-subscriber count. NOTE:
+        whether the key is Stripe TEST or LIVE mode is not observable externally — worth an owner
+        confirmation before this feeds any revenue claim (currently moot at 0 subscribers)."
+      why: "GTM_STANDARD §4 fail-closed rule — the Growth Agent cannot report MRR/churn/CAC until this source resolves to connected. RESOLVED."
+      how: "No further action needed. Optional: confirm TEST vs LIVE mode with the Growth Agent's next run."
+      blocks: none
     - id: gtm-connect-email
-      title: "GTM validation: connect the email provider source"
-      priority: urgent
-      status: open
-      why: "GTM_STANDARD §4 fail-closed rule — the Growth Agent cannot report open/click rates until this source resolves to connected. Full detail: see the `track-h-activation` item below."
-      how: "Set RESEND_API_KEY (or SENDGRID_API_KEY / POSTMARK_API_KEY) + EMAIL_FROM in Vercel env. See `track-h-activation` for the full runbook."
-      blocks: gtm-validation
+      title: "DONE (with a caveat): email provider key connected — deliverability itself still unconfirmed"
+      priority: normal
+      status: done
+      resolved: "2026-07-04 (GTM run 8) — a supported provider key (RESEND_API_KEY / SENDGRID_API_KEY /
+        POSTMARK_API_KEY) is present in the deployed app (emailConnected:true in the snapshot). CAVEAT:
+        this is a key-presence check, not a live send — open_rate/click_rate stay null until a real
+        send+open/click is observed, which won't happen until GTM_STANDARD §6's launch gate opens."
+      why: "GTM_STANDARD §4 fail-closed rule — the Growth Agent cannot report open/click rates until this source resolves to connected. RESOLVED for connection status; deliverability remains a distinct, still-open question."
+      how: "No further action needed to unblock GTM validation. Deliverability check happens naturally once real lifecycle sends occur post-launch."
+      blocks: none
     - id: set-direct-database-url-prod
       title: "DONE: DIRECT_DATABASE_URL set in Vercel — signup/signin working in prod (19 users, 16 in last 7d, newest 2026-06-28)"
       priority: urgent
@@ -103,10 +121,10 @@ OWNER_ACTIONS:
       how: "In the `e2e functional journeys` job (.github/workflows/ci.yml), export EMAIL_CAPTURE_DIR=$RUNNER_TEMP/email-sink for BOTH the `next start` step and the playwright step (same value, same runner — the server writes, the test reads), then either let the default `e2e` run pick it up or add `pnpm --filter @gm/web e2e email-roundtrip`. No secret needed; EMAIL_CAPTURE_DIR fails closed in prod runtimes (resolveEmailCaptureDir) so it's safe to set only in CI."
       blocks: none
     - id: track-h-activation
-      title: Set Track H env vars to activate the growth-execution engine
+      title: "IN PROGRESS (GTM run 8): CRON_SECRET + an email provider key + PLAUSIBLE_API_KEY CONFIRMED live; other listed vars unverified"
       priority: high
-      status: open
-      why: The publishing engine, email runner, and cron endpoint are all dormant until credentials are set. Without them the Growth Agent cannot publish or email.
+      status: in_progress
+      why: "The publishing engine, email runner, and cron endpoint are all dormant until credentials are set. GTM run 8 confirmed via a real round-trip (Bearer $CRON_SECRET against GET /api/growth/snapshot returned 200) that CRON_SECRET, a supported email provider key, and PLAUSIBLE_API_KEY are all live. NOT independently verified by this pull: EMAIL_FROM, EMAIL_UNSUBSCRIBE_SECRET, WAITLIST_OPTIN_SECRET, X_API_KEY/BUFFER_ACCESS_TOKEN/TYPEFULLY_API_KEY, and whether /api/cron/publish is actually scheduled as a Vercel Cron Job — none of these are exposed by the snapshot endpoint, so they stay unverified rather than assumed."
       how: |
         Apply migration 0015 (waitlist confirmed_at) via `pnpm --filter @gm/db db:migrate`, then
         set these in Vercel env (never committed):
@@ -144,19 +162,19 @@ OWNER_ACTIONS:
       how: "DONE: SITE_GATE_PASSWORD is set in Vercel env (gate is ON; confirmed via live HTTP behavior above). At ACTUAL public launch (every ship-critical QUALITY_SCORECARD dim A/A+ + readiness passed + store submission complete): UNSET SITE_GATE_PASSWORD to open the app, then announce to the waitlist. Never commit the value. (Mobile pre-launch is gated via TestFlight / internal track.)"
       blocks: none
     - id: spend-caps
-      title: Set HARD daily API spend caps + alerts in every provider dashboard
+      title: "URGENT (elevated, GTM run 8): Set HARD daily API spend caps + alerts — Stripe/Plausible/email keys now CONFIRMED LIVE"
       priority: urgent
       status: open
-      why: If the app is live and calls any paid API, an abuse spike or runaway loop can run up cost. A spend cap is the only hard backstop (Track G7).
-      how: Google Cloud / Vertex Budgets; Twilio usage triggers; Stripe Radar; Anthropic Console spend limit. Regenerate any key that has been exposed.
+      why: "If the app is live and calls any paid API, an abuse spike or runaway loop can run up cost. A spend cap is the only hard backstop (Track G7). ELEVATED this run: GTM run 8 confirmed via a real authenticated round-trip that STRIPE_SECRET_KEY, PLAUSIBLE_API_KEY, and an email provider key are all now live in the deployed app — real paid surfaces are active, not hypothetical. This item was already open; it is now materially more urgent."
+      how: Google Cloud / Vertex Budgets; Twilio usage triggers; Stripe Radar; Anthropic Console spend limit; Plausible/email-provider usage alerts. Regenerate any key that has been exposed.
       blocks: launch-safety
     - id: connect-channels
-      title: Connect + authorize marketing channels to switch the Growth Agent into execute mode
+      title: "IN PROGRESS: email channel connected (GTM run 8); no social channel yet"
       priority: high
-      status: open
-      why: The Growth Agent stays in honest "prepare only" mode until you connect your own authorized channels (social API token, email provider, analytics). No execution happens without this.
-      how: Connect your own accounts/keys to the deployed app's growth settings (server-side). The agent's daily report lists the exact keys it needs. NEVER hands the agent live secrets — the deployed app sends.
-      blocks: growth-execution
+      status: in_progress
+      why: "The Growth Agent stays in honest 'prepare only' mode until you connect your own authorized channels (social API token, email provider, analytics). GTM run 8 confirmed (real round-trip, not self-report) that an email provider key IS connected — GROWTH_STATUS.channels_connected flipped to [email]. No social channel (X/Buffer/Typefully token) is connected yet. NOTE: even with a channel connected, GTM_STANDARD §6's launch gate keeps automated outbound sends OFF until phase==post_launch — connecting a channel unlocks real DATA, not sends."
+      how: "Optionally connect a social channel too (X_API_KEY / BUFFER_ACCESS_TOKEN / TYPEFULLY_API_KEY — see track-h-activation) for broader reach once launched. No further action required to keep the email channel connected."
+      blocks: none
     - id: rotate-envl-secrets
       title: Confirm .envl secrets are safe (GitHub push protection blocked a commit containing them)
       priority: high
@@ -173,12 +191,12 @@ OWNER_ACTIONS:
       how: Add `pnpm --filter web lint` and the E2E job to .github/workflows/ci.yml (see prose entry below).
       blocks: none
     - id: waitlist-migration
-      title: "Set ADMIN_EMAIL in Vercel (waitlist/growth migrations 0012–0017 already APPLIED to prod via MCP)"
-      priority: high
+      title: "NORMAL (downgraded, GTM run 8): Set ADMIN_EMAIL in Vercel — now only for human /admin/waitlist UI access, not the Growth Agent's own analytics"
+      priority: normal
       status: open
-      why: "The in-app waitlist analytics (`/admin/waitlist`, the Growth Agent's real signup source) needs the table + UTM + content-schedule + double-opt-in columns, plus the admin email for `/admin/*` + `GET /api/growth/snapshot`. Migration 0016 enables RLS on `waitlist_submissions` + `content_schedule` — without it, on a Supabase/PostgREST deployment the anon key could read every waitlist email (PII). Migration 0017 adds the H10 experiment tables (`experiment_exposures` + `experiment_conversions`, RLS tenant-isolation + GRANTs) — without it the experiment engine logs nothing (it degrades gracefully via `getExperimentStats`). Apply before the public waitlist + experiments go live."
+      why: "The in-app waitlist analytics needs the admin email for the HUMAN-facing `/admin/*` UI. GTM run 8 confirmed the Growth Agent's OWN read need is already satisfied via CRON_SECRET (GET /api/growth/snapshot returned a real waitlist total without ADMIN_EMAIL) — so this item no longer blocks growth analytics, only your own convenience browsing /admin/waitlist directly. Migrations 0012-0017 were already confirmed applied to prod in earlier runs (RLS on, experiment tables present)."
       how: "Run `pnpm --filter @gm/db db:migrate` (idempotent; applies 0012 waitlist, 0013 UTM, 0014 content_schedule, 0015 confirmed_at, 0016 RLS on the two admin growth tables, 0017 experiment exposure/conversion tables); set ADMIN_EMAIL in Vercel env (see prose entry below)."
-      blocks: growth-analytics
+      blocks: none
     - id: referral-credits-migration
       title: Apply migration 0018 (referral_credits) — H13 referral rewards
       priority: high
