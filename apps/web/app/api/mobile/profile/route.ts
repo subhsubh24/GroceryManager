@@ -24,8 +24,10 @@ export async function GET(req: Request) {
   let user;
   try {
     user = await getUserById(getAdminDb(), userId);
-  } catch {
+  } catch (err) {
     // Don't let a DB connectivity failure escape as an uncaught 500 with a stack.
+    // Log server-side (G3 error-hygiene convention) so the failure is diagnosable.
+    console.error("[mobile/profile]", err);
     return Response.json({ error: "Profile temporarily unavailable" }, { status: 503 });
   }
   if (!user) {

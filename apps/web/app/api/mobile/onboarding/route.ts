@@ -40,8 +40,9 @@ export async function GET(req: Request) {
   try {
     const onboarded = await withTenant(getDb(), userId, (tx) => isOnboarded(tx, userId));
     return Response.json({ onboarded });
-  } catch {
+  } catch (err) {
     // A DB failure must return a controlled 503, not an uncaught 500 with a stack.
+    console.error("[mobile/onboarding]", err);
     return Response.json({ error: "Onboarding temporarily unavailable" }, { status: 503 });
   }
 }
@@ -149,7 +150,8 @@ export async function POST(req: Request) {
       { error: 'Unknown action. Expected "profile", "taste", or "finish".' },
       { status: 400 },
     );
-  } catch {
+  } catch (err) {
+    console.error("[mobile/onboarding]", err);
     return Response.json({ error: "Onboarding temporarily unavailable" }, { status: 503 });
   }
 }
