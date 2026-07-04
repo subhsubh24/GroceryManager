@@ -30,8 +30,34 @@ export default function CookScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
+  const [logging, setLogging] = useState(false);
+  const [logged, setLogged] = useState(false);
+  const [logError, setLogError] = useState<string | null>(null);
 
   if (!token) return <Redirect href="/login" />;
+
+  // "I cooked this" — logs the meal + draws down the pantry via the same core path the web uses.
+  // Awaits + checks the server result before flipping to the "Logged" state (no optimistic success).
+  async function logCooked() {
+    if (!token || !id || logging || logged) return;
+    setLogging(true);
+    setLogError(null);
+    try {
+      const res = await apiFetch("/api/mobile/cook", token, {
+        method: "POST",
+        body: JSON.stringify({ recipeId: id }),
+      });
+      if (res.ok) {
+        setLogged(true);
+      } else {
+        setLogError("Couldn't log this cook — please try again.");
+      }
+    } catch {
+      setLogError("Network error — check your connection and try again.");
+    } finally {
+      setLogging(false);
+    }
+  }
 
   useEffect(() => {
     if (!token || !id) return;
@@ -99,6 +125,27 @@ export default function CookScreen() {
       <Text style={styles.title}>{recipe.title}</Text>
       {recipe.cuisine ? <Text style={styles.cuisine}>{recipe.cuisine}</Text> : null}
 
+      {/* One-tap "I cooked this" — logs the meal + macros and draws down the pantry. */}
+      <Pressable
+        style={[styles.cookedBtn, (logging || logged) && styles.cookedBtnDone]}
+        onPress={logCooked}
+        disabled={logging || logged}
+        accessibilityRole="button"
+        accessibilityLabel={logged ? "Logged" : "I cooked this"}
+      >
+        {logging ? (
+          <ActivityIndicator size="small" color="#ffffff" />
+        ) : (
+          <Text style={styles.cookedBtnText}>{logged ? "Logged ✓" : "I cooked this"}</Text>
+        )}
+      </Pressable>
+      {logged ? (
+        <Pressable onPress={() => router.push("/cooked")} accessibilityRole="button">
+          <Text style={styles.cookedLink}>View cooked meals →</Text>
+        </Pressable>
+      ) : null}
+      {logError ? <Text style={styles.cookedError}>{logError}</Text> : null}
+
       {/* Ingredients */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Ingredients</Text>
@@ -163,6 +210,19 @@ const styles = StyleSheet.create({
   eyebrow: { fontSize: 11, fontWeight: "600", color: "#0c8a3e", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 },
   title: { fontSize: 24, fontWeight: "700", color: "#1d2530", lineHeight: 30 },
   cuisine: { fontSize: 13, color: "#525d6a", marginTop: 4 },
+  cookedBtn: {
+    marginTop: 16,
+    minHeight: 48,
+    borderRadius: 12,
+    backgroundColor: "#0c8a3e",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  cookedBtnDone: { backgroundColor: "#0a6e33" },
+  cookedBtnText: { fontSize: 16, fontWeight: "700", color: "#ffffff" },
+  cookedLink: { marginTop: 10, fontSize: 14, fontWeight: "600", color: "#0c8a3e", textAlign: "center" },
+  cookedError: { marginTop: 10, fontSize: 13, color: "#8e261b", textAlign: "center" },
   section: {
     marginTop: 24,
     backgroundColor: "#ffffff",
