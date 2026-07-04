@@ -74,7 +74,7 @@ export default async function BlogPostPage({ params }: Props) {
           <div className="mt-5 flex flex-wrap gap-3">
             <a
               href="/signup"
-              className="btn inline-flex bg-white px-4 py-2.5 text-sm text-brand-solid hover:bg-white/90"
+              className="btn inline-flex bg-white px-4 py-2.5 text-sm text-brand-solid-hover hover:bg-white/90"
             >
               Get started free →
             </a>
