@@ -33,11 +33,13 @@ export default function CookScreen() {
   const [logging, setLogging] = useState(false);
   const [logged, setLogged] = useState(false);
   const [logError, setLogError] = useState<string | null>(null);
+  const [servings, setServings] = useState(1);
 
   if (!token) return <Redirect href="/login" />;
 
   // "I cooked this" — logs the meal + draws down the pantry via the same core path the web uses.
   // Awaits + checks the server result before flipping to the "Logged" state (no optimistic success).
+  // Sends the chosen servings so a batch cook draws down + counts macros for the real amount.
   async function logCooked() {
     if (!token || !id || logging || logged) return;
     setLogging(true);
@@ -45,7 +47,7 @@ export default function CookScreen() {
     try {
       const res = await apiFetch("/api/mobile/cook", token, {
         method: "POST",
-        body: JSON.stringify({ recipeId: id }),
+        body: JSON.stringify({ recipeId: id, servings }),
       });
       if (res.ok) {
         setLogged(true);
@@ -125,27 +127,6 @@ export default function CookScreen() {
       <Text style={styles.title}>{recipe.title}</Text>
       {recipe.cuisine ? <Text style={styles.cuisine}>{recipe.cuisine}</Text> : null}
 
-      {/* One-tap "I cooked this" — logs the meal + macros and draws down the pantry. */}
-      <Pressable
-        style={[styles.cookedBtn, (logging || logged) && styles.cookedBtnDone]}
-        onPress={logCooked}
-        disabled={logging || logged}
-        accessibilityRole="button"
-        accessibilityLabel={logged ? "Logged" : "I cooked this"}
-      >
-        {logging ? (
-          <ActivityIndicator size="small" color="#ffffff" />
-        ) : (
-          <Text style={styles.cookedBtnText}>{logged ? "Logged ✓" : "I cooked this"}</Text>
-        )}
-      </Pressable>
-      {logged ? (
-        <Pressable onPress={() => router.push("/cooked")} accessibilityRole="button">
-          <Text style={styles.cookedLink}>View cooked meals →</Text>
-        </Pressable>
-      ) : null}
-      {logError ? <Text style={styles.cookedError}>{logError}</Text> : null}
-
       {/* Ingredients */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Ingredients</Text>
@@ -196,6 +177,65 @@ export default function CookScreen() {
           </View>
         </View>
       ) : null}
+
+      {/* "Made it?" — the logger sits at the BOTTOM (after ingredients + the step-through) so it's a
+          deliberate end-of-cook action, matching web's placement. Logging draws down the pantry
+          ledger + records a meal, so it's gated behind moving through the recipe, not a reflexive tap. */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Made it?</Text>
+        <Text style={styles.madeItHint}>
+          {steps.length > 0 && isLastStep
+            ? "Last step done — log it to draw down what you used and count the macros."
+            : "Logs the meal, learns your taste, and draws down what you used."}
+        </Text>
+
+        {!logged ? (
+          <View style={styles.servingsRow}>
+            <Text style={styles.servingsLabel}>Servings</Text>
+            <View style={styles.stepper}>
+              <Pressable
+                style={[styles.stepperBtn, servings <= 1 && styles.stepperBtnDisabled]}
+                onPress={() => setServings((s) => Math.max(1, s - 1))}
+                disabled={servings <= 1}
+                accessibilityRole="button"
+                accessibilityLabel="Fewer servings"
+              >
+                <Text style={styles.stepperBtnText}>−</Text>
+              </Pressable>
+              <Text style={styles.stepperValue}>{servings}</Text>
+              <Pressable
+                style={[styles.stepperBtn, servings >= 12 && styles.stepperBtnDisabled]}
+                onPress={() => setServings((s) => Math.min(12, s + 1))}
+                disabled={servings >= 12}
+                accessibilityRole="button"
+                accessibilityLabel="More servings"
+              >
+                <Text style={styles.stepperBtnText}>+</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+
+        <Pressable
+          style={[styles.cookedBtn, (logging || logged) && styles.cookedBtnDone]}
+          onPress={logCooked}
+          disabled={logging || logged}
+          accessibilityRole="button"
+          accessibilityLabel={logged ? "Logged" : "I cooked this"}
+        >
+          {logging ? (
+            <ActivityIndicator size="small" color="#ffffff" />
+          ) : (
+            <Text style={styles.cookedBtnText}>{logged ? "Logged ✓" : "I cooked this"}</Text>
+          )}
+        </Pressable>
+        {logged ? (
+          <Pressable onPress={() => router.push("/cooked")} accessibilityRole="button">
+            <Text style={styles.cookedLink}>View cooked meals →</Text>
+          </Pressable>
+        ) : null}
+        {logError ? <Text style={styles.cookedError}>{logError}</Text> : null}
+      </View>
     </ScrollView>
   );
 }
@@ -210,8 +250,24 @@ const styles = StyleSheet.create({
   eyebrow: { fontSize: 11, fontWeight: "600", color: "#0c8a3e", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 },
   title: { fontSize: 24, fontWeight: "700", color: "#1d2530", lineHeight: 30 },
   cuisine: { fontSize: 13, color: "#525d6a", marginTop: 4 },
+  madeItHint: { fontSize: 13, color: "#525d6a", lineHeight: 19, marginBottom: 14 },
+  servingsRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
+  servingsLabel: { fontSize: 15, color: "#1d2530", fontWeight: "600" },
+  stepper: { flexDirection: "row", alignItems: "center", gap: 14 },
+  stepperBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#ece7dd",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#faf8f3",
+  },
+  stepperBtnDisabled: { opacity: 0.35 },
+  stepperBtnText: { fontSize: 22, fontWeight: "600", color: "#1d2530", lineHeight: 26 },
+  stepperValue: { fontSize: 17, fontWeight: "700", color: "#1d2530", minWidth: 24, textAlign: "center" },
   cookedBtn: {
-    marginTop: 16,
     minHeight: 48,
     borderRadius: 12,
     backgroundColor: "#0c8a3e",
