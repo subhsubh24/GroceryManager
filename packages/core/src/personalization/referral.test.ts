@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { countJoined, isValidReferralCode } from "./referral.js";
+import { describe, expect, it, vi } from "vitest";
+import { attributeReferralBestEffort, countJoined, isValidReferralCode } from "./referral.js";
 
 describe("isValidReferralCode", () => {
   it("accepts url-safe base64url codes of 8–64 chars", () => {
@@ -31,5 +31,81 @@ describe("countJoined", () => {
     expect(countJoined([])).toBe(0);
     expect(countJoined(["", "  ", "u1"])).toBe(1);
     expect(countJoined(["", ""])).toBe(0);
+  });
+});
+
+describe("attributeReferralBestEffort (FACTORY_STANDARD §32 — issue #370)", () => {
+  it("credits the referrer when the code resolves", async () => {
+    const resolveReferrer = vi.fn().mockResolvedValue("referrer-1");
+    const recordReferral = vi.fn().mockResolvedValue(undefined);
+    const res = await attributeReferralBestEffort("aB3-_xYz9012", "new-user", {
+      resolveReferrer,
+      recordReferral,
+    });
+    expect(res).toEqual({ attributed: true, referrerUserId: "referrer-1" });
+    expect(resolveReferrer).toHaveBeenCalledWith("aB3-_xYz9012");
+    expect(recordReferral).toHaveBeenCalledWith("referrer-1", "new-user");
+  });
+
+  it("no-ops (and never touches the DB) on absent, blank, or invalid codes", async () => {
+    const resolveReferrer = vi.fn();
+    const recordReferral = vi.fn();
+    const deps = { resolveReferrer, recordReferral };
+    expect(await attributeReferralBestEffort(null, "u", deps)).toEqual({ attributed: false, reason: "no-code" });
+    expect(await attributeReferralBestEffort(undefined, "u", deps)).toEqual({ attributed: false, reason: "no-code" });
+    expect(await attributeReferralBestEffort("   ", "u", deps)).toEqual({ attributed: false, reason: "no-code" });
+    expect(await attributeReferralBestEffort("bad code!", "u", deps)).toEqual({
+      attributed: false,
+      reason: "invalid-code",
+    });
+    expect(resolveReferrer).not.toHaveBeenCalled();
+    expect(recordReferral).not.toHaveBeenCalled();
+  });
+
+  it("reports unknown-referrer (and does NOT record) when the code has no owner", async () => {
+    const recordReferral = vi.fn();
+    const res = await attributeReferralBestEffort("aB3-_xYz9012", "new-user", {
+      resolveReferrer: vi.fn().mockResolvedValue(null),
+      recordReferral,
+    });
+    expect(res).toEqual({ attributed: false, reason: "unknown-referrer" });
+    expect(recordReferral).not.toHaveBeenCalled();
+  });
+
+  // The §32 guarantee: a NON-ESSENTIAL side-effect failing must NEVER throw out of / block signup.
+  it("NEVER throws when resolving the referrer fails — returns the error result", async () => {
+    const call = attributeReferralBestEffort("aB3-_xYz9012", "new-user", {
+      resolveReferrer: vi.fn().mockRejectedValue(new Error("DB down")),
+      recordReferral: vi.fn(),
+    });
+    await expect(call).resolves.toEqual({ attributed: false, reason: "error" });
+  });
+
+  it("NEVER throws when recording the credit fails — returns the error result", async () => {
+    const call = attributeReferralBestEffort("aB3-_xYz9012", "new-user", {
+      resolveReferrer: vi.fn().mockResolvedValue("referrer-1"),
+      recordReferral: vi.fn().mockRejectedValue(new Error("insert failed")),
+    });
+    await expect(call).resolves.toEqual({ attributed: false, reason: "error" });
+  });
+
+  it("NEVER throws even when a dep throws synchronously", async () => {
+    // resolveReferrer throws synchronously (before returning a promise) — still inside the try.
+    const resolveThrows = attributeReferralBestEffort("aB3-_xYz9012", "new-user", {
+      resolveReferrer: () => {
+        throw new Error("sync boom");
+      },
+      recordReferral: vi.fn(),
+    });
+    await expect(resolveThrows).resolves.toEqual({ attributed: false, reason: "error" });
+
+    // recordReferral throws synchronously too — the second side-effect is equally guarded.
+    const recordThrows = attributeReferralBestEffort("aB3-_xYz9012", "new-user", {
+      resolveReferrer: vi.fn().mockResolvedValue("referrer-1"),
+      recordReferral: () => {
+        throw new Error("sync boom");
+      },
+    });
+    await expect(recordThrows).resolves.toEqual({ attributed: false, reason: "error" });
   });
 });
