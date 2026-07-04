@@ -4,6 +4,41 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-04 (run 49) — 5-Haiku scout sweep + 2 file-disjoint clears (#426 mobile Discover paywall
+  dead-end / #427 mobile-route uncaught-throw hardening); 0 abandons; 6 Sonnet reviews (4 first-pass +
+  2 re-review) all APPROVE.** No deep audit (run 47 same day). Baseline green (typecheck 0, 867 core
+  tests, scorecard A, self-validation 5/5). Five lenses. Security **CLEAN** (only known/owner items:
+  Redis rate-limit, Next.js CSP constraint, CORS-lockdown-by-omission). Monetization **reach-gated
+  reconfirmed** — the mobile Family-tier "parity gap" is owner-config-gated via a RevenueCat OFFERING
+  (native IAP), not a Stripe code change, so forcing a Family button that maps to nothing would be a
+  broken path; correctly skipped. Artifacts clean.
+  **#426 — a discriminated-union API response cast to just its happy arm silently swallows the other.**
+  `discover.tsx` cast `/api/mobile/discover`'s response to `{ recipes: DeckCard[] }`, but the route
+  returns `{ recipes } | { upgradeRequired: true }`. For a free user `data.recipes` was undefined → `[]`
+  → the screen showed the "All caught up / add pantry items" EMPTY state instead of the paywall — a dead
+  conversion funnel where the free→paid moment was invisible. Fix types the response as the full union
+  (so `tsc` forces both arms) + renders the upgrade prompt like the sibling premium screens
+  (plan/spend/wrapped). **LESSON (reusable): when a client consumes a discriminated-union API, TYPE it as
+  the union, never `as HappyPathShape` — the cast compiles but drops every other arm at runtime. A
+  "premium feature is unreachable on mobile" bug hides as a cheerful empty state.**
+  **#427 — mirror the FULL reference route, not just its try/catch skeleton.** Three mobile routes
+  (auth/profile/onboarding) called the DB outside any try/catch → an uncaught 500 on a transient DB
+  failure, the exact thing the repo's "hunt the uncaught throw" rule forbids and which the sibling routes
+  (discover, v1/auth/token) already guard. Wrapped each to a controlled 503. **Reviewer B's non-blocking
+  should-fix earned its keep:** the first cut used bare `catch {}` — a clean 503 but ZERO server-side
+  trace on the auth/onboarding paths most worth diagnosing, unlike the `serverError()` G3 convention +
+  the `discover` route which both `console.error` before returning the generic message. Applied it
+  (cycle 2): `catch (err)` + `console.error("[mobile/<route>]", err)`. **LESSON: copying a reference's
+  ERROR SHAPE (generic message + status) without its LOGGING trades an uncaught-500 for a blind-503 —
+  half the fix. The repo's error-hygiene bar is: log full context server-side, return a generic message
+  to the client. Bind the catch and log.** Also reconfirmed the recurring **admin dark-mode brand-text
+  trap** (run 48 #424): the design scout re-flagged admin `text-brand-solid` stat-cards/links; still the
+  SAME surface-token-as-foreground issue (`brand-solid`/`-hover` darker = worse on the near-black admin
+  bg), correctly deferred to a dedicated dark-mode foreground pass, not a per-link swap.
+  **Readiness:** did NOT open 'ready' — sole open DoD gap unchanged (reach-gated floor #190, owner-GTM);
+  confidence statement stays UNCHECKED. **Housekeeping note:** #426 merged mid-run, so branch #427 was
+  rebased onto latest main (force-with-lease) before auto-merge to avoid a stale two-dot diff showing a
+  phantom discover.tsx revert (GitHub's three-dot PR diff was already correct; the rebase is belt-and-braces).
 - **2026-07-04 (run 48) — 4-Haiku scout sweep + 2 file-disjoint clears merged (#422 fetch timeouts /
   #423 mobile README freshness); 1 candidate (admin contrast #424) correctly ABANDONED on an adversarial
   reviewer catch. No deep audit (run 47 same day).** Baseline gate green (typecheck clean, 865 tests,
