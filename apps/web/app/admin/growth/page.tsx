@@ -62,7 +62,7 @@ export default async function GrowthAdminPage() {
       <section className="mt-8">
         <div className="flex items-center justify-between">
           <p className="section-title">Waitlist funnel</p>
-          <a href="/admin/waitlist" className="text-sm text-brand-solid hover:underline">
+          <a href="/admin/waitlist" className="text-sm text-brand-solid-hover hover:underline">
             View all →
           </a>
         </div>
@@ -112,7 +112,7 @@ export default async function GrowthAdminPage() {
       <section className="mt-8">
         <div className="flex items-center justify-between">
           <p className="section-title">Content pipeline</p>
-          <a href="/admin/content" className="text-sm text-brand-solid hover:underline">
+          <a href="/admin/content" className="text-sm text-brand-solid-hover hover:underline">
             View all →
           </a>
         </div>
