@@ -21,7 +21,13 @@ export async function GET(req: Request) {
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   // User row (admin scope — reading own row by verified userId)
-  const user = await getUserById(getAdminDb(), userId);
+  let user;
+  try {
+    user = await getUserById(getAdminDb(), userId);
+  } catch {
+    // Don't let a DB connectivity failure escape as an uncaught 500 with a stack.
+    return Response.json({ error: "Profile temporarily unavailable" }, { status: 503 });
+  }
   if (!user) {
     return Response.json({ error: "User not found" }, { status: 404 });
   }

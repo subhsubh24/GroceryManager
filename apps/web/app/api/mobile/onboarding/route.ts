@@ -37,8 +37,13 @@ export async function GET(req: Request) {
   const rl = rateLimit(`onboarding-read:${userId}`, 60, 60_000);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
-  const onboarded = await withTenant(getDb(), userId, (tx) => isOnboarded(tx, userId));
-  return Response.json({ onboarded });
+  try {
+    const onboarded = await withTenant(getDb(), userId, (tx) => isOnboarded(tx, userId));
+    return Response.json({ onboarded });
+  } catch {
+    // A DB failure must return a controlled 503, not an uncaught 500 with a stack.
+    return Response.json({ error: "Onboarding temporarily unavailable" }, { status: 503 });
+  }
 }
 
 export async function POST(req: Request) {
@@ -55,91 +60,96 @@ export async function POST(req: Request) {
 
   const action = typeof body.action === "string" ? body.action : null;
 
-  if (action === "profile") {
-    const name = typeof body.name === "string" ? body.name.trim() : "";
-    const rawAge = typeof body.age === "string" ? Number(body.age.trim()) : typeof body.age === "number" ? body.age : 0;
-    const gender = typeof body.gender === "string" ? body.gender.trim() : "";
-    const signals = [
-      ...(name ? [signalFromProfileName(name)] : []),
-      ...(Number.isFinite(rawAge) && rawAge > 0 ? [signalFromProfileAge(rawAge)] : []),
-      ...(gender ? [signalFromProfileGender(gender)] : []),
-    ];
-    if (signals.length > 0) {
-      await withTenant(getDb(), userId, async (tx) => {
-        for (const s of signals) {
-          await appendPreferenceSignal(tx, {
-            userId,
-            topic: s.topic,
-            value: s.value ?? null,
-            polarity: s.polarity,
-            source: "onboarding_q",
-            confidence: s.confidence,
-          });
-        }
-      });
+  // A DB failure inside any write branch returns a controlled 503, not an uncaught 500 with a stack.
+  try {
+    if (action === "profile") {
+      const name = typeof body.name === "string" ? body.name.trim() : "";
+      const rawAge = typeof body.age === "string" ? Number(body.age.trim()) : typeof body.age === "number" ? body.age : 0;
+      const gender = typeof body.gender === "string" ? body.gender.trim() : "";
+      const signals = [
+        ...(name ? [signalFromProfileName(name)] : []),
+        ...(Number.isFinite(rawAge) && rawAge > 0 ? [signalFromProfileAge(rawAge)] : []),
+        ...(gender ? [signalFromProfileGender(gender)] : []),
+      ];
+      if (signals.length > 0) {
+        await withTenant(getDb(), userId, async (tx) => {
+          for (const s of signals) {
+            await appendPreferenceSignal(tx, {
+              userId,
+              topic: s.topic,
+              value: s.value ?? null,
+              polarity: s.polarity,
+              source: "onboarding_q",
+              confidence: s.confidence,
+            });
+          }
+        });
+      }
+      return Response.json({ ok: true });
     }
-    return Response.json({ ok: true });
-  }
 
-  if (action === "taste") {
-    const toStrArr = (v: unknown): string[] =>
-      Array.isArray(v) ? (v as unknown[]).filter((x): x is string => typeof x === "string") : [];
-    const toIngredients = (v: unknown): string[] =>
-      typeof v === "string" ? v.split(",").map((s) => s.trim()).filter(Boolean) : [];
+    if (action === "taste") {
+      const toStrArr = (v: unknown): string[] =>
+        Array.isArray(v) ? (v as unknown[]).filter((x): x is string => typeof x === "string") : [];
+      const toIngredients = (v: unknown): string[] =>
+        typeof v === "string" ? v.split(",").map((s) => s.trim()).filter(Boolean) : [];
 
-    const answers: OnboardingAnswers = {
-      diets: toStrArr(body.diets),
-      allergens: toStrArr(body.allergens),
-      lovedCuisines: toStrArr(body.lovedCuisines),
-      lovedIngredients: toIngredients(body.lovedIngredients),
-      dislikedIngredients: toIngredients(body.dislikedIngredients),
-    };
-    const signals = answersToSignals(answers);
-    if (signals.length > 0) {
-      await withTenant(getDb(), userId, async (tx) => {
-        for (const s of signals) {
-          await appendPreferenceSignal(tx, {
-            userId,
-            topic: s.topic,
-            value: s.value ?? null,
-            polarity: s.polarity,
-            source: "onboarding_q",
-            confidence: s.confidence,
-          });
-        }
-      });
+      const answers: OnboardingAnswers = {
+        diets: toStrArr(body.diets),
+        allergens: toStrArr(body.allergens),
+        lovedCuisines: toStrArr(body.lovedCuisines),
+        lovedIngredients: toIngredients(body.lovedIngredients),
+        dislikedIngredients: toIngredients(body.dislikedIngredients),
+      };
+      const signals = answersToSignals(answers);
+      if (signals.length > 0) {
+        await withTenant(getDb(), userId, async (tx) => {
+          for (const s of signals) {
+            await appendPreferenceSignal(tx, {
+              userId,
+              topic: s.topic,
+              value: s.value ?? null,
+              polarity: s.polarity,
+              source: "onboarding_q",
+              confidence: s.confidence,
+            });
+          }
+        });
+      }
+      return Response.json({ ok: true });
     }
-    return Response.json({ ok: true });
-  }
 
-  if (action === "finish") {
-    // Idempotent: if already onboarded, return early without re-projecting or appending duplicate rows.
-    const alreadyDone = await withTenant(getDb(), userId, (tx) => isOnboarded(tx, userId));
-    if (alreadyDone) return Response.json({ ok: true });
+    if (action === "finish") {
+      // Idempotent: if already onboarded, return early without re-projecting or appending duplicate rows.
+      const alreadyDone = await withTenant(getDb(), userId, (tx) => isOnboarded(tx, userId));
+      if (alreadyDone) return Response.json({ ok: true });
 
-    await withTenant(getDb(), userId, async (tx) => {
-      const model = projectUserModel(await loadPreferenceSignals(tx, userId));
-      await persistUserModel(tx, userId, {
-        diets: model.diets,
-        allergens: model.allergens,
-        cuisineAffinity: model.cuisineAffinity,
-        qualityPrefs: model.qualityPrefs,
-        confidencePerField: model.confidencePerField,
+      await withTenant(getDb(), userId, async (tx) => {
+        const model = projectUserModel(await loadPreferenceSignals(tx, userId));
+        await persistUserModel(tx, userId, {
+          diets: model.diets,
+          allergens: model.allergens,
+          cuisineAffinity: model.cuisineAffinity,
+          qualityPrefs: model.qualityPrefs,
+          confidencePerField: model.confidencePerField,
+        });
+        await appendPreferenceSignal(tx, {
+          userId,
+          topic: "onboarded",
+          value: "true",
+          polarity: "positive",
+          source: "onboarding_q",
+          confidence: 1,
+        });
       });
-      await appendPreferenceSignal(tx, {
-        userId,
-        topic: "onboarded",
-        value: "true",
-        polarity: "positive",
-        source: "onboarding_q",
-        confidence: 1,
-      });
-    });
-    return Response.json({ ok: true });
-  }
+      return Response.json({ ok: true });
+    }
 
-  return Response.json(
-    { error: 'Unknown action. Expected "profile", "taste", or "finish".' },
-    { status: 400 },
-  );
+    return Response.json(
+      { error: 'Unknown action. Expected "profile", "taste", or "finish".' },
+      { status: 400 },
+    );
+  } catch {
+    return Response.json({ error: "Onboarding temporarily unavailable" }, { status: 503 });
+  }
 }

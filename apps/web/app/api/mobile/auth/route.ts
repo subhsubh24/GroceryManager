@@ -37,7 +37,14 @@ export async function POST(req: Request) {
     return Response.json({ error: "username and password are required" }, { status: 400 });
   }
 
-  const user = await getUserByUsername(getAdminDb(), username);
+  let user;
+  try {
+    user = await getUserByUsername(getAdminDb(), username);
+  } catch {
+    // A DB connectivity failure must not surface as an uncaught 500 with a stack — return a
+    // controlled 503 so the mobile client can retry (mirrors /api/v1/auth/token's try/catch).
+    return Response.json({ error: "Auth temporarily unavailable" }, { status: 503 });
+  }
   if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) {
     return Response.json({ error: "Invalid credentials" }, { status: 401 });
   }
