@@ -4,6 +4,46 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-04 (run 46) — 3 file-disjoint clears (backlog + lean scout sweep); all 2/2 first-pass; 0 abandons
+
+Converged repo. No deep audit (run 45 ran a full 5-lens sweep <24h ago). Worked the open-issue backlog +
+a lean 3-Haiku scout sweep (artifact-freshness, hot-path correctness, a11y) rather than a full 8-scout sweep.
+Baseline gate green (quality scorecard **A**, self-validation 5/5, 0 unmet).
+
+**Shipped 3, all reviewers APPROVE (6 Sonnet reviews total):**
+1. **#404 (closes #370) — testable §32 signup-referral guard.** Run 45's audit found the §32 failure mode
+   (a non-essential side-effect hard-blocking account creation) absent-by-construction on signup, but with no
+   regression test — the best-effort referral attribution was inline in a server action and `apps/web` has no
+   unit-test runner. Extracted the contract into `@gm/core` as `attributeReferralBestEffort` with the DB I/O
+   dependency-injected (core stays DB-free), so the never-throw guarantee is provable by 8 unit tests forcing
+   each injected dep to reject/throw. Signup passes the real `getAdminDb()` closures; behavior-equivalent
+   (verified: the old `referrerUserId` was `const`, block-scoped, discarded).
+2. **#406 — a11y file-input labels (WCAG 3.3.2 Level A).** The `/add-receipt` + `/scan` file inputs had
+   sibling `<label>`s with no `htmlFor`/`id` — an unlabeled file picker for screen-reader users on the two
+   first-value capture surfaces. Explicit association; zero visual change.
+3. **#407 — §28 Stripe-webhook fail-loud on an unrecognized price.** The webhook silently defaulted any
+   active price that wasn't FAMILY/ANNUAL to `premium_monthly`, so with `STRIPE_PRICE_ANNUAL/FAMILY` unset
+   (`.optional()` env) or an out-of-band price, an annual/family buyer was mislabeled monthly with the
+   misconfiguration hidden. Now matches all 3 price IDs explicitly + LOUD-logs the anomaly (userId/priceId/
+   which envs set — booleans, no secret values), still granting base premium (§32) at the lowest tier (never
+   over-grant). Reviewer B confirmed it's not impossible-case: the Customer-Portal plan-switch bypasses the
+   checkout price-guard.
+
+**Gate value:** #404 Reviewer A's conditional REQUEST_CHANGES (possible extraction regression) resolved by the
+verbatim source + a follow-up test; #407's two reviewers independently confirmed no secret leakage + fail-safe
+entitlement direction. 0 abandons, 0 circuit breaks, 0 findings rejected (all 3 scout signals shipped or NO-DRIFT).
+
+**Readiness:** did NOT open the 'ready' issue — the sole open DoD gap is unchanged (reach-gated business-case
+floor, base ≈ $33K < $100K = owner-GTM, #190). Confidence statement stays UNCHECKED. A focused, coherent,
+converged run = success.
+
+**Follow-up queued (next run, file-disjoint):** §28 observability on the referral swallow path — now that
+`attributeReferralBestEffort` returns a `reason` code, hang a server-side log line off the `error` branch so a
+genuine DB outage on that path is visible (Reviewer B's non-blocking note on #404). Touches `referral.ts`, so
+it could not ship this run (not disjoint from #404).
+
+---
+
 ## 2026-07-03 (run 45) — DEEP AUDIT (5-lens sweep) + 1 file-disjoint a11y clear; 2 scout findings correctly rejected
 
 Full 5-Haiku scout sweep over the whole repo (security/RLS+Track-G, correctness/functional, monetization/
