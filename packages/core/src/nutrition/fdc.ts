@@ -9,6 +9,10 @@
  */
 import type { MacroSet } from "./types.js";
 
+// Bound the outbound FDC request so a hung/slow USDA endpoint can't stall the cook-logging request
+// past the serverless budget — an abort surfaces as the same null the caller already falls back on.
+const TIMEOUT_MS = 5_000;
+
 // FoodData Central reports macros per 100g via numbered nutrients. We match by number first (the
 // payload may carry it as `nutrientNumber`/`number` on the row or nested under `nutrient`), then fall
 // back to a name contains-match, since the search endpoint's shape varies by dataType.
@@ -120,7 +124,10 @@ export async function fetchFdcPer100g(
     const url =
       `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${apiKey}` +
       `&query=${encodeURIComponent(name)}&pageSize=1&dataType=${encodeURIComponent(DATA_TYPES)}`;
-    const res = await fetchImpl(url, { headers: { Accept: "application/json" } });
+    const res = await fetchImpl(url, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
     if (!res.ok) return null;
     const json: unknown = await res.json();
     if (!json || typeof json !== "object") return null;

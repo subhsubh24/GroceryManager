@@ -27,6 +27,10 @@ export interface PublishResult {
 
 const OWNED_CHANNELS = new Set(["x", "twitter", "buffer", "typefully"]);
 
+// Bound each channel API call so a hung provider can't stall the publishing job indefinitely; a
+// timeout throws and is caught by each publisher's try/catch (recorded as a non-fatal skip/failure).
+const TIMEOUT_MS = 10_000;
+
 // ─── Pure utilities ────────────────────────────────────────────────────────
 
 /**
@@ -60,6 +64,7 @@ async function publishToX(item: ContentItem): Promise<PublishResult> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ text: item.content }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
 
     if (!res.ok) {
@@ -94,6 +99,7 @@ async function publishToBuffer(item: ContentItem): Promise<PublishResult> {
         text: item.content,
         // scheduled_at: item.scheduledAt.toISOString(), // optionally pass to Buffer
       }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
 
     if (!res.ok) {
@@ -129,6 +135,7 @@ async function publishToTypefully(item: ContentItem): Promise<PublishResult> {
         "schedule-date": item.scheduledAt.toISOString(),
         threadify: false,
       }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
 
     if (!res.ok) {

@@ -92,4 +92,18 @@ describe("TheMealDBProvider", () => {
     stubFetch(() => ({ ok: true, body: { meals: null } }));
     expect(await new TheMealDBProvider().getById("1")).toBeNull();
   });
+
+  it("bounds both requests with an AbortSignal so a hung provider can't stall discovery", async () => {
+    const fetchMock = vi.fn(
+      async (_url: string, _init?: RequestInit) =>
+        ({ ok: true, json: async () => ({ meals: null }) }) as Response,
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await new TheMealDBProvider().searchByIngredient("beef");
+    await new TheMealDBProvider().getById("1");
+    expect(fetchMock.mock.calls.length).toBe(2);
+    for (const call of fetchMock.mock.calls) {
+      expect(call[1]?.signal).toBeInstanceOf(AbortSignal);
+    }
+  });
 });
