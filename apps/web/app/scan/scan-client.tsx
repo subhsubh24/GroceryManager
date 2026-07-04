@@ -27,8 +27,11 @@ export function ScanClient() {
           ))}
         </div>
 
-        <label className="mb-2 block field-label">Photo(s)</label>
+        <label htmlFor="scan-photos" className="mb-2 block field-label">
+          Photo(s)
+        </label>
         <input
+          id="scan-photos"
           type="file"
           name="photos"
           accept="image/*"

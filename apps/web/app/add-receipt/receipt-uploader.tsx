@@ -20,8 +20,11 @@ export function ReceiptUploader() {
   return (
     <div className="space-y-6">
       <form action={formAction} className="card-pad">
-        <label className="mb-2 block field-label">Receipt photo(s)</label>
+        <label htmlFor="receipt-photos" className="mb-2 block field-label">
+          Receipt photo(s)
+        </label>
         <input
+          id="receipt-photos"
           type="file"
           name="photos"
           accept="image/*"
