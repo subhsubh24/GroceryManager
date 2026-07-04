@@ -9,7 +9,12 @@ import {
   recordReferral,
 } from "@gm/db";
 import { hashPassword } from "@gm/core/crypto";
-import { isValidReferralCode, isValidUsername, normalizeUsername } from "@gm/core/personalization";
+import {
+  attributeReferralBestEffort,
+  isValidReferralCode,
+  isValidUsername,
+  normalizeUsername,
+} from "@gm/core/personalization";
 import { signIn } from "@/auth";
 import { Leaf } from "@/app/components/icons";
 import { Turnstile } from "@/app/components/turnstile";
@@ -59,19 +64,16 @@ async function registerAction(formData: FormData) {
     passwordHash: hashPassword(password),
   });
 
-  // Referral attribution — STRICTLY best-effort. The user already exists and is about to be signed in;
-  // crediting the referrer must NEVER block or break signup. So everything below is wrapped in a single
-  // try/catch that swallows any error (bad/unknown code, DB hiccup) and falls through to the normal
-  // sign-in. The write uses the admin connection (it credits the *referrer*, a different tenant) and is
-  // idempotent inside recordReferral. Runs BEFORE signIn's redirect, but can't throw out of the action.
-  if (ref && isValidReferralCode(ref)) {
-    try {
-      const referrerUserId = await getUserIdByReferralCode(getAdminDb(), ref);
-      if (referrerUserId) await recordReferral(getAdminDb(), referrerUserId, userId);
-    } catch {
-      /* attribution is best-effort — never let it interfere with signup */
-    }
-  }
+  // Referral attribution — STRICTLY best-effort (FACTORY_STANDARD §32). The user already exists and is
+  // about to be signed in; crediting the referrer is a NON-ESSENTIAL side-effect that must NEVER block or
+  // break signup. `attributeReferralBestEffort` encapsulates that contract — it validates the code,
+  // resolves the referrer, records the credit on the ADMIN connection (crediting the *referrer*, a
+  // different tenant; idempotent inside recordReferral), and CATCHES EVERYTHING so it can never throw out
+  // of the action. Its never-throw guarantee is proven by referral.test.ts (issue #370). Result ignored.
+  await attributeReferralBestEffort(ref, userId, {
+    resolveReferrer: (code) => getUserIdByReferralCode(getAdminDb(), code),
+    recordReferral: (referrerUserId, newUserId) => recordReferral(getAdminDb(), referrerUserId, newUserId),
+  });
 
   try {
     // New accounts land in the guided onboarding flow first (returning users via /signin go to /).
