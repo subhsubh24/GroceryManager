@@ -18,7 +18,7 @@ export function OnboardingFinish() {
       <form action={finishOnboardingAction}>
         <button
           type="submit"
-          className="btn inline-flex shrink-0 bg-white px-5 py-3 text-base text-brand-solid hover:bg-white/90"
+          className="btn inline-flex shrink-0 bg-white px-5 py-3 text-base text-brand-solid-hover hover:bg-white/90"
         >
           Finish setup → my kitchen
         </button>

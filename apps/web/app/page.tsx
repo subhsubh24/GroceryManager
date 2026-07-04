@@ -348,7 +348,7 @@ export default async function HomePage({
             {readiness.state !== "clear" && (
               <a
                 href="/list"
-                className="btn mt-4 inline-flex bg-white px-5 py-3 text-base text-brand-solid hover:bg-white/90"
+                className="btn mt-4 inline-flex bg-white px-5 py-3 text-base text-brand-solid-hover hover:bg-white/90"
               >
                 {readiness.state === "building" ? "Review list →" : "Review & order →"}
               </a>
@@ -542,7 +542,7 @@ export default async function HomePage({
                 </div>
                 <a
                   href="/plan"
-                  className="btn inline-flex shrink-0 bg-white px-5 py-3 text-base text-brand-solid hover:bg-white/90"
+                  className="btn inline-flex shrink-0 bg-white px-5 py-3 text-base text-brand-solid-hover hover:bg-white/90"
                 >
                   Plan my week →
                 </a>
