@@ -90,12 +90,22 @@ describe("attributeReferralBestEffort (FACTORY_STANDARD §32 — issue #370)", (
   });
 
   it("NEVER throws even when a dep throws synchronously", async () => {
-    const call = attributeReferralBestEffort("aB3-_xYz9012", "new-user", {
+    // resolveReferrer throws synchronously (before returning a promise) — still inside the try.
+    const resolveThrows = attributeReferralBestEffort("aB3-_xYz9012", "new-user", {
       resolveReferrer: () => {
         throw new Error("sync boom");
       },
       recordReferral: vi.fn(),
     });
-    await expect(call).resolves.toEqual({ attributed: false, reason: "error" });
+    await expect(resolveThrows).resolves.toEqual({ attributed: false, reason: "error" });
+
+    // recordReferral throws synchronously too — the second side-effect is equally guarded.
+    const recordThrows = attributeReferralBestEffort("aB3-_xYz9012", "new-user", {
+      resolveReferrer: vi.fn().mockResolvedValue("referrer-1"),
+      recordReferral: () => {
+        throw new Error("sync boom");
+      },
+    });
+    await expect(recordThrows).resolves.toEqual({ attributed: false, reason: "error" });
   });
 });
