@@ -31,6 +31,57 @@ support it; the gap speaks for itself.
 
 ## RUN LOG (newest first)
 
+### 2026-07-04 (run 6) — pre_launch, awaiting_connect, PREPARE mode (no owner movement since run 5)
+- **Mode**: Still PREPARE (channels_connected: [] — no email/social channel; site_gate_up stays `true`,
+  unchanged from run 5). First run of a new day; re-verified rather than assumed the run-5 state held.
+- **Did**:
+  - Read GROWTH_STATUS, GROWTH_MEMORY, PENDING_OPS, GTM_SCORECARD, ANALYSIS_PLAYBOOK, OUTREACH,
+    BUSINESS_CASE, GTM_STANDARD, FACTORY_STANDARD. `git fetch origin main` showed **zero new commits**
+    since run 5's merge (d21076f) — the first run since run 1 where a fetch found literally nothing new.
+  - **Re-verified infra state directly** (no self-report): `curl` against the live deployed URL
+    reproduced run 5's exact split (home/`/blog` 200, `/signup`+`/admin/waitlist` 401,
+    `GET /api/growth/snapshot` still `{"error":"Forbidden."}` — no CRON_SECRET/admin session held).
+    `ListConnectors` unchanged: only Gmail (connected) + Google Drive (connected, chat-disabled). So
+    `site_gate_up` stays correctly `true`; ADMIN_EMAIL / PLAUSIBLE_API_KEY / an email provider / any
+    channel remain unverified — none of runs 2-6's named owner blockers have moved.
+  - **Demand-signal expansion (§10)**: tried a citable-aggregator sweep beyond Paprika/KitchenPal.
+    `grand-screen.com/apps/my-pantry-tracker/reviews/` yielded a real, verbatim-confirmed quote (Steven
+    Wilshire: "it will not scan QR codes. Can this be added PLEASE???") that extends the existing
+    "barcode/UPC scanning is unreliable and tedious" theme to a SECOND independent barcode-first tracker
+    — upgraded that theme's `durability` from `recent` (1 app) to `durable` (2 structurally-similar
+    apps). Also tried Trustpilot (AnyList — 403 on WebFetch), grand-screen.com's own AnyList reviews page
+    (zero reviews despite a 4.8/26,785 Play Store rating shown elsewhere on the aggregator), and
+    WebSearch-surfaced "complaints" for SuperCook/Fridgely/Mealime — none of the latter could be verified
+    verbatim by fetching the actual source page (some 403'd, one 404'd, one page simply didn't contain
+    the summarized text). Correctly did NOT cite any of those — a search-engine paraphrase is not a
+    citable quote per §10's evidence bar. Logged this pattern explicitly in `disconfirming_or_limitations`
+    so future runs don't waste a cycle re-trying Trustpilot/Google-Play-direct and instead try
+    grand-screen.com's OTHER listed pantry/grocery apps (Grocery AI, Wonder Fridge, Our Groceries,
+    CookBook) — untried, and the same aggregator has proven reliable twice now.
+  - **Outreach research (§3b)**: tried a genuinely NEW angle not covered in runs 2-5 (frugal-living /
+    anti-food-waste / grocery-budgeting Substack newsletters, per OUTREACH.md's "relevant newsletter
+    curators" target type). Surfaced "Front Yard Veggies" (Amy Bauer) — real, active, does publish
+    grocery-spending/food-waste content — but its `/about` page has no published email or contact form
+    (only social handles, which don't meet OUTREACH.md's bar), and its actual content center of gravity
+    is gardening/homesteading, not pantry-tracking — a weak audience-fit "why they'd care." Rejected;
+    **zero outreach drafted this run** (correct — 5th consecutive run at zero, each time for a genuine,
+    checked reason, not a rubber-stamp).
+  - Did NOT touch ROADMAP/VISION/BUSINESS_CASE — the barcode-theme durability upgrade is a qualitative
+    confidence note within the existing §10 hard bound, not a new causal, significant finding; no figure
+    changed.
+  - Ran an independent reviewer subagent (fresh context, adversarial) against this run's full diff before
+    committing.
+- **Hypothesis**: none new on the funnel (still no analytics READ / billing / email-provider connection).
+  This run's work is (a) an honest re-verification that nothing changed, (b) one real incremental
+  demand-signal citation, (c) a correctly-negative outreach check on a new angle.
+- **Result**: Infra state unchanged (confirmed, not assumed). One new verbatim-cited review quote added.
+  Funnel/PMF numbers stay `0`/`null` (correct — still no connected source).
+- **Decision**: Ship the GROWTH_STATUS/GROWTH_MEMORY updates (reviewer-cleared); outreach stays at zero
+  (correct, no qualifying target); no ROADMAP/VISION/BUSINESS_CASE steer (no new causal, significant data).
+- **Operational note**: this is the first run to find LITERALLY zero new commits on `git fetch` — worth
+  distinguishing from runs 2-4 (which found unrelated product-factory commits between GTM runs) since it
+  confirms the owner has been away, not just inactive on GTM-relevant items specifically.
+
 ### 2026-07-03 (later cycle, run 5) — pre_launch, awaiting_connect, PREPARE mode (with real owner progress)
 - **Mode**: Still PREPARE (channels_connected: [] — no email/social channel confirmed connected), but
   **one of the two HARD-BLOCK preconditions flipped this run**: `site_gate_up` is now verified `true`.
