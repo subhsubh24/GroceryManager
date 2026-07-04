@@ -4,6 +4,55 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-04 (run 49) — 5-Haiku scout sweep + 2 file-disjoint clears (mobile funnel + route hardening); 0 abandons
+
+No deep audit (run 47 ran a 6-lens standalone same day; not due). Baseline gate green: typecheck 0
+across 6 packages, 867 core tests pass, scorecard **A**, self-validation 5/5 (0 unmet). Five read-only
+Haiku scout lenses (correctness/dead-code, security/RLS+Track-G, design/a11y/taste, mobile+monetization,
+artifacts+tests/perf). **Security CLEAN** (only previously-acknowledged/owner items surfaced — see below);
+**monetization REACH-GATED reconfirmed** (no buildable floor-mover; the mobile Family-tier "gap" is
+owner-config-gated via a RevenueCat offering, not code — correctly skipped); **artifacts NO DRIFT**.
+
+**Shipped 2, all reviewers APPROVE (4 first-pass + 2 re-review Sonnet reviews):**
+
+1. **#426 — fix(mobile): Discover paywall dead-end.** `apps/mobile/app/discover.tsx` cast the API
+   response to `{ recipes: DeckCard[] }`, but `/api/mobile/discover` returns a **discriminated union** —
+   free users get `{ upgradeRequired: true }`. That flag was silently dropped (`data.recipes` undefined →
+   `[]`), so free users saw the misleading **"All caught up / add more pantry items"** empty state and the
+   paywall was **never shown** — a broken conversion dead-end on the free→paid funnel. Fix parses the union
+   and renders a real "Premium feature → See plans" prompt linking to `/upgrade`, matching the pattern
+   already used by `plan.tsx`/`spend.tsx`/`wrapped.tsx`, and tightens the response type so future contract
+   drift is caught by `tsc`. Reviewer B verified the copy ("unlock unlimited Discover", "matched to what's
+   in your pantry", "train your taste") is truthful to the actual feature and reuses the repo's own billing
+   terminology — no invented claim. **LESSON: a client that casts a discriminated-union API response to just
+   the happy-path shape silently swallows the other arm — here it buried the paywall. Type the response as
+   the full union so `tsc` forces every arm to be handled; the sibling premium screens already did.**
+2. **#427 — harden(mobile-api): uncaught DB throw → controlled 5xx.** Three mobile routes called the DB
+   **outside any try/catch** (`auth/route.ts` `getUserByUsername`; `profile/route.ts` `getUserById`;
+   `onboarding/route.ts` `isOnboarded` in GET + all three POST write branches), so a transient connectivity
+   failure escaped as an uncaught 500 with a stack — violating the repo's "hunt the uncaught throw" rule and
+   diverging from the sibling routes (`/api/mobile/discover`, `/api/v1/auth/token`) that already wrap their
+   DB work. Wrapped each to return a controlled **503**; the 401 bad-credentials path in auth stays outside
+   the catch (unaffected). **Reviewer B (non-blocking should-fix) caught that the new `catch {}` blocks were
+   bare — no server-side log on exactly the auth/onboarding paths most worth diagnosing, unlike the
+   `serverError()` G3 convention + the `discover` route.** Applied it (cycle 2): `catch (err)` +
+   `console.error("[mobile/<route>]", err)`, re-verified (typecheck/lint/build clean) and re-reviewed 2/2.
+   **LESSON: mirror the FULL reference pattern, not just its try/catch skeleton — the repo's error-hygiene
+   convention (G3) logs full context server-side BEFORE returning the generic message; a bare `catch {}` that
+   returns a clean 503 but discards the error trades an uncaught-500 for a blind 503. Bind `catch (err)` and
+   log it.**
+
+**Not shipped (verified as non-clearing):** admin `text-brand-solid` stat-card/link contrast — the SAME
+dark-mode surface-token trap abandoned in #424 last run (`brand-solid`/`-hover` are `bg-*` surface tokens;
+darker = worse as `text-*` on a near-black admin bg), correctly deferred to a dedicated dark-mode foreground
+pass, not a per-link hack; admin hardcoded status-badge colors (amber/green/slate → tokens) — marginal
+cosmetic on an internal admin surface; `gmail-sync.ts` sequential message processing — intentional per-message
+tenant-transaction isolation (documented in-code). **Security scout non-findings** (all previously
+acknowledged, none new): in-memory rate-limit needs Redis for multi-instance (PENDING_OPS
+`llm-quota-redis-upgrade`); CSP `unsafe-eval`/`unsafe-inline` is the documented Next.js 15 hydration
+constraint; CORS omitting `Access-Control-Allow-Origin` is the SECURE default (lockdown) for a same-origin +
+bearer-token-mobile app, not a bug.
+
 ## 2026-07-04 (run 47) — DEEP AUDIT (6-lens) + 3 file-disjoint clears; all reviewed, 0 abandons
 
 DEEP AUDIT due (last standalone run 45, ~24h). Six read-only Haiku lenses over the whole repo:
