@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import { Redirect, router } from "expo-router";
+import { Link, Redirect, router } from "expo-router";
 import { useAuth } from "../lib/auth";
 import { apiFetch } from "../lib/api";
 
@@ -19,12 +19,17 @@ interface DeckCard {
   haveCount: number;
 }
 
+// The discover endpoint returns a discriminated union: a recipe deck, or an upgrade prompt for
+// free users (Discover is a premium feature — see app/api/mobile/discover/route.ts).
+type DiscoverResponse = { recipes: DeckCard[] } | { upgradeRequired: true };
+
 export default function DiscoverScreen() {
   const { token } = useAuth();
   const [deck, setDeck] = useState<DeckCard[]>([]);
   const [index, setIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [upgradeRequired, setUpgradeRequired] = useState(false);
   const [swiping, setSwiping] = useState(false);
 
   const load = useCallback(async () => {
@@ -34,8 +39,16 @@ export default function DiscoverScreen() {
     try {
       const res = await apiFetch("/api/mobile/discover", token);
       if (!res.ok) throw new Error("fetch failed");
-      const data = (await res.json()) as { recipes: DeckCard[] };
-      setDeck(data.recipes ?? []);
+      const data = (await res.json()) as DiscoverResponse;
+      if ("upgradeRequired" in data && data.upgradeRequired) {
+        // Free user — surface the paywall instead of a misleading "all caught up" empty state.
+        setUpgradeRequired(true);
+        setDeck([]);
+        setIndex(0);
+        return;
+      }
+      setUpgradeRequired(false);
+      setDeck(("recipes" in data ? data.recipes : undefined) ?? []);
       setIndex(0);
     } catch {
       setError("Couldn't load recipes — check your connection.");
@@ -87,6 +100,24 @@ export default function DiscoverScreen() {
         <Pressable style={styles.retryBtn} onPress={load}>
           <Text style={styles.retryBtnText}>Retry</Text>
         </Pressable>
+      </View>
+    );
+  }
+
+  if (upgradeRequired) {
+    return (
+      <View style={styles.center}>
+        <View style={styles.emptyMark}>
+          <Text style={styles.emptyGlyph}>GM</Text>
+        </View>
+        <Text style={styles.emptyTitle}>Premium feature</Text>
+        <Text style={styles.emptyNote}>
+          Upgrade to unlock unlimited Discover — swipe through recipes matched to what's in your
+          pantry and train your taste.
+        </Text>
+        <Link href="/upgrade" style={styles.upgradeBtn}>
+          <Text style={styles.upgradeBtnText}>See plans →</Text>
+        </Link>
       </View>
     );
   }
@@ -214,6 +245,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
   },
   retryBtnText: { color: "#ffffff", fontSize: 15, fontWeight: "600" },
+
+  upgradeBtn: {
+    backgroundColor: "#0c8a3e",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 28,
+    color: "#ffffff",
+  },
+  upgradeBtnText: { color: "#ffffff", fontSize: 15, fontWeight: "600" },
 
   emptyMark: {
     width: 72,
