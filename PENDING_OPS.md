@@ -12,7 +12,7 @@ The dashboard surfaces every `open` item, urgent first.
 ```yaml
 OWNER_ACTIONS:
   project: GroceryManager
-  as_of: 2026-07-04 (GTM run 6) — no owner-side changes since run 5; all items below re-verified unchanged
+  as_of: 2026-07-04 (GTM run 7) — no owner-side changes since run 6; all items below re-verified unchanged
   items:
     - id: gtm-connect-waitlist
       title: "GTM validation: connect the waitlist admin read source (ADMIN_EMAIL)"
