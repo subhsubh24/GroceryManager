@@ -10,7 +10,10 @@ import { join } from "node:path";
 
 // Bound each provider API call so a hung email endpoint can't stall the sending job/serverless
 // function indefinitely; a timeout throws and is caught by the caller's try/catch (fail-open no-op).
-const TIMEOUT_MS = 10_000;
+// 8s keeps this comfortably UNDER the smallest serverless budget (Vercel Hobby 10s) — some send
+// paths (growth/email route, the landing waitlist action) run with no maxDuration override, so a
+// 10s in-process timeout could lose the race to the platform's uncatchable 504. Mirrors llm/client.ts.
+const TIMEOUT_MS = 8_000;
 
 export interface EmailPayload {
   to: string;

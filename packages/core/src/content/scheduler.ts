@@ -29,7 +29,9 @@ const OWNED_CHANNELS = new Set(["x", "twitter", "buffer", "typefully"]);
 
 // Bound each channel API call so a hung provider can't stall the publishing job indefinitely; a
 // timeout throws and is caught by each publisher's try/catch (recorded as a non-fatal skip/failure).
-const TIMEOUT_MS = 10_000;
+// 8s stays comfortably UNDER the smallest serverless budget (Vercel Hobby 10s) so the in-process
+// abort wins over the platform's uncatchable 504, even if a future caller lacks a maxDuration override.
+const TIMEOUT_MS = 8_000;
 
 // ─── Pure utilities ────────────────────────────────────────────────────────
 
