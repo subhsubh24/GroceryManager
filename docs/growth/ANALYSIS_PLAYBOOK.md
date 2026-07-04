@@ -129,6 +129,23 @@ sets secrets. Phase advances on **EVIDENCE only**.
 - **Experiment ENGINE** (H10) — deterministic variant assignment + exposure logging + lift measurement.
 Until these exist, the agent works from the `GROWTH_STATUS` snapshot and flags the missing pipe as a blocker.
 
+### Pulling REAL funnel/analytics data — do this EVERY run (env changes are invisible to git)
+The authenticated read path is `GET https://grocery-manager-web.vercel.app/api/growth/snapshot`,
+returning real funnel / analytics (Plausible) / billing (Stripe) / email aggregates in ONE call.
+Authenticate with the **`CRON_SECRET` provided in your routine environment**:
+
+    curl -s -H "Authorization: Bearer $CRON_SECRET" https://grocery-manager-web.vercel.app/api/growth/snapshot
+
+- **Always actually CALL it — never infer "no owner movement" from `git fetch`.** Owner
+  source-connections (`CRON_SECRET`, `PLAUSIBLE_API_KEY`, `STRIPE_SECRET_KEY`, `ADMIN_EMAIL`, email
+  keys) are set as ENV VARS on Vercel / in this routine — `git fetch` and `ListConnectors` CANNOT see
+  them, so a git-quiet run is NOT evidence that sources are still unconnected. Re-probe every run.
+- **Self-diagnose in `GROWTH_STATUS.validation` every run:** report (a) whether `CRON_SECRET` was
+  present in your environment (presence only, NEVER the value), and (b) the HTTP status the snapshot
+  call returned. `200` → populate funnel/analytics/billing/email from the REAL payload and flip those
+  sources to `connected`. `401`/`403` → `CRON_SECRET` missing or mismatched vs the deployed app.
+  Record whatever you actually observe — this makes the exact break point visible on the dashboard.
+
 ## Strategic outreach (curated, human-reviewed drafts → [`OUTREACH.md`](./OUTREACH.md))
 A high-leverage channel the agent MAY run: a FEW deeply-personalized 1:1 outreach emails to genuinely
 strategic targets (press / partners / overlapping communities / newsletter curators), drafted as Gmail
