@@ -143,12 +143,18 @@ export async function saveImportedRecipeAction(formData: FormData) {
   }
   if (!parsed.title) redirect("/import?error=" + encodeURIComponent("Nothing to save."));
 
-  const id = await saveImportedRecipe(getDb(), {
-    title: parsed.title!,
-    imageUrl: parsed.imageUrl ?? null,
-    sourceUrl: parsed.sourceUrl ?? null,
-    instructions: parsed.instructions ?? null,
-    ingredients: parsed.ingredients ?? [],
-  });
+  let id: string;
+  try {
+    id = await saveImportedRecipe(getDb(), {
+      title: parsed.title!,
+      imageUrl: parsed.imageUrl ?? null,
+      sourceUrl: parsed.sourceUrl ?? null,
+      instructions: parsed.instructions ?? null,
+      ingredients: parsed.ingredients ?? [],
+    });
+  } catch (e) {
+    console.error("saveImportedRecipeAction failed", e);
+    redirect("/import?error=" + encodeURIComponent("Couldn't save the recipe — please try again."));
+  }
   redirect(`/cook/${id}`);
 }
