@@ -59,4 +59,49 @@ describe("UnitConverter", () => {
   it("returns null for COUNT↔MASS with no item data", () => {
     expect(conv.convert(2, "each", "g")).toBeNull();
   });
+
+  it("chains two item conversions (each → g via clove) as item_base", () => {
+    // No direct each↔g edge, so the converter must walk each → clove → g (a 2-hop BFS).
+    const itemConv: ItemConversion[] = [
+      { fromCode: "each", toCode: "clove", factor: 10, confidence: 0.8 }, // 1 head = 10 cloves
+      { fromCode: "clove", toCode: "g", factor: 5, confidence: 0.9 }, //     1 clove = 5 g
+    ];
+    const r = conv.convert(2, "each", "g", itemConv);
+    expect(r).not.toBeNull();
+    expect(r!.qty).toBeCloseTo(100, 6); // 2 × 10 × 5
+    expect(r!.method).toBe("item_base");
+    // Confidence propagates as the MINIMUM of the hops, not the last one.
+    expect(r!.confidence).toBe(0.8);
+  });
+
+  it("chains item conversions through REVERSED edges (g → each)", () => {
+    // The reverse direction must also chain: g → clove (1/5) → each (1/10).
+    const itemConv: ItemConversion[] = [
+      { fromCode: "each", toCode: "clove", factor: 10, confidence: 0.8 },
+      { fromCode: "clove", toCode: "g", factor: 5, confidence: 0.7 },
+    ];
+    const r = conv.convert(100, "g", "each", itemConv);
+    expect(r).not.toBeNull();
+    expect(r!.qty).toBeCloseTo(2, 6); // 100 × (1/5) × (1/10)
+    expect(r!.method).toBe("item_base");
+    expect(r!.confidence).toBe(0.7); // min(0.7, 0.8)
+  });
+
+  it("prefers a DIRECT item edge over a 2-hop chain (item beats item_base)", () => {
+    // Both a direct clove→g and an indirect clove→each→g path exist; the direct one wins.
+    const itemConv: ItemConversion[] = [
+      { fromCode: "clove", toCode: "g", factor: 5, confidence: 0.9 },
+      { fromCode: "clove", toCode: "each", factor: 0.1, confidence: 0.6 },
+      { fromCode: "each", toCode: "g", factor: 50, confidence: 0.6 },
+    ];
+    const r = conv.convert(3, "clove", "g", itemConv);
+    expect(r!.method).toBe("item");
+    expect(r!.qty).toBeCloseTo(15, 6); // 3 × 5 (direct), not via each
+    expect(r!.confidence).toBe(0.9);
+  });
+
+  it("exposes unit definitions via unit()", () => {
+    expect(conv.unit("g")).toEqual({ code: "g", dimension: "MASS", toBaseFactor: 1 });
+    expect(conv.unit("nope")).toBeUndefined();
+  });
 });
