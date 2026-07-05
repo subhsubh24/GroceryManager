@@ -23,6 +23,23 @@ describe("spendByPeriod", () => {
     expect(out[0]).toEqual({ periodStart: "2026-06-01", totalCents: 1500 });
     expect(out[1]).toEqual({ periodStart: "2026-05-01", totalCents: 700 });
   });
+
+  it("groups by ISO week (Monday start), folding Sunday into the prior Monday", () => {
+    // 2026-06-01 is a Monday. Sun 2026-06-14 must fold back to the Mon 2026-06-08 week,
+    // which is exactly the case the (getUTCDay()+6)%7 offset exists to get right.
+    const out = spendByPeriod(
+      [
+        { purchasedAt: d("2026-06-03"), totalCents: 1000 }, // Wed → week of 06-01
+        { purchasedAt: d("2026-06-05"), totalCents: 500 }, // Fri → week of 06-01
+        { purchasedAt: d("2026-06-08"), totalCents: 700 }, // Mon → week of 06-08
+        { purchasedAt: d("2026-06-14"), totalCents: 300 }, // Sun → still week of 06-08
+        { purchasedAt: d("2026-06-10"), totalCents: null }, // skipped
+      ],
+      "week",
+    );
+    expect(out[0]).toEqual({ periodStart: "2026-06-08", totalCents: 1000 });
+    expect(out[1]).toEqual({ periodStart: "2026-06-01", totalCents: 1500 });
+  });
 });
 
 describe("topItemsBySpend", () => {
