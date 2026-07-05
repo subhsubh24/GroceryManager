@@ -4,6 +4,52 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-05 (run 51) — 4 file-disjoint clears from a 6-Haiku scout sweep (#435 /support store-404 alias /
+  #436 make-action DB-degrade / #437 household server-action uncaught-throw hardening / #438 mobile brand-color);
+  all 8 Sonnet reviews (2 per PR) APPROVE first-pass; 0 abandons. No deep audit (run 50 ran a full 6-lens one
+  same day, <24h).** Baseline gate green (typecheck 0 across all packages, 871 core tests, scorecard **A**
+  as_of 2026-07-03, self-validation 5/5 / 0 unmet). Six read-only Haiku scout lenses (mobile parity,
+  monetization/conversion UX, test/eval coverage, design/a11y/taste, artifact freshness, web
+  reliability/correctness); pooled → selected the maximal file-disjoint value-bar-clearing set; verified every
+  candidate against the code before selecting (two scout claims were REJECTED on verification — see lessons).
+  - **#435 — /support was a live store-acceptance 404.** The App Store + Google Play listings publish
+    `grocerymanager.app/support` as the Support URL (5 refs across `docs/store/`), but only `/help` existed —
+    a reviewer following the link hit a 404 (rejection risk). Added a stable `/support` page that
+    `redirect()`s to `/help` (which already carries the FAQ + support email). Fixing the ROUTE (not the docs)
+    is correct: the URL is already submitted to the consoles, so the app must serve the path.
+  - **#436 — a live premium path violated its own degrade contract.** `generateMealsAction`'s docstring
+    promises "everything that can fail degrades to `{ ok: false, error }`", but the pantry+signals `withTenant`
+    read sat OUTSIDE the try/catch (the `generateMeals` LLM call 3 lines below already had one) → a transient
+    DB blip threw uncaught to the client. Wrapped it (declare-`let` / assign-in-try / return-in-catch idiom;
+    reviewers confirmed no TS2454). Same "hunt the uncaught throw" class as #427/#429, now on a web server action.
+  - **#437 — two household server actions threw uncaught, one contradicting its OWN comment.** `acceptInviteAction`'s
+    doc literally says "any failure sends them back to the household page rather than throwing" yet the admin-DB
+    write escaped the guards → error boundary; `createHouseholdAction` was the odd one out vs its already-wrapped
+    sibling `createInviteLinkAction`. Both now degrade (redirect / no-op); `redirect()` kept OUTSIDE the try so
+    NEXT_REDIRECT isn't swallowed; reviewer A confirmed the entitlement check still fails-closed (a caught throw
+    never grants a household). Flag-gated (FEATURE_HOUSEHOLDS) but a docstring lying about behavior is a real
+    defect regardless of flag state.
+  - **#438 — the mobile nav header + launch spinner were off-brand.** `_layout.tsx` was the SOLE holdout at
+    `#13a14a` while every other mobile surface (buttons/icons/logo/app.json) + the web `--brand-solid` use
+    `#0c8a3e` (rgb 12 138 62). Visible on every screen + at launch. Aligned both occurrences; `grep 13a14a` →
+    0 hits after. White-on-#0c8a3e contrast (~4.45:1) is the design system's documented, app-wide accepted
+    ceiling (upgrade.tsx:279) — not a regression.
+  **LESSON (verify scout claims against the code before selecting — two were wrong):** (1) the mobile-parity
+  scout flagged `apps/mobile/app/index.tsx` `.then(res => res.json())` as an uncaught-crash — but it MISSED the
+  `.catch()` two lines down that fail-opens (`setOnboarded(true)`); a non-JSON/5xx response is already handled.
+  REJECTED. (2) the design scout flagged cook-mode scaling tabs (×1/×2/×3) as missing aria-labels — but
+  cook-mode has no such tabs, and its timer buttons already carry aria-labels. REJECTED. A scout's "bug" is a
+  CANDIDATE, not a finding; reading the actual surrounding lines (the catch, the sibling) is what separates the
+  2 real clears from the 2 false positives.
+  **LESSON (drop speculative conversion levers):** the monetization scout proposed a premium/trial CTA at
+  onboarding-FINISH — but that pitches premium BEFORE the user has experienced the core loop (a conversion
+  anti-pattern; grocery apps convert after value), and an annual-switch nudge duplicates the already-built H14
+  annual-nudge. Dropped both as speculative/redundant rather than shipping churn. Conversion levers must be
+  grounded in a real gap, not a plausible-sounding "highest-intent moment."
+  **Readiness:** did NOT open the 'ready' issue — the sole open DoD gap is unchanged (reach-gated business-case
+  floor #190, base ≈ $33K < $100K at median inputs, owner-GTM not a buildable lever). Confidence statement
+  stays UNCHECKED. 4 real clears + 2 correctly-rejected false positives = a coherent converged run.
+
 - **2026-07-05 (run 50) — DEEP AUDIT (6-Haiku lens sweep, due since run 47 ~24h/3 runs) + 2 file-disjoint
   clears (#429 mobile/v1 route error-hardening / #430 units multi-hop test coverage); all 4 Sonnet reviews
   (2 per PR) APPROVE first-pass; 0 abandons.** Baseline gate green (typecheck 0 across all packages, 867
