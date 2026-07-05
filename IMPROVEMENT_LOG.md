@@ -4,6 +4,43 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-05 (run 52) — 5 file-disjoint clears (push {ok}-contract + import degrade + cook a11y + spend test + mobile Wrapped); 9/10 Sonnet reviews approve first-pass, 1 REQUEST_CHANGES honored; 0 abandons
+
+5-Haiku scout sweep (web reliability, security/Track-G, mobile parity, design/a11y/taste, test-coverage+artifacts).
+No deep audit (run 50 ran a full 6-lens one same day, <24h). Baseline gate green (typecheck 0, 871→872 core tests,
+scorecard **A** as_of 2026-07-05, self-validation 5/5, production build clean, mobile typecheck 0). Security **CLEAN**
+(no new gaps since run 50); artifacts **CLEAN** (pricing matches everywhere). Every candidate verified against the
+code before selection; several scout false positives correctly REJECTED.
+
+- **#447 — 3 push-subscription actions violated their `{ok}` contract AND drove a fake success.** `savePush/removePush/
+  sendTestPushAction` declare `Promise<{ok}>` but the `withTenant`/DB (and `sendNotificationToUser`) calls sat outside
+  try/catch → uncaught throw. `push-toggle.tsx` ALSO ignored the returned `ok`: the not-signed-in `{ok:false}` path (and
+  any DB failure) still showed "Notifications are on." (a fake success — SIDE-EFFECT INTEGRITY), and `sendTestPushAction`
+  throwing left the Test button stuck busy. Wrapped all 3 (return `{ok:false}` + server-side `console.error`) + made
+  enable()/disable() check `res.ok`. Reviewer A confirmed disable() ordering (local unsubscribe only after server delete).
+- **#448 — the one exit in `saveImportedRecipeAction` that didn't degrade.** Every other exit redirects with `?error=`;
+  the `saveImportedRecipe(getDb(),…)` DB write threw uncaught to the Next error boundary. Wrapped → `redirect("/import?error=…")`;
+  success redirect stays outside try (NEXT_REDIRECT / `redirect()` is `never` so no TS2454). NOT a fake success. Same #436/#437 class.
+- **#449 — cook-mode ×1/×2/×3 scale toggles were visually-selected-only.** Added `aria-pressed={factor===f}` (the single-select
+  toggle-button semantic; a screen-reader user otherwise can't tell which scale is active). Reviewer B REQUEST_CHANGES'd a
+  redundant `aria-label` I'd added (reintroduces a run-51-rejected change + drift risk) — honored, dropped it, kept aria-pressed.
+- **#450 — `spendByPeriod` "week" branch had zero tests.** Only "month" was covered; the Monday-of-week math (Sunday folds
+  back to the prior Monday) was untested. Added an exact-value test hitting the Sunday-boundary case; two reviewers independently
+  hand-verified the calendar arithmetic. +1 test (872).
+- **#451 — mobile Grocery Wrapped (premium) hid an expired-items-only summary.** The `empty` guard omitted `itemsExpired`, so a
+  paying user with only expired items saw "Nothing yet" while the render path had a populated warning card. Added `&& itemsExpired===0`;
+  `estSavedCents` needs no term (derived from cooked meals).
+
+**Rejected (correctly):** mobile `index.tsx` unguarded `res.json()` (has a fail-open `.catch` — run-51 re-reject); capture/list
+mutation form actions (swallowing a void mutation = fake success); pill touch-target <44px (AAA, non-blocking); line-clamp fallback
+(speculative); mobile spend/profile "add a button" (feature-add). **Process lesson:** a shell `grep` over raw subagent JSONL matched
+the prompt-echo verdict strings (3 phantom rejections) — trust the completion-notification `<result>` block, not a transcript grep.
+
+**Readiness:** did NOT open the 'ready' issue — the sole open DoD gap is unchanged (reach-gated business-case floor #190, base ≈ $33K
+< $100K = downloads/mo = owner GTM, not a buildable lever). Confidence statement stays UNCHECKED.
+
+---
+
 ## 2026-07-05 (run 51) — 4 file-disjoint clears (store-404 alias + 3 hardening/brand fixes); all 8 Sonnet reviews approve; 0 abandons
 
 6-Haiku scout sweep (mobile parity, monetization/conversion UX, test/eval coverage, design/a11y/taste, artifact
