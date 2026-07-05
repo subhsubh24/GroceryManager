@@ -27,8 +27,14 @@ export async function acceptInviteAction(token: string): Promise<void> {
   if (householdsEnabled() && isValidInviteToken(token)) {
     const userId = await currentUserId();
     if (userId) {
-      const householdId = await acceptHouseholdInvite(getAdminDb(), userId, token);
-      ok = householdId != null;
+      try {
+        const householdId = await acceptHouseholdInvite(getAdminDb(), userId, token);
+        ok = householdId != null;
+      } catch {
+        // A transient DB failure must send the invitee back to the household page (as the doc
+        // above promises), never bubble up as an uncaught error boundary.
+        ok = false;
+      }
     }
   }
   // redirect() throws to unwind — keep it OUTSIDE the guards so it isn't swallowed.

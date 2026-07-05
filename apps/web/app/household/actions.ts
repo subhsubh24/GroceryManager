@@ -28,20 +28,26 @@ async function canManageHousehold(tx: Parameters<typeof loadPreferenceSignals>[0
 /**
  * Create the signed-in user's household (they become owner + first member). Flag-gated, premium-gated
  * (Family tier), and tenant-scoped (`withTenant`) so the writes pass RLS. No-op when the flag is off,
- * signed out, or not entitled. Idempotent: if they already belong to a household, it doesn't create a
- * second one.
+ * signed out, not entitled, or on a transient DB failure. Idempotent: if they already belong to a
+ * household, it doesn't create a second one.
  */
 export async function createHouseholdAction(formData: FormData): Promise<void> {
   if (!householdsEnabled()) return;
   const userId = await currentUserId();
   if (!userId) return;
   const name = String(formData.get("name") ?? "").trim() || undefined;
-  await withTenant(getDb(), userId, async (tx) => {
-    if (!(await canManageHousehold(tx, userId))) return; // premium-only — paywall enforced server-side
-    const existing = await getHouseholdForUser(tx, userId);
-    if (existing) return;
-    await createHousehold(tx, userId, name);
-  });
+  try {
+    await withTenant(getDb(), userId, async (tx) => {
+      if (!(await canManageHousehold(tx, userId))) return; // premium-only — paywall enforced server-side
+      const existing = await getHouseholdForUser(tx, userId);
+      if (existing) return;
+      await createHousehold(tx, userId, name);
+    });
+  } catch {
+    // Resilient like createInviteLinkAction below: a transient DB failure no-ops rather than
+    // throwing an uncaught error boundary. The page re-renders with the unchanged state.
+    return;
+  }
   revalidatePath("/household");
 }
 
