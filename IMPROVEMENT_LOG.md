@@ -4,6 +4,35 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-05 (run 51) — 4 file-disjoint clears (store-404 alias + 3 hardening/brand fixes); all 8 Sonnet reviews approve; 0 abandons
+
+6-Haiku scout sweep (mobile parity, monetization/conversion UX, test/eval coverage, design/a11y/taste, artifact
+freshness, web reliability). No deep audit (run 50 ran a full 6-lens one same day, <24h). Baseline gate green
+(typecheck 0, 871 core tests, scorecard A as_of 2026-07-03, self-validation 5/5). Every candidate verified
+against the code before selection — **2 scout claims REJECTED as false positives** (mobile `index.tsx` already
+`.catch()`-fail-opens; cook-mode has no scaling tabs and its timer buttons already have aria-labels).
+
+- **#435 — /support store-acceptance 404.** The store listings publish `grocerymanager.app/support` (5 refs in
+  `docs/store/`) but only `/help` existed → a reviewer following the link hit a 404. Added a `/support` page that
+  `redirect()`s to `/help`. Fixing the route (not the docs) is correct — the URL is already submitted to the consoles.
+- **#436 — live premium path violated its own degrade contract.** `generateMealsAction`'s pantry+signals
+  `withTenant` read sat outside the try/catch (the LLM call below already had one) → a transient DB blip threw
+  uncaught. Wrapped it. Same class as #427/#429, now on a web server action.
+- **#437 — 2 household server actions threw uncaught, one against its OWN comment.** `acceptInviteAction`'s doc
+  promises "any failure sends them back rather than throwing" yet the admin-DB write escaped; `createHouseholdAction`
+  was unwrapped vs its resilient sibling. Both degrade now; `redirect()` kept outside the try (NEXT_REDIRECT);
+  entitlement check confirmed still fails-closed. Flag-gated but a docstring lying about behavior is a real defect.
+- **#438 — mobile header + launch spinner off-brand.** `_layout.tsx` was the sole holdout at `#13a14a` vs the
+  canonical `#0c8a3e` (rgb 12 138 62) used everywhere else + web `--brand-solid`. Aligned both; 0 `13a14a` refs left.
+
+**LESSON:** a scout's "bug" is a CANDIDATE, not a finding — reading the actual surrounding lines (the `.catch()`,
+the sibling handler) separated 4 real clears from 2 false positives. Also dropped 2 speculative conversion levers
+(a premium CTA at onboarding-finish pitches before value; an annual nudge duplicates the built H14) rather than
+ship churn.
+
+**Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated floor #190, owner-GTM).
+Confidence statement stays UNCHECKED. 4 real clears + 2 correct rejections = a coherent converged run.
+
 ## 2026-07-05 (run 50) — DEEP AUDIT (6-lens) + 2 file-disjoint clears (mobile/v1 route hardening + units test coverage); 0 abandons
 
 Deep audit due (last standalone was run 47, 3 runs / ~24h ago). Baseline gate green: typecheck 0 across
