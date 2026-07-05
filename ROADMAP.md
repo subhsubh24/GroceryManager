@@ -403,6 +403,8 @@ mechanical gate, not a vibe.
 > (PR #124); F4 `apps/web/playwright.config.ts` + `e2e/smoke.spec.ts` (PR #125); F5 deep audit
 > 2026-06-25 (3 critical fixes merged, lessons in LOOP_MEMORY.md).
 
+- [ ] **§29 deployed-app validator (computer-use, autonomous, non-blocking).** Build the Browserbase-driven end-to-end sweep of the DEPLOYED web app (FACTORY_STANDARD §29). Keys `BROWSERBASE_API_KEY`/`BROWSERBASE_PROJECT_ID` are SET + connectivity PROVEN (2026-07-04, HTTP 200 to the live app). Connect via the SDK's signed `s.connectUrl`; enumerate EVERY core flow, drive each, assert real user-visible outcomes with dedicated TEST accounts + Stripe TEST mode (no real charges); publish `docs/autonomous-loop/VALIDATOR_STATUS.md` (REAL flow counts — NEVER a fabricated green). Exploratory FINDER, not a merge gate. A green full-flow sweep is a §13 marketing-arming signal. Build epic: #413.
+
 ## Track G — Pre-launch security & abuse hardening (STANDING standard)
 RLS (the `grocery_app` + `app_current_user_id()` GUC model) is **necessary but NOT sufficient.** A
 live app that calls PAID APIs and exposes PUBLIC forms is a **wallet-drain + abuse target.** This is a
