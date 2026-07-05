@@ -27,11 +27,19 @@ export async function generateMealsAction(energy: MealEnergy): Promise<GenerateR
   const userId = await currentUserId();
   if (!userId) return { ok: false, error: "Sign in to generate meals." };
 
-  // Pantry + taste signals together in one tenant tx; the LLM call happens after it closes.
-  const { pantry, signals } = await withTenant(getDb(), userId, async (tx) => ({
-    pantry: await getPantryView(tx, userId),
-    signals: await loadPreferenceSignals(tx, userId),
-  }));
+  // Pantry + taste signals together in one tenant tx; the LLM call happens after it closes. A DB
+  // failure here must degrade to a friendly error like everything else in this action (per the
+  // contract in the docstring above) rather than throw an uncaught error to the client.
+  let pantry: Awaited<ReturnType<typeof getPantryView>>;
+  let signals: Awaited<ReturnType<typeof loadPreferenceSignals>>;
+  try {
+    ({ pantry, signals } = await withTenant(getDb(), userId, async (tx) => ({
+      pantry: await getPantryView(tx, userId),
+      signals: await loadPreferenceSignals(tx, userId),
+    })));
+  } catch {
+    return { ok: false, error: "Couldn't load your pantry right now — try again." };
+  }
 
   const inStock = pantry.filter((p) => p.status === "in_stock" || p.status === "low");
   if (inStock.length === 0) return { ok: false, error: "Your pantry's empty — add items first." };
