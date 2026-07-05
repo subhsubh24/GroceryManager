@@ -307,6 +307,8 @@ Subscription is the **only** revenue stream in v1 (no affiliate ordering — see
 
 - [ ] **§11 marketing media-gen adapter (image + video + music + voiceover).** Build the thin media-gen adapter (GTM_STANDARD §11) so the marketing loop produces multi-format creative on the EXISTING Gemini key: IMAGE (Nano Banana), VIDEO (Gemini Omni Flash), MUSIC (Lyria 3), VOICEOVER (Gemini TTS) — a video can carry soundtrack and/or narration from the same key. Route via `getProvider`/`geminiProvider` + the Interactions API. Every asset passes the maker≠checker not-obviously-AI + FTC audit before publish; cost-governed; preview ids pinned. Stages creative pre-launch, publishes only post-§13-approval on a connected channel. Build epic: #442.
 
+- [ ] **§34 pre-launch funnel — public demo of the core aha + gated beta.** Replace the blank waitlist with: a public, no-account, bounded + HARDENED (Track H) demo of the core aha (paste or snap a grocery receipt → watch it auto-fill a pantry list, no…) that goes live only after it clears the quality bar, driving the waitlist; then a gated-beta invite mechanism (waitlist → codes → real app, site gate up for others) yielding the first real PMF cohort. Full product stays gated; demo/beta build is autonomous + quality-gated, traffic/invites post-§13-Gate-1, public launch = Gate 2. Build epic: #453.
+
 ## Track F — World-class quality, validation & evals
 Quality is continuously re-validated in DEPTH — **enforced gates on every change + complete evals +
 periodic deep audits** — NOT a pretense of re-reading every character every run. Each item is a real,
