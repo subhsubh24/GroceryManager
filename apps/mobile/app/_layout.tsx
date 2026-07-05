@@ -8,14 +8,14 @@ function AppStack() {
   if (!ready) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator size="large" color="#13a14a" />
+        <ActivityIndicator size="large" color="#0c8a3e" />
       </View>
     );
   }
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: "#13a14a" },
+        headerStyle: { backgroundColor: "#0c8a3e" },
         headerTintColor: "#ffffff",
         headerTitleStyle: { fontWeight: "600" },
       }}
