@@ -107,7 +107,12 @@ export default function WrappedScreen() {
     );
   }
 
-  const empty = !stats || (stats.homeCookedMeals === 0 && stats.totalSpentCents === 0 && stats.topRecipes.length === 0);
+  const empty =
+    !stats ||
+    (stats.homeCookedMeals === 0 &&
+      stats.totalSpentCents === 0 &&
+      stats.topRecipes.length === 0 &&
+      stats.itemsExpired === 0);
 
   if (empty) {
     return (
