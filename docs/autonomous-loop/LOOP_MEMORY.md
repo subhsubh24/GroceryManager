@@ -4,6 +4,64 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-05 (run 50) — DEEP AUDIT (6-Haiku lens sweep, due since run 47 ~24h/3 runs) + 2 file-disjoint
+  clears (#429 mobile/v1 route error-hardening / #430 units multi-hop test coverage); all 4 Sonnet reviews
+  (2 per PR) APPROVE first-pass; 0 abandons.** Baseline gate green (typecheck 0 across all packages, 867
+  core tests, scorecard **A** as_of 2026-07-03, self-validation 5/5 / 0 unmet). Six read-only Haiku lenses
+  over the whole repo:
+  (1) **SECURITY/RLS/Track-G — CLEAN (NO REAL FINDINGS).** Re-verified: all public tables RLS-enabled
+  (0002/0010/0016 + 0011–0020 enable at creation); rate limits on every paid/expensive/auth route (incl. the
+  once-open discover POST swipe write, 30/60s — confirmed closed); every external `fetch()` carries an
+  `AbortSignal.timeout` (the #422 sweep holds — 8 modules re-checked); timing-safe webhook sig verification
+  (Stripe/RevenueCat/Gmail); server-side entitlements; captcha fail-closed in prod; DIRECT_DATABASE_URL the
+  only optional env, with a loud fallback. No secret committed.
+  (2) **CORRECTNESS/DEAD-CODE — CLEAN.** Quantity-parse siblings (cook/consume/import) consistent; EWMA
+  repurchase-cadence rate + spoilage ceiling by design; reorder/nutrition/vision-reconcile/units all correct;
+  no TODO/FIXME debt on live paths. (Re-confirmed the recurring by-design items so a future scout doesn't
+  re-flag them.)
+  (3) **ARTIFACTS/FRESHNESS — CLEAN.** Pricing matches billing config EXACTLY across every surface
+  (499/3999 mo/yr, 999/7999 Family == BUSINESS_CASE == store metadata == landing page); PREMIUM_FEATURES
+  matches docs; BUSINESS_CASE_SUMMARY YAML valid, arr_year1.base 33450 reconciles with the body (730 × $3.82
+  × 12). No drift.
+  (4) **PERF/DEPS — CLEAN.** Hot paths (home/digest/pantry) already `Promise.all`-parallelized; zero
+  `as any`/`: any` on data boundaries; lint --max-warnings=0; lucide pinned 0.460.0. The 279KB edge
+  middleware + missing CI perf-budget gate stay the sole below-A (perf, non-ship-critical) item — tracked in
+  #320, correctly NOT re-litigated (the middleware auth-rewrite is break-the-whole-site risk for an
+  unattended run; the CI gate is a `.github/` owner item).
+  (5) **DESIGN/A11Y — only low-value internal-admin items (deferred).** admin/growth + admin/waitlist
+  section-title `<p>`s (WCAG 1.3.1) + two raw `text-amber-600`/`text-green-600` tokens on admin/growth. All
+  admin-only, owner-internal, never store-reviewed — historically deferred (run 45) as reasonably out of
+  scope; skipped again (not a clear value-bar clear; a future dedicated admin design/dark-mode pass, not a
+  per-element hack).
+  (6) **MOBILE/FUNCTIONAL — 2 real findings, BOTH shipped as #429.** (a) three routes called the DB OUTSIDE
+  any try/catch (mobile/recipes/[id], v1/pantry, v1/list) → a transient DB/upstream failure escaped as an
+  uncaught HTML 500 to a JSON mobile client — the exact "hunt the uncaught throw" class #427 hardened for
+  auth/profile/onboarding but these were missed; (b) six bare `catch {}` blocks (cooked/digest/discover-POST/
+  push-token×2/v1-auth-token) returned a 500 with NO server-side log — the #427 "blind 500 = half the fix"
+  G3 gap. Wrapped (A) + `serverError()` and logged (B) + `console.error`. Discriminated-union mobile-cast
+  audit (the #426 class) came back CLEAN — discover/spend/plan/wrapped all guard both arms.
+  **#429 — completing a hardening sweep is legitimate high-value work, not churn.** A prior run (#427) fixes
+  the same class on SOME routes; the disciplined follow-up is to grep the WHOLE surface (`grep -rn catch
+  apps/web/app/api/mobile apps/web/app/api/v1`) and finish it, distinguishing the routes that still need it
+  from the ones deliberately left (fail-open tier degrade §32; JSON-parse-400 client errors; JWT-verify
+  helpers that MUST stay silent-null — logging invalid tokens = enumeration/spam noise). Both reviewers
+  independently confirmed the left-as-is set was correct. **LESSON (reusable): when hardening a class of
+  route, enumerate EVERY handler + classify each (needs-wrap / needs-log / correctly-silent) — a
+  "completed" sweep from a prior run can still leave siblings, and the silent-by-design cases (token verify,
+  parse-400) are as important to NOT touch as the real gaps are to fix.**
+  **#430 — a foundational pure engine can hold a genuinely-untested branch even in an 82%-covered module.**
+  The UnitConverter's `item_base` 2-hop BFS chain (factor product + min-confidence + reverse-edge traversal)
+  had zero tests; only identity/global/1-hop-item/heuristic/null were covered. Added 4 exact-value tests
+  (forward chain, reverse-edge chain, direct-beats-indirect precedence, the `unit()` getter). Reviewer B's
+  useful note: the two live callers (log-cook/ingest) currently pass no `itemConversions` (defaults `[]`) and
+  no DB table backs `ItemConversion` yet — so item/item_base are **dormant-but-real** pure infrastructure
+  (tested engine, not yet fed live data — the H11-cohort-builder pattern). Testing it extends the file's own
+  documented "pure + dependency-free so it's exhaustively testable" pattern; NOT an impossible case.
+  **Readiness:** did NOT open the 'ready' issue — the sole open DoD gap is unchanged (reach-gated
+  business-case floor, base ≈ $33K < $100K = downloads/mo = owner GTM #190); the monetization/business-case
+  lens re-confirmed no buildable floor-mover (prices/tiers/conversion/retention/referral levers all built).
+  Confidence statement stays UNCHECKED. A full 6-lens deep audit (5 CLEAN, 1 design deferred, 1 mobile
+  cluster shipped) + 2 real reviewed clears = a coherent, converged run.
 - **2026-07-04 (run 49) — 5-Haiku scout sweep + 2 file-disjoint clears (#426 mobile Discover paywall
   dead-end / #427 mobile-route uncaught-throw hardening); 0 abandons; 6 Sonnet reviews (4 first-pass +
   2 re-review) all APPROVE.** No deep audit (run 47 same day). Baseline green (typecheck 0, 867 core

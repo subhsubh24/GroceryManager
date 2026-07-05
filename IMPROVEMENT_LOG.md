@@ -4,6 +4,47 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-05 (run 50) — DEEP AUDIT (6-lens) + 2 file-disjoint clears (mobile/v1 route hardening + units test coverage); 0 abandons
+
+Deep audit due (last standalone was run 47, 3 runs / ~24h ago). Baseline gate green: typecheck 0 across
+all packages, 867 core tests, scorecard **A** (as_of 2026-07-03, ship_gate_met), self-validation 5/5
+(0 unmet). Six read-only Haiku lenses over the whole repo — **five CLEAN** (security/RLS+Track-G,
+correctness/dead-code, artifacts/freshness, perf/deps, + the discriminated-union mobile-cast re-audit),
+**one design finding deferred** (low-value internal-admin: admin section-title `<p>` semantics + raw
+amber/green tokens — owner-internal, never store-reviewed, run-45 precedent), and **one mobile/functional
+cluster shipped**. Monetization/business-case re-confirmed **reach-gated** — prices/tiers/conversion/
+retention/referral levers all built; the $33K→$100K gap is downloads/mo = owner GTM (#190), not code.
+
+- **#429 — completed the mobile/v1 API route error-hardening sweep #427 started.** Two classes, both to the
+  established G3 convention (`serverError()` / `console.error` → log full context server-side, return a
+  generic message): **(A)** three routes (`mobile/recipes/[id]`, `v1/pantry`, `v1/list`) called the DB
+  OUTSIDE any try/catch — a transient DB/upstream failure escaped as an uncaught HTML 500 to a JSON mobile
+  client (which only checks `res.ok`) → wrapped + `serverError()`; **(B)** six bare `catch {}` blocks
+  (`cooked`, `digest`, `discover` POST, `push-token` POST+DELETE, `v1/auth/token`) returned a 500 with NO
+  server-side trace (the #427 "blind 500 = half the fix" gap) → bound `catch (err)` + `console.error`,
+  client message unchanged. **Left silent-by-design (both reviewers confirmed):** `mobile/profile` fail-open
+  tier degrade (§32), `mobile/auth` JSON-parse→400, and the JWT-verify helpers (logging every invalid token
+  = enumeration/spam noise). **Lesson:** when hardening a class of route, enumerate EVERY handler + classify
+  each (needs-wrap / needs-log / correctly-silent) — a prior "completed" sweep can still leave siblings, and
+  the silent-by-design cases are as important to NOT touch as the real gaps are to fix.
+
+- **#430 — covered the untested UnitConverter `item_base` multi-hop path.** The 2-hop BFS chain (factor
+  product + `min` confidence + reverse-edge traversal) — foundational to pantry conversion math — had zero
+  tests; only identity/global/1-hop-item/heuristic/null were covered. Added 4 exact-value tests (forward
+  chain, reverse-edge chain, direct-beats-indirect precedence, the `unit()` getter). Reviewer B's note: the
+  live callers pass no `itemConversions` yet + no DB table backs `ItemConversion`, so item/item_base are
+  **dormant-but-real** pure infrastructure (tested engine, not yet fed live data — the H11-cohort pattern);
+  testing it extends the file's own "pure + exhaustively testable" pattern, not an impossible case.
+
+All 4 Sonnet reviews (2 per PR) APPROVE first-pass; 0 re-reviews; 0 abandons. Reviewer A on #430
+independently re-traced every qty/confidence/method value + re-ran the suite. Gate green on both.
+
+**Readiness:** did NOT open the 'ready' issue — sole open DoD gap unchanged (reach-gated floor #190, base
+≈ $33K < $100K, owner-GTM). Confidence statement stays **UNCHECKED**. A full 6-lens deep audit + 2 real
+reviewed clears = a coherent, converged run.
+
+---
+
 ## 2026-07-04 (run 49) — 5-Haiku scout sweep + 2 file-disjoint clears (mobile funnel + route hardening); 0 abandons
 
 No deep audit (run 47 ran a 6-lens standalone same day; not due). Baseline gate green: typecheck 0
