@@ -95,6 +95,7 @@ export function CookMode({
                 key={f}
                 type="button"
                 onClick={() => setFactor(f)}
+                aria-pressed={factor === f}
                 className={`tab ${factor === f ? "tab-active" : "tab-idle"}`}
               >
                 ×{f}
