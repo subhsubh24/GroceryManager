@@ -150,7 +150,10 @@ export async function POST(req: Request) {
     );
     await withTenant(getDb(), userId, (tx) => recordSwipeSignals(tx, userId, signals));
     return Response.json({ ok: true });
-  } catch {
+  } catch (err) {
+    // Log full context server-side (G3 error-hygiene) so the failure is diagnosable; mirrors the
+    // GET handler above which already logs via console.error.
+    console.error("[mobile/discover:POST]", err);
     return Response.json({ error: "Failed to record swipe" }, { status: 500 });
   }
 }

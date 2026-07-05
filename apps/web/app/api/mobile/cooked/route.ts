@@ -29,7 +29,10 @@ export async function GET(req: Request) {
         fatG: m.fatG,
       })),
     });
-  } catch {
+  } catch (err) {
+    // Log full context server-side (G3 error-hygiene) so the failure is diagnosable; the caller
+    // still gets a generic message.
+    console.error("[mobile/cooked]", err);
     return Response.json({ error: "Failed to load cook log" }, { status: 500 });
   }
 }

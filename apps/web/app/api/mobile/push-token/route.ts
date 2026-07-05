@@ -47,7 +47,9 @@ export async function POST(req: Request) {
       registerMobilePushToken(tx, { userId, token, deviceId }),
     );
     return Response.json({ ok: true });
-  } catch {
+  } catch (err) {
+    // Log full context server-side (G3 error-hygiene) so the failure is diagnosable.
+    console.error("[mobile/push-token:POST]", err);
     return Response.json({ error: "Failed to register token" }, { status: 500 });
   }
 }
@@ -78,7 +80,9 @@ export async function DELETE(req: Request) {
       deregisterMobilePushToken(tx, { userId, token }),
     );
     return Response.json({ ok: true });
-  } catch {
+  } catch (err) {
+    // Log full context server-side (G3 error-hygiene) so the failure is diagnosable.
+    console.error("[mobile/push-token:DELETE]", err);
     return Response.json({ error: "Failed to deregister token" }, { status: 500 });
   }
 }

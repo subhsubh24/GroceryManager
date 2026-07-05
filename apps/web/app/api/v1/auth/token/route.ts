@@ -55,7 +55,10 @@ export async function POST(req: Request) {
       .setExpirationTime("30d")
       .sign(getSecret());
     return NextResponse.json({ token });
-  } catch {
+  } catch (err) {
+    // Log full context server-side (G3 error-hygiene) so the failure is diagnosable; the caller
+    // still gets a generic message (no schema/stack leak).
+    console.error("[v1/auth/token]", err);
     return NextResponse.json({ error: "internal error" }, { status: 500 });
   }
 }

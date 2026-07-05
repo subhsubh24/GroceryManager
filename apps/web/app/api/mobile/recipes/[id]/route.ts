@@ -1,6 +1,7 @@
 import { getDb, loadRecipeForCook } from "@gm/db";
 import { TheMealDBProvider } from "@gm/core/recipe";
 import { verifyMobileToken } from "../../_lib";
+import { serverError } from "../../../_lib/guard";
 import { rateLimit, tooManyRequests } from "../../../_lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -25,11 +26,17 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const { id } = await params;
   if (!id) return Response.json({ error: "Recipe id required" }, { status: 400 });
 
-  const recipe = UUID.test(id)
-    ? await loadRecipeForCook(getDb(), id)
-    : await new TheMealDBProvider().getById(id);
+  try {
+    const recipe = UUID.test(id)
+      ? await loadRecipeForCook(getDb(), id)
+      : await new TheMealDBProvider().getById(id);
 
-  if (!recipe) return Response.json({ error: "Recipe not found" }, { status: 404 });
+    if (!recipe) return Response.json({ error: "Recipe not found" }, { status: 404 });
 
-  return Response.json({ recipe });
+    return Response.json({ recipe });
+  } catch (err) {
+    // A transient DB failure or upstream TheMealDB error must not escape as an uncaught 500
+    // (an HTML error page to a JSON mobile client). Log server-side (G3) + return a controlled JSON error.
+    return serverError("mobile/recipes-detail", err);
+  }
 }

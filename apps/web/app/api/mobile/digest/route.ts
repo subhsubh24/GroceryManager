@@ -32,7 +32,9 @@ export async function GET(req: Request) {
       totalCooks: meals.length,
       weeklyActivity: weeklyActivity(cookedAt, now, 8),
     });
-  } catch {
+  } catch (err) {
+    // Log full context server-side (G3 error-hygiene) so the failure is diagnosable.
+    console.error("[mobile/digest]", err);
     return Response.json({ error: "Failed to load stats" }, { status: 500 });
   }
 }
