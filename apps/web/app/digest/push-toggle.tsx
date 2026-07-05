@@ -60,7 +60,11 @@ export function PushToggle({ vapidPublicKey }: { vapidPublicKey: string | null }
         setMsg("Couldn't read the subscription keys.");
         return;
       }
-      await savePushSubscriptionAction({ endpoint: sub.endpoint, p256dh: keys.p256dh, auth: keys.auth });
+      const res = await savePushSubscriptionAction({ endpoint: sub.endpoint, p256dh: keys.p256dh, auth: keys.auth });
+      if (!res.ok) {
+        setMsg("Couldn't save your subscription — please try again.");
+        return;
+      }
       setSubscribed(true);
       setMsg("Notifications are on.");
     } catch (e) {
@@ -77,7 +81,11 @@ export function PushToggle({ vapidPublicKey }: { vapidPublicKey: string | null }
       const reg = await navigator.serviceWorker.getRegistration();
       const sub = await reg?.pushManager.getSubscription();
       if (sub) {
-        await removePushSubscriptionAction(sub.endpoint);
+        const res = await removePushSubscriptionAction(sub.endpoint);
+        if (!res.ok) {
+          setMsg("Couldn't turn notifications off — please try again.");
+          return;
+        }
         await sub.unsubscribe();
       }
       setSubscribed(false);

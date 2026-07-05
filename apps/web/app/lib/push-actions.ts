@@ -15,29 +15,44 @@ export interface PushSubInput {
 export async function savePushSubscriptionAction(sub: PushSubInput): Promise<{ ok: boolean }> {
   const userId = await currentUserId();
   if (!userId) return { ok: false };
-  await withTenant(getDb(), userId, (tx) => savePushSubscription(tx, userId, sub));
-  return { ok: true };
+  try {
+    await withTenant(getDb(), userId, (tx) => savePushSubscription(tx, userId, sub));
+    return { ok: true };
+  } catch (err) {
+    console.error("savePushSubscriptionAction failed", err);
+    return { ok: false };
+  }
 }
 
 export async function removePushSubscriptionAction(endpoint: string): Promise<{ ok: boolean }> {
   const userId = await currentUserId();
   if (!userId) return { ok: false };
-  await withTenant(getDb(), userId, (tx) => deletePushSubscription(tx, endpoint));
-  return { ok: true };
+  try {
+    await withTenant(getDb(), userId, (tx) => deletePushSubscription(tx, endpoint));
+    return { ok: true };
+  } catch (err) {
+    console.error("removePushSubscriptionAction failed", err);
+    return { ok: false };
+  }
 }
 
 /** Send the user their current digest as a push (or a plain test note on a quiet week). */
 export async function sendTestPushAction(): Promise<{ ok: boolean; message: string }> {
   const userId = await currentUserId();
   if (!userId) return { ok: false, message: "Not signed in." };
-  const digest = await withTenant(getDb(), userId, (tx) => buildDigestForUser(tx, userId));
-  const notification = buildDigestNotification(digest) ?? {
-    title: "GroceryManager",
-    body: "Notifications are on — you'll get your Sunday briefing here.",
-    url: "/digest",
-  };
-  const res = await sendNotificationToUser(userId, notification);
-  if (res.skipped === "no-vapid") return { ok: false, message: "Notifications aren't configured (set VAPID keys)." };
-  if (res.skipped === "no-subscriptions") return { ok: false, message: "No device is subscribed yet." };
-  return { ok: true, message: `Sent to ${res.sent} device${res.sent === 1 ? "" : "s"}.` };
+  try {
+    const digest = await withTenant(getDb(), userId, (tx) => buildDigestForUser(tx, userId));
+    const notification = buildDigestNotification(digest) ?? {
+      title: "GroceryManager",
+      body: "Notifications are on — you'll get your Sunday briefing here.",
+      url: "/digest",
+    };
+    const res = await sendNotificationToUser(userId, notification);
+    if (res.skipped === "no-vapid") return { ok: false, message: "Notifications aren't configured (set VAPID keys)." };
+    if (res.skipped === "no-subscriptions") return { ok: false, message: "No device is subscribed yet." };
+    return { ok: true, message: `Sent to ${res.sent} device${res.sent === 1 ? "" : "s"}.` };
+  } catch (err) {
+    console.error("sendTestPushAction failed", err);
+    return { ok: false, message: "Couldn't send the test notification — please try again." };
+  }
 }
