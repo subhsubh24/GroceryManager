@@ -4,6 +4,64 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-05 (run 52) — 5 file-disjoint clears from a 5-Haiku scout sweep (#447 push {ok}-contract /
+  #448 import save DB-degrade / #449 cook-mode aria-pressed / #450 spend week-period test / #451 mobile
+  Wrapped empty-state); 10 Sonnet reviews (2 per PR), 9 APPROVE first-pass + 1 REQUEST_CHANGES (honored);
+  0 abandons. No deep audit (run 50 ran a full 6-lens same day, <24h).** Baseline gate green (typecheck 0
+  across all packages, 872 core tests after +1, scorecard **A** as_of 2026-07-05, self-validation 5/5 / 0
+  unmet, production build clean, mobile typecheck 0). Five read-only Haiku scout lenses (web
+  reliability/correctness, security/Track-G, mobile parity, design/a11y/taste, test-coverage+artifacts);
+  security **CLEAN** (no new gaps since run 50); artifacts **CLEAN** (pricing matches everywhere). Verified
+  every candidate against the code before selecting; correctly REJECTED several scout false positives.
+  - **#447 — three push-subscription actions violated their own `{ok}` contract AND drove a fake success.**
+    `savePush/removePush/sendTestPushAction` all declare `Promise<{ok}>` but the `withTenant`/DB (and
+    `sendNotificationToUser`) calls sat outside try/catch → uncaught throw. Worse, `push-toggle.tsx` IGNORED
+    the returned `ok`: the existing not-signed-in `{ok:false}` path (and any DB failure) still rendered
+    "Notifications are on." — a fake success (SIDE-EFFECT INTEGRITY violation) — and `sendTestPushAction`
+    throwing left the Test button stuck busy (rejected promise outside the client try/catch). Wrapped all
+    three (return `{ok:false}` + server-side `console.error`) AND made enable()/disable() check `res.ok`
+    and surface a real failure message. Reviewer A confirmed the disable() ordering is correct (local
+    `sub.unsubscribe()` only after the server delete succeeds — no client/server desync).
+  - **#448 — the one exit in `saveImportedRecipeAction` that DIDN'T degrade.** Every other exit (bad JSON,
+    empty title) redirects with `?error=`, but the `saveImportedRecipe(getDb(),…)` DB write threw uncaught
+    to the Next error boundary. Wrapped it → `redirect("/import?error=…")`; success `redirect(/cook/${id})`
+    stays OUTSIDE the try (NEXT_REDIRECT not swallowed; `redirect()` is typed `never` so `id` is definitely
+    assigned — no TS2454). Same #436/#437 class. NOT a fake success: on failure the user hits an explicit
+    error redirect, never a false "saved". (Reviewer A note for a FUTURE audit: `saveImportedRecipe` uses
+    plain `getDb()` not `withTenant` — pre-existing, out of scope; verify RLS/tenant-scoping of the recipe
+    write in a later pass.)
+  - **#449 — cook-mode's ×1/×2/×3 scale toggles were visually-selected-only.** They carry `tab-active`/
+    `tab-idle` but exposed NO state to assistive tech — a screen-reader user couldn't tell which scale was
+    active. Added `aria-pressed={factor===f}` (the single-select toggle-button semantic). **NOTE the run-51
+    false-positive correction:** run 51 rejected a scout claiming these tabs "don't exist" and that they
+    needed aria-LABELS — the tabs DO exist (cook-mode.tsx:93), and the missing piece was aria-PRESSED (state),
+    not a label (the "×N" text already names them). Reviewer B (Sonnet) REQUEST_CHANGES'd my first cut for
+    ALSO adding a redundant `aria-label="Scale ingredients by N"` (reintroduces the prior-rejected change +
+    label/visible-text drift risk); honored — dropped the label, kept aria-pressed. **LESSON: a prior
+    rejection can be RIGHT about the specific fix (no aria-label) while WRONG about the premise (tabs exist);
+    separate the two — the real gap was the state semantic, and don't smuggle the rejected change back in.**
+  - **#450 — spend `spendByPeriod` "week" branch had zero tests.** Only "month" was covered; the Monday-of-week
+    math (`(getUTCDay()+6)%7`, incl. folding Sunday back to the prior Monday) was untested deterministic date
+    logic. Added an exact-value test hitting the Sunday-boundary case the offset exists for (Sun 06-14 → Mon
+    06-08 week). Two Sonnet reviewers independently hand-verified the calendar arithmetic (2026-06-01 is a
+    Monday; all five date→week mappings + sums exact). Extends the module's "pure + exhaustively testable"
+    pattern (the #430 UnitConverter precedent).
+  - **#451 — mobile Grocery Wrapped (PREMIUM) hid an expired-items-only summary.** The `empty` guard tested
+    cooked/spent/topRecipes but NOT `itemsExpired`, so a paying user who let items expire but hadn't cooked/
+    spent/saved saw "Nothing yet" while the render path HAD a populated `itemsExpired` warning card it never
+    showed. Added `&& stats.itemsExpired === 0`. Reviewer A verified `estSavedCents` needs no separate term
+    (derived from cooked meals → 0 when cooked===0, via `Math.max(0, homeCookedMeals * perMealSaving)`); the
+    state is reachable (pantry items added via manual/capture can expire with zero spend).
+  **LESSON (grep-verdict extraction is a trap):** a shell `grep -oE "APPROVE|REQUEST_CHANGES"` over a
+  subagent's raw JSONL transcript matched the PROMPT-ECHO (my own instructions quoting both verdict strings),
+  not the final verdict — it falsely showed 3 REQUEST_CHANGES. The reliable read is the completion
+  NOTIFICATION's `<result>` block, or a JSON parse of the LAST assistant text block. 4 of the 5 "rejections"
+  were phantom; only the cook aria-label one was real.
+  **Readiness:** did NOT open the 'ready' issue — the sole open DoD gap is unchanged (reach-gated
+  business-case floor #190, base ≈ $33K < $100K at median inputs = downloads/mo = owner GTM, not a buildable
+  lever). Confidence statement stays UNCHECKED. 5 real clears + honored 1 review + phantom-rejection lesson =
+  a coherent converged run.
+
 - **2026-07-05 (run 51) — 4 file-disjoint clears from a 6-Haiku scout sweep (#435 /support store-404 alias /
   #436 make-action DB-degrade / #437 household server-action uncaught-throw hardening / #438 mobile brand-color);
   all 8 Sonnet reviews (2 per PR) APPROVE first-pass; 0 abandons. No deep audit (run 50 ran a full 6-lens one
