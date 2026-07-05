@@ -305,6 +305,8 @@ Subscription is the **only** revenue stream in v1 (no affiliate ordering — see
 > **Marketing 100% bar:** you could launch demand-generation the SAME DAY the owner connects + funds
 > the accounts — nothing left to write, design, or wire on your side.
 
+- [ ] **§11 marketing media-gen adapter (image + video + music + voiceover).** Build the thin media-gen adapter (GTM_STANDARD §11) so the marketing loop produces multi-format creative on the EXISTING Gemini key: IMAGE (Nano Banana), VIDEO (Gemini Omni Flash), MUSIC (Lyria 3), VOICEOVER (Gemini TTS) — a video can carry soundtrack and/or narration from the same key. Route via `getProvider`/`geminiProvider` + the Interactions API. Every asset passes the maker≠checker not-obviously-AI + FTC audit before publish; cost-governed; preview ids pinned. Stages creative pre-launch, publishes only post-§13-approval on a connected channel. Build epic: #442.
+
 ## Track F — World-class quality, validation & evals
 Quality is continuously re-validated in DEPTH — **enforced gates on every change + complete evals +
 periodic deep audits** — NOT a pretense of re-reading every character every run. Each item is a real,
