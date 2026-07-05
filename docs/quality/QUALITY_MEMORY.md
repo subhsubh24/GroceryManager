@@ -5,6 +5,50 @@ new grade against the last entry. Append-only; newest entry on top.
 
 ---
 
+## 2026-07-05 — HELD: overall A, ship gate MET, 8/9 dims at A (no change from 07-03)
+
+**Overall: A. Ship gate: MET.** Mechanical gate this run: typecheck PASS (exit 0), `@gm/core` tests
+PASS (94 files pass / 10 skipped; 871 tests pass / 26 skipped — up from 844; coverage lines 87.04 /
+branches 87.63 / functions 90.66 — thresholds 70/84/76/70 met), production `next build` PASS (no
+missing-export warnings; 102 kB shared first-load; middleware reported 88.5 kB = gzip of an
+**unchanged** 279,931-byte raw edge bundle, re-verified byte-identical to last cycle). Graded by 9
+fresh adversarial per-dimension subagents, none having written the code.
+
+**No dimension moved.** functional_reality **A**, correctness_reliability **A**, security **A**,
+design_taste **A**, launch_readiness **A** (all SC), tests_evals **A**, artifact_integrity **A**,
+business_case **A**, performance **B**. 48 commits since 07-03 (bookkeeping runs 46-51 + hardening:
+uncaught-throw→degrade #427/#429/#436/#437, store-404 alias #435, a11y contrast #418, mobile brand
+color #438, new unit tests #419/#430) — all verified genuine improvements, **none a regression, none
+closed the performance gap**. Security grader now enumerates **39** api routes (was 38), all with
+server-side auth; correctness grader confirmed the #437 acceptInviteAction keeps `redirect()` OUTSIDE
+the try/catch (avoids swallowing Next's redirect throw) — a correct hardening.
+
+**performance held at B (the ONLY below-A dim, unchanged from #320).** Both standing gaps CONFIRMED
+still open by an independent grader: (1) no CI perf-budget gate — grep of `.github/workflows/*.yml`
+for `bundlesize|lighthouse|size-limit|budget` = only two prose comments about e2e per-request
+timeouts (`ci.yml:186`, `evals.yml:28`), no real gate; (2) `.next/server/middleware.js` = 279,931
+bytes, byte-identical to last cycle (`middleware.ts:1,6` next-auth/jose on the edge, broad matcher
+`:112-114`). It is the only thing keeping overall off A+.
+
+**Grader nits kept at A (second-order, non-blocking A→A+ polish):** launch_readiness — RevenueCat
+event→tier map (`webhooks/revenuecat/route.ts:32-49`) still inline+unexported with no unit test (same
+carried nit); design_taste — two raw Unicode glyphs (`✓`, `→`) as UI chrome in `cook-mode.tsx:181,190`
+instead of registry icons; security — two parallel mobile-token schemes (AUTH_SECRET HMAC vs
+NEXTAUTH_SECRET jose), avoidable surface, independently confirmed NOT exploitable (HMAC verifier
+ignores JWT alg, always recomputes HS256); tests_evals — line/stmt/func floors carry ~17pts slack
+(only the branches=84 floor ratchets); artifact_integrity — mobile README says "18 screens" but one
+is `_layout.tsx` (17 screens). All non-blocking.
+
+**Issues this run:** #320 (performance) left open + accurate (both gaps re-confirmed this cycle) — no
+refile needed. No ship-critical regression → no owner notification (dashboard = this scorecard). #190
+(honest revenue FYI) unchanged.
+
+**What "raise to A+" looks like next run:** the perf-budget gate + edge-middleware trim (#320) closes
+`performance` → overall A+. Two bounded A→A+ polish tests on already-A ship-critical dims (RevenueCat
+event-map, cook-mode glyph swap) remain optional gold-avoidance.
+
+---
+
 ## 2026-07-03 — tests_evals B → A; 8/9 dims at A (overall A, ship gate MET)
 
 **Overall: A. Ship gate: MET.** Mechanical gate this run: typecheck PASS (exit 0), `@gm/core` tests
