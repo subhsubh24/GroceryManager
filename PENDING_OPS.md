@@ -12,9 +12,11 @@ The dashboard surfaces every `open` item, urgent first.
 ```yaml
 OWNER_ACTIONS:
   project: GroceryManager
-  as_of: "2026-07-04 (GTM run 8) — MAJOR: CRON_SECRET reachable for the first time; authenticated snapshot
-    pull confirms analytics/billing/email all genuinely connected in the deployed app (real round-trip
-    evidence, not self-report) — see docs/growth/GROWTH_STATUS.md + GROWTH_MEMORY.md run 8 for full detail."
+  as_of: "2026-07-05 (GTM run 9) — RE-VERIFIED, unchanged: a fresh authenticated snapshot pull returned an
+    identical payload to run 8 (all 4 sources still connected, funnel still 0/null); site gate still up.
+    Zero movement on the open Human-Core items below (eas-build-submit-go-live, connect-revenuecat-iap,
+    spend-caps, turnstile-keys, rotate-envl-secrets) since run 8 — see docs/growth/GROWTH_STATUS.md +
+    GROWTH_MEMORY.md run 9 for full detail, including the new GTM_STANDARD §13 marketing-gate tracking."
   items:
     - id: gtm-connect-waitlist
       title: "DONE: waitlist source connected — the Growth Agent's own read need is satisfied via CRON_SECRET"

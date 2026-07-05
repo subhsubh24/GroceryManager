@@ -39,35 +39,41 @@ the owner sees pre-launch / launch / post-launch growth progress in one place.
 ```yaml
 GROWTH_STATUS:
   project: GroceryManager
-  as_of: 2026-07-04 (run 8)
+  as_of: 2026-07-05 (run 9)
   phase: pre_launch              # pre_launch | launching | post_launch — NOT "launching" despite the
                                  #   snapshot API's own `phase` field (see below): ANALYSIS_PLAYBOOK's phase
                                  #   definition requires EVERY ship-critical QUALITY_SCORECARD dim A/A+ AND
-                                 #   the store live. QUALITY_SCORECARD is A/ship_gate_met (as_of 2026-07-03),
-                                 #   but PENDING_OPS `eas-build-submit-go-live` is still `status: open` — the
-                                 #   mobile store submission has NOT happened, so the store isn't live. The
-                                 #   snapshot route's `phase` field (see GROWTH_STATUS.sources note) is a
-                                 #   narrower code-level signal (stripeConnected && no active subs ->
-                                 #   "launching") that does NOT encode store-readiness — do not confuse the two.
+                                 #   the store live. QUALITY_SCORECARD is A/ship_gate_met (RE-CONFIRMED
+                                 #   as_of 2026-07-05, unchanged grade from 2026-07-03), but PENDING_OPS
+                                 #   `eas-build-submit-go-live` is still `status: open` — the mobile store
+                                 #   submission has NOT happened, so the store isn't live. The snapshot
+                                 #   route's `phase` field (see GROWTH_STATUS.sources note) is a narrower
+                                 #   code-level signal (stripeConnected && no active subs -> "launching")
+                                 #   that does NOT encode store-readiness — do not confuse the two.
   engine_built: true             # MUST equal (engine_pct == 100); preflight enforces it against real anchor files
   engine_pct: 100                # % of growth-execution engine pieces shipped — DERIVED from anchor files by preflight; NEVER hand-set
-  channels_connected: [email]    # REAL, VERIFIED THIS RUN (run 8) via authenticated GET /api/growth/snapshot
-                                 #   (Bearer $CRON_SECRET, which was present in this run's environment for the
-                                 #   FIRST time in 8 runs): emailConnected:true (a RESEND_API_KEY-class key is
-                                 #   set in the deployed app). Analytics + billing are real too but are
+  channels_connected: [email]    # RE-VERIFIED THIS RUN (run 9) via a FRESH authenticated GET
+                                 #   /api/growth/snapshot call (Bearer $CRON_SECRET, again present in this
+                                 #   run's environment) — payload identical to run 8's: emailConnected:true (a
+                                 #   supported provider key is set). Analytics + billing are real too but are
                                  #   MEASUREMENT/MONETIZATION infra, not marketing "channels" in the
-                                 #   ANALYSIS_PLAYBOOK/§9 sense — tracked in `sources` below, not here.
-  awaiting_connect: false        # FLIPPED false this run — BOTH ANALYSIS_PLAYBOOK hard-block preconditions
-                                 #   are now met for the first time: (a) a real channel (email) is connected,
-                                 #   AND (b) site_gate_up is true. This does NOT mean automated outbound sends
-                                 #   start: GTM_STANDARD §6's LAUNCH GATE separately keeps BOTH outbound lanes
-                                 #   FULLY OFF until phase==post_launch / an explicit owner launch flag — that
-                                 #   gate is UNCHANGED and still blocks (see learnings). What DOES open: the
-                                 #   agent may act on real (not assumed) funnel/analytics/billing data instead
-                                 #   of all-null placeholders.
+                                 #   ANALYSIS_PLAYBOOK/§9 sense — tracked in `sources` below, not here. (Note:
+                                 #   the snapshot route's OWN `channels_connected` field now lists
+                                 #   ["analytics","billing","email"] — that is the route's broader code-level
+                                 #   definition; this dashboard deliberately keeps the narrower
+                                 #   marketing-channel definition established in run 8, unchanged.)
+  awaiting_connect: false        # Unchanged since run 8 — both ANALYSIS_PLAYBOOK hard-block preconditions
+                                 #   (a real channel connected + site_gate_up true) remain met. Still does NOT
+                                 #   mean automated outbound sends start: GTM_STANDARD §6's readiness gate AND
+                                 #   the NEW §13 two-gate approval system (added 2026-07-05, PR #441 — see the
+                                 #   new `marketing` block below) both keep outbound OFF until the owner
+                                 #   explicitly approves GATE 1. What DOES stay open: the agent acts on real
+                                 #   (not assumed) funnel/analytics/billing data instead of all-null placeholders.
   site_gate_up: true             # RE-VERIFIED THIS RUN via direct curl: home 200, /signup + /admin/waitlist
-                                 #   401 (identical split to runs 5-7) — SITE_GATE_PASSWORD still set, unchanged.
-  sources:                       # per-source pull status (H7 snapshot): connected | awaiting_connect
+                                 #   401 (identical split to runs 5-8) — SITE_GATE_PASSWORD still set, unchanged.
+  sources:                       # per-source pull status (H7 snapshot): connected | awaiting_connect —
+                                 #   RE-PROBED run 9 (fresh authenticated call, not inferred from run 8):
+                                 #   payload identical, all 4 still genuinely connected.
     waitlist: connected          # REAL THIS RUN: the authenticated snapshot (CRON_SECRET, NOT ADMIN_EMAIL)
                                  #   returned a genuine DB-derived total (0) via getWaitlistSubmissions — the
                                  #   routine's OWN read need is satisfied independent of ADMIN_EMAIL, which is
@@ -215,6 +221,41 @@ GROWTH_STATUS:
     owner_sent_7d: 0             # how many the OWNER actually sent (owner-reported)
     replies_7d: 0                # replies received (OWNER-reported — NEVER fabricated)
     signal: none                 # none | weak | emerging | strong  (0/none pre-launch)
+  marketing:                     # GTM_STANDARD §13 — the two-gate autonomous marketing-launch system (added
+                                 #   2026-07-05, PR #441; FIRST run this dashboard schema reflects it).
+    kill_switch: not_present     # checked FIRST, every run, per §13: docs/growth/MARKETING_HOLD does not
+                                 #   exist in this repo (verified via Glob this run) -> not held.
+    stage: prepare                # prepare | waitlist (after GATE 1 approval) | launch (after GATE 2)
+    gate_1_start_waitlist_outreach:
+      status: not_ready           # not_ready | awaiting_approval | approved
+      preconditions:
+        ship_gate_met: true         # QUALITY_SCORECARD.md as_of 2026-07-05 (independent Quality Auditor):
+                                     # overall A, ship_gate_met true, unchanged since 2026-07-03.
+        computer_use_e2e_sweep_green: false   # docs/autonomous-loop/VALIDATOR_STATUS.md does NOT exist
+                                     # (checked via Glob this run) — the §29 full computer-use E2E sweep has
+                                     # never actually RUN. ROADMAP.md:408 still shows this as an unchecked
+                                     # Product-Factory build item (epic #413); BROWSERBASE_API_KEY/
+                                     # BROWSERBASE_PROJECT_ID are already set + connectivity was proven
+                                     # 2026-07-04, so this is NOT an owner blocker — it's un-built product-
+                                     # factory work.
+        waitlist_launch_assets_reviewed: true  # the waitlist landing page, blog content (4 posts), and email
+                                     # lifecycle drafts are shipped and passed the normal maker!=checker PR
+                                     # gate; not a fresh pass against this specific §13 checklist, but no
+                                     # named gap against them either.
+      blocking_precondition: computer_use_e2e_sweep_green
+      note: "GATE 1 is NOT proposable this run — 2 of 3 preconditions hold, but the §29 sweep has never
+        produced a real VALIDATOR_STATUS.md. Correctly staying quiet rather than proposing early: §13 requires
+        ALL THREE, none self-certified. Once the Product Factory ships the sweep GREEN, this flips and the
+        Growth Agent should propose the waitlist plan + notify the owner the same run."
+    gate_2_launch:
+      status: not_ready
+      preconditions:
+        product_ready: true         # ship_gate_met true, but the STORE is not live (eas-build-submit-go-live
+                                     # still open) — ANALYSIS_PLAYBOOK's own phase-advance bar isn't met either.
+        validated_demand: false     # waitlist_signups_total is 0 (no outreach has started yet) — no demand
+                                     # signal to validate against.
+      note: "Not reachable until GATE 1 opens, the waitlist actually gathers real signups, AND the mobile
+        store submission (PENDING_OPS eas-build-submit-go-live) completes."
   learnings:
     - "FIRST RUN (2026-06-29): all funnel metrics 0/null — no analytics source connected. Cannot
       diagnose binding constraint until Plausible + admin email are set."
@@ -390,21 +431,47 @@ GROWTH_STATUS:
       all-null) than a license to start sending. No demand-signal research this run (prioritized correctly
       verifying + documenting this major infra change over incremental research). Did not touch
       ROADMAP/VISION/BUSINESS_CASE — this is a real-state status refresh, not a new causal finding."
+    - "RUN 9 (2026-07-05) — re-verification run + new §13 GATE tracking added; still `pre_launch`, still
+      honestly `0`/`null` on funnel/PMF. Re-pulled `GET /api/growth/snapshot` with a fresh `CRON_SECRET`
+      (present again this run) and got an IDENTICAL payload to run 8: all 4 sources connected, funnel all
+      0/null, the same 3 experiments running with null results. Re-curled the live URL directly: home 200,
+      `/signup`+`/admin/waitlist` still 401 — site gate unchanged. `git log` since run 8's merge showed 3 new
+      commits, none product/infra: #440 (independent quality re-audit, overall A held, ship_gate_met
+      unchanged true), #441 (GTM_STANDARD gained NEW §10 demand-auto-steer language + a NEW §13 two-gate
+      autonomous-marketing-launch system), #443 (a ROADMAP item for a future marketing media-gen adapter).
+      **Read #441's new §13 in full and added the `marketing` block to this dashboard** (first run reflecting
+      it) — checked its 3 GATE-1 preconditions against real evidence: `ship_gate_met` true (QUALITY_SCORECARD
+      as_of 2026-07-05), waitlist/launch assets shipped + reviewed (true), but the §29 full computer-use E2E
+      sweep has NEVER been run (`docs/autonomous-loop/VALIDATOR_STATUS.md` does not exist — confirmed via
+      Glob) — so GATE 1 is honestly `not_ready`, not proposed. This is Product-Factory build work (ROADMAP
+      item, epic #413), not an owner blocker (Browserbase keys are already live per ROADMAP.md:408) —
+      surfaced as a `next_action` for the product loop to pick up, not an `owner_blocker`. Closed run 7's
+      last open demand-signal thread: confirmed via a targeted search that grand-screen.com does not carry
+      an Out of Milk review page at all (a real negative, not a guessed-slug 404) — dead end, closing it.
+      Checked `MARKETING_HOLD`/`MARKETING_APPROVED` (both absent, as expected pre-approval) via Glob for the
+      new `marketing.kill_switch` field. Zero outreach drafted (OUTREACH.md's target-type categories remain
+      fully searched with no new qualifying target since run 7; also moot given GATE 1 is not open). No
+      ROADMAP/VISION/BUSINESS_CASE steer — no new causal, significant data this run."
   next_actions:
+    - "NEW (run 9, highest-leverage GTM-adjacent action): the §29 computer-use E2E sweep
+      (docs/autonomous-loop/VALIDATOR_STATUS.md) is the ONLY unmet precondition for GATE 1 (see the new
+      `marketing` block above) — it is Product-Factory build work (ROADMAP.md:408, epic #413), not an
+      owner action (Browserbase keys are already live). Flagging it here so the product loop (which reads
+      GROWTH_STATUS as a data signal per FACTORY_STANDARD §11) sees it is now gating a real GTM milestone,
+      not just a nice-to-have validator."
     - "STRIPE_SECRET_KEY mode (test vs live) is not observable from outside the app — ask the owner to
       confirm which mode is live before any business-case revenue claim relies on it (currently moot:
       active_subscribers is 0 either way)."
-    - "Email deliverability is UNCONFIRMED (key-presence only) — once GTM_STANDARD §6's launch gate opens
-      (post_launch / an explicit launch flag), the first real lifecycle send should be checked for actual
-      delivery (open_rate/click_rate moving off null) before trusting the channel for volume."
-    - "The single remaining blocker to genuine launch (which would open the §6 outbound gate) is
-      `eas-build-submit-go-live` (mobile store submission, Human-Core) — the biggest lever now is the owner
-      completing that step, not further GTM-side polishing; PMF-critical waitlist/analytics infra is now live
-      and just needs real traffic + a launch decision."
-    - "Next run: re-check GET /api/growth/snapshot behavior and whether ADMIN_EMAIL / PLAUSIBLE_API_KEY /
-      an email provider key have been set — re-verify via public HTTP / ListConnectors rather than
-      assuming the circuit-breaker items are still static (RUN 7 re-checked and confirmed: still zero
-      owner movement since run 6)."
+    - "Email deliverability is UNCONFIRMED (key-presence only) — once GATE 1 opens and the first real
+      lifecycle send fires, check for actual delivery (open_rate/click_rate moving off null) before
+      trusting the channel for volume."
+    - "The single remaining Human-Core blocker to genuine launch is `eas-build-submit-go-live` (mobile
+      store submission) — unchanged, still open, across run 8 -> run 9 (see owner_blockers circuit
+      breaker). `connect-revenuecat-iap` is the second real launch blocker, also unchanged."
+    - "Every run: re-pull `GET /api/growth/snapshot` with the fresh `CRON_SECRET` in this run's env (never
+      infer from `git fetch`/`ListConnectors` alone — FACTORY_STANDARD §28) and re-verify site_gate_up via
+      direct curl. RUN 9 did both: payload identical to run 8 (all 4 sources connected, funnel still all
+      0/null); site gate still up."
     - "Aggregator reliability (CORRECTED run 7): grand-screen.com's other listed pantry/grocery apps ARE
       fetchable and DO carry a real, on-theme barcode complaint — Grocery AI (correct slug:
       grocery-ai-shop-cook-pantry) surfaced Bill Garner's barcode-scan-failure review, now cited in
@@ -412,9 +479,11 @@ GROWTH_STATUS:
       (cookbook-recipe-manager) also load fine with real reviews, just none clearly on-theme this pass.
       IMPORTANT correction: a first pass this run used guessed/truncated URL slugs, got 404s, and
       wrongly logged that as 'the app has no reviews' — always verify the exact slug (search
-      'site:grand-screen.com <app name>' first) before treating a 404 as a real negative result. Out of
-      Milk was NOT re-tried with a corrected slug this run — a future run should retry it (correct slug
-      likely 'out-of-milk-grocery-shopping-list' or similar) before assuming it's unavailable."
+      'site:grand-screen.com <app name>' first) before treating a 404 as a real negative result. CLOSED
+      run 9: a targeted 'site:grand-screen.com out of milk grocery shopping list reviews' search returned
+      the aggregator's real indexed app list (AnyList, Our Groceries, My Pantry Tracker, My H-E-B,
+      AppSales) with no Out of Milk page anywhere in it — a genuine negative result (the aggregator does
+      not carry this app), not a guessed-slug 404. Do not re-attempt Out of Milk on grand-screen.com."
     - "Outreach: press/newsletter/food-tech-beat/general-landscape/frugal-living/integration-partner
       angles are ALL now searched (runs 2-7) with zero qualifying targets. RUN 7 closed the last untried
       angle from OUTREACH.md's target list (integration/distribution partners) — see learnings. No
@@ -425,44 +494,32 @@ GROWTH_STATUS:
       curated outreach emails (press/newsletter) — the HARD BLOCK needs both, and only site_gate_up is
       met so far."
   owner_blockers:
-    - "RESOLVED run 5 (verified 2026-07-03 via live HTTP behavior, not self-reported): SITE_GATE_PASSWORD
-      is set — site_gate_up: true. Re-confirmed unchanged run 6 and run 7 (2026-07-04, identical curl
-      behavior both times). No further owner action needed on this item; PENDING_OPS 'site-gate-
-      prelaunch' marked done below. (Remember to UNSET it at actual public launch.)"
-    - "CIRCUIT BREAKER RESOLVED run 8 (2026-07-04): the 3 items below (email provider key, PLAUSIBLE_API_KEY,
-      STRIPE_SECRET_KEY) that were stuck since run 5 are now CONFIRMED CONNECTED — verified via a real
-      authenticated `GET /api/growth/snapshot` round-trip (CRON_SECRET was present in this run's environment
-      for the first time), not a self-report. See `sources`/`validation` above + GROWTH_MEMORY run 8 for the
-      full evidence. ADMIN_EMAIL remains unverified but is now LOW priority (see below) since it only gates
-      the human /admin/waitlist UI — the routine's own read need is already satisfied via CRON_SECRET."
-    - "LOW (downgraded from HIGH, run 8): ADMIN_EMAIL — still unverified (site gate alone still fully
-      explains the /admin/waitlist 401), but no longer blocks the Growth Agent's own analytics: the
-      CRON_SECRET-authenticated snapshot already returns real waitlist/funnel numbers. Only worth setting
-      for the OWNER's own convenience browsing the human /admin/waitlist dashboard page directly."
-    - "RESOLVED run 8: email provider key (RESEND_API_KEY-class) is connected — confirmed via the real
-      snapshot pull (emailConnected:true). CAVEAT: deliverability itself is still unconfirmed (open_rate/
-      click_rate null) since GTM_STANDARD §6 keeps automated sends off pre-launch — first real send won't
-      happen until the launch gate opens."
-    - "RESOLVED run 8: PLAUSIBLE_API_KEY is connected — the Stats API round-trip in `GET
-      /api/growth/snapshot` succeeded and returned a real visitors_7d value (0, correctly, since no traffic
-      has been driven yet)."
-    - "RESOLVED (new discovery) run 8: STRIPE_SECRET_KEY is also connected — not previously confirmed by any
-      prior run. A real DB query for active subscribers succeeded and returned 0 (no paid conversions yet).
-      Whether the key is Stripe TEST or LIVE mode is not observable externally — worth an owner confirmation
-      before this feeds any revenue claim (currently moot at 0 subscribers)."
-    - "NORMAL (unchanged): Pick a final app name from NAMING_CANDIDATES.md (Pantri / Mise / Larder) —
-      all content assets currently use '[APP_NAME]' placeholder; this blocks final email/store copy."
-    - "URGENT (elevated emphasis, run 8): now that Stripe + Plausible + an email provider are confirmed LIVE
-      in the deployed app, PENDING_OPS `spend-caps` (HARD daily API spend caps in each provider dashboard)
-      is materially more urgent than when it was purely hypothetical — real paid surfaces are now active.
-      Still `status: open`; this routine cannot set spend caps itself (provider-dashboard, Human-Core)."
-    - "HIGH (real remaining blocker to genuine launch): `eas-build-submit-go-live` (mobile store submission)
-      is the ONE thing still standing between 'infra connected' and 'genuinely launched' — until it's done,
-      the store isn't live (ANALYSIS_PLAYBOOK's own phase-advance criterion), so `phase` correctly stays
-      `pre_launch` and GTM_STANDARD §6 keeps outbound off. This is now the single highest-leverage owner
-      action — everything GTM-side that doesn't need it is already done or honestly blocked on real traffic."
+    - "CIRCUIT BREAKER (now 2 runs / 1 day, 2026-07-04 -> 2026-07-05, zero movement on the Human-Core items
+      below): site_gate_up, analytics/billing/email connection, and the QUALITY_SCORECARD ship gate are all
+      RESOLVED and STABLE (re-verified run 9 via a fresh authenticated snapshot pull + a fresh live-HTTP
+      curl — see `sources`/`funnel` above). What has NOT moved since run 8, confirmed still `status: open` in
+      PENDING_OPS this run: `eas-build-submit-go-live` (mobile store submission), `connect-revenuecat-iap`
+      (mobile IAP), `spend-caps` (urgent), `turnstile-keys` (blocks launch-safety), `rotate-envl-secrets`. Per
+      FACTORY brakes, naming this prominently: the single highest-leverage pair is `eas-build-submit-go-live`
+      + `connect-revenuecat-iap` — both are the ONLY remaining blockers to the store going live, which is
+      itself the ONLY remaining blocker to `phase` advancing past `pre_launch`."
+    - "HIGH: `eas-build-submit-go-live` (mobile store submission, Human-Core) — until this completes, the
+      store isn't live (ANALYSIS_PLAYBOOK's own phase-advance criterion) and GTM_STANDARD §13 GATE 2 stays
+      unreachable regardless of GATE 1's outcome."
+    - "HIGH: `connect-revenuecat-iap` (mobile in-app-purchase activation, Human-Core) — the purchase flow +
+      webhook code is built (PR #266); only the RevenueCat dashboard config + live SDK keys are missing. An
+      App-Store-targeted launch cannot accept payment on device without this."
+    - "URGENT (unchanged since run 8): `spend-caps` — Stripe/Plausible/email keys are now confirmed LIVE in
+      the deployed app, so real paid surfaces are active; still no owner-set hard daily spend cap/alert on
+      any provider dashboard. This routine cannot set spend caps itself."
+    - "HIGH (unchanged): `turnstile-keys` — Cloudflare Turnstile site + both env keys still unset; captcha
+      fail-opens per §32 (signup is never hard-blocked) but is unprotected against bot abuse until set."
+    - "NORMAL (unchanged): Pick a final app name from NAMING_CANDIDATES.md (Pantri / Mise / Larder) — all
+      content assets still use the '[APP_NAME]' placeholder; blocks finalizing store/email copy."
+    - "LOW (unchanged since run 8): ADMIN_EMAIL — only gates the human `/admin/waitlist` UI page; the Growth
+      Agent's own analytics read need is already satisfied via CRON_SECRET."
   demand_signal:                 # GTM_STANDARD §10 — pre-launch demand validation (leading indicator, NOT PMF)
-    as_of: 2026-07-04
+    as_of: 2026-07-05
     method: "WebSearch + WebFetch against competitor App/Play Store review aggregators. 6 targeted
       Reddit-scoped WebSearch queries (r/mealprep-style phrasing, quoted frustration strings) returned
       NO citable exact-quote threads this run — see limitations below; this is an honest method gap,

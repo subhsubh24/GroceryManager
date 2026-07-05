@@ -31,6 +31,71 @@ support it; the gap speaks for itself.
 
 ## RUN LOG (newest first)
 
+### 2026-07-05 (run 9) — pre_launch, unchanged infra; NEW GTM_STANDARD §13 two-gate marketing system read + tracked
+- **Mode**: Still the run-8 state (channels_connected: [email], awaiting_connect: false, site_gate_up: true),
+  RE-VERIFIED rather than assumed. No new owner movement.
+- **Did**:
+  - Read GROWTH_STATUS, GROWTH_MEMORY, PENDING_OPS, GTM_SCORECARD (still stale as_of 2026-07-01 — nothing
+    new to act on; all dims A/A+ per that grade, nothing ship-critical below A), ANALYSIS_PLAYBOOK, OUTREACH,
+    GTM_STANDARD, FACTORY_STANDARD, BUSINESS_CASE. `git log` since run 8's merge showed 3 new commits — none
+    touching product/infra code: #440 (independent Quality Auditor re-audit, overall A HELD, ship_gate_met
+    unchanged true, as_of bumped 2026-07-03 -> 2026-07-05), #441 (GTM_STANDARD.md gained new §10 language on
+    demand-driven auto-steer + a Reddit/X connected-data-source path, AND a brand-new §13 "two owner approval
+    gates" marketing-launch system), #443 (a ROADMAP.md item adding a future marketing media-gen adapter —
+    build work, not yet built).
+  - **Re-probed real state directly** (FACTORY_STANDARD §28 discipline — never infer from git alone):
+    `CRON_SECRET` was present in this run's env again; `GET /api/growth/snapshot` with it returned a fresh
+    HTTP 200 with a payload BYTE-IDENTICAL in substance to run 8's — all 4 sources (waitlist/analytics/
+    billing/email) still genuinely connected, funnel still honestly all `0`/`null`, the same 3 H10
+    experiments still `status: running` with null results. Direct curl against the live URL reproduced the
+    identical site-gate split (home/blog 200, `/signup`+`/admin/waitlist` 401). Re-read `PENDING_OPS.md` in
+    full: `eas-build-submit-go-live`, `connect-revenuecat-iap`, `spend-caps`, `turnstile-keys`,
+    `rotate-envl-secrets` are ALL still `status: open`, byte-identical to run 8 — zero Human-Core movement
+    since run 8 (which itself was only ~1 day prior).
+  - **Read GTM_STANDARD §13 in full** (new this run) and reconciled it against real evidence rather than
+    assuming: it introduces a two-gate approval system (GATE 1 = start waitlist outreach, GATE 2 = launch),
+    each requiring an explicit owner approval on top of the existing readiness gate (§6). GATE 1's
+    precondition (b) — "a FULL computer-use E2E sweep GREEN (`VALIDATOR_STATUS.md`)" — does NOT hold: that
+    file does not exist anywhere in the repo (confirmed via Glob), and `ROADMAP.md:408` still lists the §29
+    computer-use validator as an UNCHECKED build item (epic #413), even though its owner-side precondition
+    (BROWSERBASE_API_KEY/PROJECT_ID) was already proven live back on 2026-07-04. So GATE 1 is honestly
+    `not_ready` this run — 2 of 3 preconditions hold (`ship_gate_met`, shipped+reviewed waitlist/launch
+    assets) but the sweep has never run. **Added a `marketing` block to GROWTH_STATUS** (first run reflecting
+    this dashboard schema requirement) recording exactly this: `stage: prepare`, `gate_1.status: not_ready`,
+    the named blocking precondition, and `kill_switch: not_present` (confirmed via Glob that neither
+    `docs/growth/MARKETING_HOLD` nor `MARKETING_APPROVED` exists yet, as expected pre-approval). Did NOT
+    propose GATE 1 to the owner — §13 requires ALL THREE preconditions, none self-certified, and only 2 of 3
+    hold. Also noted the §29 sweep gap in `next_actions` as work for the PRODUCT loop (which reads
+    GROWTH_STATUS as data per FACTORY_STANDARD §11) — it's un-built product-factory work, not an owner
+    blocker, so it correctly does NOT go in `owner_blockers` or PENDING_OPS `OWNER_ACTIONS`.
+  - **Demand-signal (§10)**: closed the one open thread from run 7's next_actions — retried "Out of Milk" on
+    grand-screen.com with a targeted search (`site:grand-screen.com out of milk grocery shopping list
+    reviews`) instead of a guessed slug. The aggregator's real indexed app list came back (AnyList, Our
+    Groceries, My Pantry Tracker, My H-E-B, AppSales) with no Out of Milk page anywhere — a genuine negative
+    result, not a URL-slug mistake. Closed as a dead end; no new citable theme found this run (existing
+    3-theme synthesis from runs 3/6/7 stands unchanged).
+  - **Outreach (§3b)**: OUTREACH.md's target-type categories remain fully searched (runs 2-7) with zero
+    qualifying targets, and no new reason surfaced this run. Zero outreach drafted — also moot this run since
+    GATE 1 (which would gate any outbound-adjacent action per the newly-read §13) is not open anyway.
+  - Did NOT touch ROADMAP/VISION/BUSINESS_CASE — no new causal, significant, revenue-linked data this run;
+    the `marketing` block addition is a living-artifact schema update reflecting the standard's own newest
+    section, not a steer.
+  - Ran an independent reviewer subagent (fresh context, adversarial) against this run's full diff before
+    committing — see its verdict recorded below once returned.
+- **Hypothesis**: none new on the funnel (still no real traffic). This run's work is (a) an honest
+  re-verification that infra state is unchanged, (b) reading and correctly operationalizing a brand-new
+  standard section without over-claiming readiness, (c) closing one demand-signal dead end.
+- **Result**: Infra state confirmed unchanged via fresh round-trip evidence (not assumed). New `marketing`
+  gate-tracking block shipped to the dashboard, honestly reporting `not_ready`. Funnel/PMF still `0`/`null`.
+- **Decision**: Ship the GROWTH_STATUS/GROWTH_MEMORY/PENDING_OPS updates (reviewer-cleared); zero outreach
+  (correct); no ROADMAP/VISION/BUSINESS_CASE steer; no GATE 1/2 proposal (preconditions not fully met).
+- **Operational note**: the standard itself can change between runs (this is the first time GTM_STANDARD
+  gained a whole new governance section, §13, since this routine started) — the right response was to READ
+  it fully, check its preconditions against REAL evidence (not assume readiness because the mission text
+  sounded eager to launch), and honestly report `not_ready` rather than proposing a gate the evidence doesn't
+  support. Worth remembering for future standard updates: treat a new section as a new set of claims to
+  VERIFY, not a new default to assume.
+
 ### 2026-07-04 (later cycle, run 8) — pre_launch, awaiting_connect: FALSE, EXECUTE-eligible (MAJOR: 3 channels confirmed connected via real round-trip)
 - **Mode**: The 8-run circuit breaker (ADMIN_EMAIL / email provider / PLAUSIBLE_API_KEY unmoved since run 5)
   is RESOLVED — but only partially, and honestly bounded. `CRON_SECRET` was present in this run's
