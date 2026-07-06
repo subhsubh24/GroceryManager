@@ -148,8 +148,13 @@ export async function POST(req: Request) {
           confidence: 1.0,
         });
 
-        // Mark that this user has held a subscription (disqualifies from future free trial)
-        if (isActive && sub.status !== "trialing") {
+        // Mark that this user has STARTED a subscription (disqualifies from future free trial).
+        // Includes the `trialing` status on purpose: the 7-day trial is one-per-user for life, so the
+        // moment a trial begins the user must become trial-ineligible. Writing this only on the paid
+        // transition (status "active") let a user who cancelled before the trial converted come back
+        // and claim a fresh trial indefinitely — a repeat-free-trial leak. `isActive` covers both
+        // `active` and `trialing`, so the marker lands as soon as the subscription is created.
+        if (isActive) {
           await appendPreferenceSignal(adminDb, {
             userId,
             topic: "subscription_renewal_at",
