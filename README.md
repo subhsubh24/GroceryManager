@@ -43,7 +43,7 @@ The `dev` / `start` / `db:*` / worker scripts **auto-load the root `.env`** (via
 ## Status
 A working vertical slice runs end-to-end: pages are server-rendered against Postgres with
 **row-level-security** enforcement, and the Gemini-backed features below were verified against the
-real model. **780+ core unit tests + full workspace typecheck + `next build` green**, plus a gated
+real model. **870+ core unit tests + full workspace typecheck + `next build` green**, plus a gated
 **LLM eval harness** (golden fixtures + scorers + LLM-as-judge) that passes live against Gemini.
 
 **Deterministic math never rides on token prediction:** unit conversion, totals reconciliation,
