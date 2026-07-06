@@ -105,17 +105,18 @@ export async function POST(req: Request) {
         source: "correction",
         confidence: 1.0,
       });
-      // A non-trial purchase disqualifies from a future free trial (mirrors the Stripe handler).
-      if (event.period_type !== "TRIAL") {
-        await appendPreferenceSignal(adminDb, {
-          userId,
-          topic: "subscription_renewal_at",
-          value: new Date().toISOString(),
-          polarity: "positive",
-          source: "correction",
-          confidence: 1.0,
-        });
-      }
+      // Starting a subscription — INCLUDING a free trial — disqualifies from a future free trial
+      // (mirrors the Stripe handler). The trial is one-per-user for life, so a TRIAL grant must also
+      // set this marker; gating it on non-trial purchases let a user who never converted claim repeat
+      // trials. Any GRANT_EVENTS entitlement (trial or paid) makes the user trial-ineligible.
+      await appendPreferenceSignal(adminDb, {
+        userId,
+        topic: "subscription_renewal_at",
+        value: new Date().toISOString(),
+        polarity: "positive",
+        source: "correction",
+        confidence: 1.0,
+      });
       console.info("[revenuecat-webhook] Synced entitlement", { userId, type, tier });
     } else if (REVOKE_EVENTS.has(type)) {
       await appendPreferenceSignal(adminDb, {
