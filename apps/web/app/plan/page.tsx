@@ -52,11 +52,14 @@ async function load(lowEnergy: boolean) {
     const userId = await currentUserId();
     if (!userId) return { ready: false as const, error: null as string | null };
 
-    const { pantry, signals, budgetCents } = await withTenant(getDb(), userId, async (tx) => ({
-      pantry: await getPantryView(tx, userId),
-      signals: await loadPreferenceSignals(tx, userId),
-      budgetCents: await getUserBudgetCents(tx, userId),
-    }));
+    const { pantry, signals, budgetCents } = await withTenant(getDb(), userId, async (tx) => {
+      const [pantry, signals, budgetCents] = await Promise.all([
+        getPantryView(tx, userId),
+        loadPreferenceSignals(tx, userId),
+        getUserBudgetCents(tx, userId),
+      ]);
+      return { pantry, signals, budgetCents };
+    });
 
     const billingOn = process.env.FEATURE_BILLING === "1";
     if (!canUse("plan_week", isPremium(signals), billingOn)) {
