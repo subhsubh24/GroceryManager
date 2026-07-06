@@ -32,11 +32,14 @@ async function loadRecipes(mood: Mood, guest: string | null) {
       return { ranked: [], images: new Map<string, string>(), savedIds: emptySaved, error: null as string | null };
 
     // Read pantry + taste signals + saved recipes together in one tenant tx; provider fetch is after.
-    const { pantry, signals, saved } = await withTenant(getDb(), userId, async (tx) => ({
-      pantry: await getPantryView(tx, userId),
-      signals: await loadPreferenceSignals(tx, userId),
-      saved: await loadSavedRecipes(tx, userId),
-    }));
+    const { pantry, signals, saved } = await withTenant(getDb(), userId, async (tx) => {
+      const [pantry, signals, saved] = await Promise.all([
+        getPantryView(tx, userId),
+        loadPreferenceSignals(tx, userId),
+        loadSavedRecipes(tx, userId),
+      ]);
+      return { pantry, signals, saved };
+    });
     const savedIds = new Set(dedupeSaved(saved).map((r) => r.id));
     const inStock = pantry.filter((p) => p.status === "in_stock" || p.status === "low");
     if (inStock.length === 0)

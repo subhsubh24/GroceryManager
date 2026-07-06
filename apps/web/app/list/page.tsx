@@ -18,10 +18,15 @@ async function loadDraft() {
     const userId = await currentUserId();
     if (!userId)
       return { draft: null, listItems: [], hasInstacartKey: false, error: null as string | null };
-    const { rows, list } = await withTenant(getDb(), userId, async (tx) => ({
-      rows: (await loadReorderInputs(tx, userId)) as ReorderInputRow[],
-      list: await getActiveListView(tx, userId),
-    }));
+    // Both reads are independent; run them concurrently on the one tenant connection (postgres.js
+    // pipelines them) instead of awaiting sequentially — same pattern as the spend page.
+    const { rows, list } = await withTenant(getDb(), userId, async (tx) => {
+      const [rowsRaw, list] = await Promise.all([
+        loadReorderInputs(tx, userId),
+        getActiveListView(tx, userId),
+      ]);
+      return { rows: rowsRaw as ReorderInputRow[], list };
+    });
     const draft = buildDraftOrders(rows, { associateTag: env.AMAZON_ASSOCIATE_TAG });
     const listItems = list.filter((i) => !i.checked);
     return {
