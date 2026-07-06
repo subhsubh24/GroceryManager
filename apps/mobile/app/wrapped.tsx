@@ -44,7 +44,10 @@ export default function WrappedScreen() {
           if (d.upgradeRequired) {
             setUpgradeRequired(true);
           } else {
-            setStats(d.stats ?? null);
+            // Normalise the array field at the trust boundary: the `res.json()` cast gives no runtime
+            // guarantee, so a partial 200 could omit topRecipes and crash the share + list render on
+            // `.length`/`.map`/`[0]`. Defaulting to [] here keeps every consumer safe.
+            setStats(d.stats ? { ...d.stats, topRecipes: d.stats.topRecipes ?? [] } : null);
           }
         }
       })
