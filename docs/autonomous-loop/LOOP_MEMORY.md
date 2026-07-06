@@ -4,6 +4,56 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-06 (run 53) — DEEP AUDIT (8-Haiku lens sweep, due since run 50 ~24h/3 runs) + 4 file-disjoint
+  clears (#456 billing repeat-trial-leak / #457 perf tenant-read parallelization / #458 docs test-count /
+  #459 mobile array-field boundary normalization); ALL 8 Sonnet reviews (2/PR) APPROVE first-pass; 0
+  abandons.** Baseline gate green (typecheck 0, 872 core tests, production build clean 0 missing-export,
+  mobile typecheck 0, self-validation 5/5 0 unmet). Combined-tree gate run once before splitting to branches.
+  **DEEP AUDIT verdict — 1 CONFIRMED revenue bug (fixed), everything else CLEAN or false-positive:**
+  - SECURITY/RLS/Track-G **CLEAN**. Scout "content_schedule missing RLS" = FALSE POSITIVE (already covered
+    by `0016_rls_waitlist_content.sql`; the scout only read 0014). In-memory rate-limit/LLM-quota not shared
+    across Vercel instances = known owner-infra (Upstash Redis, PENDING_OPS), not a code fix. CSP
+    `unsafe-inline` = known Next.js-15 hydration requirement. CORS-add-`ACAO:*` + AUTH_SECRET-module-throw =
+    REJECTED (would weaken the lockdown / break the env-free `next build`).
+  - MONETIZATION: **#456 CONFIRMED + FIXED** — both webhooks wrote the `subscription_renewal_at`
+    trial-ineligibility marker only on the PAID transition (Stripe `status!=="trialing"`, RevenueCat
+    `period_type!=="TRIAL"`), so a user who started the 7-day trial and cancelled before conversion was
+    never marked → `isTrialEligible` stayed true → unlimited repeat free trials. Fix: write on `isActive`
+    (Stripe — covers `trialing`) / any GRANT_EVENTS (RevenueCat). `subscription_renewal_at` is a
+    presence-only marker (only `isTrialEligible` reads it via `.some()`; value never parsed as a date), so
+    early + duplicate appends are safe. Deferred: checkout idempotency-key (the proposed `${userId}-${plan}`
+    is too coarse — 24h Stripe dedup would reuse a stale session URL), annual-first paywall (an A/B-worthy
+    conversion lever), portal customer-id fallback.
+  - PERF: **#457 SHIPPED** — list/recipes/plan awaited independent tenant reads sequentially in an object
+    literal; → `Promise.all` on the one tx (postgres.js pipelines; spend page is the in-prod precedent).
+    pantry 7-transaction batch refactor DEFERRED (higher risk, correctness-sensitive).
+  - COVERAGE: nutrition `estimateMealMacros` "confidence 0.3 on empty" = FALSE POSITIVE (empty/all-optional
+    → `source==="none"` → confidence 0, not 0.3). Other edge-branch tests low-value, deferred.
+  - DESIGN/A11Y: redundant-alt findings (swipe-deck img + 6 thumbnails) REJECTED — the recipe title is
+    adjacent visible text, so `alt=""` is WCAG-correct; `alt={title}` would double-announce. `aria-current`
+    on the filter tabs DEFERRED (file-conflicted with #457's recipes/plan; the perf win outranked it).
+  - MOBILE: **#459 SHIPPED** — use-it-up/digest/wrapped `res.json() as T` casts give no runtime guarantee;
+    a partial 200 would white-screen on `.length`/`.map`/`[0]`. Normalized the array fields to `[]` once at
+    the fetch boundary (setData/setStats) — coherent, vs scattered per-site guards (wrapped derefs
+    `topRecipes` at 4 sites; a single-site guard would be incomplete). discover "Skip/Like" a11y REJECTED
+    (buttons have Text children — already announced).
+  - ARTIFACTS: **#458 SHIPPED** — CLAUDE.md "~408" / README "780+" test counts were 2.2×/13% low vs 872
+    passing → "~870". Pricing ($4.99/$39.99/$9.99) + BUSINESS_CASE YAML (base $33,450) CLEAN everywhere.
+  **LESSON — STALE LOCAL MAIN trap (new):** local `main` was **36 commits behind** origin/main (`git fetch
+  origin main` updates the remote-tracking ref, NOT the local branch). Branches cut from it showed PHANTOM
+  diffs — the mobile branch's wrapped.tsx carried run-52 #451's `empty` reformatting as if it were mine.
+  Caught by diffing the branch and recognizing #451's change. FIX: before cutting ANY branch, `git reset
+  --hard origin/main` on local main (or assert `git rev-list --count main..origin/main == 0`). Recovered
+  cleanly: reset main → recreate all 4 branches from the stash (only wrapped.tsx had changed upstream, and
+  the stashed tree already contained #451, so `git checkout stash -- <files>` yielded exactly origin/main +
+  my edit for all 10 files) → force-push; re-verified every branch's diff vs FRESH main was minimal before
+  opening the PR.
+  **LESSON — verify every scout finding against real code up front (maker≠checker before coding):** 3 of the
+  sweep's headline findings were false positives (content_schedule RLS, nutrition confidence, redundant alt)
+  that a quick code-read killed before any implementation — cheaper than burning a reviewer round.
+  **Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated floor #190, owner-GTM;
+  base ≈ $33K < $100K = downloads/mo, no buildable floor-mover surfaced this sweep). Confidence statement
+  stays UNCHECKED. Validation 5/5, 0 unmet.
 - **2026-07-05 (run 52) — 5 file-disjoint clears from a 5-Haiku scout sweep (#447 push {ok}-contract /
   #448 import save DB-degrade / #449 cook-mode aria-pressed / #450 spend week-period test / #451 mobile
   Wrapped empty-state); 10 Sonnet reviews (2 per PR), 9 APPROVE first-pass + 1 REQUEST_CHANGES (honored);

@@ -4,6 +4,48 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-06 (run 53) — DEEP AUDIT (8-lens) + 4 file-disjoint clears (billing repeat-trial-leak + hot-page perf + mobile crash-guard + docs test-count); all 8 Sonnet reviews approve first-pass; 0 abandons
+
+8-Haiku deep-audit sweep (security/RLS+Track-G, correctness/dead-code, design/a11y/taste, artifacts/freshness,
+monetization/revenue, test-coverage, performance, native-mobile) — due since run 50 (~24h/3 runs). Baseline gate
+green (typecheck 0, 872 core tests, production `next build` clean/0 missing-export, mobile typecheck 0,
+self-validation 5/5 0 unmet, scorecard **A**). Every scout finding verified against real code before selection —
+3 headline findings were false positives killed by a code-read (see below).
+
+**Shipped (4, all 2/2 Sonnet approve, auto-merged through green CI):**
+- **#456 fix(billing) — closed the repeat-free-trial revenue leak.** Both webhooks wrote the
+  `subscription_renewal_at` trial-ineligibility marker only on the PAID transition (Stripe `status!=="trialing"`,
+  RevenueCat `period_type!=="TRIAL"`), so a user who started the 7-day trial and cancelled before conversion was
+  never marked → `isTrialEligible` stayed true → unlimited repeat free trials. Now writes on `isActive` (Stripe,
+  covers `trialing`) / any GRANT_EVENTS (RevenueCat). Marker is presence-only (never parsed as a date), so early +
+  duplicate appends are safe.
+- **#457 perf(web) — parallelized independent tenant reads on list/recipes/plan.** Sequential object-literal
+  awaits → `Promise.all` on the one tx (postgres.js pipelines; the spend page is the in-prod precedent). Cuts a
+  round-trip of serialized DB latency off each hot page's first render.
+- **#459 fix(mobile) — normalized API array fields at the fetch boundary** (use-it-up/digest/wrapped). `res.json()
+  as T` gives no runtime guarantee; a partial 200 would white-screen the native app on `.length`/`.map`/`[0]`.
+  Default the array fields to `[]` once at setData/setStats — coherent vs scattered per-site guards.
+- **#458 docs — synced core test count** (CLAUDE.md "~408" / README "780+" → "~870"; actual 872 passing). A
+  living-artifact drift (2.2× low in the canonical build-loop guide).
+
+**Rejected / deferred (audit hygiene):** content_schedule "missing RLS" (FALSE POSITIVE — covered by
+`0016_rls_waitlist_content.sql`); nutrition "confidence 0.3 on empty" (FALSE POSITIVE — empty ⇒ source "none" ⇒
+0); redundant image-`alt` findings (WCAG-correct as-is — title is adjacent text, `alt={title}` would
+double-announce); CORS `ACAO:*` + AUTH_SECRET module-throw (would weaken lockdown / break the env-free build);
+in-memory rate-limit/quota Redis upgrade (known owner-infra, PENDING_OPS); `aria-current` on filter tabs +
+pantry 7-tx batch (deferred — file-conflict / higher risk).
+
+**Lessons:** (1) **Stale-local-main trap** — local `main` was 36 commits behind origin/main (a `git fetch origin
+main` updates the remote-tracking ref, not the local branch); branches cut from it carried phantom diffs
+(#451's wrapped reformatting). Always `git reset --hard origin/main` before cutting branches. (2) Verify every
+scout finding against real code up front — 3 false positives were killed cheaper than a reviewer round.
+
+**Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated floor #190, owner-GTM). Base
+≈ $33K < $100K = downloads/mo, no buildable floor-mover this sweep. Confidence statement stays UNCHECKED.
+Validation 5/5, 0 unmet.
+
+---
+
 ## 2026-07-05 (run 52) — 5 file-disjoint clears (push {ok}-contract + import degrade + cook a11y + spend test + mobile Wrapped); 9/10 Sonnet reviews approve first-pass, 1 REQUEST_CHANGES honored; 0 abandons
 
 5-Haiku scout sweep (web reliability, security/Track-G, mobile parity, design/a11y/taste, test-coverage+artifacts).
