@@ -19,7 +19,7 @@ depletes over time, predicts run-outs, suggests meals, and tracks cook macros. M
 
 ```bash
 pnpm -r run typecheck
-pnpm --filter @gm/core test          # ~408 tests; pure logic, no DB/LLM needed
+pnpm --filter @gm/core test          # ~870 tests; pure logic, no DB/LLM needed
 NODE_ENV=production DATABASE_URL=postgres://u:p@localhost:5432/db pnpm --filter web build
 ```
 
