@@ -55,7 +55,10 @@ export default function UseItUpScreen() {
         if (!res.ok) throw new Error("fetch failed");
         return res.json() as Promise<UseItUpData>;
       })
-      .then((d) => { if (!cancelled) setData(d); })
+      // Normalise array fields at the trust boundary: `res.json() as UseItUpData` is a compile-time
+      // cast with no runtime guarantee, so a partial/degraded 200 could omit an array and white-screen
+      // the native app on the first `.length`/`.map`. Defaulting to [] here keeps every consumer safe.
+      .then((d) => { if (!cancelled) setData({ ...d, recipes: d.recipes ?? [], expiring: d.expiring ?? [] }); })
       .catch(() => { if (!cancelled) setError("Couldn't load — check your connection."); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };

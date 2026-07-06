@@ -46,7 +46,10 @@ export default function DigestScreen() {
         if (!res.ok) throw new Error("fetch failed");
         return res.json() as Promise<DigestData>;
       })
-      .then((d) => { if (!cancelled) setData(d); })
+      // Normalise the array field at the trust boundary: `res.json() as DigestData` is a compile-time
+      // cast with no runtime guarantee, so a partial 200 could omit weeklyActivity and crash the chart
+      // render on `.map`. Defaulting to [] here keeps every consumer safe.
+      .then((d) => { if (!cancelled) setData({ ...d, weeklyActivity: d.weeklyActivity ?? [] }); })
       .catch(() => { if (!cancelled) setError("Couldn't load stats — check your connection."); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
