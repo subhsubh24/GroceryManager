@@ -43,7 +43,15 @@ export async function analyzeScan(_prev: AnalyzeState, formData: FormData): Prom
   const userId = await currentUserId();
   if (!userId) return { status: "error", message: "No user context." };
 
-  const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+  let signals: Awaited<ReturnType<typeof loadPreferenceSignals>>;
+  try {
+    signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+  } catch (e) {
+    // Same G3 hygiene as the analyze try/catch below: a transient DB blip on the quota gate must
+    // degrade to an inline error, never throw to the page-level error boundary.
+    console.error("[scan] loadPreferenceSignals failed:", e);
+    return { status: "error", message: "Something went wrong. Please try again in a moment." };
+  }
   const quota = checkLlmQuota(userId, isPremium(signals));
   if (!quota.allowed) {
     return { status: "error", message: "Daily AI limit reached — upgrade for more." };
