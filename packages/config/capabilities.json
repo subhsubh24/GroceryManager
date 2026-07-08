@@ -71,6 +71,20 @@
         "requiresCiEnv": [],
         "requiresOwnerSecret": []
       }
+    },
+    {
+      "id": "marketing-media-gen",
+      "summary": "Multi-format marketing creative adapter (image/video/voiceover/music on the existing Gemini key) — best-effort + cost-governed + degrades to {status:degraded|error}, never throws. Validated keyless via a wholesale @google/genai mock: degrade-without-key, cost-guard fail-closed, model selection, envelope shaping, RAI-filter/no-bytes errors, and timeout — no live key or network needed (real generation runs on the same GEMINI_API_KEY the LLM pipeline already uses).",
+      "status": "active",
+      "ownerActionId": null,
+      "validation": {
+        "specs": [],
+        "tests": [
+          "packages/core/src/content/media-gen.test.ts"
+        ],
+        "requiresCiEnv": [],
+        "requiresOwnerSecret": []
+      }
     }
   ]
 }

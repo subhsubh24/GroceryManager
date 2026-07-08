@@ -35,6 +35,7 @@
     "./chat": "./src/chat/index.ts",
     "./email": "./src/email/index.ts",
     "./content/scheduler": "./src/content/scheduler.ts",
+    "./content/media-gen": "./src/content/media-gen.ts",
     "./growth/guardrails": "./src/growth/guardrails.ts",
     "./growth/snapshot": "./src/growth/snapshot.ts",
     "./growth/optin": "./src/growth/optin.ts",
