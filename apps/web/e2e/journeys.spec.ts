@@ -169,3 +169,46 @@ test.describe("auth boundary (logged-out vs authed)", () => {
     await expect(page).toHaveURL(/\/signin/);
   });
 });
+
+// The public, no-account "try the aha" demo (§34) — the one AI surface a stranger can reach. These
+// assert the OUTCOME (BUILDS≠WORKS): the page is reachable without auth and the hardened endpoint
+// handles a request WITHOUT crashing or faking success. In keyless CI this exercises the graceful
+// 503 degrade branch specifically; with a key it would return 200 + items.
+test.describe("public demo (§34) — reachable + hardened + graceful", () => {
+  test("/demo loads for a logged-out visitor (no signin redirect)", async ({ page }) => {
+    await page.context().clearCookies();
+    await page.goto("/demo", { waitUntil: "domcontentloaded" });
+    await expect(page).not.toHaveURL(/\/signin/);
+    await expect(page.locator("body")).not.toContainText(ERROR_SCREEN);
+    await expect(
+      page.getByRole("heading", { name: /turn a receipt into a pantry/i }),
+    ).toBeVisible();
+  });
+
+  test("POST /api/public/parse-receipt degrades gracefully (never a crash / fake success)", async ({
+    request,
+  }) => {
+    const res = await request.post("/api/public/parse-receipt", {
+      data: { text: "MILK 1 GAL 4.99\nEGGS 12 CT 3.49" },
+      headers: { "Content-Type": "application/json" },
+    });
+    // Every path is calm, well-formed JSON — never a 500 / stack leak / fabricated pantry. The exact
+    // degrade code depends on the env: no key → 503; an invalid/failing key (CI uses a dummy key) →
+    // 502 from the catch; over quota/rate → 429; a working key → 200 + items. All must be handled.
+    expect([200, 429, 502, 503]).toContain(res.status());
+    expect(res.headers()["content-type"]).toMatch(/application\/json/);
+    const body = await res.json();
+    if (res.status() === 200) {
+      expect(Array.isArray(body.items)).toBe(true);
+    } else {
+      // A generic, non-leaking error message — never empty, never a stack/schema.
+      expect(typeof body.error).toBe("string");
+      expect(body.error.length).toBeGreaterThan(0);
+    }
+  });
+
+  test("GET /api/public/parse-receipt is 405 (POST-only)", async ({ request }) => {
+    const res = await request.get("/api/public/parse-receipt");
+    expect(res.status()).toBe(405);
+  });
+});

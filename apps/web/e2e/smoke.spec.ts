@@ -49,6 +49,16 @@ test.describe("public routes load without auth", () => {
     await expect(page).not.toHaveURL(/signin/);
     await expect(page.locator("body")).toBeVisible();
   });
+
+  test("public demo /demo loads without auth", async ({ page }) => {
+    await page.goto("/demo");
+    // Public no-account demo (§34) — must NOT redirect to signin and must render the aha heading.
+    // (The CI-run functional assertions for the demo API live in journeys.spec.ts.)
+    await expect(page).not.toHaveURL(/signin/);
+    await expect(page.getByRole("heading", { name: /turn a receipt into a pantry/i })).toBeVisible();
+    // The interactive try surface (mode toggle) is present.
+    await expect(page.getByRole("tab", { name: /paste text/i })).toBeVisible();
+  });
 });
 
 test.describe("landing A/B variants load", () => {

@@ -71,6 +71,22 @@
         "requiresCiEnv": [],
         "requiresOwnerSecret": []
       }
+    },
+    {
+      "id": "public-demo-spend-ceiling",
+      "summary": "The public no-account receipt demo (§34) enforces a per-IP AND global per-instance daily spend ceiling (checkDemoQuota) plus a per-IP rate limit, so an anonymous / IP-rotating caller cannot drain the LLM budget on a given instance (the global counter backstops IP spoofing). NOTE: the counter is in-memory per Node instance — a TRUE cross-instance global cap needs the Redis backing tracked in PENDING_OPS (llm-quota-redis-upgrade); pre-launch traffic is owner-gated so the per-instance bound suffices until then. The route also degrades to a calm 503 JSON (never a crash / fake success) when no Gemini key is configured. Validated keyless: the ceiling logic by unit test, the route's degrade + POST-only behaviour by the e2e smoke spec.",
+      "status": "active",
+      "ownerActionId": null,
+      "validation": {
+        "specs": [
+          "apps/web/e2e/journeys.spec.ts"
+        ],
+        "tests": [
+          "packages/core/src/security/demo-quota.test.ts"
+        ],
+        "requiresCiEnv": [],
+        "requiresOwnerSecret": []
+      }
     }
   ]
 }
