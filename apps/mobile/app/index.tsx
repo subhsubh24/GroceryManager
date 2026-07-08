@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Redirect } from "expo-router";
-import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
+import { View, Text, Pressable, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { useAuth } from "../lib/auth";
 import { apiFetch } from "../lib/api";
 
@@ -23,9 +23,17 @@ export default function HomeScreen() {
   }, [token]);
 
   if (!token) return <Redirect href="/login" />;
-  // While the onboarding check is in-flight (null), render nothing so new users never see
-  // the full home screen before being redirected to onboarding.
-  if (onboarded === null) return null;
+  // While the onboarding check is in-flight (null), show a spinner instead of a blank white
+  // screen — this is the first surface after login, and rendering nothing reads as a broken load.
+  // We still don't render the full home before the check resolves, so new users never flash the
+  // home screen before being redirected to onboarding (same intent as before, better first paint).
+  if (onboarded === null) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color="#0c8a3e" />
+      </View>
+    );
+  }
   if (onboarded === false) return <Redirect href="/onboarding" />;
 
   return (
@@ -102,6 +110,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: "#faf8f3" },
+  loading: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#faf8f3" },
   container: {
     alignItems: "center",
     padding: 24,
