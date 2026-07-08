@@ -4,6 +4,69 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-08 (run 54) — DEEP AUDIT (6-lens, all 8 areas) + 4 file-disjoint clears (add-receipt+scan degrade-hardening + scan a11y fieldset + ask 7-read parallelize); all 8 Sonnet reviews approve first-pass; 0 abandons
+
+Standalone 6-Haiku deep-audit sweep covering the 8 areas (security/RLS+Track-G, correctness/dead-code,
+design/a11y/taste, monetization+business-case, native-mobile+performance, test-coverage+artifacts) — due since
+run 53 (~2 days). Baseline gate green (typecheck 0, 872 core tests, production `next build` clean/0 missing-export,
+self-validation 5/5 0 unmet, scorecard **A**). Every scout finding verified against real code before selection —
+3 headline findings were false positives killed by a code-read (see below).
+
+**Shipped (4, all 2/2 Sonnet approve, auto-merged through green CI):**
+- **#464 harden(add-receipt) — degrade the pre-LLM quota-gate DB read to an inline error.** `analyzeAndIngest-
+  Receipt`'s `loadPreferenceSignals` read (feeding the LLM-quota gate) sat OUTSIDE the action's try/catch, so a
+  transient DB blip threw uncaught to the page-level error boundary — violating the file's own documented contract
+  ("any failure … is mapped to a calm message — we never throw to the client"). Wrapped just that read → `{status:
+  "error"}` inline + server-side `console.error`. Same G3-hygiene class as #436/#437/#448. Core "receipt → pantry" aha path.
+- **#465 harden(scan) — same class in `analyzeScan`** (the fridge-scan core-loop path). The signals read sat above
+  the file's existing G3 try/catch; wrapped to match. Distinct user path from #464 (fridge-scan vs receipt-ingest).
+- **#466 a11y(scan) — group the scan-location radios in a fieldset/legend (WCAG 1.3.1 Level A).** The "What are you
+  scanning?" prompt was an orphaned `<label>` above three radios (fridge/pantry/freezer), so assistive tech never
+  announced them as one group. Wrapped in `<fieldset>`+`<legend>`. Reviewer A/B confirmed Tailwind Preflight zeroes
+  fieldset/legend border/padding/margin → pixel-identical; radios untouched → form submission unchanged.
+- **#467 perf(ask) — parallelize the 7 independent brief reads before the LLM call.** `buildBriefForFallback`
+  awaited pantry/purchases/lineItems/cookedAt/wrapped/signals/budget sequentially in an object literal inside one
+  tenant tx → `Promise.all` (postgres.js pipelines on the single connection; the #457 hot-page precedent). Reviewer
+  A verified against `packages/db/src/client.ts` that `withTenant`/`getDb` use drizzle-over-postgres.js (porsager,
+  safe concurrent-on-one-connection), RLS GUC set once, destructuring order correct. `cachedSignals` short-circuit
+  preserved via `Promise.resolve`. Premium "Ask your kitchen" path.
+
+**Deep-audit verdict — 0 CRITICAL; everything CLEAN or a verified false-positive:**
+- **SECURITY/RLS/Track-G CLEAN** — all 24 public tables have RLS + a correct policy through migration 0020; rate
+  limiting, captcha (Turnstile fail-closed in prod), HMAC unsubscribe/confirm tokens (timing-safe, fail-closed),
+  Stripe/Gmail/RevenueCat webhook auth (timing-safe), server-side entitlements, security headers (CSP/HSTS/XCTO/
+  Permissions-Policy/X-Frame), locked CORS, body-size + UUID validation — NO NEW FINDINGS.
+- **COVERAGE CLEAN** — core pure/deterministic logic (pantry EWMA, reorder, recipe, nutrition, ingestion cascade,
+  shelf-life, unit conversion, spend grouping) exhaustively tested (872 pass); the 26 skips are `skipIf(!TEST_DATABASE_URL)`.
+- **ARTIFACTS CLEAN** — pricing 499/3999/999/7999 cents byte-identical doc↔code; feature set + architecture match.
+  README "870+ tests" is a still-TRUE floor claim (871 > 870), not drift — deliberately NOT touched (a bump = churn).
+- **MONETIZATION** — pricing MATCHES, no correctness bugs (trial-leak fixed #456, webhooks fail-closed, entitlements
+  server-side, price-ID webhook validation defaults-safely). Reach-gated RE-CONFIRMED: base ≈ $33K < $100K = downloads/mo
+  = owner GTM (#190). The audit's candidate levers (annual-first checkout default, promo-code win-back) are A/B-experiment
+  territory — banking their adoption would GAME the number; not bankable pre-launch → **no buildable floor-mover**.
+
+**Findings verified FALSE against real code + rejected (3):**
+- **mobile `app/index.tsx` onboarding "res.ok not checked"** — the code ALREADY fails OPEN to `onboarded=true` in
+  every failure path (`res.json()` on an error body → `data.onboarded` undefined → `?? true`; `.catch` → `true`).
+  A `res.ok` guard routes to the same `true` — a behavioral NO-OP = churn. (Every other screen checks `res.ok`, but
+  here the fail-open semantic is the documented intent and already correct.)
+- **`upgrade/page.tsx` `aria-current="true"` "misused on a non-nav div"** — FALSE: `aria-current="true"` is VALID
+  for "the current item within a set of related elements", not navigation-only. The focused perk card IS the current
+  item in the perks set. (Verify-every-scout-finding caught the auditor's over-narrow ARIA claim.)
+- **`aria-disabled` + native `disabled` redundancy** on the paywall Coming-soon buttons — harmless, no user impact = churn.
+
+**Deferred (real but lower-value / marginal):** pantry `syncGmail`/`backfillGmail` signals-read guard (same class as
+#464/#465 but a premium SECONDARY path where the actual work already degrades in try/catch — only the gate is exposed);
+the 5 home-page + mobile-route 2–3-read micro-parallelizations (each dominated by a downstream LLM/API fan-out ⇒ <5%
+latency — the high-value #467 + the shipped #457 cover the worthwhile ones).
+
+**Readiness:** did NOT open the 'ready' issue — the sole open DoD gap is unchanged (reach-gated business-case floor
+#190; base ≈ $33K < $100K at median inputs = downloads/mo = owner GTM, not a buildable lever). Confidence statement
+stays UNCHECKED. Validation 5/5, 0 unmet. A coherent converged run: 4 reliability/a11y/perf clears on core paths,
+security + business-case re-verified clean.
+
+---
+
 ## 2026-07-06 (run 53) — DEEP AUDIT (8-lens) + 4 file-disjoint clears (billing repeat-trial-leak + hot-page perf + mobile crash-guard + docs test-count); all 8 Sonnet reviews approve first-pass; 0 abandons
 
 8-Haiku deep-audit sweep (security/RLS+Track-G, correctness/dead-code, design/a11y/taste, artifacts/freshness,
