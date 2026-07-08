@@ -43,7 +43,8 @@
     "./security/site-gate": "./src/security/site-gate.ts",
     "./security/uuid": "./src/security/uuid.ts",
     "./security/rate-limit-guard": "./src/security/rate-limit-guard.ts",
-    "./security/captcha-guard": "./src/security/captcha-guard.ts"
+    "./security/captcha-guard": "./src/security/captcha-guard.ts",
+    "./security/demo-quota": "./src/security/demo-quota.ts"
   },
   "scripts": {
     "lint": "echo \"(lint) @gm/core\"",

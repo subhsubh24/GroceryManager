@@ -659,7 +659,7 @@ export default async function HomePage({
 
           {/* Waitlist — email capture for launch momentum. Staged: emails displayed in server logs;
               wire to ConvertKit/Mailchimp via PENDING_OPS.md before the store launch. */}
-          <section className="mx-auto max-w-6xl px-5 pb-16 pt-8 sm:px-8">
+          <section id="waitlist" className="mx-auto max-w-6xl px-5 pb-16 pt-8 sm:px-8">
             <div className="panel-brand">
               <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -671,7 +671,10 @@ export default async function HomePage({
                   </h2>
                   <p className="mt-1.5 text-[0.95rem] leading-relaxed text-white/90">
                     Be first in line — drop your email and we&apos;ll reach out the moment the iOS
-                    and Android apps go live.
+                    and Android apps go live.{" "}
+                    <a href="/demo" className="font-semibold text-white underline underline-offset-2">
+                      Or try it first — no signup.
+                    </a>
                   </p>
                 </div>
                 <div className="w-full sm:max-w-xs">

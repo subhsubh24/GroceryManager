@@ -71,6 +71,20 @@
         "requiresCiEnv": [],
         "requiresOwnerSecret": []
       }
+    },
+    {
+      "id": "public-demo-spend-ceiling",
+      "summary": "The public no-account receipt demo (§34) enforces a per-IP AND global daily spend ceiling (checkDemoQuota) so an anonymous / IP-rotating caller cannot drain the LLM budget; the demo route also degrades to a calm 503 (never a crash / fake success) when no Gemini key is configured — keyless unit-validated.",
+      "status": "active",
+      "ownerActionId": null,
+      "validation": {
+        "specs": [],
+        "tests": [
+          "packages/core/src/security/demo-quota.test.ts"
+        ],
+        "requiresCiEnv": [],
+        "requiresOwnerSecret": []
+      }
     }
   ]
 }

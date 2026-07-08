@@ -20,6 +20,11 @@
  */
 export const SITE_GATE_EXEMPT: RegExp[] = [
   /^\/$/, // waitlist / "coming soon" landing (the waitlist join is a server action POSTed here)
+  // Public, no-account "try the aha" demo (§34) + its hardened parse endpoint. The demo drives the
+  // waitlist; the FULL app stays gated. `/api/public/*` is the ONLY public-namespaced API — each
+  // route inside it self-hardens (rate limit + per-IP/global spend ceiling + captcha).
+  /^\/demo(\/|$)/,
+  /^\/api\/public(\/|$)/,
   /^\/privacy(\/|$)/, // legal
   /^\/terms(\/|$)/,
   /^\/blog(\/|$)/, // public marketing content

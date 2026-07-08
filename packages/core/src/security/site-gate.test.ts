@@ -9,6 +9,9 @@ import {
 describe("isSiteGateExempt — public marketing/waitlist + machine endpoints", () => {
   const exempt = [
     "/",
+    "/demo",
+    "/demo/",
+    "/api/public/parse-receipt",
     "/privacy",
     "/privacy/",
     "/terms",
@@ -40,6 +43,8 @@ describe("isSiteGateExempt — public marketing/waitlist + machine endpoints", (
     "/api/waitlist", // blanket join API is NOT exempt — only the confirm link is
     "/api/growth/secret",
     "/privacyish", // no false prefix match
+    "/demonstrations", // /demo must not prefix-match a longer segment
+    "/api/publicity", // /api/public must not prefix-match a longer segment
   ];
   for (const p of gated) {
     it(`gates ${p}`, () => expect(isSiteGateExempt(p)).toBe(false));
