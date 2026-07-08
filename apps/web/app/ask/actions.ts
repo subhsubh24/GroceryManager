@@ -81,17 +81,22 @@ async function buildBriefForFallback(
   userId: string,
   cachedSignals?: Awaited<ReturnType<typeof loadPreferenceSignals>>,
 ) {
-  const data = await withTenant(getDb(), userId, async (tx) => ({
-    pantry: await getPantryView(tx, userId),
-    purchases: await loadPurchasesForSpend(tx, userId),
-    lineItems: await loadLineItemsForSpend(tx, userId),
-    cookedAt: await loadCookedAt(tx, userId),
-    // Match loadCookedAt's default 120-day window so recent recipe titles cover the same horizon
-    // the streak/total stats describe (avoids the brief claiming cooks it lists no titles for).
-    wrapped: await loadWrappedInputs(tx, userId, 120),
-    signals: cachedSignals ?? await loadPreferenceSignals(tx, userId),
-    budgetCents: await getUserBudgetCents(tx, userId),
-  }));
+  const data = await withTenant(getDb(), userId, async (tx) => {
+    // These reads are independent; postgres.js pipelines them on the one tenant connection, so
+    // Promise.all trims the brief-assembly latency before the LLM call (the #457 hot-page pattern).
+    const [pantry, purchases, lineItems, cookedAt, wrapped, signals, budgetCents] = await Promise.all([
+      getPantryView(tx, userId),
+      loadPurchasesForSpend(tx, userId),
+      loadLineItemsForSpend(tx, userId),
+      loadCookedAt(tx, userId),
+      // Match loadCookedAt's default 120-day window so recent recipe titles cover the same horizon
+      // the streak/total stats describe (avoids the brief claiming cooks it lists no titles for).
+      loadWrappedInputs(tx, userId, 120),
+      cachedSignals ? Promise.resolve(cachedSignals) : loadPreferenceSignals(tx, userId),
+      getUserBudgetCents(tx, userId),
+    ]);
+    return { pantry, purchases, lineItems, cookedAt, wrapped, signals, budgetCents };
+  });
 
   const recentCookedTitles = [...data.wrapped.mealLogs]
     .sort((a, b) => b.cookedAt.getTime() - a.cookedAt.getTime())
