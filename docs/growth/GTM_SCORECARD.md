@@ -9,136 +9,152 @@ block below. Every grade cites concrete evidence a fresh, adversarial grader sub
 ```yaml
 GTM_SCORECARD:
   project: GroceryManager
-  as_of: 2026-07-01
+  as_of: 2026-07-08
   overall: A
   ship_gate_met: true            # true ONLY when every ship_critical dim is A/A+ AND all others >= B
-  phase_context: pre_launch      # PREPARE mode; no channels connected; funnel honestly 0/null
+  phase_context: pre_launch      # sources now CONNECTED (runs 8-9) but still pre_launch (store not live);
+                                 #   funnel honestly 0/null — auditor re-verified against the live snapshot
   method: "4 fresh, independent, adversarial grader subagents (Opus), none of which did the GTM work,
-           each told to REFUTE the GTM Factory's claims and cite file:line/commit evidence."
+           each told to REFUTE the GTM Factory's claims and cite file:line/commit evidence. This cycle the
+           auditor ALSO reproduced the claims first-hand: an authenticated GET /api/growth/snapshot
+           (Bearer $CRON_SECRET, present in the auditor's env) returned HTTP 200 with all 4 sources
+           'connected' and every funnel value 0/null — matching the dashboard exactly."
   dimensions:
     metric_integrity:
-      grade: A+
+      grade: A
       ship_critical: true
       evidence: >
-        Entire GROWTH_STATUS block (GROWTH_STATUS.md:40-140) is 0/null/empty across funnel, pmf,
-        acquisition, experiments, channels, email, outreach — correct honest pre-launch reporting with
-        awaiting_connect:true. Only 3 non-zero values, all legitimate: engine_pct:100/engine_built:true
-        are CODE-DERIVED (scripts/preflight.sh:194-231 recomputes from 5 anchor files on disk and fails
-        on drift — not fabricatable; all 5 files verified present) and scheduled_next_7d:1 maps to a real
-        staged blog post (apps/web/app/blog/posts.ts:219). Adversarial fabrication hunt confirmed the 19
-        real app-signups (PENDING_OPS.md:18) did NOT leak into funnel as a fake waitlist count — users and
-        waitlist_submissions are separate tables (packages/db/src/queries.ts:1669-1696); the snapshot route
-        returns null (not a number) on any Plausible failure. No fabricated/unsourced metric found.
-      gap: null
+        Auditor INDEPENDENTLY reproduced the live authenticated snapshot (GET /api/growth/snapshot, Bearer
+        $CRON_SECRET → HTTP 200): funnel ALL 0/null (visitors_7d:0, waitlist_signups_total:0,
+        active_subscribers:0, mrr_usd:0, trial_to_paid_rate:null), 3 experiments landing_hero/h14/h15 all
+        status:running result:null — matching GROWTH_STATUS.md EXACTLY, no fabricated number leaked in.
+        engine_pct:100 is code-derived (preflight recomputes from 5 anchor files, all verified present).
+        published_7d:1 maps to a real post (posts.ts:223, publishedAt 2026-06-29). Grader WebFetched both
+        demand_signal source URLs: all quote TEXT is verbatim-genuine, no fabricated review. No fabrication
+        anywhere → nowhere near F.
+      gap: "Off A+ (down from A+ 2026-07-01) on two real accuracy nits: (a) content.published_7d:1 now reads
+            wrong — the post is 9 days old as of 2026-07-08, outside its own 7-day window (should be 0), and
+            the line-213 comment still cites 'as of 2026-07-03'; (b) two demand_signal reviewer attributions
+            (D. Bogan / Jane Sanders) may not match the source-page names (P. Kerluke / Lars Uriel) — quote
+            text is genuine, WebFetch attribution extraction is unreliable, so re-confirm rather than assume."
     business_case_honesty:
       grade: A+
       ship_critical: true
       evidence: >
-        Prices reconcile EXACTLY: billing config (packages/core/src/billing/index.ts:40,56,64-66 →
+        Prices reconcile EXACTLY: billing config (packages/core/src/billing/index.ts:40,56,66-67 →
         499/3999 monthly/annual, family 999/7999) == BUSINESS_CASE.md:44-46 ($4.99/$39.99, family
-        $9.99/$79.99). Summary YAML (BUSINESS_CASE.md:7-14) matches body; grader independently recomputed
-        conservative ($3,085≈$3,100), base ($33,451≈$33,450), optimistic ($342,144≈$342,000), blended
-        churn (3.71%), and ARPU ($3.82) — all match, 15% platform fee correctly applied. Genuinely
-        corrected DOWN: prior gamed 12.6% signup→paid (2.5-6x the cited 2-5% freemium benchmark) was
-        re-grounded to base 4%, moving base FROM ~$106K (above floor) TO ~$33K (below floor) — the
-        opposite of gaming. floor_met_year1:false is honest and consistent throughout (§4/§5/§8).
-      gap: "Minor (does not lower grade): base 4% free→paid sits at upper-mid of the 2-5% band vs the
-            cited 2.18% median; the doc defends 4% via the Gmail-import hook and discloses the tension."
+        $9.99/$79.99). Grader independently recomputed all 3 scenarios showing arithmetic: conservative
+        (500×0.35×0.025÷0.065×$3.82×12 = $3,085≈$3,100), base ($33,450 exact), optimistic ($342,144≈
+        $342,000); blended churn 3.707%≈3.71%, ARPU $3.818≈$3.82, 15% fee applied as ×0.85 throughout,
+        ramp 1/c=27mo. Summary YAML (7-15) matches body; floor_met_year1:false consistent in all 4 places
+        (:13,:218,:247,:340). Nothing gamed UP — base is 1/3 of the floor and the doc self-documents rolling
+        back a prior gamed 12.6% funnel to the honest freemium 4%. Only 2 sub-cent rounding nits in non-floor
+        upside numbers ($4.31 vs 4.32 with-Family ARPU; ~83% vs ~86% 4yr ramp) — immaterial.
+      gap: null
     roadmap_steer_justification:
-      grade: A
+      grade: A+
       ship_critical: true
       evidence: >
-        Zero GTM-authored ROADMAP/VISION steers exist — the honest correct state pre-launch with no
-        connected analytics. git log -- ROADMAP.md VISION.md returns only product/quality-factory commits
-        (270052c, a784d61); a784d61 actually RETRACTS an unbacked 'performance budget' claim
-        (ROADMAP.md:319-323) rather than inflating one. BUSINESS_CASE.md §5 (253-266) confirms the
-        run-20/22 product builds (PR #197/#198/#217) left median ARR 'deliberately UNMOVED... no adoption
-        % banked to clear the floor'. No speculative or low-confidence steer reached the roadmap.
-      gap: "Not A+ only because the §3 causal-mechanism discipline has no worked example yet (no real
-            signal has arrived to exercise it) — a limitation of pre-launch state, not a defect."
+        Zero GTM-authored ROADMAP/VISION steers. git log --format='%ae' -- ROADMAP.md VISION.md since
+        2026-07-01 returns 4 commits, ALL airjordan33@gmail.com (the OWNER), none by the Growth Agent:
+        §34 pre-launch-funnel (1d2b8ff, epic #453), §11 media-gen adapter (46a16c1, #442), §29 validator
+        (6cf3a77/19d8711) — all product/infra BUILD items banking no adoption %/conversion figure. The one
+        demand_signal touch on BUSINESS_CASE (:157-163) is citation-only and self-polices ('does NOT change
+        the modelled 4% base rate or any other figure — directional corroboration, not a new number'). With
+        the funnel all 0/null, zero steers is the correct answer and it is exactly what happened.
+      gap: null
     self_validation_honesty:
-      grade: A
+      grade: A+
       ship_critical: true
       evidence: >
-        All four sources (waitlist, analytics, billing, email) honestly marked awaiting_connect
-        (GROWTH_STATUS.md:53-57), matching real env-gated runtime checks in the snapshot route
-        (apps/web/app/api/growth/snapshot/route.ts:69,79-83,92-95). owner_blockers (:124-136) surface every
-        unconnected source and cross-reference PENDING_OPS ids (track-h-activation:open, site-gate-prelaunch:open).
-        No claimed-connected-but-unconnected source anywhere — nowhere near F.
-      gap: "Raise to A+: GTM_STANDARD §4 prescribes an explicit `validation:` block in GROWTH_STATUS and
-            URGENT `gtm-connect-<source>` owner-action ids; neither exists (grep for 'validation'/'gtm-connect'
-            in docs/growth returns nothing) — the connect actions use ad-hoc ids instead. A real, named,
-            STRUCTURAL gap only; the underlying honesty is fully intact, so it does not breach integrity."
+        The 2026-07-01 filed gap (#314) is CLOSED: GROWTH_STATUS.md:96-125 now carries the explicit
+        GTM_STANDARD §4 `validation:` block, and PENDING_OPS.md:21,33,43,54 carries gtm-connect-{waitlist,
+        analytics,billing,email} owner actions (status:done, dated). Declared sources (all 4 'connected')
+        MATCH the auditor's live authenticated snapshot exactly — no claimed-but-unconnected channel (the
+        F trigger) exists. The one deliverability risk is fail-closed + disclosed 4x (email is 'connected'
+        by key-presence only; open_rate/click_rate stay null). Every deviation UNDER-claims: dashboard shows
+        channels_connected:[email] (snapshot says [analytics,billing,email]) and phase:pre_launch (snapshot's
+        own field says 'launching') — reporting a worse-sounding state than the API is the A+ signature.
+      gap: null
     experiment_validity:
       grade: A
       ship_critical: false
       evidence: >
-        experiments:[] (GROWTH_STATUS.md:89) is honestly empty — no fabricated/p-hacked wins. Methodology is
-        real code: packages/core/src/growth/experiments/stats.ts (twoProportionZTest, wilsonInterval,
-        minSampleSizePerArm); lift.ts:39-105 refuses a winner unless BOTH arms exceed minSamplePerArm AND
-        p<0.05, else returns 'running' (codified insufficient-data honesty). Commit 338c5b3 is a genuine
-        adversarial catch: a zFromAlpha sign bug that collapsed required N ~10x was fixed WITH a monotonicity
-        regression test. ANALYSIS_PLAYBOOK §3 mandates significance + min sample size before any winner.
-      gap: "Raise to A+: the significance apparatus is validated only by unit tests; add a bucket-assignment
-            balance + exposure-dedup coverage test on the H10 path so the first live experiment can't be
-            corrupted by an assignment bug the way it nearly was by the power bug."
+        Real, textbook stats: stats.ts twoProportionZTest (pooled two-tailed p, significant iff p<0.05),
+        wilsonInterval, minSampleSizePerArm (correct (z_a/2+z_b)^2 power formula). lift.ts
+        computeExperimentResult declares 'decided' ONLY when both arms exceed minSamplePerArm AND
+        test.significant, else 'running' with null lift/CI — codified insufficient-data honesty. 3
+        hypotheses falsifiable with explicit MDEs (+2pp/+3pp/+2pp), all honestly running/null at 0
+        exposures. Real power-bug guard: commit 72adf42 (not the 338c5b3 cited last cycle) fixed the
+        inverted zFromAlpha sign bug WITH a monotonicity regression test.
+      gap: "Raise to A+: computeExperimentResult (the actual decided-vs-running monetization gate) has ZERO
+            direct tests — only stats.test.ts exists, no lift.test.ts / bucketing test. Add a lift test
+            asserting 'running' at sub-N + non-significant inputs and 'decided' only on sufficient+significant."
     pmf_read_accuracy:
-      grade: A
+      grade: A+
       ship_critical: false
       evidence: >
-        pmf block (GROWTH_STATUS.md:75-87) all null with signal:none — the correct 'no analytics connected'
-        read, not flattery. Recommendation is a CONNECT/activation fix, never premature acquisition scaling:
-        next_actions (:118-123) + owner_blockers (:124-136) point at connecting analytics/email/site-gate and
-        nurturing captured-but-unconfirmed signups. ANALYSIS_PLAYBOOK.md:65-67 FORBIDS pre-PMF acquisition
-        scaling and gates it behind an emerging/flattening weekly curve; no violation found.
-      gap: "Raise to A+: once ADMIN_EMAIL connects, quantify the already-visible captured-vs-confirmed signup
-            delta as a first real activation-funnel observation."
+        pmf block (GROWTH_STATUS.md:148-160) fully null with signal:none — the correct pre-data read.
+        next_actions (:455-495) point EXCLUSIVELY at product/infra fixes (§29 sweep, eas-build-submit-go-live,
+        connect-revenuecat-iap, email deliverability), never 'scale acquisition'; acquisition.cac/ltv/ratio/
+        top_channel all null (zero spend). The one outreach next_action is draft-only + gated behind GATE 1,
+        not paid-channel scaling. ANALYSIS_PLAYBOOK.md:63-70 makes the PMF signal govern the lever and the
+        block obeys it. No flattery — no claimed PMF signal unbacked by cohort data.
+      gap: null
     compliance:
-      grade: A
+      grade: A+
       ship_critical: false
       evidence: >
-        Draft-only discipline holds: outreach.drafted_7d/owner_sent_7d/replies_7d all 0 (GROWTH_STATUS.md:102-104),
-        consistent with site_gate_up:false. OUTREACH.md:5 hard-codes 'DRAFT ONLY — the agent never sends'; RUN
-        LOG (GROWTH_MEMORY.md:34-56) is explicitly PREPARE mode, no external actions. 4th blog post
-        (apps/web/app/blog/posts.ts:219-278) carries NO invented competitor metrics/ratings — qualitative,
-        defensible descriptions only; LESSON-0 explicitly bans inventing counts/ratings. No fake
-        reviews/accounts/spend/auto-send.
-      gap: "Raise to A+: one unsourced qualitative third-party claim ('KitchenPal well-reviewed, large user
-            base', posts.ts:257) — low FTC risk; cite or soften to fully close."
+        Draft-only hard-enforced: OUTREACH.md:5 'DRAFT ONLY... the agent never sends... no auto-send ever';
+        outreach.drafted_7d/owner_sent_7d/replies_7d all 0. The 2026-07-01-flagged 'KitchenPal well-reviewed,
+        large user base' claim is REMOVED — posts.ts:255-259 now reads only 'focused on pantry management
+        since 2016... tracks inventory by item'; grep for star|rating|4.8|26,785|million|users across the
+        blog returns zero fabricated metrics. demand_signal quotes each carry a real URL + explicit dating
+        caveat + a limitations block documenting rejected unverifiable paraphrases and the agent's own
+        wrong-slug 404 — fetched web content adversarially verified, not trusted. spend-caps honestly
+        surfaced as an URGENT owner blocker; cac_usd:null (zero spend). No violation.
+      gap: null
     artifact_freshness:
       grade: A
       ship_critical: false
       evidence: >
-        Pricing consistent everywhere: growth/brand copy (CONTENT_DRAFTS.md:146, EMAIL_LIFECYCLE.md:266,321-322),
-        landing (page.tsx:638), upgrade page (upgrade/page.tsx:137,165) all == billing config ($4.99/$39.99).
-        [APP_NAME] placeholder honestly surfaced as a NORMAL owner_blocker (:135-136); the 3 named candidates
-        (Pantri/Mise/Larder) match docs/brand/NAMING_CANDIDATES.md:10,38,68. as_of 2026-06-29 vs today
-        2026-07-01 is 2 days stale — acceptable for a low-frequency pre-launch routine and self-documented as
-        a signal (:36-37), not drift.
-      gap: "Raise to A+: [APP_NAME] placeholder blocks finalizing store/email copy — an owner name pick
-            (Pantri/Mise/Larder), not an agent error."
+        Pricing consistent with billing config everywhere: upgrade/page.tsx:137,165,194,197 ($4.99/$39.99/
+        $9.99/$79.99), landing page.tsx:265,638 (derives from billing module), CONTENT_DRAFTS.md:147,
+        EMAIL_LIFECYCLE.md:266,322,377 all == config; annual math checks ($39.99/12=$3.33, ~33% off).
+        [APP_NAME] placeholder genuinely unresolved and honestly surfaced as a NORMAL owner_blocker
+        (:517-518). §13 marketing block honest: kill_switch not_present, GATE 1 not_ready — auditor verified
+        MARKETING_HOLD/MARKETING_APPROVED/VALIDATOR_STATUS.md are all genuinely ABSENT on disk.
+      gap: "Raise to A+: as_of 2026-07-05 is 3 days stale vs today; more concretely content.published_7d:1 has
+            aged past its own 7-day window (the post is 9 days old) — should be 0. Re-stamp as_of to the live
+            snapshot date and recompute published_7d so the windowed metric stops silently aging."
   top_gaps:                        # ordered by severity; all are A->A+ polish (nothing below A)
-    - dimension: self_validation_honesty
+    - dimension: artifact_freshness
       severity: low
-      ship_critical: true
-      gap: "Add the GTM_STANDARD §4 explicit `validation:` block + `gtm-connect-<source>` owner-action ids;
-            honesty is intact today via owner_blockers, but the prescribed structure is missing."
-      filed_issue: "gtm-quality: self-validation A -> raise to A+"
+      ship_critical: false
+      gap: "content.published_7d:1 has aged outside its own 7-day window (post published 2026-06-29, now 9
+            days old) → should be 0; as_of 2026-07-05 is 3 days stale. Re-stamp as_of + recompute published_7d."
+      filed_issue: "gtm-quality: artifact-freshness A -> raise to A+ (stale windowed metric)"
     - dimension: experiment_validity
       severity: low
       ship_critical: false
-      gap: "Add bucket-assignment balance + exposure-dedup coverage test on the H10 experiment path."
-    - dimension: compliance
+      gap: "computeExperimentResult (lift.ts) — the decided-vs-running monetization gate — has zero direct
+            tests. Add a lift.test.ts covering the refusal logic (both arms >= min N AND p<0.05)."
+    - dimension: metric_integrity
       severity: low
-      ship_critical: false
-      gap: "Cite or soften the unsourced 'KitchenPal large user base' qualitative claim in the 4th blog post."
+      ship_critical: true
+      gap: "Re-confirm the two demand_signal reviewer attributions (D. Bogan / Jane Sanders) against the
+            source pages, and refresh the stale line-213 published_7d comment date. Quote text is genuine;
+            this is accuracy hygiene, not fabrication."
   summary: >
-    Disciplined, honest pre-launch PREPARE-mode GTM work. Two ship-critical honesty dimensions (metric
-    integrity, business-case honesty) are A+; the other two (roadmap-steer, self-validation) are A. No
-    fabricated metric, no gamed business case, no speculative roadmap steer, no auto-send, no unauthorized
-    spend, no pricing drift. All remaining gaps are A->A+ polish (mostly honestly-flagged owner blockers).
-    Ship gate MET on GTM quality. NOTE: this grades the GTM WORK's honesty/quality — it is independent of
-    the product's own launch readiness (see QUALITY_SCORECARD / issue #260).
+    Disciplined, honest GTM work that IMPROVED on structure this cycle: the sources genuinely connected
+    (runs 8-9) and the auditor independently reproduced the live authenticated snapshot — all 4 sources
+    'connected', every funnel value 0/null, matching the dashboard exactly. Three ship-critical dimensions
+    are A+ (business-case, roadmap-steer, self-validation); the 2026-07-01 self-validation gap I filed
+    (#314: §4 validation block + gtm-connect ids) is CLOSED. Metric integrity slipped A+→A on a real but
+    minor accuracy nit (a windowed metric aged past its own definition + an uncertain reviewer-attribution
+    discrepancy) — no fabrication. No gamed business case, no speculative roadmap steer, no auto-send, no
+    unauthorized spend, no pricing drift. Ship gate MET on GTM quality. NOTE: this grades the GTM WORK's
+    honesty/quality — it is independent of the product's own launch readiness (see QUALITY_SCORECARD).
 ```
 
 ## How to read it (owner)
