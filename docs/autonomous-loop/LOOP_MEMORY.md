@@ -4,6 +4,31 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-08 (run 55) — Track E §34 Part A shipped: the public no-account "try the aha" receipt demo
+  → waitlist (PR #471), ONE coherent flagship change, both Sonnet reviewers APPROVE after one fix cycle,
+  0 abandons.** Deep audit NOT due (run 54 same day). Advanced the LOWEST incomplete track (Track E §34)
+  with the highest-value buildable lever — a public, no-account demo of the core aha (paste/snap a receipt
+  → pantry list) that grounds waitlist interest, directly targeting the business case's binding constraint
+  (reach/conversion, #190). Built: `/demo` page+client, hardened `POST /api/public/parse-receipt` (per-IP
+  rate limit + captcha + bounded input + per-IP AND global daily spend ceiling + cheap-tier `maxAttempts:1`),
+  pure keyless-tested `@gm/core/security/demo-quota`, gate-aware hero funnel, scoped site-gate/middleware
+  exemptions, `public-demo-spend-ceiling` capability. §34 box stays UNCHECKED (Part B gated-beta + full
+  instrumentation still pending — no self-certification). §11 media-gen deferred (lower value; would
+  conflict on capabilities.json/core package.json this run).
+  **LESSONS (durable):** (1) **Public paid-LLM endpoint hardening** — the GLOBAL spend ceiling is the
+  wallet-drain backstop (an anonymous IP-rotating caller defeats a per-IP cap), but an in-memory Map is
+  per-Vercel-instance → effective cap is `cap × instances`. Be HONEST in the capability manifest ("per-instance
+  bound; Redis for a true cross-instance cap") and make it the top-priority Redis-upgrade item; reserve the
+  quota slot as LATE as possible (after validation, right before spend) so denied/invalid requests don't
+  consume budget. (2) **Self-validation only credits CI-RUN specs** — `check-self-validation.mjs` matches
+  `e2e <token>` in the ci.yml e2e job block; CI runs `journeys` + `email-roundtrip`, NOT `smoke`. A new
+  capability's e2e proof must go in `journeys.spec.ts` (keyless, outcome-asserting), not smoke. (3) **Pre-launch
+  site-gate front door** — `/signup` + `/signin` dead-end at the gate, so any hero leading with them is broken
+  pre-launch; a `gateOn = Boolean(process.env.SITE_GATE_PASSWORD)` branch that leads with the working `/demo`
+  is the coherent funnel (keeps the A/B signup primary post-launch). (4) **Scope namespace exemptions to the
+  EXACT route** (`/api/public/parse-receipt`), never a bare namespace (`/api/public`), matching the repo's
+  `/api/waitlist/confirm` / `/api/growth/snapshot` convention — a blanket namespace exemption silently makes
+  future sibling routes public.
 - **2026-07-08 (run 54) — DEEP AUDIT (6-Haiku lens sweep covering all 8 areas, due since run 53 ~2 days) + 4
   file-disjoint clears (#464 add-receipt quota-gate degrade / #465 scan quota-gate degrade / #466 scan radio
   fieldset a11y / #467 ask 7-read parallelize); ALL 8 Sonnet reviews (2/PR) APPROVE first-pass; 0 abandons.**

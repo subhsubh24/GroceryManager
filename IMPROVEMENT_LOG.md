@@ -4,6 +4,48 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-08 (run 55) — Track E §34 Part A: public no-account "try the aha" receipt demo → waitlist (1 coherent flagship PR, both Sonnet reviewers APPROVE after one fix cycle; 0 abandons)
+
+A single high-value, coherent change advancing the lowest incomplete track (Track E §34): a public,
+NO-ACCOUNT demo of the core aha — paste or snap a grocery receipt → watch it become a pantry list —
+replacing the blank waitlist-only funnel with grounded interest. Deep audit NOT due (run 54 ran a
+full 6-lens sweep same day). Baseline gate green before starting (typecheck 0, ~884 core tests,
+self-validation green). Full scout sweep (2 Haiku: §34 surface + §11 media-gen) — §34 selected as the
+highest-value, lowest-track item; §11 deferred (lower value, and would conflict on capabilities.json /
+core package.json → not file-disjoint this run).
+
+**Shipped — PR #471 (§34 Part A):**
+- **`/demo` page + client** — design-system surface (concrete icons, real loading/empty/error states,
+  a synthetic sample receipt so the aha is instant, recognized-retailer reinforcement), demo→waitlist
+  CTA + Plausible funnel (`demo_view`/`demo_try`/`demo_success`/`demo_to_waitlist`). Writes NOTHING to
+  the DB ("nothing stored" is literally true).
+- **`POST /api/public/parse-receipt`** — hardened public AI endpoint: per-IP rate limit + captcha
+  (fail-open until keyed) + bounded input (8k text / 2 MB image) + per-IP AND global daily spend
+  ceiling (reserved right before spend) + single cheap-tier extraction (`maxAttempts: 1`, no
+  escalation). Degrades to a calm 503 (never a crash / fake success) with no key.
+- **`@gm/core/security/demo-quota`** — pure, keyless-tested per-IP + global daily ceiling with UTC-day
+  reset (7 tests).
+- **Gate-aware hero funnel** — pre-launch `/signup` dead-ends at the site gate, so the hero now leads
+  with the working `/demo` + waitlist when `SITE_GATE_PASSWORD` is set; post-launch keeps the A/B
+  signup primary + a `/demo` secondary. `#waitlist` anchor added.
+- Exemptions scoped to the EXACT demo route (never blanket `/api/public/*`) in site-gate + middleware.
+- Registered `public-demo-spend-ceiling` in the self-validation manifest (ceiling proven keyless by
+  unit test; route degrade + POST-only 405 proven by the CI-run `journeys.spec.ts`).
+
+**Review:** two Sonnet reviewers (correctness+security, value+design). First pass surfaced real gaps —
+a blanket `/api/public/*` exemption, a manifest overclaim about the in-memory (per-Vercel-instance)
+global cap, the pre-launch dead-end hero CTA, missing e2e coverage, and a copy/honesty tension
+("added to your pantry" vs "nothing stored"). All fixed; both reviewers re-verified **APPROVE**.
+
+**LESSONS:** (1) a public, no-account paid-LLM endpoint's load-bearing protection is the GLOBAL
+spend ceiling, not the per-IP one — but an in-memory counter is per-Vercel-instance, so the honest
+manifest claim is "per-instance bound; Redis needed for a true cross-instance cap" (surfaced in
+PENDING_OPS `llm-quota-redis-upgrade`, now the highest-priority of the three Map-based limiters).
+(2) The self-validation checker only credits an e2e spec the CI e2e job actually RUNS (`e2e <token>`)
+— demo assertions had to live in `journeys.spec.ts` (CI-run, keyless), not `smoke.spec.ts` (staging-only).
+(3) Pre-launch, ANY hero CTA to `/signup`/`/signin` dead-ends at the site gate — a gate-aware front
+door that leads with the working demo is the coherent §34 funnel.
+
 ## 2026-07-08 (run 54) — DEEP AUDIT (6-lens, all 8 areas) + 4 file-disjoint clears (add-receipt+scan degrade-hardening + scan a11y fieldset + ask 7-read parallelize); all 8 Sonnet reviews approve first-pass; 0 abandons
 
 Standalone 6-Haiku deep-audit sweep covering the 8 areas (security/RLS+Track-G, correctness/dead-code,
