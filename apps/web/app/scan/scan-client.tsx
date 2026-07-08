@@ -17,15 +17,17 @@ export function ScanClient() {
   return (
     <div className="space-y-6">
       <form action={formAction} className="card-pad">
-        <label className="mb-2 block field-label">What are you scanning?</label>
-        <div className="mb-4 flex flex-wrap gap-2">
-          {LOCATIONS.map((l, i) => (
-            <label key={l.value} className="chip">
-              <input type="radio" name="location" value={l.value} defaultChecked={i === 0} className="control-accent" />
-              {l.label}
-            </label>
-          ))}
-        </div>
+        <fieldset className="mb-4">
+          <legend className="mb-2 block field-label">What are you scanning?</legend>
+          <div className="flex flex-wrap gap-2">
+            {LOCATIONS.map((l, i) => (
+              <label key={l.value} className="chip">
+                <input type="radio" name="location" value={l.value} defaultChecked={i === 0} className="control-accent" />
+                {l.label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
         <label htmlFor="scan-photos" className="mb-2 block field-label">
           Photo(s)
