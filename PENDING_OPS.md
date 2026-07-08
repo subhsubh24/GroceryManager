@@ -231,8 +231,8 @@ OWNER_ACTIONS:
       title: Upgrade in-memory rate limiter + LLM quota to Redis (Upstash) for multi-instance
       priority: normal
       status: open
-      why: Current rate limiter + LLM quota use Node.js in-memory Maps — correct per-instance but not shared across multiple Vercel regions/instances. For single-instance deployments this is sufficient; for global Vercel this needs Redis.
-      how: "Install @upstash/ratelimit + @upstash/redis; set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN in Vercel env. Replace the Map-based buckets in _lib/rate-limit.ts and _lib/llm-quota.ts with Upstash Ratelimit."
+      why: Current rate limiter + LLM quota + the PUBLIC demo spend ceiling (§34) use Node.js in-memory Maps — correct per-instance but not shared across multiple Vercel regions/instances. For single-instance deployments this is sufficient; for global Vercel this needs Redis. The demo ceiling (packages/core/src/security/demo-quota.ts) is the highest-priority of the three because it guards a PUBLIC, no-account paid-LLM endpoint — its global daily cap is currently per-instance, so a scaled-out deployment's effective ceiling is cap×instances. Pre-launch traffic is owner-gated, so wire this BEFORE driving real demo traffic (§13 Gate 1).
+      how: "Install @upstash/ratelimit + @upstash/redis; set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN in Vercel env. Replace the Map-based buckets in _lib/rate-limit.ts, _lib/llm-quota.ts AND packages/core/src/security/demo-quota.ts (checkDemoQuota — back BOTH the per-IP and the global counter with a shared store) with Upstash Ratelimit."
       blocks: multi-instance-safety
     - id: decide-ship-households-family-tier
       title: "PRODUCT DECISION: ship household sharing live (FEATURE_HOUSEHOLDS=1) or keep the Family tier dark?"
