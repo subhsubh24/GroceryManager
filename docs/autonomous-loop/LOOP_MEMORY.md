@@ -4,6 +4,44 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-08 (run 54) — DEEP AUDIT (6-Haiku lens sweep covering all 8 areas, due since run 53 ~2 days) + 4
+  file-disjoint clears (#464 add-receipt quota-gate degrade / #465 scan quota-gate degrade / #466 scan radio
+  fieldset a11y / #467 ask 7-read parallelize); ALL 8 Sonnet reviews (2/PR) APPROVE first-pass; 0 abandons.**
+  Baseline gate green (typecheck 0, 872 core tests, production build clean 0 missing-export, self-validation 5/5
+  0 unmet, scorecard **A**). Combined-tree gate run once before splitting to 4 branches; all 4 apps/web-only
+  (no core/migration/mobile/capability change) so each subset also green. All 4 auto-merged through green CI.
+  **DEEP AUDIT verdict — 0 CRITICAL, everything CLEAN or verified false-positive:**
+  - SECURITY/RLS/Track-G **CLEAN** — 24 public tables all RLS+policy through 0020; rate-limit/captcha/HMAC/
+    webhook-auth(timing-safe)/headers/CORS/validation all present. NO NEW FINDINGS.
+  - COVERAGE **CLEAN** (core pure logic exhaustively tested); ARTIFACTS **CLEAN** (pricing byte-identical
+    doc↔code; README "870+" is a still-true FLOOR claim, not drift — NOT touched = churn avoided).
+  - MONETIZATION: pricing MATCHES, no correctness bugs; reach-gated RE-CONFIRMED (base ≈ $33K < $100K = owner
+    GTM #190). The audit's annual-first-default + promo-code-winback levers are A/B-experiment territory —
+    banking their adoption would GAME the number; NOT bankable pre-launch → **no buildable floor-mover**.
+  - Shipped: **#464/#465** hardened the add-receipt+scan **pre-LLM quota-gate `loadPreferenceSignals` read** that
+    sat OUTSIDE the try/catch → a DB blip threw uncaught to the page-level error boundary instead of the
+    `{status:error}` inline state (the #436/#437/#448 G3 class, on 2 core-loop vision paths). **#466** grouped the
+    scan-location radios in fieldset/legend (WCAG 1.3.1; Tailwind Preflight zeroes fieldset/legend defaults →
+    pixel-identical). **#467** parallelized `buildBriefForFallback`'s 7 sequential independent tenant reads →
+    `Promise.all` on the one tx (the #457 postgres.js-pipeline pattern, premium Ask path).
+  **LESSON — verify EVERY scout finding against real code before selecting (3 false positives this run, killed by a
+  code-read, 0 reviewer rounds burned):** (1) mobile `app/index.tsx` onboarding "res.ok not checked" is a NO-OP — the
+  code already fails OPEN to `onboarded=true` in every failure path (`res.json()` on an error body → `?? true`;
+  `.catch` → `true`), so a `res.ok` guard changes NOTHING = churn. "Every other file does X" is not a reason to add X
+  where the existing behavior is already correct-by-design. (2) `upgrade/page.tsx` `aria-current="true"` on a perk card
+  is NOT an ARIA misuse — `aria-current="true"` is valid for "the current item within a SET of related elements", not
+  navigation-only; the auditor's "nav links only" claim was over-narrow. Know the actual ARIA spec before "fixing" an
+  attribute. (3) `aria-disabled`+native `disabled` redundancy = harmless churn. The maker-verify guard (maker≠checker
+  BEFORE coding) keeps paying off — same pattern as runs 42-45/47/53.
+  **LESSON — same-class fix across 2 disjoint files is NOT padding when the paths are genuinely distinct:** #464
+  (receipt-ingest) and #465 (fridge-scan) apply the identical degrade-guard but are separate core user journeys each
+  independently valuable; Reviewer B was explicitly asked "is this count-padding?" and approved both on the
+  distinct-path rationale. The line: ship the SAME fix on N files only when each file is a real, separately-reachable
+  user path — and STOP at the marginal ones (deferred the pantry gmail-sync twin: premium secondary path, actual work
+  already degrades, only the gate exposed; deferred 5 micro-parallelizations dominated by downstream LLM latency).
+  **Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated floor #190, owner-GTM; base ≈
+  $33K < $100K = downloads/mo, no buildable floor-mover surfaced this sweep). Confidence statement stays UNCHECKED.
+  Validation 5/5, 0 unmet. Stale-local-main trap avoided (run-start `git reset --hard origin/main`, was 43 behind).
 - **2026-07-06 (run 53) — DEEP AUDIT (8-Haiku lens sweep, due since run 50 ~24h/3 runs) + 4 file-disjoint
   clears (#456 billing repeat-trial-leak / #457 perf tenant-read parallelization / #458 docs test-count /
   #459 mobile array-field boundary normalization); ALL 8 Sonnet reviews (2/PR) APPROVE first-pass; 0
