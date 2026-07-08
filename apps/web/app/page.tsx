@@ -230,6 +230,10 @@ export default async function HomePage({
   const assignedVariant = await assignAndLogVariant("landing_hero");
   const heroVariantKey = assignedVariant ?? sp.v ?? "a";
   const heroVariant: HeroVariant = HERO_VARIANTS[heroVariantKey] ?? HERO_VARIANTS.a!;
+  // Pre-launch the whole app is behind the SITE GATE, so /signup and /signin dead-end at the
+  // password challenge. In that phase the working, no-account /demo is the real front door — lead
+  // the hero with it (§34). Post-launch (gate unset) the A/B-tested signup CTA leads as before.
+  const gateOn = Boolean(process.env.SITE_GATE_PASSWORD);
   // Safe session read — a stale/undecryptable cookie (e.g. after an AUTH_SECRET rotation) makes
   // `auth()` THROW; that would crash this whole render into the error boundary ("Couldn't load your
   // dashboard"). currentSession() degrades to null so the visitor just sees the logged-out landing.
@@ -474,12 +478,31 @@ export default async function HomePage({
                   {heroVariant.subtext}
                 </p>
                 <div className="mt-8 flex flex-wrap items-center gap-3">
-                  <a href="/signup" className="btn-primary px-5 py-3 text-base">
-                    {heroVariant.primaryCta}
-                  </a>
-                  <a href="/signin" className="btn-secondary px-5 py-3 text-base">
-                    Sign in
-                  </a>
+                  {gateOn ? (
+                    <>
+                      <a href="/demo" className="btn-primary px-5 py-3 text-base">
+                        Try it free — no signup
+                      </a>
+                      <a href="#waitlist" className="btn-secondary px-5 py-3 text-base">
+                        Join the waitlist
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      <a href="/signup" className="btn-primary px-5 py-3 text-base">
+                        {heroVariant.primaryCta}
+                      </a>
+                      <a href="/demo" className="btn-secondary px-5 py-3 text-base">
+                        Try the demo
+                      </a>
+                      <a
+                        href="/signin"
+                        className="px-2 py-3 text-base font-medium text-ink-500 hover:text-ink-800"
+                      >
+                        Sign in
+                      </a>
+                    </>
+                  )}
                 </div>
                 <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-400">
                   {heroVariant.trustBadges.map((badge) => (

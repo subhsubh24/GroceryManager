@@ -10,7 +10,7 @@ import {
   ReceiptText,
 } from "@/app/components/icons";
 import { Turnstile } from "@/app/components/turnstile";
-import { titleCase } from "@/app/lib/format";
+import { humanize, titleCase } from "@/app/lib/format";
 import { trackEvent } from "@/app/lib/plausible";
 
 /**
@@ -60,6 +60,7 @@ export function DemoClient() {
   const [token, setToken] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [items, setItems] = useState<DemoItem[]>([]);
+  const [retailer, setRetailer] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [limited, setLimited] = useState(false);
 
@@ -96,6 +97,7 @@ export function DemoClient() {
 
       const data = (await res.json().catch(() => ({}))) as {
         items?: DemoItem[];
+        retailer?: string;
         error?: string;
         limited?: boolean;
       };
@@ -107,6 +109,7 @@ export function DemoClient() {
         return;
       }
       setItems(data.items);
+      setRetailer(data.retailer ?? null);
       setStatus("done");
       trackEvent("demo_success", { items: data.items.length });
     } catch {
@@ -222,7 +225,8 @@ export function DemoClient() {
         <div className="mt-5">
           <div className="flex items-center gap-2 text-sm font-medium text-brand-700">
             <Check className="h-5 w-5 shrink-0 text-brand-600" strokeWidth={2.5} aria-hidden />
-            {items.length} item{items.length === 1 ? "" : "s"} added to your pantry
+            {items.length} item{items.length === 1 ? "" : "s"} found on your receipt
+            {retailer && retailer !== "other" ? ` · ${humanize(retailer)}` : ""}
           </div>
           <ul className="mt-3 divide-y divide-line overflow-hidden rounded-xl border border-line">
             {items.map((item, i) => (

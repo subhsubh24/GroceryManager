@@ -71,10 +71,11 @@ function challengePage(failed: boolean): Response {
 const PUBLIC = [
   /^\/$/,
   // Public, no-account "try the aha" demo (§34) + its hardened parse endpoint. Drives the waitlist;
-  // the full app stays gated. The route inside /api/public self-hardens (rate limit + per-IP/global
-  // spend ceiling + captcha) — never blanket-trust /api/public for anything but the demo.
+  // the full app stays gated. Scoped to the EXACT demo route — never blanket-expose /api/public/*,
+  // so a future route under that namespace isn't silently made public. The route self-hardens
+  // (rate limit + per-IP/global spend ceiling + captcha).
   /^\/demo(\/|$)/,
-  /^\/api\/public(\/|$)/,
+  /^\/api\/public\/parse-receipt(\/|$)/,
   /^\/signin(\/|$)/,
   /^\/signup(\/|$)/,
   /^\/share(\/|$)/,
