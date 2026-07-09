@@ -274,8 +274,10 @@ optimistic trajectory.
    the `?ref=` attribution into an earned incentive (free months at 1/3/5-friend milestones, capped at 6,
    redeemed as bonus trial days at first checkout). This is a margin-bounded viral-acquisition + retention
    lever. The median ARR is deliberately UNMOVED: referral-driven installs and their conversion are left to
-   live experiment data — no adoption % is banked to clear the floor. Remaining buildable retention levers:
-   month-3 annual nudge (H14), win-back sequence (H15).)_
+   live experiment data — no adoption % is banked to clear the floor. The month-3 annual nudge (H14) and
+   win-back sequence (H15) are also BUILT (2026-06-28, run 23, PR #221) — dormant until the owner connects
+   an email provider + schedules the crons; no adoption % is banked from them either. No buildable retention
+   lever remains unbuilt; the binding constraint is reach, not the retention machine.)_
 4. **ARPU — Family + annual mix.** Family adoption (upside) and shifting mix toward annual lift ARPU
    ~13 %; secondary to reach/conversion.
 5. **MARGIN.** Already ~97 %; not a constraint.
