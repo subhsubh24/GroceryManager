@@ -94,7 +94,7 @@ export function MealGenerator({ energy, canGenerate }: { energy: MealEnergy; can
                 <details className="group mt-3 rounded-xl border border-line bg-cream/50 px-3.5 py-2.5 transition open:bg-surface">
                   <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-ink-800 marker:content-none">
                     <span>Steps</span>
-                    <span className="text-ink-300 transition group-open:rotate-180">▾</span>
+                    <span className="text-ink-300 transition group-open:rotate-180" aria-hidden="true">▾</span>
                   </summary>
                   <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-ink-600">
                     {meal.steps.map((step, s) => (
