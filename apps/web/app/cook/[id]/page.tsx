@@ -179,7 +179,7 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
                           <span>
                             {k.name} <span className="text-xs font-normal text-brand-600">· swap</span>
                           </span>
-                          <span className="text-ink-300 transition group-open:rotate-180">▾</span>
+                          <span className="text-ink-300 transition group-open:rotate-180" aria-hidden="true">▾</span>
                         </summary>
                         <ul className="mt-2 space-y-1 pl-3 text-sm text-ink-600">
                           {k.subs.map((s, i) => (
