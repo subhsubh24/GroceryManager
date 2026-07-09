@@ -63,6 +63,11 @@ const EnvSchema = z.object({
   // launch to open the app. Human-applied (PENDING_OPS) — never commit the value. Read directly
   // from process.env in apps/web/middleware.ts (edge runtime); listed here only as a known var.
   SITE_GATE_PASSWORD: z.string().optional(),
+  // Pre-launch gated-beta (§34 Part B) invite secret — a DISTINCT value the site gate ALSO accepts,
+  // granted to invitees by /api/invite/redeem so they never receive the master SITE_GATE_PASSWORD.
+  // Set it (to a different value than SITE_GATE_PASSWORD) to run the gated beta; rotate independently
+  // if leaked. Read directly from process.env (edge middleware + the redeem route). Human-applied.
+  SITE_GATE_INVITE_SECRET: z.string().optional(),
 
   // Integrations
   INSTACART_API_KEY: z.string().optional(),

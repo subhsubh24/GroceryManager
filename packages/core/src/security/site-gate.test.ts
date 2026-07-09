@@ -92,6 +92,39 @@ describe("siteGateDecision", () => {
       siteGateDecision({ pathname: "/dashboard", password: "deepster", cookie: "nope" }),
     ).toBe("challenge");
   });
+
+  it("authorized with the DISTINCT invite secret (beta invitees never hold the master password)", () => {
+    expect(
+      siteGateDecision({
+        pathname: "/dashboard",
+        password: "deepster",
+        inviteSecret: "invite-xyz",
+        cookie: "invite-xyz",
+      }),
+    ).toBe("authorized");
+  });
+
+  it("invite secret only authorizes when it is set (empty/absent secret never matches an empty cookie)", () => {
+    // No invite secret configured → a cookie must equal the master password or it's a challenge.
+    expect(
+      siteGateDecision({ pathname: "/dashboard", password: "deepster", cookie: "invite-xyz" }),
+    ).toBe("challenge");
+    // Empty invite secret must not be matchable by an empty cookie (both empty → still challenge).
+    expect(
+      siteGateDecision({ pathname: "/dashboard", password: "deepster", inviteSecret: "", cookie: "" }),
+    ).toBe("challenge");
+  });
+
+  it("a wrong cookie is a challenge even when an invite secret is configured", () => {
+    expect(
+      siteGateDecision({
+        pathname: "/dashboard",
+        password: "deepster",
+        inviteSecret: "invite-xyz",
+        cookie: "nope",
+      }),
+    ).toBe("challenge");
+  });
 });
 
 describe("exempt list hygiene", () => {

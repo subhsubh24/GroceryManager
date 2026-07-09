@@ -19,11 +19,16 @@ const SITE_GATE_COOKIE = "gm_site_gate";
  */
 function siteGate(req: Request, pathname: string, search: string): Response | undefined {
   const password = process.env.SITE_GATE_PASSWORD;
+  // A DISTINCT beta-invite secret the gate ALSO accepts (granted by /api/invite/redeem), so invitees
+  // never receive the master password. Optional — absent → only the password unlocks the gate.
+  const inviteSecret = process.env.SITE_GATE_INVITE_SECRET;
   const cookie = (req as { cookies?: { get(name: string): { value: string } | undefined } }).cookies?.get(
     SITE_GATE_COOKIE,
   )?.value;
 
-  // A `?gate=...` query unlocks the gate by setting the cookie, then redirects to the clean URL.
+  // A `?gate=...` query unlocks the gate by setting the cookie, then redirects to the clean URL. This
+  // path is the human-typed master password only (invitees use /join), so it never sets the cookie
+  // to the invite secret.
   const url = new URL(req.url);
   const provided = url.searchParams.get("gate");
   if (password && provided !== null) {
@@ -40,7 +45,7 @@ function siteGate(req: Request, pathname: string, search: string): Response | un
     }
   }
 
-  const decision = siteGateDecision({ pathname, password, cookie });
+  const decision = siteGateDecision({ pathname, password, cookie, inviteSecret });
   if (decision === "off" || decision === "exempt" || decision === "authorized") return undefined;
   return challengePage(provided !== null);
 }

@@ -75,13 +75,27 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ error: GENERIC }, { status: 404 });
   }
 
-  // 5. Grant the SITE-GATE cookie so /signup is reachable. Only meaningful when the gate is ON
-  //    (a password is configured); when it's OFF (dev / post-launch) this is a harmless no-op and
-  //    /signup is already public.
-  const res = NextResponse.json({ ok: true, next: "/signup?invited=1" });
+  // 5. Grant the SITE-GATE cookie so /signup is reachable — with the DISTINCT invite secret, NEVER
+  //    the master password (an invitee's cookie must never disclose the owner's admin override; a
+  //    leaked invite secret is rotated independently while password-holders are untouched).
+  //    - Gate OFF (no password): nothing to grant — /signup is already public. Return ok.
+  //    - Gate ON + invite secret configured: set the cookie to the invite secret.
+  //    - Gate ON but NO invite secret (misconfig): the code is validly redeemed, but we can't safely
+  //      grant access, so degrade honestly rather than fall back to leaking the master password.
   const password = process.env.SITE_GATE_PASSWORD;
-  if (password) {
-    res.cookies.set(SITE_GATE_COOKIE, password, {
+  const inviteSecret = process.env.SITE_GATE_INVITE_SECRET;
+  if (password && !inviteSecret) {
+    console.error(
+      "[invite/redeem] SITE_GATE_PASSWORD is set but SITE_GATE_INVITE_SECRET is missing — cannot grant beta access; set both (see PENDING_OPS).",
+    );
+    return NextResponse.json(
+      { ok: false, error: "Your invite is valid, but beta access is still being set up. Please try again shortly." },
+      { status: 503 },
+    );
+  }
+  const res = NextResponse.json({ ok: true, next: "/signup?invited=1" });
+  if (password && inviteSecret) {
+    res.cookies.set(SITE_GATE_COOKIE, inviteSecret, {
       httpOnly: true,
       sameSite: "lax",
       path: "/",

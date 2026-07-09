@@ -69,14 +69,15 @@ export function formatInviteCodeForDisplay(code: string): string {
 
 /**
  * Generate a canonical code from an injected random-byte source (the DB layer passes
- * `node:crypto`'s `randomBytes`). Rejection-samples so every symbol is uniform over the 32-symbol
- * alphabet (no modulo bias). Pure given the source, so it is unit-tested with a deterministic stub.
+ * `node:crypto`'s `randomBytes`). Each symbol is the low 5 bits of one random byte; because the
+ * alphabet is exactly 32 = 2^5 symbols, every 5-bit value maps 1:1 to a symbol with NO modulo bias
+ * and no rejection needed — uniform as long as the byte source is. Pure given the source, so it is
+ * unit-tested with a deterministic stub.
  */
 export function generateInviteCode(randomBytes: (n: number) => Uint8Array): string {
   let out = "";
   while (out.length < INVITE_CODE_LENGTH) {
-    // Draw a batch; keep only the low 5 bits when they land in [0,32) — a no-op here since the
-    // alphabet is exactly 32 symbols, so every 5-bit value maps 1:1 with zero rejection.
+    // One symbol per byte, low 5 bits — 32 symbols = 2^5 so the mapping is 1:1 and unbiased.
     const batch = randomBytes(INVITE_CODE_LENGTH);
     for (let i = 0; i < batch.length && out.length < INVITE_CODE_LENGTH; i++) {
       out += INVITE_CODE_ALPHABET[batch[i]! & 31]!;

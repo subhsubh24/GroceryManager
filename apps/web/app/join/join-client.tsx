@@ -23,12 +23,23 @@ export function JoinClient() {
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState<string | null>(null);
 
-  // Pre-fill from the invite email's deep link (?code=…), formatted for readability.
+  // Pre-fill from the invite email's deep link (?code=…), formatted for readability, then STRIP the
+  // code from the URL so a reusable beta key isn't retained in browser history or sent to analytics
+  // on any later pageview. The code lives in component state from here; redemption is idempotent, so
+  // dropping it from the URL is safe.
   useEffect(() => {
     const fromUrl = params.get("code");
-    if (fromUrl) {
-      const norm = normalizeAndValidate(fromUrl);
-      setCode(norm ? formatInviteCodeForDisplay(norm) : fromUrl);
+    if (!fromUrl) return;
+    const norm = normalizeAndValidate(fromUrl);
+    setCode(norm ? formatInviteCodeForDisplay(norm) : fromUrl);
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("code")) {
+        url.searchParams.delete("code");
+        window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+      }
+    } catch {
+      /* non-critical — leave the URL as-is if history isn't available */
     }
   }, [params]);
 
