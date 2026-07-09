@@ -31,6 +31,73 @@ support it; the gap speaks for itself.
 
 ## RUN LOG (newest first)
 
+### 2026-07-09 (run 10) — pre_launch, unchanged infra; §34 demo/invite shipped by product loop; 2 scorecard nits fixed
+- **Mode**: Still the run-9 state (channels_connected: [email], awaiting_connect: false, site_gate_up: true,
+  GATE 1 not_ready), RE-VERIFIED, not assumed. No owner movement on the Human-Core blockers.
+- **Did**:
+  - Read GTM_STANDARD, FACTORY_STANDARD, GROWTH_STATUS, GROWTH_MEMORY, GTM_SCORECARD (as_of 2026-07-08 — a
+    fresh grade since run 9, overall A, ship_gate_met true, 3 top_gaps all A->A+ polish), ANALYSIS_PLAYBOOK,
+    OUTREACH, PENDING_OPS, QUALITY_SCORECARD (as_of 2026-07-09, overall A held, ship_gate_met true).
+  - **Re-probed real state directly** (FACTORY_STANDARD §28): `CRON_SECRET` present again; `GET
+    /api/growth/snapshot` returned HTTP 200 with a payload identical in substance to run 9 (all 4 sources
+    connected, funnel all 0/null, same 3 H10 experiments running/null). Direct curl reproduced the same
+    site-gate split — home 200, `/signup`+`/admin/waitlist` 401 — and ALSO confirmed `/demo` and `/join`
+    (new since run 9) both return 200, gate-exempt by design.
+  - `git fetch origin main` showed 15 new commits since run 9's merge. The GTM-relevant ones: **§34 Part A**
+    (public no-account demo of the core receipt-import aha, `/demo`, PR #471, run 55) and **§34 Part B**
+    (gated-beta invite codes, `/join` + `POST /api/invite/redeem`, PR #475, run 56) both SHIPPED — replacing
+    the blank pre-launch waitlist concept with a real product demo + a built (but inactive) invite-cohort
+    mechanism. `QUALITY_SCORECARD` (2026-07-09) confirms both new public attack surfaces were hardened
+    (rate-limit + captcha + spend-ceiling + non-enumerating errors) with no new ship-critical gap — overall
+    grade held at A. Updated `GROWTH_STATUS.marketing` to reflect this: precondition (c) is now backed by
+    LIVE audited pages, not just reviewed copy, but GATE 1 stays `not_ready` — precondition (b), the §29
+    computer-use sweep, is STILL unmet (`docs/autonomous-loop/VALIDATOR_STATUS.md` re-confirmed absent via
+    `ls`), unchanged since run 9 despite `BROWSERBASE_API_KEY`/`BROWSERBASE_PROJECT_ID` being present in this
+    run's environment too — still Product-Factory build work, not an owner blocker.
+  - **Closed 2 of 3 GTM_SCORECARD (2026-07-08) top_gaps** (real fixes, not new claims):
+    1. `content.published_7d` was still `1`, but the cited post (2026-06-29) is now 10 days old — outside
+       its own 7-day window. Corrected to `0`. Did not draft a new post (no analytics-identified gap; would
+       be padding).
+    2. Re-fetched BOTH flagged `demand_signal` source pages directly (WebFetch, not a search summary) and
+       confirmed real misattributions: the "purchases don't automatically flow" Paprika quote is P.
+       Kerluke's (part of the SAME review already cited for the "mediocre" theme), not a separate "D.
+       Bogan"; the KitchenPal "slow when creating a new item" quote is Lars Uriel's, not "Jane Sanders".
+       Quote TEXT was verbatim-correct both times — only the attributed names were wrong. Corrected both.
+    3. Did NOT attempt the third top_gap (a `lift.test.ts` for `computeExperimentResult`, the
+       decided-vs-running monetization gate) — that's core test authoring in
+       `packages/core/src/growth/experiments`, outside the GTM Factory's remit (docs/growth + PENDING_OPS
+       only, never `packages/core`). Flagged as a `next_action` for the product loop instead of overreaching
+       into code I'm not scoped to ship.
+  - **Demand-signal (§10)**: tried 2 new angles. "Pantry Check" (App Store id966702368, 4.5★/1.6K ratings)
+    surfaced via a broader "scan my grocery receipt" search — WebFetch confirmed it's BARCODE-based, no
+    receipt/Gmail-import feature, and no on-theme complaint text in its reviews — a genuine negative, not
+    added. Cooklist (grand-screen.com) surfaced only a recipe-import complaint (off-theme) — also not added.
+    No new citable evidence this run; the existing 3-theme synthesis stands unchanged.
+  - **Outreach (§3b)**: OUTREACH.md's target-type categories remain fully searched (runs 2-7) with zero
+    qualifying targets and no new reason surfaced (the §34 demo shipping doesn't create a new press/partner
+    "why now" on its own — zero real traffic to cite yet). Zero outreach drafted — also moot, GATE 1 not open.
+  - Did NOT touch ROADMAP/VISION/BUSINESS_CASE — the §34 demo is a real product change but has zero
+    traffic/conversion data yet, so no number could be honestly computed or changed from it; not a steer.
+  - Ran an independent reviewer subagent (fresh context, adversarial) against this run's full diff before
+    committing — see its verdict recorded below once returned.
+- **Hypothesis**: none new on the funnel (still zero real traffic). This run's work is (a) re-verifying
+  infra state is unchanged, (b) correctly reconciling a real, significant product-loop change (§34 shipping)
+  against the §13 gate without over-claiming readiness, (c) closing 2 of 3 named scorecard accuracy gaps.
+- **Result**: Infra state confirmed unchanged via fresh round-trip evidence. Two real accuracy bugs fixed
+  (a stale windowed metric, two misattributed review quotes). §34 demo/invite assets confirmed live and
+  reflected honestly in the `marketing` block without prematurely opening GATE 1. Funnel/PMF still 0/null.
+- **Decision**: Ship the GROWTH_STATUS/GROWTH_MEMORY/PENDING_OPS updates (reviewer-cleared); zero outreach
+  (correct); no ROADMAP/VISION/BUSINESS_CASE steer; no GATE 1/2 proposal (§29 sweep still the sole blocker).
+- **Operational note**: the GTM_SCORECARD's adversarial re-grade caught two real name-misattributions that
+  had survived 3+ runs unnoticed (quote text was always right; only the attributed reviewer name was wrong).
+  Worth remembering: WebFetch's name-extraction from a multi-review aggregator page is not fully reliable —
+  re-confirm a specific attribution against the raw page before trusting the first extraction, the same
+  discipline run 7 already learned for URL slugs. Also worth remembering for future runs: when the product
+  loop ships a GTM-relevant feature (like §34's demo/invite) between GTM runs, the right response is to
+  verify it live (curl, not just reading the PR title) and reconcile it against the exact §13 precondition
+  language — it can strengthen one precondition without unblocking the gate, and claiming otherwise would be
+  the "eager to launch" mistake run 9 flagged.
+
 ### 2026-07-05 (run 9) — pre_launch, unchanged infra; NEW GTM_STANDARD §13 two-gate marketing system read + tracked
 - **Mode**: Still the run-8 state (channels_connected: [email], awaiting_connect: false, site_gate_up: true),
   RE-VERIFIED rather than assumed. No new owner movement.
