@@ -108,7 +108,14 @@ export async function removePantryItemAction(formData: FormData) {
   const userId = await currentUserId();
   if (!userId) return;
 
-  await withTenant(getDb(), userId, (tx) => removePantryItem(tx, userId, canonicalItemId));
+  // Degrade a transient DB/RLS failure to a quiet no-op rather than throwing to the client (which
+  // would blow up the whole pantry page via the error boundary). revalidatePath re-reads the real
+  // state, so a failed removal honestly shows the item still there — never a fake success.
+  try {
+    await withTenant(getDb(), userId, (tx) => removePantryItem(tx, userId, canonicalItemId));
+  } catch (e) {
+    console.error("[pantry/removePantryItemAction]", e);
+  }
 
   revalidatePath("/pantry");
 }
@@ -128,23 +135,29 @@ export async function addPantryItemAction(formData: FormData) {
   const rawQty = Number(formData.get("qty"));
   const qty = Number.isFinite(rawQty) && rawQty > 0 ? rawQty : 1;
 
-  await withTenant(getDb(), userId, async (tx) => {
-    const ports = createDbNormalizationPorts(tx, userId);
-    const [top] = await ports.trigramCandidates(name, 1);
-    const canonicalItemId =
-      top && top.score >= NORMALIZE.trigramThreshold ? top.id : await ports.createCanonical(name);
+  // Degrade a transient DB/RLS failure to a quiet no-op (see removePantryItemAction) — the re-read
+  // after revalidate reflects the true state, so a failed add simply doesn't appear.
+  try {
+    await withTenant(getDb(), userId, async (tx) => {
+      const ports = createDbNormalizationPorts(tx, userId);
+      const [top] = await ports.trigramCandidates(name, 1);
+      const canonicalItemId =
+        top && top.score >= NORMALIZE.trigramThreshold ? top.id : await ports.createCanonical(name);
 
-    await appendLedgerAndReproject(tx, {
-      userId,
-      canonicalItemId,
-      baseQtyDelta: qty,
-      eventType: "manual_adjust",
-      confidence: 0.9,
-      refType: "manual",
-      refId: null,
-      occurredAt: new Date(),
+      await appendLedgerAndReproject(tx, {
+        userId,
+        canonicalItemId,
+        baseQtyDelta: qty,
+        eventType: "manual_adjust",
+        confidence: 0.9,
+        refType: "manual",
+        refId: null,
+        occurredAt: new Date(),
+      });
     });
-  });
+  } catch (e) {
+    console.error("[pantry/addPantryItemAction]", e);
+  }
 
   revalidatePath("/pantry");
 }
@@ -165,32 +178,38 @@ export async function resolveExpiringAction(formData: FormData) {
   const userId = await currentUserId();
   if (!userId) return;
 
-  await withTenant(getDb(), userId, async (tx) => {
-    if (outcome === "have") {
+  // Degrade a transient DB/RLS failure to a quiet no-op (see removePantryItemAction) — the item stays
+  // flagged and the user can retry, rather than the page erroring out.
+  try {
+    await withTenant(getDb(), userId, async (tx) => {
+      if (outcome === "have") {
+        await appendLedgerAndReproject(tx, {
+          userId,
+          canonicalItemId,
+          baseQtyDelta: 0,
+          eventType: "manual_adjust",
+          confidence: 0.9,
+          refType: "manual",
+          occurredAt: new Date(),
+        });
+        return;
+      }
+      if (outcome !== "used" && outcome !== "tossed") return;
+      const raw = await getRawStockSum(tx, userId, canonicalItemId);
+      if (raw <= 0) return; // already empty — nothing to remove
       await appendLedgerAndReproject(tx, {
         userId,
         canonicalItemId,
-        baseQtyDelta: 0,
-        eventType: "manual_adjust",
+        baseQtyDelta: -raw,
+        eventType: outcome === "tossed" ? "spoilage" : "consume_inferred",
         confidence: 0.9,
         refType: "manual",
         occurredAt: new Date(),
       });
-      return;
-    }
-    if (outcome !== "used" && outcome !== "tossed") return;
-    const raw = await getRawStockSum(tx, userId, canonicalItemId);
-    if (raw <= 0) return; // already empty — nothing to remove
-    await appendLedgerAndReproject(tx, {
-      userId,
-      canonicalItemId,
-      baseQtyDelta: -raw,
-      eventType: outcome === "tossed" ? "spoilage" : "consume_inferred",
-      confidence: 0.9,
-      refType: "manual",
-      occurredAt: new Date(),
     });
-  });
+  } catch (e) {
+    console.error("[pantry/resolveExpiringAction]", e);
+  }
 
   revalidatePath("/pantry");
 }
@@ -204,7 +223,13 @@ export async function clearPantryAction() {
   const userId = await currentUserId();
   if (!userId) return;
 
-  await withTenant(getDb(), userId, (tx) => clearPantry(tx, userId));
+  // Degrade a transient DB/RLS failure to a quiet no-op (see removePantryItemAction) — a failed wipe
+  // leaves the pantry intact and re-renders true state rather than throwing to the client.
+  try {
+    await withTenant(getDb(), userId, (tx) => clearPantry(tx, userId));
+  } catch (e) {
+    console.error("[pantry/clearPantryAction]", e);
+  }
 
   revalidatePath("/pantry");
 }
