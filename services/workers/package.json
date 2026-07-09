@@ -9,6 +9,7 @@
     "backfill:embeddings": "dotenv -e ../../.env -- tsx src/scripts/backfill-embeddings.ts",
     "backfill:receipts": "dotenv -e ../../.env -- tsx src/scripts/backfill-receipts.ts",
     "backfill:shelf-life": "dotenv -e ../../.env -- tsx src/scripts/backfill-shelf-life.ts",
+    "invite:issue": "dotenv -e ../../.env -- tsx src/scripts/issue-invites.ts",
     "lint": "echo \"(lint) @gm/workers\"",
     "typecheck": "tsc --noEmit"
   },

@@ -84,6 +84,9 @@ async function main() {
     console.log("→ cohort-retention activity indexes…");
     await sql.unsafe(readFileSync(join(pkgRoot, "sql/0020_cohort_activity_index.sql"), "utf8"));
 
+    console.log("→ waitlist beta invite codes (§34 Part B)…");
+    await sql.unsafe(readFileSync(join(pkgRoot, "sql/0021_waitlist_invites.sql"), "utf8"));
+
     console.log("✓ migrations complete");
   } finally {
     await sql.end();

@@ -25,6 +25,12 @@ export const SITE_GATE_EXEMPT: RegExp[] = [
   // /api/public/*, so a future route added under that namespace isn't silently made public.
   /^\/demo(\/|$)/,
   /^\/api\/public\/parse-receipt(\/|$)/,
+  // Gated-beta (§34 Part B): a waitlisted person with a code must reach the redeem page + endpoint
+  // even while the gate is LOCKED — redeeming a valid code is exactly how they're let past it (the
+  // route grants the gate cookie on success). Scoped to the EXACT routes; /signup stays gated so
+  // only a redeemed invite (or the password) gets in.
+  /^\/join(\/|$)/,
+  /^\/api\/invite\/redeem(\/|$)/,
   /^\/privacy(\/|$)/, // legal
   /^\/terms(\/|$)/,
   /^\/blog(\/|$)/, // public marketing content

@@ -12,6 +12,10 @@ describe("isSiteGateExempt — public marketing/waitlist + machine endpoints", (
     "/demo",
     "/demo/",
     "/api/public/parse-receipt",
+    "/join",
+    "/join/",
+    "/api/invite/redeem",
+    "/api/invite/redeem/",
     "/privacy",
     "/privacy/",
     "/terms",
@@ -47,6 +51,9 @@ describe("isSiteGateExempt — public marketing/waitlist + machine endpoints", (
     "/api/publicity", // /api/public must not prefix-match a longer segment
     "/api/public", // the /api/public namespace is NOT blanket-exempt — only the exact demo route is
     "/api/public/other", // a future /api/public/* route must stay gated until explicitly exempted
+    "/joinery", // /join must not prefix-match a longer segment
+    "/api/invite", // the /api/invite namespace is NOT blanket-exempt — only /redeem is
+    "/api/invite/issue", // a future /api/invite/* route must stay gated until explicitly exempted
   ];
   for (const p of gated) {
     it(`gates ${p}`, () => expect(isSiteGateExempt(p)).toBe(false));

@@ -76,6 +76,11 @@ const PUBLIC = [
   // (rate limit + per-IP/global spend ceiling + captcha).
   /^\/demo(\/|$)/,
   /^\/api\/public\/parse-receipt(\/|$)/,
+  // Gated-beta (§34 Part B): the invite-code redeem page + its endpoint. A waitlisted person with a
+  // code must reach these WITHOUT an account; redeeming grants the gate cookie → /signup. Scoped to
+  // the EXACT routes — never blanket-expose /api/invite/*.
+  /^\/join(\/|$)/,
+  /^\/api\/invite\/redeem(\/|$)/,
   /^\/signin(\/|$)/,
   /^\/signup(\/|$)/,
   /^\/share(\/|$)/,
