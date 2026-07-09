@@ -4,6 +4,40 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-09 (run 58) — 2 file-disjoint QUALITY_SCORECARD A→A+ closures (#486 cook-mode arrow icons /
+  #487 RevenueCat event-map extract + table tests); 4/4 Sonnet reviews APPROVE first-pass; 0 abandons; 0
+  verify-cycle failures.** Deep audit NOT due (run 57 ran one same-day). Baseline gate green. No scout
+  sweep — consumed the fresh scorecard (2026-07-09, overall A, ship_gate_met true) as the distilled
+  discovery, verified each named gap against real code, shipped the two cleanly+safely buildable +
+  file-disjoint ones. #486 closed the `design_taste` A→A+ nit (the two cook-mode step-nav arrow glyphs
+  #479 left behind → `<ArrowLeft>`/`<ArrowRight>` registry icons). #487 closed the ship-critical
+  `launch_readiness` A→A+ gap (uncorrected 3 cycles): extracted the RevenueCat webhook's inline,
+  untested grant/revoke/ignore + product→tier mapping to pure exported `@gm/core/billing` fns
+  (`rcEventAction`/`tierFromRevenueCatProduct`) + 25 table tests, byte-identical behaviour. No DoD box
+  completed (A→A+ polish on already-A dims, not new DoD items).
+  **LESSONS (durable):**
+  (1) **When a deep audit ran within 24h, the fresh QUALITY_SCORECARD `top_gaps` list IS the run's
+  distilled discovery — a full scout sweep would just re-derive it.** The right move on a converged
+  product is: read the scorecard's named gaps, verify each against the actual code (don't trust the
+  grade blindly — but here both were real), and ship the subset that is BOTH cleanly buildable AND
+  safe AND file-disjoint. That kept this a tight 2-change run with zero churn.
+  (2) **Not every scorecard-named gap is worth shipping this run — filter by blast radius, not just
+  value.** The `performance` (B, the only sub-A dim) gap named two asks: a CI perf-budget gate (can't —
+  `.github` is a forbidden blast-radius zone for a headless run) and an edge-middleware trim (moving
+  NextAuth/jose off the edge runtime is a high-blast-radius AUTH refactor for a NON-ship-critical A→A+
+  nit). Per the BRAKES ("when in doubt, STOP"), both were correctly deferred — a risky auth-middleware
+  rewrite is not worth a non-blocking A+ cosmetic. The `security` A→A+ (in-memory→Redis quota) needs an
+  owner secret (already in PENDING_OPS) → also deferred. Ship the safe closures, leave the risky/gated
+  ones for the owner or a dedicated slice.
+  (3) **Extract-and-table-test is the clean pattern for un-tested money-code decisions.** A grant/revoke
+  or product→tier typo mis-grants entitlements silently. Lifting the inline sets/mapping verbatim into a
+  pure exported fn (no behaviour change → Reviewer A can verify line-by-line vs the pre-diff) + a table
+  test over every event class and precedence/edge case turns an untested critical path into a proven
+  one without touching the route's auth/fail-closed path.
+  **Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated business-case
+  floor, base ≈ $33K < $100K, #190 = owner-GTM, no buildable floor-mover). Confidence statement stays
+  UNCHECKED. Validation 7/7, 0 unmet. Coherent converged run: 2 real clears (1 design, 1 ship-critical
+  correctness safety net), 4/4 first-pass approvals, 0 abandons = success.
 - **2026-07-09 (run 57) — DEEP AUDIT (5-Haiku lens sweep, due since run 54 ~1 day) + 4 file-disjoint
   clears (#482 ask-quota-per-step G7 / #480 pantry degrade / #479 cook-mode Check icon / #481 business-case
   H14/H15 freshness); all 8 Sonnet reviews (2 per PR) APPROVE first-pass; 0 abandons; 0 verify-cycle
