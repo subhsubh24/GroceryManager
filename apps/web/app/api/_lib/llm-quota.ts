@@ -39,3 +39,23 @@ export function checkLlmQuota(userId: string, isPremiumUser: boolean): QuotaResu
   entry.count++;
   return { allowed: true, count: entry.count, limit };
 }
+
+/**
+ * Settle EXTRA calls a single request actually made beyond the 1 already charged by `checkLlmQuota`.
+ * The "ask your kitchen" agent runs a function-calling loop that can fan out to several Gemini calls
+ * per ask; charging a flat 1 at the gate under-counts the G7 spend ceiling by up to that multiplier.
+ * The caller pre-charges 1 at the gate, then records `actualCalls - 1` here once the loop reports its
+ * real step count — so a user who runs deep multi-step asks hits the ceiling proportionally sooner.
+ * No allow/deny decision (the budget was already consumed); just accrue. No-op for <= 0.
+ */
+export function recordLlmUsage(userId: string, additionalCalls: number): void {
+  if (!Number.isFinite(additionalCalls) || additionalCalls <= 0) return;
+  const today = todayUtc();
+  const entry = quotas.get(userId);
+  if (!entry || entry.date !== today) {
+    // Day rolled over (or no prior entry) between the gate check and settlement — start fresh.
+    quotas.set(userId, { count: Math.floor(additionalCalls), date: today });
+    return;
+  }
+  entry.count += Math.floor(additionalCalls);
+}

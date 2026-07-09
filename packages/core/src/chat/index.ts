@@ -269,21 +269,37 @@ export interface AnswerArgs {
   brief: KitchenBrief;
 }
 
+export interface AnswerResult {
+  reply: string;
+  /**
+   * How many Gemini API calls the agentic loop actually made (0 on the keyless/no-userId path).
+   * The agentic loop can fan out to `maxSteps` calls per single ask, so the caller must settle its
+   * per-user LLM spend quota against THIS count — not charge a flat 1 per ask — or the G7 spend
+   * ceiling is under-counted by up to 8× on this endpoint (see apps/web/app/ask/actions.ts).
+   */
+  llmCalls: number;
+}
+
 /**
  * Answer the user's chat. With a client AND a userId → run Gemini's FUNCTION-CALLING loop over the
  * per-user semantic-layer tools (code-execution ON, so every number is computed in Python; the model
  * fetches its own data and can take additive actions). Without a client or userId → the deterministic,
  * key-free summary built from the brief. Any failure in the agentic path falls back to that same
  * summary — this never throws to the caller.
+ *
+ * Returns the real number of LLM calls made (`llmCalls`) so the caller can charge its spend quota
+ * proportionally: the loop makes up to `maxSteps` calls per ask, so a flat charge-per-ask would let
+ * a single ask consume up to 8× its quota weight.
  */
-export async function answerKitchenChat(deps: AnswerDeps, args: AnswerArgs): Promise<{ reply: string }> {
+export async function answerKitchenChat(deps: AnswerDeps, args: AnswerArgs): Promise<AnswerResult> {
   // Keyless / no-session: degrade to the pre-computed summary (and nudge to add a key when keyless).
+  // No LLM call is made on this path, so it costs zero quota.
   if (!deps.client || !deps.userId) {
-    return { reply: summarizeBrief(args.brief, !deps.client) };
+    return { reply: summarizeBrief(args.brief, !deps.client), llmCalls: 0 };
   }
   try {
     const tools = buildSemanticTools({ userId: deps.userId, client: deps.client });
-    const { text } = await deps.client.runChatWithTools({
+    const { text, steps } = await deps.client.runChatWithTools({
       messages: args.messages.map((m): ChatTurn => ({ role: m.role, content: m.content })),
       system: SYSTEM_AGENT,
       tools,
@@ -293,9 +309,10 @@ export async function answerKitchenChat(deps: AnswerDeps, args: AnswerArgs): Pro
       maxSteps: 8,
     });
     const reply = text.trim();
-    return { reply: reply.length > 0 ? reply : summarizeBrief(args.brief, false) };
+    return { reply: reply.length > 0 ? reply : summarizeBrief(args.brief, false), llmCalls: steps };
   } catch {
-    // Never throw to the caller — degrade to the deterministic, pre-computed summary.
-    return { reply: summarizeBrief(args.brief, false) };
+    // Never throw to the caller — degrade to the deterministic, pre-computed summary. At least one
+    // (failed) call was attempted, so charge 1 rather than 0.
+    return { reply: summarizeBrief(args.brief, false), llmCalls: 1 };
   }
 }
