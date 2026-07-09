@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { canUse, getCurrentSubscriptionTier, isPremium, PREMIUM_FEATURES, SUBSCRIPTION_PLANS } from "./index.js";
+import {
+  canUse,
+  getCurrentSubscriptionTier,
+  isPremium,
+  PREMIUM_FEATURES,
+  rcEventAction,
+  SUBSCRIPTION_PLANS,
+  tierFromRevenueCatProduct,
+} from "./index.js";
 
 describe("isPremium", () => {
   it("is true when an entitlement=premium signal is present", () => {
@@ -80,5 +88,64 @@ describe("SUBSCRIPTION_PLANS", () => {
     expect(familyPlan?.priceMonthCents).toBe(999);
     expect(familyPlan?.priceAnnualCents).toBe(7999);
     expect(familyPlan?.trialDays).toBe(7);
+  });
+});
+
+describe("rcEventAction (RevenueCat event → entitlement effect)", () => {
+  it.each([
+    "INITIAL_PURCHASE",
+    "RENEWAL",
+    "PRODUCT_CHANGE",
+    "UNCANCELLATION",
+    "NON_RENEWING_PURCHASE",
+    "SUBSCRIPTION_EXTENDED",
+    "TRANSFER",
+  ])("grants access on %s", (type) => {
+    expect(rcEventAction(type)).toBe("grant");
+  });
+
+  it.each(["EXPIRATION", "SUBSCRIPTION_PAUSED"])("revokes access on %s", (type) => {
+    expect(rcEventAction(type)).toBe("revoke");
+  });
+
+  it.each([
+    // CANCELLATION / BILLING_ISSUE keep access until an explicit EXPIRATION — must NOT revoke here.
+    "CANCELLATION",
+    "BILLING_ISSUE",
+    "SUBSCRIBER_ALIAS",
+    "TEST",
+    "UNKNOWN_FUTURE_EVENT",
+    "",
+  ])("ignores %s (access unchanged until EXPIRATION)", (type) => {
+    expect(rcEventAction(type)).toBe("ignore");
+  });
+
+  it("ignores null/undefined event types", () => {
+    expect(rcEventAction(null)).toBe("ignore");
+    expect(rcEventAction(undefined)).toBe("ignore");
+  });
+});
+
+describe("tierFromRevenueCatProduct (product id → paid tier)", () => {
+  it.each([
+    ["gm_family_monthly", "premium_family"],
+    ["premium_family_annual", "premium_family"], // family wins over annual (most specific first)
+    ["gm_annual", "premium_annual"],
+    ["gm_premium_yearly", "premium_annual"], // "year" also maps to annual
+    ["gm_monthly", "premium_monthly"],
+    ["gm_premium", "premium_monthly"], // no keyword → monthly default
+    ["", "premium_monthly"],
+  ])("maps %s → %s", (productId, expected) => {
+    expect(tierFromRevenueCatProduct(productId)).toBe(expected);
+  });
+
+  it("is case-insensitive", () => {
+    expect(tierFromRevenueCatProduct("GM_FAMILY_ANNUAL")).toBe("premium_family");
+    expect(tierFromRevenueCatProduct("Premium_Annual")).toBe("premium_annual");
+  });
+
+  it("defaults to monthly for null/undefined", () => {
+    expect(tierFromRevenueCatProduct(null)).toBe("premium_monthly");
+    expect(tierFromRevenueCatProduct(undefined)).toBe("premium_monthly");
   });
 });
