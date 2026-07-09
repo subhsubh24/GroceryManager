@@ -177,9 +177,10 @@ export function CookMode({
                   onClick={() =>
                     document.getElementById("log-cook")?.scrollIntoView({ behavior: "smooth", block: "center" })
                   }
-                  className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-brand-solid-hover shadow-sm transition hover:bg-white/95 active:scale-[0.97]"
+                  className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-white px-4 text-sm font-semibold text-brand-solid-hover shadow-sm transition hover:bg-white/95 active:scale-[0.97]"
                 >
-                  ✓ Done — log it
+                  <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+                  Done — log it
                 </button>
               ) : (
                 <button
