@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { extractTimerMinutes, scaleMeasure } from "@gm/core/recipe";
-import { Check } from "@/app/components/icons";
+import { ArrowLeft, ArrowRight, Check } from "@/app/components/icons";
 
 type Ingredient = { name: string; measure?: string; inPantry?: boolean };
 
@@ -163,9 +163,10 @@ export function CookMode({
                 type="button"
                 onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
                 disabled={stepIndex === 0}
-                className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-white/15 px-4 text-sm font-semibold transition hover:bg-white/25 active:scale-[0.97] disabled:opacity-40"
+                className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-white/15 px-4 text-sm font-semibold transition hover:bg-white/25 active:scale-[0.97] disabled:opacity-40"
               >
-                ← Back
+                <ArrowLeft className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+                Back
               </button>
               {/* Green text on the white primary button uses `brand-solid-hover` (the darker deep
                   green), NOT `brand-solid` — brand-solid (12 138 62) fails WCAG AA (4.5:1) as text on
@@ -186,9 +187,10 @@ export function CookMode({
                 <button
                   type="button"
                   onClick={() => setStepIndex((i) => Math.min(total - 1, i + 1))}
-                  className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-brand-solid-hover shadow-sm transition hover:bg-white/95 active:scale-[0.97]"
+                  className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-white px-4 text-sm font-semibold text-brand-solid-hover shadow-sm transition hover:bg-white/95 active:scale-[0.97]"
                 >
-                  Next →
+                  Next
+                  <ArrowRight className="h-4 w-4" strokeWidth={2.5} aria-hidden />
                 </button>
               )}
             </div>
