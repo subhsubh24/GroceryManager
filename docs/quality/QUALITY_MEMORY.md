@@ -5,6 +5,64 @@ new grade against the last entry. Append-only; newest entry on top.
 
 ---
 
+## 2026-07-09 — HELD: overall A, ship gate MET, 8/9 dims at A (no change from 07-05)
+
+**Overall: A. Ship gate: MET.** Mechanical gate this run: typecheck PASS (exit 0), `@gm/core` tests
+PASS (96 files pass / 10 skipped; **912 tests pass** / 26 skipped — up from 871; coverage lines 87.19
+/ branches 87.79 / functions 90.88 — thresholds 70/84/76/70 met), production `next build` PASS (no
+missing-export warnings; 102 kB shared first-load; middleware reported 88.6 kB = gzip of a
+**280,299-byte** raw edge bundle). Graded by 9 fresh adversarial per-dimension subagents, none having
+written the code.
+
+**No dimension moved.** functional_reality **A**, correctness_reliability **A**, security **A**,
+design_taste **A**, launch_readiness **A** (all SC), tests_evals **A**, artifact_integrity **A**,
+business_case **A**, performance **B**. 39 commits since 07-05: the **§34 pre-launch funnel** (public
+no-account receipt demo #471 + gated-beta invite codes #475), hardening (pantry-mutation degrade
+#480, ask/scan/add-receipt quota-gate degrade #464/#465/#482), a11y (#466/#473), a partial design fix
+(#479), and docs — all verified genuine improvements, **none a regression, none closed the
+performance gap**.
+
+**The two NEW public attack surfaces graded HARD, both layered.** security grader audited
+`/api/public/parse-receipt` (per-IP rateLimit + captcha + `checkDemoQuota` dual per-IP/global ceiling
+reserved after validation + keyless 503 degrade) and `/api/invite/redeem` (per-IP rateLimit + bounded
+input + keyless `normalizeAndValidate` before DB + idempotent COALESCE redeem + generic
+non-enumerating errors, grants only the DISTINCT `SITE_GATE_INVITE_SECRET` cookie that opens ONLY
+`/signup`, no full-app bypass). **The two NEW self-validation manifest capabilities verified HONEST**
+(manifest grew 5→7): artifact_integrity grader confirmed `demo-quota.test.ts` + `invite-code.test.ts`
+genuinely exercise `checkDemoQuota` / invite generation+redeem (not stubs), and `journeys.spec.ts`
+demo/invite assertions are real outcomes (status codes, generic-reject, POST-only 405) not
+page-loads. No capability parked planned/retired to dodge the tripwire.
+
+**performance held at B (the ONLY below-A dim, unchanged from #320).** Both standing gaps re-confirmed
+by an independent grader: (1) no CI perf-budget gate (grep of workflows = only two prose comments); (2)
+edge middleware still ~280 KB raw (NextAuth→jose on the edge, broad matcher). **NEW this cycle: the raw
+bundle CREPT 279,931 → 280,299 bytes** — a small ungated regression, exactly what a perf budget would
+have failed. It is the only thing keeping overall off A+.
+
+**Grader nits kept at A (second-order, non-blocking A→A+ polish):** launch_readiness — RevenueCat
+event→tier map (`revenuecat/route.ts:32-49`) STILL inline+unexported, no unit test, no capabilities
+entry (**3rd cycle uncorrected**); design_taste — #479 fixed only the cook-mode `✓` Done CTA but LEFT
+raw `←`/`→` arrow glyphs on the same file's two primary nav buttons (`cook-mode.tsx:168,191`) despite
+the registry having `ArrowLeft`/`ArrowRight` (used correctly on /demo + /join) — so the flagged nit is
+only HALF fixed; security — rate-limit + demo ceiling in-memory per-process, "global" cap becomes
+500×instances under horizontal scale (needs the PENDING_OPS Redis backing); correctness — #482 ask-quota
+settles per-step only on the return path, so a mid-run THROW under-counts up to ~7x G7 spend;
+tests_evals — line/stmt/func floors carry ~15-17pt slack (only branches=84 ratchets); business_case —
+`arr_year1` header field holds STEADY-STATE ($33.45K) not literal year-1 (~$6.5K), a disclosed naming
+nit; artifact_integrity — keyless demo e2e lands on the 502 catch branch so `checkDemoQuota` reserve is
+proven only by unit test end-to-end (honestly disclosed in the manifest note). All non-blocking.
+
+**Issues this run:** #320 (performance) left open + accurate (both gaps re-confirmed, byte figure
+refreshed 279,931→280,299 via a comment) — no refile needed. No ship-critical regression → no owner
+notification (dashboard = this scorecard).
+
+**What "raise to A+" looks like next run:** the perf-budget gate + edge-middleware trim (#320) closes
+`performance` → overall A+. Three bounded A→A+ polish items on already-A ship-critical dims remain
+optional gold-avoidance (RevenueCat event-map test; cook-mode arrow-glyph swap; Redis-backed
+demo/rate-limit ceiling).
+
+---
+
 ## 2026-07-05 — HELD: overall A, ship gate MET, 8/9 dims at A (no change from 07-03)
 
 **Overall: A. Ship gate: MET.** Mechanical gate this run: typecheck PASS (exit 0), `@gm/core` tests
