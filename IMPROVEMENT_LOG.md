@@ -4,6 +4,45 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-09 (run 58) — 2 file-disjoint QUALITY_SCORECARD A→A+ closures (#486 cook-mode arrow icons / #487 RevenueCat event-map extract + table tests); 4/4 Sonnet reviews APPROVE first-pass; 0 abandons
+
+Deep audit NOT due (run 57 ran a full 5-lens sweep same day, within 24h). Baseline gate green before
+starting (typecheck 0 all packages, production build clean). No full scout sweep needed — the fresh
+`docs/quality/QUALITY_SCORECARD.md` (2026-07-09, overall **A**, ship_gate_met **true**) already
+distilled the codebase's remaining buildable gaps; I verified each named gap against the real code and
+shipped the two that were cleanly + safely buildable and file-disjoint. Both close named scorecard
+A→A+ nits (Track F quality-gate advance) with the value bar cleared; neither completes a DoD box (they
+are A→A+ polish on already-A dimensions, not new DoD items).
+
+**Shipped — PR #486 (`design_taste` A→A+):** cook-mode's two step-navigation buttons rendered raw
+Unicode arrow glyphs (`← Back` / `Next →`) as UI chrome — the leftover the scorecard flagged after
+#479 fixed only the `✓ Done` CTA. Swapped both to the `<ArrowLeft>`/`<ArrowRight>` registry icons
+(`aria-hidden`, `gap-1.5` to match the adjacent `<Check>` CTA), so all three step-nav surfaces
+(cook-mode, `/demo`, `/join`) now use one deliberate icon system — icons via the registry, never a
+glyph (CLAUDE.md). Single file, no logic change.
+
+**Shipped — PR #487 (`launch_readiness` A→A+, ship_critical):** the RevenueCat webhook classified
+events (grant/revoke/ignore) and mapped product ids to paid tiers with inline, unexported, UNTESTED
+helpers — a product-substring typo or a grant/revoke reclassification could silently mis-grant or
+mis-revoke device (App Store / Play) entitlements with nothing to catch it (uncorrected across 3
+scorecard cycles). Extracted to pure exported fns in `@gm/core/billing` — `rcEventAction()`
+(grant/revoke/ignore; unknown types incl. CANCELLATION/BILLING_ISSUE stay `ignore` so access persists
+until an explicit EXPIRATION) and `tierFromRevenueCatProduct()` (family > annual/year > monthly,
+case-insensitive, monthly default) — with **+25 table tests** (937 core tests total, up from 912). The
+route imports them; behaviour byte-identical (verified line-by-line by Reviewer A against the pre-diff
+route). Extended the `billing-entitlements` capability summary to name the now-tested RC mapping (same
+already-registered test file → self-validation tripwire stays 7/7 green).
+
+**Process:** 4 Sonnet reviewers (2 per PR; billing got EXTRA correctness scrutiny per the guardrail) —
+all 4 APPROVE first-pass; 0 verify-cycle failures; 0 abandons. Each PR gate-green independently
+(typecheck + core tests + production build + self-validation) before review.
+
+**Readiness:** did NOT open the 'ready' issue — the sole DoD gap is unchanged (Confidence Statement
+blocked by the reach-gated business-case floor: honest median base ≈ $33K < $100K, needs
+~4,000–4,500 sustained downloads/mo = owner-GTM #190, no buildable floor-mover). A coherent converged
+run: 2 real scorecard-sourced quality closures (1 design, 1 ship-critical money-code correctness
+safety net), 4/4 first-pass approvals, 0 abandons = success.
+
 ## 2026-07-08 (run 55) — Track E §34 Part A: public no-account "try the aha" receipt demo → waitlist (1 coherent flagship PR, both Sonnet reviewers APPROVE after one fix cycle; 0 abandons)
 
 A single high-value, coherent change advancing the lowest incomplete track (Track E §34): a public,
