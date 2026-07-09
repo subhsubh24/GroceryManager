@@ -39,12 +39,13 @@ the owner sees pre-launch / launch / post-launch growth progress in one place.
 ```yaml
 GROWTH_STATUS:
   project: GroceryManager
-  as_of: 2026-07-05 (run 9)
+  as_of: 2026-07-09 (run 10)
   phase: pre_launch              # pre_launch | launching | post_launch — NOT "launching" despite the
                                  #   snapshot API's own `phase` field (see below): ANALYSIS_PLAYBOOK's phase
                                  #   definition requires EVERY ship-critical QUALITY_SCORECARD dim A/A+ AND
                                  #   the store live. QUALITY_SCORECARD is A/ship_gate_met (RE-CONFIRMED
-                                 #   as_of 2026-07-05, unchanged grade from 2026-07-03), but PENDING_OPS
+                                 #   as_of 2026-07-09, unchanged overall grade since 2026-07-05 — 8/9 dims A,
+                                 #   performance still B), but PENDING_OPS
                                  #   `eas-build-submit-go-live` is still `status: open` — the mobile store
                                  #   submission has NOT happened, so the store isn't live. The snapshot
                                  #   route's `phase` field (see GROWTH_STATUS.sources note) is a narrower
@@ -52,9 +53,9 @@ GROWTH_STATUS:
                                  #   that does NOT encode store-readiness — do not confuse the two.
   engine_built: true             # MUST equal (engine_pct == 100); preflight enforces it against real anchor files
   engine_pct: 100                # % of growth-execution engine pieces shipped — DERIVED from anchor files by preflight; NEVER hand-set
-  channels_connected: [email]    # RE-VERIFIED THIS RUN (run 9) via a FRESH authenticated GET
+  channels_connected: [email]    # RE-VERIFIED THIS RUN (run 10) via a FRESH authenticated GET
                                  #   /api/growth/snapshot call (Bearer $CRON_SECRET, again present in this
-                                 #   run's environment) — payload identical to run 8's: emailConnected:true (a
+                                 #   run's environment) — payload identical to runs 8-9: emailConnected:true (a
                                  #   supported provider key is set). Analytics + billing are real too but are
                                  #   MEASUREMENT/MONETIZATION infra, not marketing "channels" in the
                                  #   ANALYSIS_PLAYBOOK/§9 sense — tracked in `sources` below, not here. (Note:
@@ -70,9 +71,12 @@ GROWTH_STATUS:
                                  #   explicitly approves GATE 1. What DOES stay open: the agent acts on real
                                  #   (not assumed) funnel/analytics/billing data instead of all-null placeholders.
   site_gate_up: true             # RE-VERIFIED THIS RUN via direct curl: home 200, /signup + /admin/waitlist
-                                 #   401 (identical split to runs 5-8) — SITE_GATE_PASSWORD still set, unchanged.
+                                 #   401 (identical split to runs 5-9) — SITE_GATE_PASSWORD still set, unchanged.
+                                 #   ALSO re-verified this run: /demo and /join (the new §34 Part A/B public
+                                 #   surfaces, shipped since run 9 — PRs #471, #475) both return 200, gate-exempt
+                                 #   by design (public marketing surfaces), same pattern as the waitlist landing.
   sources:                       # per-source pull status (H7 snapshot): connected | awaiting_connect —
-                                 #   RE-PROBED run 9 (fresh authenticated call, not inferred from run 8):
+                                 #   RE-PROBED run 10 (fresh authenticated call, not inferred from run 9):
                                  #   payload identical, all 4 still genuinely connected.
     waitlist: connected          # REAL THIS RUN: the authenticated snapshot (CRON_SECRET, NOT ADMIN_EMAIL)
                                  #   returned a genuine DB-derived total (0) via getWaitlistSubmissions — the
@@ -207,10 +211,13 @@ GROWTH_STATUS:
     open_rate: null                # UNCONFIRMED per the sources.email caveat — no real send has occurred
     click_rate: null
   content:
-    published_7d: 1              # "pantry-tracker-apps-2026" (apps/web/app/blog/posts.ts:223) published
-                                  #   2026-06-29 — within the last 7 days as of this run (2026-07-03)
-    scheduled_next_7d: 0          # nothing new staged this run (prior value was stale: the run-1 post
-                                  #   had already published, so it belonged in published_7d, not here)
+    published_7d: 0              # CORRECTED run 10 (GTM_SCORECARD 2026-07-08 top_gap): "pantry-tracker-apps-2026"
+                                  #   (apps/web/app/blog/posts.ts:223) published 2026-06-29 is now 10 days old as
+                                  #   of this run (2026-07-09) — OUTSIDE its own 7-day window. Was stale at 1 since
+                                  #   run 4; now correctly 0. No newer post has been drafted (still 4 posts total,
+                                  #   unchanged dates: 06-01, 06-08, 06-15, 06-29) — writing a 5th this run would be
+                                  #   padding without an analytics-identified gap, not value-bar-clearing work.
+    scheduled_next_7d: 0          # nothing staged this run
     organic_sessions_7d: 0
   outreach:                      # STRATEGIC OUTREACH — curated, human-reviewed Gmail DRAFTS (docs/growth/OUTREACH.md).
                                  #   DRAFT-ONLY: the agent never sends; the OWNER reviews + sends. REAL numbers only.
@@ -229,24 +236,29 @@ GROWTH_STATUS:
     gate_1_start_waitlist_outreach:
       status: not_ready           # not_ready | awaiting_approval | approved
       preconditions:
-        ship_gate_met: true         # QUALITY_SCORECARD.md as_of 2026-07-05 (independent Quality Auditor):
-                                     # overall A, ship_gate_met true, unchanged since 2026-07-03.
-        computer_use_e2e_sweep_green: false   # docs/autonomous-loop/VALIDATOR_STATUS.md does NOT exist
-                                     # (checked via Glob this run) — the §29 full computer-use E2E sweep has
-                                     # never actually RUN. ROADMAP.md:408 still shows this as an unchecked
-                                     # Product-Factory build item (epic #413); BROWSERBASE_API_KEY/
-                                     # BROWSERBASE_PROJECT_ID are already set + connectivity was proven
-                                     # 2026-07-04, so this is NOT an owner blocker — it's un-built product-
-                                     # factory work.
-        waitlist_launch_assets_reviewed: true  # the waitlist landing page, blog content (4 posts), and email
-                                     # lifecycle drafts are shipped and passed the normal maker!=checker PR
-                                     # gate; not a fresh pass against this specific §13 checklist, but no
-                                     # named gap against them either.
+        ship_gate_met: true         # QUALITY_SCORECARD.md as_of 2026-07-09 (independent Quality Auditor):
+                                     # overall A, ship_gate_met true — unchanged grade since 2026-07-05, but the
+                                     # regrade now covers the two NEW public-facing §34 surfaces shipped since
+                                     # run 9 (/demo public no-account receipt-demo, #471; /join gated-beta invite
+                                     # redemption, #475) and both were audited hard (rate-limit + captcha +
+                                     # spend-ceiling + non-enumerating errors) with no new gap.
+        computer_use_e2e_sweep_green: false   # docs/autonomous-loop/VALIDATOR_STATUS.md STILL does NOT exist
+                                     # (re-checked via `ls` this run — RE-VERIFIED, not assumed). ROADMAP.md:410
+                                     # still shows the §29 sweep as an unchecked Product-Factory build item (epic
+                                     # #413), unchanged since run 9. BROWSERBASE_API_KEY/BROWSERBASE_PROJECT_ID
+                                     # are confirmed present in THIS run's own environment too (re-checked) — so
+                                     # this remains un-built Product-Factory work, not an owner blocker.
+        waitlist_launch_assets_reviewed: true  # STRENGTHENED since run 9: beyond the waitlist landing + 4 blog
+                                     # posts + email lifecycle drafts, the §34 Part A/B assets are now REAL,
+                                     # LIVE, gate-exempt pages (verified this run via direct curl: /demo -> 200,
+                                     # /join -> 200), not just reviewed copy — a public no-account demo of the
+                                     # core "aha" and a gated-beta invite-redemption flow, both quality-audited.
       blocking_precondition: computer_use_e2e_sweep_green
-      note: "GATE 1 is NOT proposable this run — 2 of 3 preconditions hold, but the §29 sweep has never
-        produced a real VALIDATOR_STATUS.md. Correctly staying quiet rather than proposing early: §13 requires
-        ALL THREE, none self-certified. Once the Product Factory ships the sweep GREEN, this flips and the
-        Growth Agent should propose the waitlist plan + notify the owner the same run."
+      note: "GATE 1 is STILL NOT proposable this run — unchanged from run 9: 2 of 3 preconditions hold (now on
+        stronger evidence — real live /demo + /join pages, not just reviewed copy), but the §29 sweep has never
+        produced a real VALIDATOR_STATUS.md (re-verified absent this run). Correctly staying quiet rather than
+        proposing early: §13 requires ALL THREE, none self-certified. Once the Product Factory ships the sweep
+        GREEN, this flips and the Growth Agent should propose the waitlist plan + notify the owner the same run."
     gate_2_launch:
       status: not_ready
       preconditions:
@@ -452,13 +464,51 @@ GROWTH_STATUS:
       new `marketing.kill_switch` field. Zero outreach drafted (OUTREACH.md's target-type categories remain
       fully searched with no new qualifying target since run 7; also moot given GATE 1 is not open). No
       ROADMAP/VISION/BUSINESS_CASE steer — no new causal, significant data this run."
+    - "RUN 10 (2026-07-09): re-verified infra directly (fresh authenticated `GET /api/growth/snapshot` with
+      `CRON_SECRET` present in this run's env -> HTTP 200, payload identical in substance to run 9: all 4
+      sources connected, funnel all 0/null, same 3 experiments running/null); direct curl reproduced the
+      same site-gate split (home/`/demo`/`/join` 200, `/signup`+`/admin/waitlist` 401). `git fetch origin
+      main` showed 15 new commits since run 9's merge — the significant ones for GTM: **§34 Part A public
+      no-account demo** (`/demo`, PR #471) and **§34 Part B gated-beta invite codes** (`/join` + `POST
+      /api/invite/redeem`, PR #475) both SHIPPED, quality-audited (`QUALITY_SCORECARD` as_of 2026-07-09,
+      overall A held, both new public surfaces graded hardened with no new gap), and confirmed publicly
+      reachable via direct curl this run. This REPLACES the blank pre-launch waitlist with a real product
+      demo of the core aha — strengthens GATE 1 precondition (c) from 'reviewed copy' to 'live, audited,
+      gate-exempt pages' — but does NOT open GATE 1: precondition (b), the §29 computer-use sweep, is still
+      unmet (`docs/autonomous-loop/VALIDATOR_STATUS.md` re-confirmed absent via `ls`), unchanged since run
+      9 despite `BROWSERBASE_API_KEY`/`BROWSERBASE_PROJECT_ID` being present in this run's own environment
+      too. **Closed 2 GTM_SCORECARD (2026-07-08) top_gaps this run**: (1) `content.published_7d` had aged
+      to 10 days old (outside its own 7-day window) — corrected 1->0; (2) re-fetched both flagged
+      demand_signal source pages directly and confirmed 2 real reviewer misattributions (P. Kerluke, not
+      'D. Bogan'; Lars Uriel, not 'Jane Sanders') — quote TEXT was always verbatim-genuine, only the names
+      were wrong; both corrected. Did NOT attempt the third top_gap (a `lift.test.ts` for
+      `computeExperimentResult`) — that is core test authoring in `packages/core/src/growth/experiments`,
+      Product-Factory code territory outside the GTM Factory's remit; flagged as a next_action instead of
+      self-attempting a code change I'm not scoped to ship. Demand-signal: tried 2 new angles (Pantry Check,
+      a barcode-only app with no on-theme complaints; Cooklist, an off-theme recipe-import complaint) —
+      both genuine negatives, not added. Zero outreach (OUTREACH.md categories still exhausted; also moot,
+      GATE 1 not open). No ROADMAP/VISION/BUSINESS_CASE steer — the demo shipping is a real product change
+      but has zero traffic/conversion data yet, so no number could be honestly computed from it."
   next_actions:
-    - "NEW (run 9, highest-leverage GTM-adjacent action): the §29 computer-use E2E sweep
-      (docs/autonomous-loop/VALIDATOR_STATUS.md) is the ONLY unmet precondition for GATE 1 (see the new
-      `marketing` block above) — it is Product-Factory build work (ROADMAP.md:408, epic #413), not an
-      owner action (Browserbase keys are already live). Flagging it here so the product loop (which reads
-      GROWTH_STATUS as a data signal per FACTORY_STANDARD §11) sees it is now gating a real GTM milestone,
-      not just a nice-to-have validator."
+    - "STILL the highest-leverage GTM-adjacent action (run 9 -> run 10, unmoved): the §29 computer-use E2E
+      sweep (docs/autonomous-loop/VALIDATOR_STATUS.md) is the ONLY unmet precondition for GATE 1 (see the
+      `marketing` block above) — it is Product-Factory build work (ROADMAP.md:410, epic #413), not an
+      owner action (Browserbase keys are already live, re-confirmed present in this run's env too).
+      Flagging it again so the product loop (which reads GROWTH_STATUS as a data signal per
+      FACTORY_STANDARD §11) sees it is now gating a real, ready-to-fire GTM milestone — the §34 demo/invite
+      assets are shipped and waiting on exactly this one precondition."
+    - "NEW (run 10): a GTM_SCORECARD (2026-07-08) top_gap flagged `computeExperimentResult` (lift.ts, the
+      decided-vs-running monetization gate) as having zero direct tests — needs a `lift.test.ts` covering
+      the refusal logic (both arms >= min N AND p<0.05). This is core code in
+      `packages/core/src/growth/experiments`, outside the GTM Factory's remit (docs/growth + PENDING_OPS
+      only) — flagging for the product loop to pick up, same pattern as the §29 sweep above."
+    - "NEW (run 10): the §34 Part B gated-beta invite MECHANISM is fully built (redeem route, /join page,
+      invite:issue script) but INACTIVE — PENDING_OPS `gated-beta-invite-codes` (medium priority) needs the
+      owner to apply migration 0021 + set `SITE_GATE_INVITE_SECRET` + mint codes. Worth doing EARLY (the
+      infra setup itself doesn't need GATE 1) so it's ready the moment real waitlist signups exist — but
+      note it has no one to invite yet either way: `waitlist_signups_total` is still 0, and gathering real
+      signups is itself gated behind GATE 1 (the §29 sweep). This is the concrete, already-built path to
+      the FIRST real PMF cohort (GATE 2's `validated_demand` precondition) once both pieces are ready."
     - "STRIPE_SECRET_KEY mode (test vs live) is not observable from outside the app — ask the owner to
       confirm which mode is live before any business-case revenue claim relies on it (currently moot:
       active_subscribers is 0 either way)."
@@ -494,15 +544,24 @@ GROWTH_STATUS:
       curated outreach emails (press/newsletter) — the HARD BLOCK needs both, and only site_gate_up is
       met so far."
   owner_blockers:
-    - "CIRCUIT BREAKER (now 2 runs / 1 day, 2026-07-04 -> 2026-07-05, zero movement on the Human-Core items
-      below): site_gate_up, analytics/billing/email connection, and the QUALITY_SCORECARD ship gate are all
-      RESOLVED and STABLE (re-verified run 9 via a fresh authenticated snapshot pull + a fresh live-HTTP
-      curl — see `sources`/`funnel` above). What has NOT moved since run 8, confirmed still `status: open` in
-      PENDING_OPS this run: `eas-build-submit-go-live` (mobile store submission), `connect-revenuecat-iap`
-      (mobile IAP), `spend-caps` (urgent), `turnstile-keys` (blocks launch-safety), `rotate-envl-secrets`. Per
-      FACTORY brakes, naming this prominently: the single highest-leverage pair is `eas-build-submit-go-live`
-      + `connect-revenuecat-iap` — both are the ONLY remaining blockers to the store going live, which is
-      itself the ONLY remaining blocker to `phase` advancing past `pre_launch`."
+    - "CIRCUIT BREAKER (now 3 runs / 5 days, 2026-07-04 -> 2026-07-09, zero movement on the Human-Core items
+      below, re-confirmed against a fresh PENDING_OPS re-read this run): site_gate_up, analytics/billing/
+      email connection, and the QUALITY_SCORECARD ship gate are all RESOLVED and STABLE (re-verified run 10
+      via a fresh authenticated snapshot pull + a fresh live-HTTP curl — see `sources`/`funnel` above). What
+      has NOT moved since run 8, confirmed still `status: open` in PENDING_OPS this run: `eas-build-submit-
+      go-live` (mobile store submission), `connect-revenuecat-iap` (mobile IAP), `spend-caps` (urgent),
+      `turnstile-keys` (blocks launch-safety), `rotate-envl-secrets`. Per FACTORY brakes, naming this
+      prominently: the single highest-leverage pair is `eas-build-submit-go-live` + `connect-revenuecat-iap`
+      — both are the ONLY remaining blockers to the store going live, which is itself the ONLY remaining
+      blocker to `phase` advancing past `pre_launch`. The Product Factory HAS shipped real GTM-relevant work
+      in this window (§34 demo + gated-beta invite mechanism, run 55-56) — so this is inactivity on the
+      Human-Core items specifically, not overall stall."
+    - "NORMAL, NEW (run 10): `gated-beta-invite-codes` — the §34 Part B mechanism (waitlist -> invite code ->
+      /join -> gated /signup access) is fully built and quality-audited but requires 3 owner steps to
+      activate (apply migration 0021, set `SITE_GATE_INVITE_SECRET`, mint codes via `invite:issue`) — see
+      PENDING_OPS for the exact commands. Low urgency today since waitlist_signups_total is 0 (nothing to
+      invite yet), but worth setting up ahead of the §29 sweep landing so it's ready the moment real
+      signups exist."
     - "HIGH: `eas-build-submit-go-live` (mobile store submission, Human-Core) — until this completes, the
       store isn't live (ANALYSIS_PLAYBOOK's own phase-advance criterion) and GTM_STANDARD §13 GATE 2 stays
       unreachable regardless of GATE 1's outcome."
@@ -519,11 +578,17 @@ GROWTH_STATUS:
     - "LOW (unchanged since run 8): ADMIN_EMAIL — only gates the human `/admin/waitlist` UI page; the Growth
       Agent's own analytics read need is already satisfied via CRON_SECRET."
   demand_signal:                 # GTM_STANDARD §10 — pre-launch demand validation (leading indicator, NOT PMF)
-    as_of: 2026-07-05
-    method: "WebSearch + WebFetch against competitor App/Play Store review aggregators. 6 targeted
-      Reddit-scoped WebSearch queries (r/mealprep-style phrasing, quoted frustration strings) returned
-      NO citable exact-quote threads this run — see limitations below; this is an honest method gap,
-      not a claim that Reddit pain doesn't exist."
+    as_of: 2026-07-09
+    method: "RUN 10: re-verified the 2 existing citations GTM_SCORECARD (2026-07-08) flagged as
+      possibly-misattributed by WebFetching both source pages directly — see the corrections above. Also
+      tried 2 new search angles (grand-screen.com's other listed apps; 'scan my grocery receipt' review
+      complaints broadly) — surfaced Pantry Check (App Store id966702368, 4.5★/1.6K ratings) as a NEW
+      candidate, but WebFetch of its reviews page confirms it is BARCODE-based (no receipt/Gmail import)
+      and no on-theme complaint text was found — a genuine negative, not a new citation; not added.
+      Cooklist (grand-screen.com) surfaced a 'recipes don't import correctly' complaint, which is a
+      recipe-import gripe, not pantry/receipt-tracking — off-theme, not added. Prior runs' method note
+      stands: 6 Reddit-scoped WebSearch queries across runs 1-4 returned NO citable exact-quote threads —
+      an honest method gap, not a claim that Reddit pain doesn't exist."
     themes:
       - theme: "Manual pantry entry never stays current"
         durability: durable        # recurs across structurally different competitor apps
@@ -545,10 +610,16 @@ GROWTH_STATUS:
         solved_by_product: true
         evidence:
           - quote: "marking an item in Grocery as purchased can be added to the pantry, but it doesn't appear to increase"
-            source: "Paprika Recipe Manager 3 user review (D. Bogan), via ComplaintsBoard"
+            source: "Paprika Recipe Manager 3 user review (P. Kerluke), via ComplaintsBoard"
             url: "https://www.complaintsboard.com/paprika-recipe-manager-3-b149019"
             date: not_shown_by_source
-        note: "This is exactly the receipt/Gmail auto-fill + depletion-projection gap the product is built around."
+        note: "This is exactly the receipt/Gmail auto-fill + depletion-projection gap the product is built
+          around. CORRECTED run 10 (GTM_SCORECARD 2026-07-08 top_gap): re-fetched the source page directly —
+          this quote is part of the SAME P. Kerluke review cited in the theme above ('the additional Pantry
+          and Groceries features I find are mediocre... marking an item in Grocery as purchased can be added
+          to the pantry, but it doesn't appear to increase the quantity'), not a separate reviewer 'D. Bogan'
+          as previously (and wrongly) attributed. Quote text itself is unchanged and verbatim-genuine — this
+          is an attribution correction, not a new claim."
       - theme: "Barcode/UPC scanning is unreliable and tedious"
         durability: durable        # UPGRADED run 7: now recurs across 3 independent barcode-capable apps
         solved_by_product: partial
@@ -562,9 +633,12 @@ GROWTH_STATUS:
             url: "https://grand-screen.com/apps/kitchenpal-pantry-inventory/reviews/"
             date: "aggregator-displayed 2025-10-17 (see dating caveat below)"
           - quote: "Slow when creating a new item, slow during item search."
-            source: "KitchenPal user review (Jane Sanders), via grand-screen.com aggregator"
+            source: "KitchenPal user review (Lars Uriel), via grand-screen.com aggregator"
             url: "https://grand-screen.com/apps/kitchenpal-pantry-inventory/reviews/"
-            date: "aggregator-displayed 2025-10-17 (see dating caveat below)"
+            date: "aggregator-displayed 2025-10-17 (see dating caveat below); CORRECTED run 10 (GTM_SCORECARD
+              2026-07-08 top_gap) — re-fetched the source page directly and confirmed this quote is attributed
+              to Lars Uriel, not 'Jane Sanders' as previously (and wrongly) attributed. Quote text itself is
+              unchanged and verbatim-genuine — this is an attribution correction, not a new claim."
           - quote: "it will not scan QR codes. Can this be added PLEASE???"
             source: "My Pantry Tracker user review (Steven Wilshire), via grand-screen.com aggregator"
             url: "https://grand-screen.com/apps/my-pantry-tracker/reviews/"
@@ -604,6 +678,20 @@ GROWTH_STATUS:
         clearly on-theme this pass (recipe/grocery-list/sharing gripes, not barcode/pantry). LESSON: when
         a fetch 404s, verify the exact slug via a targeted WebSearch before treating it as a negative
         result — a 404 is evidence the URL is wrong, not evidence the app has no reviews."
+      - "UPDATE (run 10, 2026-07-09): a GTM_SCORECARD adversarial re-grade (2026-07-08) caught TWO real
+        misattributions in this block that had survived multiple runs unnoticed — WebFetch's name-extraction
+        from multi-review aggregator pages is not fully reliable, a durable tool limitation worth remembering
+        alongside run 7's URL-slug lesson. Both corrected this run (see the theme entries above): (1) the
+        'purchases don't automatically flow into the pantry' quote is P. Kerluke's, not 'D. Bogan' (it's part
+        of the SAME review already cited under the first theme); (2) the KitchenPal 'slow when creating a new
+        item' quote is Lars Uriel's, not 'Jane Sanders'. Quote TEXT was verbatim-correct both times — only the
+        attributed reviewer name was wrong. LESSON: re-confirm a reviewer name against the raw page before
+        trusting a first WebFetch extraction, especially on aggregator pages listing many reviews."
+      - "UPDATE (run 10): tried Pantry Check (App Store id966702368, 4.5-star/1.6K ratings) as a new
+        candidate after a broader 'scan my grocery receipt' search surfaced it — confirmed via WebFetch it
+        is BARCODE-based (no receipt/Gmail-import feature), and no on-theme complaint text exists in its
+        reviews. A genuine negative result, not added as evidence; do not re-attempt this app. Cooklist
+        (grand-screen.com) surfaced only a recipe-import complaint (off-theme), also not added."
     synthesis: >
       2 of 3 surfaced themes are DURABLE (recurring across a recipe-manager AND a dedicated barcode
       tracker — structurally different apps making the identical complaint) and both are precisely the

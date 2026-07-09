@@ -12,11 +12,13 @@ The dashboard surfaces every `open` item, urgent first.
 ```yaml
 OWNER_ACTIONS:
   project: GroceryManager
-  as_of: "2026-07-05 (GTM run 9) — RE-VERIFIED, unchanged: a fresh authenticated snapshot pull returned an
-    identical payload to run 8 (all 4 sources still connected, funnel still 0/null); site gate still up.
+  as_of: "2026-07-09 (GTM run 10) — RE-VERIFIED, unchanged: a fresh authenticated snapshot pull returned a
+    payload identical in substance to runs 8-9 (all 4 sources still connected, funnel still 0/null); site
+    gate still up (now also confirmed /demo + /join, the new §34 public surfaces, are live and gate-exempt).
     Zero movement on the open Human-Core items below (eas-build-submit-go-live, connect-revenuecat-iap,
     spend-caps, turnstile-keys, rotate-envl-secrets) since run 8 — see docs/growth/GROWTH_STATUS.md +
-    GROWTH_MEMORY.md run 9 for full detail, including the new GTM_STANDARD §13 marketing-gate tracking."
+    GROWTH_MEMORY.md run 10 for full detail. NEW this window (added by the Product Factory, run 56, PR #475,
+    not by GTM): `gated-beta-invite-codes` — see that item below."
   items:
     - id: gtm-connect-waitlist
       title: "DONE: waitlist source connected — the Growth Agent's own read need is satisfied via CRON_SECRET"
