@@ -54,7 +54,24 @@ export default function PlanScreen() {
           return;
         }
         const d = (await res.json()) as PlanData;
-        if (!cancelled) setData(d);
+        // Normalize the plan's array fields at the fetch boundary. A degraded API response (partial
+        // load, transient server issue) could omit `dinners`/`addToList`; without this guard the
+        // `.map()` calls below white-screen the whole tab. Matches the `?? []` boundary normalization
+        // every other mobile screen already does (use-it-up, digest, cooked, …).
+        if (!cancelled) {
+          if (d && "plan" in d && d.plan) {
+            setData({
+              ...d,
+              plan: {
+                ...d.plan,
+                dinners: d.plan.dinners ?? [],
+                addToList: d.plan.addToList ?? [],
+              },
+            });
+          } else {
+            setData(d);
+          }
+        }
       })
       .catch(() => { if (!cancelled) setData({ error: "Network error — check your connection." }); })
       .finally(() => { if (!cancelled) setLoading(false); });
