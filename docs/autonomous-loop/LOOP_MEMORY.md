@@ -4,6 +4,78 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-09 (run 57) — DEEP AUDIT (5-Haiku lens sweep, due since run 54 ~1 day) + 4 file-disjoint
+  clears (#482 ask-quota-per-step G7 / #480 pantry degrade / #479 cook-mode Check icon / #481 business-case
+  H14/H15 freshness); all 8 Sonnet reviews (2 per PR) APPROVE first-pass; 0 abandons; 0 verify-cycle
+  failures.** Baseline gate green (typecheck 0 all packages, 912 core tests, production build clean 0
+  missing-export, self-validation 7/7). Advanced hardening/quality/artifacts off the deep audit; no DoD box
+  completed (these are Track-F/G + LIVING-ARTIFACT fixes, not new DoD items).
+  **DEEP AUDIT verdict:** ONE real MEDIUM security finding (shipped as #482), the rest CLEAN or verified
+  false-positives. Findings by lens:
+  (1) **SECURITY/RLS/Track-G — 1 real MEDIUM shipped, rest CLEAN.** The FLAGSHIP #482: the "ask your
+  kitchen" agent runs a Gemini function-calling loop of up to `maxSteps: 8` calls per ask, but
+  `checkLlmQuota` (G7 per-user daily spend ceiling) charged a flat 1 per ask → a free user's 10/day quota
+  permitted up to ~80 real Gemini calls/day, an up-to-8× breach unique to this endpoint (every other LLM
+  surface is single-shot). Fix: `answerKitchenChat` now returns the loop's real step count (`llmCalls`,
+  already computed by `runChatWithTools`); `ask/actions.ts` pre-charges 1 at the gate then settles the extra
+  via a new `recordLlmUsage(userId, llmCalls-1)` — total charged = llmCalls. Keyless = 0 (never charged); a
+  thrown agent = 1; a 1-step ask still costs exactly 1 (no over-penalty). +3 keyless assertions. RLS CLEAN
+  (all public tables through 0021 have RLS+policy); rate-limit/captcha/HMAC/webhook-auth/headers/CORS all
+  present, no new gaps.
+  (2) **CORRECTNESS/FUNCTIONAL-REALITY — 1 real MEDIUM shipped, 1 dropped.** #480: the four pantry mutation
+  server actions (remove/add/resolveExpiring/clearPantry) ran their `withTenant` mutation with NO try/catch —
+  the only mutation actions left doing so — so a transient DB/RLS throw propagated uncaught and blew up the
+  whole /pantry page via the error boundary, against the degrade-by-default convention. Wrapped each: log
+  server-side + fall through to `revalidatePath` (kept OUTSIDE the try) so a failed op honestly re-reads
+  unchanged state — no fake success (SIDE-EFFECT INTEGRITY). DROPPED: cron h14/h15 "missing outer try/catch"
+  — verified they have the SAME per-item try/catch shape as the digest/gmail crons (whose outer candidate
+  read is also unwrapped), so no real inconsistency, and the failure mode (rare transient DB blip on a weekly
+  dormant cron → benign Vercel retry) doesn't clear the bar.
+  (3) **DESIGN/A11Y/TASTE — 1 real shipped, 1 false-positive rejected.** #479: the cook-mode final-step
+  primary CTA rendered a literal `✓` (U+2713) glyph instead of the `<Check>` registry icon every other
+  "done" affordance uses (cooked-it-button/getting-started/staples) — a real convention violation (CLAUDE.md:
+  icons via icons.tsx, never a glyph) on a prominent core-loop CTA; swapped to `<Check aria-hidden/>` (already
+  imported). REJECTED the `alt=""` on recipe images finding: in all three sites (cookbook/cook-mode/swipe-deck)
+  the recipe title is rendered as visible adjacent text, so per WCAG the decorative image correctly takes
+  empty alt — adding `alt={title}` would cause REDUNDANT screen-reader announcements. The `← Back`/`Next →`
+  arrows are established typographic punctuation (not text-as-icon) — correctly left as-is.
+  (4) **ARTIFACTS/BUSINESS-CASE/MONETIZATION — 1 stale claim shipped, rest CLEAN.** #481: BUSINESS_CASE.md §5
+  listed H14 (annual nudge) + H15 (win-back) as "remaining buildable retention levers" but both shipped run 23
+  (PR #221) as the /api/cron/h14-annual-nudge + h15-winback routes (dormant until owner connects email) —
+  LIVING-ARTIFACT drift, corrected to built/dormant. BODY-TEXT ONLY: the BUSINESS_CASE_SUMMARY YAML + all ARR
+  figures untouched, no adoption banked → no gaming. Pricing byte-identical doc↔code (499/3999/999/7999); all
+  named conversion/retention/expansion levers BUILT; reach-gated RE-CONFIRMED (base ≈ $33K < $100K = owner-GTM
+  #190, no buildable floor-mover). README "870+" still a true floor claim (not touched = churn avoided).
+  (5) **MOBILE/PERF/COVERAGE — nothing cleared the bar.** All mobile findings verified as defensive-against-
+  IMPOSSIBLE: the mobile /plan route NEVER returns `{empty:false, plan:null}` (plan is null only when
+  empty:true, which the render already guards) → the proposed plan.tsx null-guard guards a shape the server
+  can't produce = churn; cooked.tsx `imageUrl?.startsWith()` is already optional-chain-safe. Perf: digest
+  two-withTenant merge marginal; cook-tonight slice marginal. Coverage: vision/detect.ts branch 81% is low-
+  value (adding an impossible-case test = churn). All rejected with the route/render code as evidence.
+  **LESSONS (durable):**
+  (1) **An agentic tool-loop defeats a per-invocation spend ceiling by its step multiplier.** A quota charged
+  once per user-facing call under-counts an endpoint that fans out to N model calls internally. The fix
+  pattern that stays clean: have the loop RETURN its real step count (`runChatWithTools` already did) and
+  SETTLE the extra post-hoc (`recordLlmUsage`) — pre-charge 1 at the gate, add `steps-1` after — so typical
+  1-step calls aren't over-penalized and the ceiling counts real API usage. Look for this multiplier on ANY
+  endpoint whose quota gate wraps an agentic/retry/escalate loop.
+  (2) **Known residual (minor, follow-up): the settlement still under-counts two edge cases** — a mid-loop
+  throw charges 1 (can't see partial steps without changing client.ts), and a maxSteps-exhausted run makes one
+  extra "final summary" call not counted in `steps` (reports 8 when 9 real calls fire). Both are bounded 1-call
+  residuals, strictly better than the 8× hole; closing them needs `runChatWithTools` to expose partial
+  progress on throw — deferred (out of the fix's file set, low value vs. the hole closed).
+  (3) **A degrade-quiet swallow is only honest if the re-read reflects true state.** Wrapping a mutation
+  server action in try/catch is safe ONLY when `revalidatePath` (the re-read) stays OUTSIDE the try, so a
+  failed op shows the UNCHANGED projection — never an optimistic "done". A catch that also skipped the
+  re-read, or a form that showed a success toast regardless, would be fake success (§ SIDE-EFFECT INTEGRITY).
+  (4) **When an audit lens flags a "missing guard/try-catch", verify the sibling/peer code FIRST** — the cron
+  h14/h15 "inconsistency" and the mobile plan.tsx "crash" both dissolved once the digest cron's identical
+  shape and the /plan route's actual response contract were read. Two of five lenses' top findings were
+  defensive-against-impossible; rejecting them with the peer/contract code as evidence kept the batch churn-free.
+  **Readiness:** did NOT open the 'ready' issue — the sole DoD gap is unchanged (reach-gated business-case
+  floor, base ≈ $33K < $100K at median, #190 = owner-GTM, no buildable lever). Confidence statement stays
+  UNCHECKED. Validation 7/7 active, 0 unmet. A coherent converged run: 4 real clears (1 security, 1 reliability,
+  1 design, 1 artifact) + a full 5-lens deep audit, 0 abandons, 8/8 first-pass approvals = success.
 - **2026-07-09 (run 56) — Track E §34 Part B shipped: the gated-beta INVITE-CODE mechanism (PR #475)
   + 2 file-disjoint clears (#474 mobile plan array-guard / #473 a11y details-triangle); 6 Sonnet reviews
   across 3 PRs; 1 real security defect + 1 e2e locator bug caught and fixed; 0 abandons.** Deep audit NOT
