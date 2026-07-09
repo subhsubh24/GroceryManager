@@ -4,6 +4,50 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-09 (run 56) — Track E §34 Part B shipped: the gated-beta INVITE-CODE mechanism (PR #475)
+  + 2 file-disjoint clears (#474 mobile plan array-guard / #473 a11y details-triangle); 6 Sonnet reviews
+  across 3 PRs; 1 real security defect + 1 e2e locator bug caught and fixed; 0 abandons.** Deep audit NOT
+  due (run 54 same-ish window). Advanced the LOWEST incomplete track: after run-55's public `/demo` (Part A),
+  built waitlist → owner issues a code → `/join` redeem → past the site gate → `/signup`. Built:
+  `@gm/core/security/invite-code` (pure, 16 keyless tests), migration 0021 (invite columns on the existing
+  RLS-hardened `waitlist_submissions` — no new table), idempotent issue/redeem/stats queries, hardened
+  `POST /api/invite/redeem`, on-brand `/join`, `invite:issue` owner script, `invite-code-redeem` capability.
+  §34 box stays UNCHECKED (the invite MECHANISM is built + tested, but "yielding the first real PMF cohort"
+  is owner-gated — needs the owner to set `SITE_GATE_INVITE_SECRET`, apply 0021, and issue codes to real
+  traffic; no self-certification of an owner-gated outcome).
+  **LESSONS (durable):**
+  (1) **A gate-grant must NEVER hand out the master credential (Reviewer-A caught, load-bearing).** The first
+  cut set the site-gate cookie to the literal `SITE_GATE_PASSWORD`, so any beta invitee could read the owner's
+  admin override from devtools and leak it (→ forced password rotation for everyone). Fix: mint a DISTINCT,
+  independently-rotatable `SITE_GATE_INVITE_SECRET` the gate ALSO accepts (constant-time), grant THAT; if the
+  gate is on but the secret is unset, degrade 503 rather than fall back to the password. General rule: when a
+  flow grants access by handing the client a shared secret, that secret must be a scoped, rotatable credential —
+  never the admin/master one.
+  (2) **The STALE-LOCAL-MAIN trap bit AGAIN — this time via detached HEAD.** Run-start
+  `git reset --hard origin/main` ran on a DETACHED HEAD, so it did NOT advance the local `main` REF; then
+  `git checkout -b <branch> main` cut from a stale `main` (behind origin, missing run-55's `/demo` middleware
+  entries → looked like a regression). Durable fix: branch explicitly from `origin/main`
+  (`git checkout -B <branch> origin/main`) or `git branch -f main origin/main` FIRST; never trust local `main`
+  after a detached-HEAD reset.
+  (3) **Reviewer subagents may create their OWN git worktrees on the branch under review — do NOT
+  `git worktree remove` a path you didn't create while any reviewer of that branch is still running.** I removed
+  a `review-wt` worktree believing it orphaned from a finished mobile reviewer; it actually belonged to the
+  still-running flagship Reviewer B, breaking its review mid-flight (had to TaskStop + re-review). **Prevention
+  that worked:** instruct reviewers to review DIFF-ONLY (`git diff`, read files), NOT create worktrees or run
+  per-package installs — the cycle-2 pair did this and finished cleanly + faster, and it avoids both the
+  branch-checkout contention AND the false cross-package typecheck errors an isolated worktree's `@gm/*`
+  symlinks produce (Reviewer B's worktree reported a bogus "issueWaitlistInvite not exported").
+  (4) **A loose `getByLabel(/regex/i)` can collide with a section `aria-label` (Playwright strict mode).**
+  `getByLabel(/invite code/i)` matched both the input ("Invite code") and the wrapping section
+  ("Redeem invite code") → 14/15 green, 1 strict-mode fail that only surfaced in CI (not local typecheck).
+  Prefer `getByRole("textbox", { name: "Invite code" })`. CI's real-browser e2e is the gate that catches this
+  class — local typecheck can't.
+  (5) **db-never-imports-core stays clean by INJECTING the generator:** `issueWaitlistInvite(db, email,
+  generateCode)` — the tested generation logic lives in `@gm/core`, the caller supplies
+  `() => generateInviteCode(randomBytes)`, so `packages/db` keeps zero core dependency.
+  **Business case DEEPLY re-confirmed reach-gated** (skeptical scout pass): pricing drift-free; ALL named
+  conversion/retention/expansion levers already BUILT; constraint is REACH (owner-GTM #190), not loop-buildable —
+  no buildable floor-mover. Base ≈ $33K < $100K. Readiness NOT opened; confidence statement stays UNCHECKED.
 - **2026-07-08 (run 55) — Track E §34 Part A shipped: the public no-account "try the aha" receipt demo
   → waitlist (PR #471), ONE coherent flagship change, both Sonnet reviewers APPROVE after one fix cycle,
   0 abandons.** Deep audit NOT due (run 54 same day). Advanced the LOWEST incomplete track (Track E §34)
