@@ -164,6 +164,64 @@ export function isTrialEligible(signals: { topic: string; value: string | null }
   return !signals.some((s) => s.topic === "subscription_renewal_at");
 }
 
+// ---------------------------------------------------------------------------
+// RevenueCat webhook event mapping (pure — mobile IAP lifecycle → entitlement)
+// ---------------------------------------------------------------------------
+//
+// The RevenueCat webhook (apps/web/app/api/webhooks/revenuecat/route.ts) translates device
+// (App Store / Play) purchase events into the SAME entitlement/tier signals the Stripe webhook
+// writes. That classification — which event grants vs revokes access, and which product id maps to
+// which paid tier — is a pure decision extracted here so it is unit-tested: a product-substring typo
+// or a grant/revoke reclassification would silently mis-grant or mis-revoke device entitlements, and
+// that is exactly the kind of regression a table test catches.
+
+/** A paid tier (never "free"). RevenueCat only fires for a real product, so it always resolves to one. */
+export type PaidTier = Exclude<SubscriptionTier, "free">;
+
+/**
+ * RevenueCat event types that mean the user currently HAS access.
+ * CANCELLATION / BILLING_ISSUE deliberately keep access until EXPIRATION, so they are NOT here.
+ */
+export const RC_GRANT_EVENTS = new Set([
+  "INITIAL_PURCHASE",
+  "RENEWAL",
+  "PRODUCT_CHANGE",
+  "UNCANCELLATION",
+  "NON_RENEWING_PURCHASE",
+  "SUBSCRIPTION_EXTENDED",
+  "TRANSFER",
+]);
+
+/** RevenueCat event types that mean access has ended. */
+export const RC_REVOKE_EVENTS = new Set(["EXPIRATION", "SUBSCRIPTION_PAUSED"]);
+
+/** The entitlement effect of a RevenueCat event: grant access, revoke it, or leave it unchanged. */
+export type RcEntitlementAction = "grant" | "revoke" | "ignore";
+
+/**
+ * Classify a RevenueCat event type into its entitlement effect. Unknown types (TEST,
+ * CANCELLATION, BILLING_ISSUE, SUBSCRIBER_ALIAS, …) are `"ignore"` — access persists until an
+ * explicit EXPIRATION.
+ */
+export function rcEventAction(eventType: string | null | undefined): RcEntitlementAction {
+  const type = eventType ?? "";
+  if (RC_GRANT_EVENTS.has(type)) return "grant";
+  if (RC_REVOKE_EVENTS.has(type)) return "revoke";
+  return "ignore";
+}
+
+/**
+ * Map a RevenueCat product id to a paid subscription tier. Matching is on the lowercased id, most
+ * specific first (family > annual/year > monthly), so a product named e.g. "premium_family_annual"
+ * resolves to the family tier. Defaults to monthly when nothing matches.
+ */
+export function tierFromRevenueCatProduct(productId: string | null | undefined): PaidTier {
+  const p = (productId ?? "").toLowerCase();
+  if (p.includes("family")) return "premium_family";
+  if (p.includes("annual") || p.includes("year")) return "premium_annual";
+  return "premium_monthly";
+}
+
 /**
  * Whether a feature is usable. **Fails open**: when billing is disabled (flag off) everything is
  * allowed, so this scaffold never removes access. When enabled, premium features require the

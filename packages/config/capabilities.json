@@ -32,7 +32,7 @@
     },
     {
       "id": "billing-entitlements",
-      "summary": "Server-side subscription entitlement gating + tier resolution (premium / annual / family), fail-open when the flag is off — validated keyless via unit tests (no live Stripe key needed for the entitlement logic).",
+      "summary": "Server-side subscription entitlement gating + tier resolution (premium / annual / family), incl. the RevenueCat webhook event→entitlement classification (grant/revoke/ignore) and product-id→tier mapping, fail-open when the flag is off — validated keyless via unit tests (no live Stripe/RevenueCat key needed for the entitlement logic).",
       "status": "active",
       "ownerActionId": null,
       "validation": {

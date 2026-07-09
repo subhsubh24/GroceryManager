@@ -23,30 +23,14 @@
 import { createHash, timingSafeEqual } from "crypto";
 import { getAdminDb, appendPreferenceSignal } from "@gm/db";
 import { loadEnv } from "@gm/config/env";
+import { rcEventAction, tierFromRevenueCatProduct } from "@gm/core/billing";
 
 export const runtime = "nodejs";
 
-type RcTier = "premium_annual" | "premium_monthly" | "premium_family";
-
-/** Events that mean the user currently HAS access. CANCELLATION/BILLING_ISSUE keep access until EXPIRATION. */
-const GRANT_EVENTS = new Set([
-  "INITIAL_PURCHASE",
-  "RENEWAL",
-  "PRODUCT_CHANGE",
-  "UNCANCELLATION",
-  "NON_RENEWING_PURCHASE",
-  "SUBSCRIPTION_EXTENDED",
-  "TRANSFER",
-]);
-/** Events that mean access has ended. */
-const REVOKE_EVENTS = new Set(["EXPIRATION", "SUBSCRIPTION_PAUSED"]);
-
-function tierFromProduct(productId: string | undefined | null): RcTier {
-  const p = (productId ?? "").toLowerCase();
-  if (p.includes("family")) return "premium_family";
-  if (p.includes("annual") || p.includes("year")) return "premium_annual";
-  return "premium_monthly";
-}
+// Event classification (grant/revoke/ignore) and product→tier mapping are pure, unit-tested
+// functions in @gm/core/billing — a product-substring typo or a grant/revoke reclassification would
+// silently mis-grant or mis-revoke device entitlements, so they are table-tested there rather than
+// inline here.
 
 function authorized(header: string | null, secret: string): boolean {
   if (!header) return false;
@@ -86,9 +70,10 @@ export async function POST(req: Request) {
 
   try {
     const adminDb = getAdminDb();
+    const action = rcEventAction(type);
 
-    if (GRANT_EVENTS.has(type)) {
-      const tier = tierFromProduct(event.product_id as string | undefined);
+    if (action === "grant") {
+      const tier = tierFromRevenueCatProduct(event.product_id as string | undefined);
       await appendPreferenceSignal(adminDb, {
         userId,
         topic: "entitlement",
@@ -118,7 +103,7 @@ export async function POST(req: Request) {
         confidence: 1.0,
       });
       console.info("[revenuecat-webhook] Synced entitlement", { userId, type, tier });
-    } else if (REVOKE_EVENTS.has(type)) {
+    } else if (action === "revoke") {
       await appendPreferenceSignal(adminDb, {
         userId,
         topic: "entitlement",
