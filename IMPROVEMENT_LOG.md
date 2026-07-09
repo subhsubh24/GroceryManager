@@ -2703,3 +2703,21 @@ Security **CLEAN**, monetization **reach-gated reconfirmed** (#190 owner-GTM, no
 
 **Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated floor #190). Confidence
 statement stays UNCHECKED. 2 real clears + a correct abandon on an adversarial catch = a coherent converged run.
+
+## Run 56 — 2026-07-09 — §34 Part B (gated-beta invite codes) flagship + 2 file-disjoint clears; 6 Sonnet reviews across 3 PRs; 1 real security defect + 1 e2e locator bug caught + fixed
+Advanced the LOWEST incomplete track (Track E §34) with its natural continuation: after run-55's public `/demo` (Part A), built the **gated-beta invite mechanism** (Part B) — waitlist → owner issues a code → `/join` redeem → past the site gate → `/signup` → real app. Plus 2 disjoint clears. All 3 PRs merged green.
+
+### PR #475 — feat(beta): §34 Part B gated-beta invite codes (flagship)
+`@gm/core/security/invite-code` (pure alphabet/normalize/validate/generate, 16 keyless tests) + migration 0021 (invite columns on the already-RLS-hardened `waitlist_submissions` — no new table) + idempotent issue/redeem/stats queries + hardened `POST /api/invite/redeem` (rate limit, bounded input, validate-before-DB, generic non-enumerating errors) + on-brand `/join` page/client (real states, `?code=` prefill + URL strip, advances only on server-confirmed ok) + middleware/site-gate exempt scoping + `invite:issue` owner script + `invite-code-redeem` capability + e2e journeys. **db never imports core** — the code generator is injected into the db query.
+- **Reviewer A cycle-1 caught a real security defect:** the redeem route granted invitees a cookie set to the literal master `SITE_GATE_PASSWORD` — any invitee could read it (devtools) and leak the owner's admin override, forcing a password rotation for everyone. **Fixed** with a DISTINCT `SITE_GATE_INVITE_SECRET` the gate also accepts (constant-time); the redeem grants THAT, never the master password, and degrades 503 if the gate is on but the secret is unconfigured (never falls back to the password). Also strip `?code=` from the URL so a reusable key isn't kept in history/analytics. Cycle-2: both reviewers APPROVE (wired the previously-unused `getWaitlistInviteStats` into the issuance script's cohort summary; corrected the alphabet comment 30→32).
+- **CI caught an e2e locator bug (not a product defect):** `getByLabel(/invite code/i)` matched BOTH the input and the section's `aria-label="Redeem invite code"` (Playwright strict-mode violation, 14/15 passing). Fixed to `getByRole("textbox", { name: "Invite code" })`.
+
+### PR #474 — fix(mobile): normalize plan array fields at the fetch boundary
+`plan.dinners`/`plan.addToList` mapped unguarded → a degraded API response white-screens the plan tab. Normalized to `?? []` at the boundary (the #459 pattern every other mobile screen already applies). Both reviewers APPROVE.
+
+### PR #473 — a11y: hide decorative details-disclosure triangles from assistive tech
+`aria-hidden="true"` on the two decorative `▾` `<details>` toggle glyphs (cook page, meal-generator) so screen readers don't announce "DOWNWARDS FACING TRIANGLE" over the native disclosure state (WCAG 1.3.1/4.1.2). Both reviewers APPROVE.
+
+**Business case — DEEPLY re-confirmed reach-gated (skeptical scout pass):** pricing drift-free (499/3999/999/7999 doc↔code); ALL named conversion/retention/expansion levers are already BUILT (H13 referral, H14 annual-nudge, H15 win-back, Family tier, experiment framework, Gmail teaser); the binding constraint is REACH (~4,000+ downloads/mo needed vs 1,500 base) — owner-GTM #190, not loop-buildable. No buildable floor-mover surfaced. Base ≈ $33K < $100K.
+
+**Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated floor #190, owner-GTM). Confidence statement stays UNCHECKED. Security CLEAN (scout sweep, no findings). Deep audit NOT due (run 54, within ~24h). Validation 7/7 (added `invite-code-redeem`).
