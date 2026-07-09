@@ -16,7 +16,7 @@ import { getGeminiClient } from "@gm/core/llm";
 import { answerKitchenChat, buildKitchenBrief, type ChatMessage } from "@gm/core/chat";
 import { isPremium } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
-import { checkLlmQuota } from "@/app/api/_lib/llm-quota";
+import { checkLlmQuota, recordLlmUsage } from "@/app/api/_lib/llm-quota";
 
 // Bound the conversation we forward to the model (keeps tokens in check on long threads).
 const MAX_MESSAGES = 12;
@@ -69,7 +69,16 @@ export async function askAction(messages: ChatMessage[]): Promise<{ reply: strin
     // Gemini outage would tell a data-rich user "I don't have much data on your kitchen yet".
     const brief = await buildBriefForFallback(userId, preloadedSignals);
 
-    return await answerKitchenChat({ client, userId }, { messages: trimmed, brief });
+    const result = await answerKitchenChat({ client, userId }, { messages: trimmed, brief });
+
+    // The agentic loop can make several Gemini calls per ask (up to maxSteps). The quota gate above
+    // pre-charged 1; settle the extra calls it actually made so the per-user G7 spend ceiling counts
+    // real API usage, not a flat 1-per-ask (which would let one ask consume up to 8× its quota).
+    if (hasLlm && result.llmCalls > 1) {
+      recordLlmUsage(userId, result.llmCalls - 1);
+    }
+
+    return { reply: result.reply };
   } catch {
     return { reply: "Something went wrong loading your kitchen. Please try again in a moment." };
   }

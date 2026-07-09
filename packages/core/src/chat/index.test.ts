@@ -181,11 +181,12 @@ describe("summarizeBrief / answerKitchenChat (keyless fallback)", () => {
     expect(reply).not.toContain("GEMINI_API_KEY");
   });
 
-  it("answerKitchenChat with no client returns the keyless summary (never throws)", async () => {
+  it("answerKitchenChat with no client returns the keyless summary (never throws), 0 LLM calls", async () => {
     const messages: ChatMessage[] = [{ role: "user", content: "How's my spending?" }];
-    const { reply } = await answerKitchenChat({ userId: "u1" }, { messages, brief: briefWithData });
+    const { reply, llmCalls } = await answerKitchenChat({ userId: "u1" }, { messages, brief: briefWithData });
     expect(reply).toContain("GEMINI_API_KEY");
     expect(reply.length).toBeGreaterThan(0);
+    expect(llmCalls).toBe(0); // keyless path makes no LLM call — costs zero quota
   });
 
   it("answerKitchenChat with a client but NO userId degrades to the keyless summary", async () => {
@@ -223,11 +224,12 @@ describe("summarizeBrief / answerKitchenChat (keyless fallback)", () => {
       },
     } as unknown as Parameters<typeof answerKitchenChat>[0]["client"];
 
-    const { reply } = await answerKitchenChat(
+    const { reply, llmCalls } = await answerKitchenChat(
       { client: fakeClient, userId: "u1" },
       { messages: [{ role: "user", content: "How's my spending?" }], brief: briefWithData },
     );
     expect(reply).toBe("Your spending looks healthy.");
+    expect(llmCalls).toBe(2); // reports the loop's real step count so the caller settles quota per-call
     expect(captured!.codeExecution).toBe(true);
     expect(captured!.system).toMatch(/tool/i);
     expect(captured!.maxSteps).toBe(8); // loop is capped
@@ -243,12 +245,13 @@ describe("summarizeBrief / answerKitchenChat (keyless fallback)", () => {
         throw new Error("network down");
       },
     } as unknown as Parameters<typeof answerKitchenChat>[0]["client"];
-    const { reply } = await answerKitchenChat(
+    const { reply, llmCalls } = await answerKitchenChat(
       { client: throwingClient, userId: "u1" },
       { messages: [{ role: "user", content: "hi" }], brief: briefWithData },
     );
     expect(reply).toContain("$70.00"); // degraded to deterministic stats
     expect(reply).not.toContain("GEMINI_API_KEY"); // not keyless — a key existed, the call just failed
+    expect(llmCalls).toBe(1); // a (failed) call was attempted — charge 1, not 0
   });
 
   it("answerKitchenChat falls back to summary when the agent returns blank text", async () => {
