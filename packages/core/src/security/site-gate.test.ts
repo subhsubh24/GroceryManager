@@ -12,6 +12,10 @@ describe("isSiteGateExempt — public marketing/waitlist + machine endpoints", (
     "/demo",
     "/demo/",
     "/api/public/parse-receipt",
+    "/join",
+    "/join/",
+    "/api/invite/redeem",
+    "/api/invite/redeem/",
     "/privacy",
     "/privacy/",
     "/terms",
@@ -47,6 +51,9 @@ describe("isSiteGateExempt — public marketing/waitlist + machine endpoints", (
     "/api/publicity", // /api/public must not prefix-match a longer segment
     "/api/public", // the /api/public namespace is NOT blanket-exempt — only the exact demo route is
     "/api/public/other", // a future /api/public/* route must stay gated until explicitly exempted
+    "/joinery", // /join must not prefix-match a longer segment
+    "/api/invite", // the /api/invite namespace is NOT blanket-exempt — only /redeem is
+    "/api/invite/issue", // a future /api/invite/* route must stay gated until explicitly exempted
   ];
   for (const p of gated) {
     it(`gates ${p}`, () => expect(isSiteGateExempt(p)).toBe(false));
@@ -83,6 +90,39 @@ describe("siteGateDecision", () => {
     expect(siteGateDecision({ pathname: "/dashboard", password: "deepster" })).toBe("challenge");
     expect(
       siteGateDecision({ pathname: "/dashboard", password: "deepster", cookie: "nope" }),
+    ).toBe("challenge");
+  });
+
+  it("authorized with the DISTINCT invite secret (beta invitees never hold the master password)", () => {
+    expect(
+      siteGateDecision({
+        pathname: "/dashboard",
+        password: "deepster",
+        inviteSecret: "invite-xyz",
+        cookie: "invite-xyz",
+      }),
+    ).toBe("authorized");
+  });
+
+  it("invite secret only authorizes when it is set (empty/absent secret never matches an empty cookie)", () => {
+    // No invite secret configured → a cookie must equal the master password or it's a challenge.
+    expect(
+      siteGateDecision({ pathname: "/dashboard", password: "deepster", cookie: "invite-xyz" }),
+    ).toBe("challenge");
+    // Empty invite secret must not be matchable by an empty cookie (both empty → still challenge).
+    expect(
+      siteGateDecision({ pathname: "/dashboard", password: "deepster", inviteSecret: "", cookie: "" }),
+    ).toBe("challenge");
+  });
+
+  it("a wrong cookie is a challenge even when an invite secret is configured", () => {
+    expect(
+      siteGateDecision({
+        pathname: "/dashboard",
+        password: "deepster",
+        inviteSecret: "invite-xyz",
+        cookie: "nope",
+      }),
     ).toBe("challenge");
   });
 });

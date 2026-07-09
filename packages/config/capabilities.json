@@ -87,6 +87,22 @@
         "requiresCiEnv": [],
         "requiresOwnerSecret": []
       }
+    },
+    {
+      "id": "invite-code-redeem",
+      "summary": "The gated-beta invite funnel (§34 Part B): a waitlisted person redeems the code the owner issued them at /join → POST /api/invite/redeem validates the code and, on success, grants the pre-launch site-gate cookie so /signup is reachable (the full app stays gated otherwise). Hardened like the other public surface: per-IP rate limit, bounded input, keyless normalize+format validation BEFORE any DB work, idempotent redeem (a code is a per-person beta KEY — a cleared cookie / second device re-redeems safely), and generic non-enumerating error messages (invalid / malformed / not-found all read the same). Validated keyless: the code alphabet/shape/normalization/generation by unit test (no key needed), and the route's reachability + generic-reject + POST-only behaviour by the e2e journeys spec (CI runs with the gate OFF, so a made-up code exercises the real validate+lookup+reject path).",
+      "status": "active",
+      "ownerActionId": null,
+      "validation": {
+        "specs": [
+          "apps/web/e2e/journeys.spec.ts"
+        ],
+        "tests": [
+          "packages/core/src/security/invite-code.test.ts"
+        ],
+        "requiresCiEnv": [],
+        "requiresOwnerSecret": []
+      }
     }
   ]
 }

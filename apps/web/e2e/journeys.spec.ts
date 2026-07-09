@@ -212,3 +212,56 @@ test.describe("public demo (§34) — reachable + hardened + graceful", () => {
     expect(res.status()).toBe(405);
   });
 });
+
+// The gated-beta INVITE-CODE funnel (§34 Part B) — waitlist → code → past the gate → signup. These
+// assert the OUTCOME (BUILDS≠WORKS): the redeem page is reachable without an account, the hardened
+// endpoint rejects a bad code with a generic (non-enumerating) message and no crash, and only POST
+// is accepted. In keyless CI the site gate is OFF, so /join is reachable directly; a made-up code is
+// not in the DB → the route returns the generic reject, exercising the real validate+lookup path.
+test.describe("gated-beta invite (§34 Part B) — reachable + hardened + graceful", () => {
+  test("/join loads for a logged-out visitor (no signin redirect)", async ({ page }) => {
+    await page.context().clearCookies();
+    await page.goto("/join", { waitUntil: "domcontentloaded" });
+    await expect(page).not.toHaveURL(/\/signin/);
+    await expect(page.locator("body")).not.toContainText(ERROR_SCREEN);
+    await expect(page.getByRole("heading", { name: /redeem your invite/i })).toBeVisible();
+    // Target the input by its textbox role — a loose getByLabel(/invite code/i) also matches the
+    // section's aria-label "Redeem invite code" (strict-mode violation).
+    await expect(page.getByRole("textbox", { name: "Invite code" })).toBeVisible();
+  });
+
+  test("POST /api/invite/redeem rejects a made-up code generically (no crash, no enumeration)", async ({
+    request,
+  }) => {
+    const res = await request.post("/api/invite/redeem", {
+      data: { code: "2345H-7Q9WX" }, // well-formed but not a real issued code
+      headers: { "Content-Type": "application/json" },
+    });
+    // A non-existent code is a 404 with a generic message; a malformed one is a 400. Either way it's
+    // calm JSON — never a 500 / stack leak, never { ok: true }, and the message must not reveal
+    // whether the code merely doesn't exist vs was already used (no enumeration).
+    expect([400, 404]).toContain(res.status());
+    expect(res.headers()["content-type"]).toMatch(/application\/json/);
+    const body = await res.json();
+    expect(body.ok).toBeFalsy();
+    expect(typeof body.error).toBe("string");
+    expect(body.error.length).toBeGreaterThan(0);
+  });
+
+  test("POST /api/invite/redeem rejects a malformed code with a 400 (bounded input)", async ({
+    request,
+  }) => {
+    const res = await request.post("/api/invite/redeem", {
+      data: { code: "!!!" },
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(res.status()).toBe(400);
+    const body = await res.json();
+    expect(body.ok).toBeFalsy();
+  });
+
+  test("GET /api/invite/redeem is 405 (POST-only)", async ({ request }) => {
+    const res = await request.get("/api/invite/redeem");
+    expect(res.status()).toBe(405);
+  });
+});

@@ -340,3 +340,138 @@ export async function getWaitlistSegmentCounts(
     throw err;
   }
 }
+
+// ---------------------------------------------------------------------------
+// §34 Part B — gated-beta INVITE CODES (migration 0021)
+//
+// Admin-only, always via getAdminDb(). The code alphabet/shape/generation lives in
+// `@gm/core/security/invite-code` (unit-tested keyless), but packages/db must NOT import
+// packages/core (cycle rule) — so the caller INJECTS the generator here, and the route/worker
+// (which may import core) normalizes untrusted input before calling `redeemWaitlistInvite`.
+// ---------------------------------------------------------------------------
+
+/** Pre-migration-safe: true when the error is a missing invite column / table (0021 not applied). */
+function isPreInviteMigration(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return (
+    msg.includes("invite_code") ||
+    msg.includes("invite_redeemed_at") ||
+    (msg.includes("waitlist_submissions") && msg.includes("does not exist"))
+  );
+}
+
+/**
+ * Issue (or reuse) a beta invite code for a waitlisted email. Idempotent: if the email already has
+ * a code, that same code is returned (a person keeps ONE beta key). Returns null if the email isn't
+ * on the waitlist, or if migration 0021 hasn't been applied yet (degrade, never crash).
+ *
+ * `generateCode` is injected by the caller (the worker script supplies
+ * `() => generateInviteCode(randomBytes)` from @gm/core + node:crypto) so this stays free of the
+ * core dependency. Retries on the vanishingly unlikely UNIQUE collision with a fresh code.
+ */
+export async function issueWaitlistInvite(
+  db: Querier,
+  email: string,
+  generateCode: () => string,
+): Promise<string | null> {
+  try {
+    const existing = (await db.execute(
+      sql`SELECT invite_code FROM waitlist_submissions WHERE lower(email) = lower(${email}) LIMIT 1`,
+    )) as unknown as Array<{ invite_code: string | null }>;
+    if (existing.length === 0) return null; // not a waitlisted email
+    if (existing[0]!.invite_code) return existing[0]!.invite_code; // idempotent — reuse
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const code = generateCode();
+      try {
+        const rows = (await db.execute(
+          sql`UPDATE waitlist_submissions
+              SET invite_code = ${code}, invite_issued_at = now()
+              WHERE lower(email) = lower(${email}) AND invite_code IS NULL
+              RETURNING invite_code`,
+        )) as unknown as Array<{ invite_code: string }>;
+        if (rows.length > 0) return rows[0]!.invite_code;
+        // A concurrent issue set a code between our SELECT and UPDATE — read it back and reuse.
+        const now = (await db.execute(
+          sql`SELECT invite_code FROM waitlist_submissions WHERE lower(email) = lower(${email}) LIMIT 1`,
+        )) as unknown as Array<{ invite_code: string | null }>;
+        if (now[0]?.invite_code) return now[0]!.invite_code;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        // UNIQUE violation on invite_code = a cross-email code collision → retry with a fresh code.
+        if (msg.includes("invite_code") && (msg.includes("duplicate") || msg.includes("unique"))) continue;
+        throw err;
+      }
+    }
+    return null; // gave up after retries (essentially impossible with 50-bit codes)
+  } catch (err) {
+    if (isPreInviteMigration(err)) return null;
+    throw err;
+  }
+}
+
+/**
+ * Redeem a beta invite code. IDEMPOTENT by design: a code is a per-person beta KEY, so a cleared
+ * cookie / second device re-redeems the same code — the first redemption timestamp is kept
+ * (COALESCE) for cohort metrics. `canonicalCode` MUST already be normalized+validated by the caller
+ * (via @gm/core/security/invite-code) — this does an exact match. Returns the owning email on
+ * success, or null when the code doesn't exist / migration 0021 isn't applied (never crashes).
+ */
+export async function redeemWaitlistInvite(
+  db: Querier,
+  canonicalCode: string,
+): Promise<{ email: string } | null> {
+  try {
+    const rows = (await db.execute(
+      sql`UPDATE waitlist_submissions
+          SET invite_redeemed_at = COALESCE(invite_redeemed_at, now())
+          WHERE invite_code = ${canonicalCode}
+          RETURNING email`,
+    )) as unknown as Array<{ email: string }>;
+    if (rows.length === 0) return null;
+    return { email: rows[0]!.email };
+  } catch (err) {
+    if (isPreInviteMigration(err)) return null;
+    throw err;
+  }
+}
+
+/** Count issued vs redeemed invites — admin dashboard + growth snapshot. Zeroes pre-migration. */
+export async function getWaitlistInviteStats(
+  db: Querier,
+): Promise<{ issued: number; redeemed: number }> {
+  try {
+    const rows = (await db.execute(
+      sql`SELECT
+            count(*) FILTER (WHERE invite_code IS NOT NULL)::text AS issued,
+            count(*) FILTER (WHERE invite_redeemed_at IS NOT NULL)::text AS redeemed
+          FROM waitlist_submissions`,
+    )) as unknown as Array<{ issued: string; redeemed: string }>;
+    return {
+      issued: parseInt(rows[0]?.issued ?? "0", 10),
+      redeemed: parseInt(rows[0]?.redeemed ?? "0", 10),
+    };
+  } catch (err) {
+    if (isPreInviteMigration(err)) return { issued: 0, redeemed: 0 };
+    throw err;
+  }
+}
+
+/**
+ * The next `limit` confirmed (double-opt-in) waitlist emails that don't yet have an invite code —
+ * the roll-out queue the owner's issuance script mints codes for, oldest-confirmed first.
+ */
+export async function listUnissuedConfirmedEmails(db: Querier, limit: number): Promise<string[]> {
+  try {
+    const rows = (await db.execute(
+      sql`SELECT email FROM waitlist_submissions
+          WHERE invite_code IS NULL AND confirmed_at IS NOT NULL
+          ORDER BY confirmed_at ASC
+          LIMIT ${limit}`,
+    )) as unknown as Array<{ email: string }>;
+    return rows.map((r) => r.email);
+  } catch (err) {
+    if (isPreInviteMigration(err)) return [];
+    throw err;
+  }
+}

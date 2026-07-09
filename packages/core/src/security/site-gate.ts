@@ -25,6 +25,12 @@ export const SITE_GATE_EXEMPT: RegExp[] = [
   // /api/public/*, so a future route added under that namespace isn't silently made public.
   /^\/demo(\/|$)/,
   /^\/api\/public\/parse-receipt(\/|$)/,
+  // Gated-beta (§34 Part B): a waitlisted person with a code must reach the redeem page + endpoint
+  // even while the gate is LOCKED — redeeming a valid code is exactly how they're let past it (the
+  // route grants the gate cookie on success). Scoped to the EXACT routes; /signup stays gated so
+  // only a redeemed invite (or the password) gets in.
+  /^\/join(\/|$)/,
+  /^\/api\/invite\/redeem(\/|$)/,
   /^\/privacy(\/|$)/, // legal
   /^\/terms(\/|$)/,
   /^\/blog(\/|$)/, // public marketing content
@@ -60,15 +66,28 @@ export type SiteGateDecision =
 /**
  * Decide what to do for one request. Gate is ON whenever `password` (the env var) is non-empty.
  * `cookie` is the value of the gate cookie presented by the client.
+ *
+ * The gate accepts EITHER the master `password` OR an optional, DISTINCT `inviteSecret`
+ * (SITE_GATE_INVITE_SECRET). The invite-code redeem route (§34 Part B) grants the invite secret —
+ * NEVER the master password — so a beta invitee's gate cookie never discloses the owner's admin
+ * override password: a leaked invitee cookie only exposes the invite secret, which the owner can
+ * rotate independently (invitees just re-redeem their still-valid codes) without disturbing the
+ * master password or locking out password-holders. Both are compared constant-time.
  */
 export function siteGateDecision(opts: {
   pathname: string;
   password?: string | null;
   cookie?: string | null;
+  inviteSecret?: string | null;
 }): SiteGateDecision {
   const password = opts.password ?? "";
   if (password.length === 0) return "off";
   if (isSiteGateExempt(opts.pathname)) return "exempt";
-  if (opts.cookie && safeEqual(opts.cookie, password)) return "authorized";
+  const cookie = opts.cookie ?? "";
+  if (cookie.length > 0) {
+    if (safeEqual(cookie, password)) return "authorized";
+    const invite = opts.inviteSecret ?? "";
+    if (invite.length > 0 && safeEqual(cookie, invite)) return "authorized";
+  }
   return "challenge";
 }
