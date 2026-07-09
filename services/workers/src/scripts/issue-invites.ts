@@ -14,7 +14,12 @@
  * collision internally.
  */
 import { randomBytes } from "node:crypto";
-import { getAdminDb, issueWaitlistInvite, listUnissuedConfirmedEmails } from "@gm/db";
+import {
+  getAdminDb,
+  getWaitlistInviteStats,
+  issueWaitlistInvite,
+  listUnissuedConfirmedEmails,
+} from "@gm/db";
 import {
   formatInviteCodeForDisplay,
   generateInviteCode,
@@ -57,6 +62,10 @@ async function main() {
     `\n✓ ${issued} code(s) ready. Send each person their code (or a /join?code=<CODE> link). ` +
       `Redeeming it lets them past the site gate to /signup.`,
   );
+
+  // Beta roll-out at a glance: total codes issued vs redeemed so far (the cohort funnel).
+  const stats = await getWaitlistInviteStats(db);
+  console.log(`\n  Beta invites — issued: ${stats.issued} · redeemed: ${stats.redeemed}`);
 }
 
 main()

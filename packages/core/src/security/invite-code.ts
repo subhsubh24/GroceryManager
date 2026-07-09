@@ -15,7 +15,8 @@
 
 /**
  * Crockford-style base32 minus the ambiguous glyphs (no I, L, O, U) so a code is safe to read aloud,
- * type on a phone, and paste from an email without transcription errors. 30 symbols.
+ * type on a phone, and paste from an email without transcription errors. 32 symbols (2^5) — see
+ * `generateInviteCode` for why the power-of-two size makes generation unbiased.
  */
 export const INVITE_CODE_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
