@@ -225,7 +225,9 @@ test.describe("gated-beta invite (§34 Part B) — reachable + hardened + gracef
     await expect(page).not.toHaveURL(/\/signin/);
     await expect(page.locator("body")).not.toContainText(ERROR_SCREEN);
     await expect(page.getByRole("heading", { name: /redeem your invite/i })).toBeVisible();
-    await expect(page.getByLabel(/invite code/i)).toBeVisible();
+    // Target the input by its textbox role — a loose getByLabel(/invite code/i) also matches the
+    // section's aria-label "Redeem invite code" (strict-mode violation).
+    await expect(page.getByRole("textbox", { name: "Invite code" })).toBeVisible();
   });
 
   test("POST /api/invite/redeem rejects a made-up code generically (no crash, no enumeration)", async ({
