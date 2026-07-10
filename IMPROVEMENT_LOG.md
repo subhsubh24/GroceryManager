@@ -4,6 +4,39 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-10 (run 60) — 4-Haiku scout sweep + 1 file-disjoint clear (#495); 2/2 first-pass approvals; 0 abandons
+
+Converged repo (run 60). Deep audit NOT due (run 59 ran a standalone 5-lens sweep the same day). Baseline gate
+green (HEAD==origin/main 9040ebb, 912 core tests pass, self-validation 7/7 active / 0 unmet). Ran a 4-Haiku scout
+sweep — design/UX/taste, security/RLS/Track-G, monetization/revenue, mobile+artifacts+tests — and triaged the
+pooled candidates hard against the value bar.
+
+**Shipped 1, both reviewers APPROVE (2 Sonnet reviews):**
+1. **#495 — mobile Family-tier label bug.** `/api/mobile/profile` returns the full `@gm/core/billing`
+   `SubscriptionTier` (incl. `premium_family`), but `apps/mobile/app/profile.tsx` typed `tier` with only three
+   variants and `TIER_LABEL` had no `premium_family` entry, so line 89 (`TIER_LABEL[tier] ?? tier`) fell back to
+   rendering the raw internal slug `"premium_family"` for a Family subscriber — a user-facing correctness bug on
+   the highest-value paid tier. Added the union member + a `"Premium (family)"` label (consistent with the file's
+   `Premium (monthly)`/`Premium (annual)` convention) and tightened `TIER_LABEL` to
+   `Record<ProfileData["tier"], string>` so the mobile `typecheck` CI job now fails loud if any tier is left
+   unlabeled (the compile-time regression guard — `apps/mobile` has no jest). Verified `npm ci && npm run
+   typecheck` = exit 0.
+
+**Correctly shipped nothing from the other three scout areas (anti-churn held):**
+- **Design:** 3 candidates all churn — a legitimate `env(safe-area-inset-bottom)` inline style, a cosmetic class
+  rename, and a ~69-callsite dead-prop removal.
+- **Security/Track-G:** in-memory→Redis quota is REAL but owner-gated (`llm-quota-redis-upgrade`, Upstash secret);
+  server-action per-minute burst limits judged marginal (per-day quota already caps spend; authed + RLS-scoped;
+  ~20 runs graded Track-G A/CLEAN). CORS omission intentional (same-origin).
+- **Monetization:** no buildable revenue lever — a dedicated adversary re-confirmed the gap is entirely reach
+  (owner GTM #190), base ≈ $33K < $100K floor, all product levers built.
+
+Two scout findings were verified FALSE (spend "under-tested" — each source file has a test; mobile typecheck
+"broken" — the scout skipped `npm ci`). No DoD box completed (a bug fix, not a new DoD item). Did NOT open the
+'ready' issue — the sole DoD gap is the reach-gated business-case floor (owner GTM), unchanged.
+
+---
+
 ## 2026-07-10 (run 59) — DEEP AUDIT (5-Haiku lens) + 3 file-disjoint clears (#491 design glyph→registry icon / #492 privacy-disclosure IAP correction / #493 billing scaffold-comment correction); 6/6 Sonnet reviews APPROVE first-pass; 0 abandons
 
 Deep audit was DUE (last standalone run 57, ~4 runs / >24h ago). Baseline gate green before starting
