@@ -4,6 +4,56 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-10 (run 59) — DEEP AUDIT (5-Haiku lens sweep, due since run 57) + 3 file-disjoint clears
+  (#491 design glyph→registry icon / #492 privacy-disclosure IAP correction / #493 billing scaffold-comment
+  correction); 6/6 Sonnet reviews APPROVE first-pass; 0 abandons; 0 verify-cycle failures.** Deep audit was
+  due (last standalone run 57, >24h / ~4 runs ago). Baseline gate green (typecheck 0 all packages, 912 core
+  tests, production build clean 0 missing-export, self-validation 7/7). Five read-only Haiku lenses over the
+  whole repo:
+  (1) **SECURITY/RLS/Track-G — CLEAN.** All public tables through 0021 RLS+policy; rate-limits on
+  invite-redeem/parse-receipt/mobile-auth/token, 32KB body caps, generic-500 hygiene, 10-fail/15-min lockout +
+  timing-safe compare, Turnstile captcha, Stripe constructEvent + timing-safe RevenueCat/Gmail/cron/site-gate
+  HMAC, per-user/day LLM quota; AES-256-GCM at rest; CSP/HSTS/nosniff. No new hole since 0021.
+  (2) **CORRECTNESS/FUNCTIONAL — CLEAN.** All server actions + API routes try/catch→degrade; the run-57
+  pantry-mutation wraps hold; LLM withTimeout(8s) < Vercel budget; DATABASE_URL fails-loud; no uncaught throws
+  / dead ends on critical paths; household "coming soon" intentional + flag-gated.
+  (3) **TEST/EVAL COVERAGE + PERF — CLEAN above the marginal bar.** 912 tests, coverage 87/88/91 > thresholds;
+  recent bug-fixes (#482/#480/#464/#465/#450) all landed WITH regression tests; #487 closed the RevenueCat
+  event-map gap same-day. Perf: hot paths indexed (0001/0008/0020), the ingest/capture N+1 + sequential-insert
+  candidates STILL rejected (LLM-bound flow, <2% on a correctness-sensitive core path — the run-38/41 verdict).
+  rankRecipes `batchCook` weighting is untested but a dormant/never-applied feature (not a bug). Nothing cleared.
+  (4) **DESIGN/A11Y/TASTE — 1 real customer-facing finding shipped (#491).** meal-generator.tsx:97 rendered a
+  literal `▾` disclosure glyph — the lone remaining customer-facing glyph after the cook-mode cleanups
+  (#479/#486) — → `<ChevronDown>` registry icon (added beside `ChevronRight`), preserving the group-open:rotate-180
+  flip + aria-hidden. Demo/join/home/cook surfaces re-verified clean. The inline `→` text-link arrows were
+  correctly NOT flagged (established typographic convention, unchanged across 59 runs; churn to touch ~10 files).
+  (5) **ARTIFACTS/BUSINESS-CASE — 1 real store-risk finding shipped (#492) + 1 reviewer-surfaced follow-on (#493).**
+  #492: privacy-disclosures.md §1.4 declared "NO in-app purchases or subscriptions" — FALSE (RevenueCat mobile +
+  Stripe web subscriptions wired at 499/3999/999/7999 cents). A false store data-safety/App-Privacy declaration is
+  a classic review-rejection trigger; corrected §1.4→YES (entitlement/tier + stripe_customer_id stored, NOT card
+  data → §1.5 stays NO), + the matching Play data-map row + Apple checklist line. Prices byte-verified vs
+  packages/core/src/billing. #493: while Reviewer A verified #492, it noticed the @gm/core/billing HEADER COMMENT
+  still said "SCAFFOLD ONLY (no real payments yet)" — a living-artifact contradiction on wired, DoD-load-bearing
+  billing; corrected to describe the module accurately + note the real FEATURE_BILLING-gated fail-open payment
+  paths (comment-only). BUSINESS_CASE prices/ARR/floor all still byte-consistent (base $33,450, floor_met false).
+  No DoD box completed (Track-F/G polish + artifact fixes, not new DoD items).
+  **LESSONS (durable):**
+  (1) **A reviewer verifying one artifact fix is a free second audit pass — mine it.** #493 came from Reviewer A
+  reading the billing code to fact-check #492's price claims and noticing an adjacent stale comment. When a
+  reviewer touches neighbouring code, its incidental observations are high-signal (it's already loaded the
+  context); capture them as file-disjoint follow-ons rather than losing them.
+  (2) **A false store-compliance declaration outranks a code nit on the value bar even though it's "just a doc."**
+  privacy-disclosures.md becomes the literal Apple App-Privacy + Play Data-Safety labels; a subscription app
+  declaring "no purchases" is a textbook rejection. LIVING ARTIFACTS isn't cosmetic here — a wrong store doc is a
+  submission blocker. Correcting it advanced the store-acceptance gate, not just tidiness.
+  (3) **The recurring #320 performance-B ask remains correctly deferred (5th run running): the CI perf-budget gate
+  needs `.github` (forbidden blast-radius) and the middleware trim is a high-blast auth refactor for a
+  NON-ship-critical A→A+ nit.** Not worth it on a converged product; leave for the owner / a dedicated slice.
+  **Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated business-case floor, base
+  ≈ $33K < $100K, #190 = owner-GTM, no buildable floor-mover; the 5-lens sweep found none). Confidence statement
+  stays UNCHECKED. Validation 7/7, 0 unmet. Coherent converged run: 3 real clears (1 design, 2 store/artifact
+  compliance), 6/6 first-pass approvals, 0 abandons, full deep audit = success.
+
 - **2026-07-09 (run 58) — 2 file-disjoint QUALITY_SCORECARD A→A+ closures (#486 cook-mode arrow icons /
   #487 RevenueCat event-map extract + table tests); 4/4 Sonnet reviews APPROVE first-pass; 0 abandons; 0
   verify-cycle failures.** Deep audit NOT due (run 57 ran one same-day). Baseline gate green. No scout
