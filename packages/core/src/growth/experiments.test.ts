@@ -286,4 +286,38 @@ describe("computeExperimentResult", () => {
     expect(r.id).toBe("landing_hero");
     expect(r.hypothesis).toBe(exp.hypothesis);
   });
+
+  // The "decided-vs-running gate" (issue #470): control has ENOUGH data, but the leading challenger
+  // does NOT — so we must stay `running` yet still surface which arm is ahead, without ever declaring
+  // a lift on an under-powered variant. The existing "control insufficient" case returns BEFORE the
+  // leading-variant assignment (leading_variant null); this exercises the distinct later branch.
+  it("stays running but names the leading variant when the CHALLENGER lacks sample (control sufficient)", () => {
+    const stats: Record<string, PerVariantStats> = {
+      a: { exposed: exp.minSamplePerArm + 50, conversions: 5 }, // control: sufficient
+      b: { exposed: 8, conversions: 5 }, // challenger: highest raw rate but far under-powered
+    };
+    const r = computeExperimentResult(exp, stats);
+    expect(r.status).toBe("running");
+    expect(r.lift_pct).toBeNull(); // never declare lift on an under-powered arm
+    expect(r.result).toBeNull();
+    expect(r.leading_variant).toBe("b"); // still report who's ahead this run
+  });
+
+  // Zero-conversion control is a valid outcome, and lift over a 0% base is mathematically undefined
+  // (division by zero). A significant winner must still DECIDE — with a real verdict — but report
+  // lift_pct null rather than Infinity/NaN. The other "decided" tests all use a non-zero control.
+  it("decides with null lift (not Infinity/NaN) when the control converts 0% and a winner is significant", () => {
+    const n = exp.minSamplePerArm * 4;
+    const stats: Record<string, PerVariantStats> = {
+      a: { exposed: n, conversions: 0 }, // control: 0% — undefined lift base
+      b: { exposed: n, conversions: Math.round(n * 0.1) }, // clear, well-powered winner
+    };
+    const r = computeExperimentResult(exp, stats);
+    expect(r.status).toBe("decided"); // significance doesn't depend on a non-zero control
+    expect(r.lift_pct).toBeNull(); // undefined over a 0% base — not Infinity, not NaN
+    expect(r.result).not.toBeNull();
+    expect(r.result).toContain("higher"); // direction still reads correctly
+    expect(r.leading_variant).toBe("b");
+    expect(r.ci_lower).not.toBeNull();
+  });
 });
