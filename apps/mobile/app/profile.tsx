@@ -18,13 +18,17 @@ interface ProfileData {
   name: string | null;
   email: string | null;
   username: string | null;
-  tier: "free" | "premium_monthly" | "premium_annual";
+  // Mirror @gm/core/billing SubscriptionTier — the /api/mobile/profile route returns the full union
+  // (incl. premium_family), so every member MUST have a label below or a Family subscriber sees the
+  // raw slug. Typed as Record<tier, string> so the mobile typecheck job fails if a tier is unlabeled.
+  tier: "free" | "premium_monthly" | "premium_annual" | "premium_family";
 }
 
-const TIER_LABEL: Record<string, string> = {
+const TIER_LABEL: Record<ProfileData["tier"], string> = {
   free: "Free",
   premium_monthly: "Premium (monthly)",
   premium_annual: "Premium (annual)",
+  premium_family: "Premium (family)",
 };
 
 export default function ProfileScreen() {
