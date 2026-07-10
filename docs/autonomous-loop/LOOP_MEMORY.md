@@ -4,6 +4,57 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-10 (run 60) — 4-Haiku scout sweep (design/UX/taste · security/RLS/Track-G · monetization/revenue
+  · mobile+artifacts+tests) + 1 file-disjoint clear (#495 mobile premium_family tier label); 2/2 Sonnet reviews
+  APPROVE first-pass; 0 abandons; 0 verify-cycle failures.** Deep audit NOT due (run 59 ran a standalone 5-lens
+  sweep the same day). Baseline gate green (HEAD==origin/main 9040ebb, 912 core tests pass, self-validation 7/7
+  active 0 unmet). Four scouts, results triaged HARD against the anti-churn bar:
+  (1) **DESIGN — nothing cleared.** Three candidates all churn on a converged UI: a legitimate
+  `env(safe-area-inset-bottom)` inline style (standard iOS pattern, not slop), a cosmetic `.empty-emoji`→`.empty-icon`
+  class RENAME (explicitly forbidden churn), and removing a deliberately-ignored `accent` prop across ~69 callsites
+  (high-blast cosmetic). Correctly shipped none.
+  (2) **SECURITY/Track-G — nothing NEW cleared.** In-memory rate-limit/LLM-quota/demo-quota are per-instance (won't
+  share across serverless regions) — REAL but already parked as owner-gated `llm-quota-redis-upgrade` (needs an
+  Upstash secret the loop can't supply); the scorecard already grades this the security A→A+ gap. Server-action
+  per-MINUTE burst limits (ask/add-receipt have per-DAY LLM quota + auth but no per-min limit) — judged MARGINAL:
+  the per-day quota already bounds wallet spend, endpoints are authed + RLS-scoped, and ~20 runs of auditors graded
+  Track-G A/CLEAN; adding defense-in-depth here reads as padding. CORS omission is intentional same-origin design.
+  (3) **MONETIZATION — no buildable lever (RE-CONFIRMED, ~21st run).** All conversion/retention/expansion/ARPU
+  levers built (3 tiers, Gmail-import conversion moment, referral loop, month-3 annual nudge, win-back, Family
+  multi-seat). A dedicated Haiku adversary tested each unbuilt candidate (higher tier / lite tier / annual-only /
+  usage add-ons) against the model and every one nets negative or immaterial — the entire gap is REACH (owner GTM
+  #190), which no product lever moves. base ≈ $33K < $100K floor, unchanged.
+  (4) **MOBILE+ARTIFACTS+TESTS — 1 REAL bug shipped (#495).** `/api/mobile/profile` returns the full
+  `@gm/core/billing SubscriptionTier` (incl. `premium_family`), but `apps/mobile/app/profile.tsx` typed `tier`
+  with only 3 variants and `TIER_LABEL` had no `premium_family` entry → line 89 `TIER_LABEL[tier] ?? tier` fell
+  back to displaying the raw slug `"premium_family"` to a Family subscriber (the HIGHEST-value paid tier). Added
+  the member + `"Premium (family)"` label AND tightened `TIER_LABEL` to `Record<ProfileData["tier"], string>` so
+  the mobile typecheck job now fails loud if any tier is ever left unlabeled (the compile-time regression guard —
+  apps/mobile has no jest). Scout's "spend under-tested" (#4) was FALSE — analyze.ts/wrapped.ts each have a test;
+  scout's "mobile typecheck broken" (#2) was FALSE — it just skipped `npm ci` (real `npm ci && npm run typecheck`
+  = exit 0 clean). Both proven by direct verification.
+  **LESSONS (durable):**
+  (1) **A "type it as `Record<string, string>`" lookup map is a silent slug-leak trap when its keys mirror an
+  evolving domain union.** The web/core `SubscriptionTier` gained `premium_family` and the mobile display map never
+  followed, because `Record<string,string>` accepts any key and the `?? raw` fallback hid the miss. The durable fix
+  is to type such maps as `Record<DomainUnion, string>` so the compiler enforces exhaustiveness — turning "add a
+  tier, forget the label" from a production slug-leak into a red typecheck. Worth grepping other display maps for
+  the same `Record<string, string>` shape over a domain enum.
+  (2) **A Haiku scout's "X is broken / untested" claim on infra it may not have set up (npm ci, DB, keys) must be
+  VERIFIED before it drives work OR is dismissed.** Two of this scout's six findings were false for a mundane
+  reason (deps not installed); one was a real, valuable, paid-tier bug. Direct verification separated them in ~2min
+  — cheaper than either trusting a false alarm or discarding a real bug.
+  (3) **Stale LOCAL `main` bit the bookkeeping branch: `git checkout main` landed on a pre-run-47 commit while
+  `origin/main` was 12 runs ahead.** Code branches were cut with `git checkout -b … origin/main` (correct); the
+  bookkeeping branch used bare `git checkout main` and inherited the stale base — caught by a grep for the latest
+  run number in the ledger BEFORE writing. Always base branches on `origin/main` explicitly and sanity-check the
+  ledger head; never trust local `main`.
+  **Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated business-case floor, base
+  ≈ $33K < $100K; #190 = owner-GTM; the 4-scout sweep + a dedicated monetization adversary found no buildable
+  floor-mover). Confidence statement stays UNCHECKED. Validation 7/7, 0 unmet. Tight coherent run: 1 real paid-tier
+  bug fixed with a compile-time guard, 2/2 first-pass approvals, 0 abandons, 3 scout areas correctly shipped
+  nothing (anti-churn held) = success.
+
 - **2026-07-10 (run 59) — DEEP AUDIT (5-Haiku lens sweep, due since run 57) + 3 file-disjoint clears
   (#491 design glyph→registry icon / #492 privacy-disclosure IAP correction / #493 billing scaffold-comment
   correction); 6/6 Sonnet reviews APPROVE first-pass; 0 abandons; 0 verify-cycle failures.** Deep audit was
