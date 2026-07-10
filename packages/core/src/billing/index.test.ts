@@ -3,6 +3,7 @@ import {
   canUse,
   getCurrentSubscriptionTier,
   isPremium,
+  isTrialEligible,
   PREMIUM_FEATURES,
   rcEventAction,
   SUBSCRIPTION_PLANS,
@@ -68,6 +69,42 @@ describe("getCurrentSubscriptionTier", () => {
         { topic: "subscription_tier", value: "premium_family" },
       ]),
     ).toBe("premium_family");
+  });
+});
+
+describe("isTrialEligible", () => {
+  // The 7-day free trial is money-adjacent: mis-classifying a returning subscriber as eligible would
+  // silently re-grant a trial they already consumed; mis-classifying a brand-new user as ineligible
+  // would withhold the conversion moment. Eligibility keys ONLY on ever having held a paid sub, marked
+  // by the presence of a `subscription_renewal_at` signal (written once billing activates).
+  it("is true for a brand-new user with no signals", () => {
+    expect(isTrialEligible([])).toBe(true);
+  });
+
+  it("is true for a free user who has never subscribed (taste/entitlement signals but no renewal)", () => {
+    expect(
+      isTrialEligible([
+        { topic: "cuisine:thai", value: "thai" },
+        { topic: "entitlement", value: "free" },
+      ]),
+    ).toBe(true);
+  });
+
+  it("is false once a subscription_renewal_at signal exists (has held a paid sub)", () => {
+    expect(isTrialEligible([{ topic: "subscription_renewal_at", value: "2026-08-01T00:00:00.000Z" }])).toBe(false);
+  });
+
+  it("is false even after churn — a lapsed subscriber still carries the renewal signal, so no second trial", () => {
+    expect(
+      isTrialEligible([
+        { topic: "entitlement", value: "free" }, // downgraded after cancelling
+        { topic: "subscription_renewal_at", value: "2026-01-01T00:00:00.000Z" }, // but the history remains
+      ]),
+    ).toBe(false);
+  });
+
+  it("keys on the renewal signal's PRESENCE, not its value (a null-valued renewal still disqualifies)", () => {
+    expect(isTrialEligible([{ topic: "subscription_renewal_at", value: null }])).toBe(false);
   });
 });
 
