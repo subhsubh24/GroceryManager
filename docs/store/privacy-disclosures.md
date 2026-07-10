@@ -69,11 +69,17 @@ alerts) and are never used for cross-app advertising.
 
 | Field | Answer |
 |---|---|
-| Purchase history (in-app transactions) | **NO** |
+| Purchase history (in-app transactions) | **YES — collected, linked to identity, NOT for tracking** |
 
-**Notes:** GroceryManager does not process in-app purchases or subscriptions. The app stores
-records of *grocery receipts* parsed from Gmail — but these are classified under "Other Data"
-(section 1.10) rather than Apple's "Purchase History" category, which covers in-app transactions.
+**Notes:** GroceryManager offers in-app **subscriptions** (Free / Pro $4.99·mo / $39.99·yr /
+Family $9.99·mo / $79.99·yr), sold through **RevenueCat** (Apple/Google in-app purchase) on mobile
+and **Stripe** on the web PWA. The app records the resulting **entitlement/tier** and the payment
+processor's customer id (`stripe_customer_id`) in the preference-signals ledger so premium features
+can be gated server-side — that record is what makes this category **YES**. The app never receives or
+stores the underlying **payment credentials** (card/bank numbers) — those are handled entirely by
+Apple, Google, Stripe, and RevenueCat (see §1.5, which stays **NO** for payment credentials).
+Separately, *grocery receipts* parsed from Gmail are classified under "Other Data" (§1.10), not as
+in-app purchase history.
 
 ### 1.5 Financial Info
 
@@ -211,6 +217,7 @@ and whether **users can request deletion**.
 | Data type | Collected | Shared | Required/Optional | Purpose(s) | User can delete? |
 |---|---|---|---|---|---|
 | Purchase history (grocery receipt totals, line-item prices) | YES | NO | Optional (Gmail-connected users only) | Pantry stock projection; shopping list generation; budget management | YES |
+| Purchase history (in-app subscription entitlement/tier via RevenueCat/Stripe) | YES | NO — payment processors receive it directly from the user, not from us | Optional (only if the user subscribes) | Gate premium features server-side | YES (deletes account; the processor also holds its own record) |
 
 #### App activity
 
@@ -316,9 +323,10 @@ the `/privacy` page (already covered as of June 2026):
   - [ ] Usage Data → Product interaction: YES, linked to identity, NOT for tracking
   - [ ] Photos & Videos → Photos: YES, linked to identity, NOT for tracking
   - [ ] Other Data → Other data types: YES (Gmail receipt fields + food preferences), linked to identity, NOT for tracking
+  - [ ] Purchases → Purchase history: YES (in-app subscription entitlement/tier), linked to identity, NOT for tracking — see Section 1.4
   - [ ] Financial Info → see Section 1.5 owner note; answer based on current Apple guidance
   - [ ] Health & Fitness → see Section 1.10 owner note; answer based on current Apple guidance
-  - [ ] All remaining categories (Location, Sensitive Info, Contacts, Diagnostics, Purchases) → **NO**
+  - [ ] All remaining categories (Location, Sensitive Info, Contacts, Diagnostics) → **NO**
 - [ ] Confirm that **"Does this app use data for tracking?"** = **NO**
 - [ ] Save and submit — privacy labels must be submitted alongside or before the first build upload
 - [ ] Update these labels any time a new data type is introduced
