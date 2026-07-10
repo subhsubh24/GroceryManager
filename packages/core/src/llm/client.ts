@@ -374,77 +374,89 @@ export class GeminiClient {
     let allowCodeExec = Boolean(args.codeExecution);
     let steps = 0;
 
-    while (steps < maxSteps) {
-      steps++;
-      let res: Awaited<ReturnType<typeof this.ai.models.generateContent>>;
-      try {
-        res = await withTimeout(
-          this.ai.models.generateContent({ model, contents, config: buildConfig(allowCodeExec) }),
-          this.callTimeoutMs,
-          `runChatWithTools ${model}`,
-        );
-      } catch (e) {
-        // SOME models reject combining functionDeclarations + codeExecution (400 INVALID_ARGUMENT). That
-        // shows up on the FIRST call (the tool config is identical every round), so only retry-without-
-        // code-execution on step 1 and only when the error looks like an argument rejection. Any other
-        // error (transient 429/500/network, or a later-round failure) is rethrown so we don't silently
-        // and permanently drop code execution and start predicting numbers.
-        if (allowCodeExec && steps === 1 && isToolCombineRejection(e)) {
-          allowCodeExec = false;
+    // Wrap the whole loop so ANY throw (a later-round call, the code-exec retry, or the final summary)
+    // carries the partial `steps` count out to the caller as a ChatToolLoopError. `steps` is bumped
+    // before each call, so it equals the number of Gemini calls actually issued when the loop fails —
+    // letting the caller settle the per-user spend quota for the partial loop, not a flat 1.
+    try {
+      while (steps < maxSteps) {
+        steps++;
+        let res: Awaited<ReturnType<typeof this.ai.models.generateContent>>;
+        try {
           res = await withTimeout(
-            this.ai.models.generateContent({ model, contents, config: buildConfig(false) }),
+            this.ai.models.generateContent({ model, contents, config: buildConfig(allowCodeExec) }),
             this.callTimeoutMs,
-            `runChatWithTools ${model} (no code-exec)`,
+            `runChatWithTools ${model}`,
           );
-        } else {
-          throw e;
+        } catch (e) {
+          // SOME models reject combining functionDeclarations + codeExecution (400 INVALID_ARGUMENT). That
+          // shows up on the FIRST call (the tool config is identical every round), so only retry-without-
+          // code-execution on step 1 and only when the error looks like an argument rejection. Any other
+          // error (transient 429/500/network, or a later-round failure) is rethrown so we don't silently
+          // and permanently drop code execution and start predicting numbers.
+          if (allowCodeExec && steps === 1 && isToolCombineRejection(e)) {
+            allowCodeExec = false;
+            res = await withTimeout(
+              this.ai.models.generateContent({ model, contents, config: buildConfig(false) }),
+              this.callTimeoutMs,
+              `runChatWithTools ${model} (no code-exec)`,
+            );
+          } else {
+            throw e;
+          }
         }
+
+        const calls = res.functionCalls ?? [];
+        if (calls.length === 0) {
+          return { text: res.text ?? "", steps };
+        }
+
+        // Append the model's function-call turn so the next request pairs responses to it. Echo the
+        // candidate content verbatim ONLY when it actually carries the function-call parts (preserving
+        // any ids / thoughts the API may pair on); otherwise reconstruct a clean model turn from `calls`
+        // so we never desync the functionCall/functionResponse pairing.
+        const modelContent = res.candidates?.[0]?.content;
+        const echoable = modelContent?.parts?.some((p) => p.functionCall) ?? false;
+        contents.push(echoable ? modelContent! : { role: "model", parts: calls.map((fc) => ({ functionCall: fc })) });
+
+        // Execute each requested tool (deterministic, session-scoped, never-throwing handlers) and
+        // return one functionResponse part per call so the model can read the results next round.
+        const responseParts: Part[] = [];
+        for (const call of calls) {
+          const tool = call.name ? byName.get(call.name) : undefined;
+          const response = tool
+            ? await tool.handler(call.args ?? {}, args.ctx)
+            : { error: `unknown tool: ${call.name ?? "(unnamed)"}` };
+          responseParts.push({
+            functionResponse: {
+              ...(call.id ? { id: call.id } : {}),
+              name: call.name ?? "unknown",
+              // Wrap non-object results so the API always gets a JSON object for `response`.
+              response: toResponseObject(response),
+            },
+          });
+        }
+        contents.push({ role: "user", parts: responseParts });
       }
 
-      const calls = res.functionCalls ?? [];
-      if (calls.length === 0) {
-        return { text: res.text ?? "", steps };
-      }
-
-      // Append the model's function-call turn so the next request pairs responses to it. Echo the
-      // candidate content verbatim ONLY when it actually carries the function-call parts (preserving
-      // any ids / thoughts the API may pair on); otherwise reconstruct a clean model turn from `calls`
-      // so we never desync the functionCall/functionResponse pairing.
-      const modelContent = res.candidates?.[0]?.content;
-      const echoable = modelContent?.parts?.some((p) => p.functionCall) ?? false;
-      contents.push(echoable ? modelContent! : { role: "model", parts: calls.map((fc) => ({ functionCall: fc })) });
-
-      // Execute each requested tool (deterministic, session-scoped, never-throwing handlers) and
-      // return one functionResponse part per call so the model can read the results next round.
-      const responseParts: Part[] = [];
-      for (const call of calls) {
-        const tool = call.name ? byName.get(call.name) : undefined;
-        const response = tool
-          ? await tool.handler(call.args ?? {}, args.ctx)
-          : { error: `unknown tool: ${call.name ?? "(unnamed)"}` };
-        responseParts.push({
-          functionResponse: {
-            ...(call.id ? { id: call.id } : {}),
-            name: call.name ?? "unknown",
-            // Wrap non-object results so the API always gets a JSON object for `response`.
-            response: toResponseObject(response),
-          },
-        });
-      }
-      contents.push({ role: "user", parts: responseParts });
+      // Hit the step cap — make ONE final call with no tools so the model summarizes what it has.
+      const finalRes = await withTimeout(
+        this.ai.models.generateContent({
+          model,
+          contents,
+          ...(args.system ? { config: { systemInstruction: args.system } } : {}),
+        }),
+        this.callTimeoutMs,
+        `runChatWithTools ${model} (final summary)`,
+      );
+      return { text: finalRes.text ?? "", steps };
+    } catch (e) {
+      // Any throw here means a call already succeeded this loop OR the current call failed — either way
+      // `steps` is the real number of Gemini calls issued. Re-throw carrying that count so the caller
+      // settles the per-user spend quota for the partial loop instead of a flat 1 (the spend-ceiling
+      // under-count fixed here). Preserve an already-typed error rather than double-wrapping.
+      throw e instanceof ChatToolLoopError ? e : new ChatToolLoopError(steps, e);
     }
-
-    // Hit the step cap — make ONE final call with no tools so the model summarizes what it has.
-    const finalRes = await withTimeout(
-      this.ai.models.generateContent({
-        model,
-        contents,
-        ...(args.system ? { config: { systemInstruction: args.system } } : {}),
-      }),
-      this.callTimeoutMs,
-      `runChatWithTools ${model} (final summary)`,
-    );
-    return { text: finalRes.text ?? "", steps };
   }
 
   /**
@@ -490,6 +502,27 @@ export class VerificationExhaustedError extends Error {
   ) {
     super(`LLM verify-then-escalate exhausted after ${attempts} attempts: ${reason}`);
     this.name = "VerificationExhaustedError";
+  }
+}
+
+/**
+ * Thrown by {@link GeminiClient.runChatWithTools} when the agentic loop fails PART-WAY through. It
+ * carries `stepsAttempted` — the number of Gemini calls already issued when the failure happened — so
+ * the caller can settle its per-user LLM spend quota against the REAL call count on the throw path,
+ * not a flat 1 (which would under-count the per-user/day spend ceiling by up to `maxSteps`× when a
+ * multi-step ask throws mid-loop). `cause` is the underlying error.
+ */
+export class ChatToolLoopError extends Error {
+  constructor(
+    public readonly stepsAttempted: number,
+    public override readonly cause: unknown,
+  ) {
+    super(
+      `runChatWithTools failed after ${stepsAttempted} step(s): ${
+        cause instanceof Error ? cause.message : String(cause)
+      }`,
+    );
+    this.name = "ChatToolLoopError";
   }
 }
 

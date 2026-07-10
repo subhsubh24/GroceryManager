@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { extractJsonValue, GeminiClient, l2normalize } from "./client.js";
+import { ChatToolLoopError, extractJsonValue, GeminiClient, l2normalize } from "./client.js";
 import type { Env } from "@gm/config/env";
 import type { Tool, ToolContext } from "./semantic-layer.js";
 
@@ -205,6 +205,26 @@ describe("runChatWithTools (function-calling loop)", () => {
     await expect(
       client.runChatWithTools({ messages: [{ role: "user", content: "hi" }], tools: [], ctx, codeExecution: true }),
     ).rejects.toThrow(/503/);
+  });
+
+  it("throws ChatToolLoopError carrying the REAL call count when a LATER round fails (spend settlement)", async () => {
+    // Round 1 makes a tool call (1 Gemini call); round 2's call throws a transient 429. The caller must
+    // learn that TWO calls were issued so it settles the per-user spend quota for the partial loop — a
+    // flat 1 would under-count the spend ceiling by up to maxSteps× when a multi-step ask throws.
+    const tool = makeTool("get_pantry", async () => ({ items: ["milk"] }));
+    const { client } = clientWithScript([
+      () => fakeResponse({ calls: [{ name: "get_pantry", id: "c1" }] }),
+      () => {
+        throw new Error("429 rate limited mid-loop");
+      },
+    ]);
+    const err = await client
+      .runChatWithTools({ messages: [{ role: "user", content: "big" }], tools: [tool], ctx })
+      .then(() => null)
+      .catch((e) => e);
+    expect(err).toBeInstanceOf(ChatToolLoopError);
+    expect((err as ChatToolLoopError).stepsAttempted).toBe(2); // both calls issued → charge 2, not 1
+    expect((err as ChatToolLoopError).message).toMatch(/429/); // the underlying cause is preserved
   });
 });
 

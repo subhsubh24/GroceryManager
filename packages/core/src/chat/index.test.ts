@@ -7,6 +7,7 @@ import {
   type KitchenBriefInputs,
 } from "./index.js";
 import type { PreferenceSignalInput } from "../personalization/user-model.js";
+import { ChatToolLoopError } from "../llm/client.js";
 
 const d = (s: string) => new Date(s);
 const NOW = d("2026-06-16T12:00:00Z"); // a Tuesday → its UTC Monday is 2026-06-15
@@ -252,6 +253,23 @@ describe("summarizeBrief / answerKitchenChat (keyless fallback)", () => {
     expect(reply).toContain("$70.00"); // degraded to deterministic stats
     expect(reply).not.toContain("GEMINI_API_KEY"); // not keyless — a key existed, the call just failed
     expect(llmCalls).toBe(1); // a (failed) call was attempted — charge 1, not 0
+  });
+
+  it("charges the REAL call count when the agent throws MID-loop (spend-ceiling settlement, not a flat 1)", async () => {
+    // A ChatToolLoopError carries how many Gemini calls the loop actually issued before it failed.
+    // The fallback must charge THAT count (5 here), or a mid-loop 429/network throw after several
+    // expensive calls would settle only 1 — a per-user spend-ceiling under-count of up to maxSteps×.
+    const midLoopThrowClient = {
+      async runChatWithTools() {
+        throw new ChatToolLoopError(5, new Error("429 after 5 calls"));
+      },
+    } as unknown as Parameters<typeof answerKitchenChat>[0]["client"];
+    const { reply, llmCalls } = await answerKitchenChat(
+      { client: midLoopThrowClient, userId: "u1" },
+      { messages: [{ role: "user", content: "big multi-step question" }], brief: briefWithData },
+    );
+    expect(reply).toContain("$70.00"); // still degrades to the deterministic summary
+    expect(llmCalls).toBe(5); // settle the partial loop's real spend, not 1
   });
 
   it("answerKitchenChat falls back to summary when the agent returns blank text", async () => {
