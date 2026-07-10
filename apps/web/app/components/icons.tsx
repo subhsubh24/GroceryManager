@@ -50,6 +50,7 @@ export {
   ArrowLeft,
   ArrowRight,
   ChevronRight,
+  ChevronDown, // disclosure indicator (rotates 180° when its <details> is open)
   Check,
   Plus,
   Search,
