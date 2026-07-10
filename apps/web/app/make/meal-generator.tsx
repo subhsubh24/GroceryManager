@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { GeneratedMeal, MealEnergy } from "@gm/core/recipe/generate-llm";
-import { Lightbulb, ChefHat, Plus } from "@/app/components/icons";
+import { Lightbulb, ChefHat, Plus, ChevronDown } from "@/app/components/icons";
 import { addNamesToListAction } from "@/app/lib/list-actions";
 import { generateMealsAction } from "./actions";
 
@@ -94,7 +94,10 @@ export function MealGenerator({ energy, canGenerate }: { energy: MealEnergy; can
                 <details className="group mt-3 rounded-xl border border-line bg-cream/50 px-3.5 py-2.5 transition open:bg-surface">
                   <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-ink-800 marker:content-none">
                     <span>Steps</span>
-                    <span className="text-ink-300 transition group-open:rotate-180" aria-hidden="true">▾</span>
+                    <ChevronDown
+                      className="h-4 w-4 text-ink-300 transition group-open:rotate-180"
+                      aria-hidden="true"
+                    />
                   </summary>
                   <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-ink-600">
                     {meal.steps.map((step, s) => (
