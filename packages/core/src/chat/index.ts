@@ -16,6 +16,7 @@
  * This imports the server-only llm client + semantic layer (which touches @gm/db), so it must be
  * reached via a server action — never from a "use client" component. (`askAction` is the entry point.)
  */
+import { ChatToolLoopError } from "../llm/client.js";
 import type { ChatTurn, GeminiClient } from "../llm/client.js";
 import { buildSemanticTools } from "../llm/semantic-layer.js";
 import {
@@ -310,9 +311,14 @@ export async function answerKitchenChat(deps: AnswerDeps, args: AnswerArgs): Pro
     });
     const reply = text.trim();
     return { reply: reply.length > 0 ? reply : summarizeBrief(args.brief, false), llmCalls: steps };
-  } catch {
-    // Never throw to the caller — degrade to the deterministic, pre-computed summary. At least one
-    // (failed) call was attempted, so charge 1 rather than 0.
-    return { reply: summarizeBrief(args.brief, false), llmCalls: 1 };
+  } catch (e) {
+    // Never throw to the caller — degrade to the deterministic, pre-computed summary. Charge the REAL
+    // number of Gemini calls the loop issued before it failed: a mid-loop failure (network/429/500 on
+    // a later round) may have already made several calls, and ChatToolLoopError carries that count, so
+    // the caller settles the per-user spend quota for the partial loop instead of a flat 1 (which would
+    // under-count the spend ceiling by up to maxSteps× on the throw path). A non-loop error (e.g. tool
+    // wiring) made at most one call → charge 1.
+    const llmCalls = e instanceof ChatToolLoopError ? Math.max(1, e.stepsAttempted) : 1;
+    return { reply: summarizeBrief(args.brief, false), llmCalls };
   }
 }
