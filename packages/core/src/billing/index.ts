@@ -1,9 +1,12 @@
 /**
- * Premium / billing — SCAFFOLD ONLY (no real payments yet). The entitlement rides the existing
- * PreferenceSignal ledger (topic "entitlement", value "premium"), so there is NO schema change — a
- * real Stripe webhook would simply write that same signal. Everything is gated by a FEATURE_BILLING
- * flag (default OFF) and **fails open**: with billing disabled, `canUse` allows every feature, so the
- * scaffold never removes access from anyone. Pure + client-safe (no env, no I/O).
+ * Premium / billing — the pure tier catalog + entitlement-gating logic (this module has NO env, NO
+ * I/O, and is client-safe). Real payments ARE wired: Stripe Checkout + webhook on web
+ * (`apps/web/app/api/stripe/*`) and RevenueCat in-app purchase on mobile (`apps/mobile/lib/purchases.ts`)
+ * both write the entitlement onto the existing PreferenceSignal ledger (topic "entitlement", value
+ * "premium"), so there is NO schema change — the gating below reads that same signal regardless of
+ * which processor granted it. Everything is gated by a FEATURE_BILLING flag (default OFF) and **fails
+ * open**: with billing disabled, `canUse` allows every feature, so gating never removes access from
+ * anyone until the owner flips billing on with live keys.
  */
 
 // ---------------------------------------------------------------------------
