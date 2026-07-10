@@ -4,6 +4,39 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-10 (run 61) — 5-Haiku scout sweep + 3 file-disjoint clears (#504 spend-integrity throw-path
+  settlement / #505 + #506 Track-F coverage); 6/6 Sonnet reviews APPROVE first-pass; 0 abandons.** No DEEP
+  AUDIT (run 59 ran one same day, <24h). Baseline gate green (typecheck 0, 939 core tests, prod build clean,
+  self-validation 7/7). Highest-leverage takeaways:
+  (1) **FLAGSHIP #504 closes the exact residual #482 (run 57) documented as deferred.** The "ask" agent's
+  per-step spend settlement (`recordLlmUsage(llmCalls-1)`) only ran on the RETURN path; a mid-loop THROW
+  (429/500/network on a later round, or the final-summary call) charged a flat `llmCalls: 1`, uncounting up to
+  `maxSteps`× already-billed Gemini calls against the G7 ceiling (wallet-drain vector). Fix: `runChatWithTools`
+  wraps its loop and rethrows a typed `ChatToolLoopError` carrying `stepsAttempted` (steps is bumped before
+  each call); `answerKitchenChat`'s catch charges that count. **LESSON: when a prior run explicitly logs a
+  "known residual … deferred," that residual is a PRE-QUALIFIED value-bar-clearing candidate for a later run —
+  the scout sweep independently re-found it AND the quality scorecard had named it as the correctness A→A+ nit,
+  a triple-confirm. Threading a partial count out of a loop = a typed error carrying the count, read in the
+  caller's existing catch (no signature change).** Residual (still deferred, bounded): the code-exec retry call
+  + post-cap final-summary call aren't in `steps` — a ≤1-call undercount symmetric with the success path,
+  errs in the user's favor.
+  (2) **Track-F coverage: two money/conversion decision paths pinned.** #505 `isTrialEligible` (the only
+  untested `billing` export — keys on `subscription_renewal_at` PRESENCE, not value; post-churn + null-value
+  cases guard plausible regressions). #506 `computeExperimentResult` decided-vs-running + zero-control edges
+  (#470's named gap; the challenger-insufficient `leading_variant` branch and the `pControl===0` significant
+  winner → null lift, not Infinity/NaN). Both coverage-only; impl already correct.
+  (3) **BRANCH-ENTANGLEMENT trap RECURRED a THIRD time (runs 39/41).** Parallel Sonnet reviewers sharing the
+  parent tree ran `git checkout` of another change's branch, so `claude/experiment-lift-edge-tests` got cut off
+  Change A's commit instead of main → the pushed branch bundled 5 files (NOT disjoint). Caught by verifying
+  `origin/<branch>` via `git diff --stat` (NOT the shared tree) + both reviewers flagging the stacked-branch
+  artifact. Fixed: `git checkout -B <branch> origin/main && git cherry-pick <test-commit>` (single-file commit
+  re-applies clean) + `--force-with-lease`. **LESSON (escalated): ALWAYS `git log --oneline -2 origin/<branch>`
+  to confirm the parent + `git diff --stat origin/main origin/<branch>` to confirm disjointness BEFORE arming
+  auto-merge; prefer worktree isolation for parallel agents that may checkout.**
+  **Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated floor #190, owner-GTM,
+  no buildable lever per run-41 adversarial re-test). Confidence statement stays UNCHECKED. Validation 7/7,
+  0 unmet. 3 real clears (1 spend-integrity closing a documented residual + 2 Track-F), 6/6 approvals, 0
+  abandons = a coherent converged run = success.
 - **2026-07-10 (run 60) — 4-Haiku scout sweep (design/UX/taste · security/RLS/Track-G · monetization/revenue
   · mobile+artifacts+tests) + 1 file-disjoint clear (#495 mobile premium_family tier label); 2/2 Sonnet reviews
   APPROVE first-pass; 0 abandons; 0 verify-cycle failures.** Deep audit NOT due (run 59 ran a standalone 5-lens
