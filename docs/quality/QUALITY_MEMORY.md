@@ -5,6 +5,66 @@ new grade against the last entry. Append-only; newest entry on top.
 
 ---
 
+## 2026-07-11 — SHIP GATE NOW NOT MET (overall A → B): design_taste A → B (re-assessment, not a regression)
+
+**Overall: B. Ship gate: NOT MET.** Mechanical gate this run: typecheck PASS (exit 0), `@gm/core`
+tests PASS (99 files pass / 10 skipped; **977 tests pass** / 26 skipped — up from 912; coverage lines
+87.73 / branches 87.83 / functions 91.21 — thresholds 70/84/76/70 met), production `next build` PASS
+(no missing-export warnings; 102 kB shared; middleware 88.6 kB = gzip of a **280,299-byte** raw edge
+bundle, **byte-identical** to 07-09), self-validation PASS (8 capabilities, 8 active, all keyless;
+--readiness unmet []). Graded by 9 fresh adversarial per-dimension subagents, none having written the
+code.
+
+**The one dimension that moved down: design_taste A → B (ship-critical → breaks the gate).** THIS IS A
+RE-ASSESSMENT OF A LONG-STANDING CONDITION, NOT A FRESH CODE REGRESSION. A more thorough design grader
+surfaced — and the auditor independently verified — that the native Expo app (`apps/mobile`, in ACTIVE
+App Store/Play submission scope per `eas.json` submit block) has **NO icon system at all**: `package.json`
+has zero icon-library deps (no lucide / @expo/vector-icons / react-native-svg), there are no local
+SVG/icon components (only app-icon PNGs), and ~110 raw Unicode-glyph affordances stand in for icons —
+`← Back`/`← Recipes`/`← Prev`/`Next →` (`cook/[id].tsx:101,119,160,174`), 12 card labels
+(`index.tsx:43-91`), `›` list chevron (`recipes.tsx:117`), `✓` checks (`cook/[id].tsx:229`,
+`onboarding.tsx:256`, `upgrade.tsx:158`). Plus a residual web nit: `cook/[id]/page.tsx:182` still renders
+a raw `▾` while `ChevronDown` is registered-but-unused for exactly that (`icons.tsx:53`). Per the scale
+this is a real, named, non-blocking gap on a ship-critical surface = **B** (not the A bar's "trivial nits
+only"). Verified NOT a code regression: only #512 (a11y labels) + #495 (tier label) touched `apps/mobile`
+since 07-09, neither adding/removing glyphs — prior cycles simply under-weighted the native surface while
+grading the (genuinely A+) web PWA.
+
+**Everything else improved or held — the code got better this cycle:**
+- **functional_reality A → A+.** Fake-data grep over `apps/web/app/**/*.tsx` = ZERO hits; #517 throw-safe
+  auth (`tenant.ts:13,31` catch `auth()` throwing → signed-out; `loadHomeData` → `EMPTY_HOME_DATA`) means
+  the dashboard can't fall to the error boundary; all journeys trace to real server actions + DB writes;
+  e2e assertions are real outcomes. Zero findings → A+.
+- **Three standing A→A+ nits genuinely CLOSED:** (1) launch_readiness — the 3-cycle RevenueCat event→tier
+  map was EXTRACTED to exported pure fns + table-tested (#487, `billing/index.ts:209,221` +
+  `index.test.ts:131-188`, route now imports them); (2) design — cook-mode arrow glyphs → registry icons
+  (#486, `cook-mode.tsx:5,168,192`); (3) correctness — #504 ask-quota throw-path under-count fixed +
+  regression test (`client.ts:515` `stepsAttempted` → `ask/actions.ts:77-79`, `client.test.ts:210-227`).
+- **NEW §11 media-gen adapter (#509/#515) audited HONEST.** The 8th manifest capability
+  `marketing-media-gen` genuinely exercises its code via injected fake providers (`media-gen.test.ts:104-185`,
+  `staging.test.ts:76-226`) — audit-first ordering, success mapping, and throw/empty/timeout/no-key degrade
+  all real; not a gamed-green stub. (A→A+ nit: no product-reachable caller yet — staging-only, disclosed.)
+
+**Grades:** functional_reality **A+** (↑from A), correctness_reliability **A**, security **A**,
+design_taste **B** (↓from A, SC — breaks gate), launch_readiness **A** (SC), tests_evals **A**,
+artifact_integrity **A**, business_case **A**, performance **B**.
+
+**performance held at B (unchanged from #320, 5th cycle).** Both gaps re-confirmed: no CI perf-budget
+gate (grep = 2 prose comments only); edge middleware 280,299 bytes raw, byte-identical (NextAuth→jose on
+the edge, broad matcher). Non-ship-critical — does not affect the gate; the gate is blocked solely by
+design_taste.
+
+**Issues this run:** FILED a NEW `quality` issue for design_taste (ship-critical below A: mobile has no
+icon system + residual web `▾`, with the fix = add `@expo/vector-icons` + swap the glyph chrome). #320
+(performance) left open + accurate (byte figure unchanged). **Ship-critical dimension dropped below the
+ship bar → OWNER NOTIFIED** (dashboard = this scorecard + the new issue).
+
+**What "re-close the gate" looks like next run:** add an icon system to `apps/mobile` and replace the
+`←/→/›/✓` glyph chrome with real icons (+ swap the web `▾` → `ChevronDown`) → design_taste back to A →
+ship gate MET. Then the perf-budget gate + edge-middleware trim (#320) closes the last B → overall A+.
+
+---
+
 ## 2026-07-09 — HELD: overall A, ship gate MET, 8/9 dims at A (no change from 07-05)
 
 **Overall: A. Ship gate: MET.** Mechanical gate this run: typecheck PASS (exit 0), `@gm/core` tests
