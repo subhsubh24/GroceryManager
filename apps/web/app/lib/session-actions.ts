@@ -1,6 +1,7 @@
 "use server";
 
-import { auth, signOut } from "@/auth";
+import { signOut } from "@/auth";
+import { currentSession } from "./tenant";
 
 /**
  * End any persisted session and send the user to /signin — called by the LaunchGuard on a fresh app
@@ -10,6 +11,11 @@ import { auth, signOut } from "@/auth";
  * `signOut` throws NEXT_REDIRECT, which must propagate for the navigation to happen.
  */
 export async function forceSignOutAction() {
-  const session = await auth();
+  // `currentSession()` NEVER throws — a corrupt/undecryptable session cookie (e.g. after an
+  // AUTH_SECRET rotation) must degrade to the cheap no-op, not crash the LaunchGuard that runs this
+  // on every app launch. This wraps ONLY the session READ; `signOut`'s NEXT_REDIRECT still throws
+  // from the line below and propagates for the navigation to happen (an inert corrupt cookie can't
+  // authenticate anyway, so skipping signOut is safe).
+  const session = await currentSession();
   if (session?.user) await signOut({ redirectTo: "/signin" });
 }
