@@ -11,7 +11,7 @@ import { currentUserId } from "@/app/lib/tenant";
 import { checkLlmQuota } from "@/app/api/_lib/llm-quota";
 import { isPersistedRecipeId, loadRecipeAnySource } from "@/app/lib/recipe";
 import { SaveButton } from "@/app/cookbook/save-button";
-import { ArrowLeft, Check, Shuffle, UtensilsCrossed } from "@/app/components/icons";
+import { ArrowLeft, Check, ChevronDown, Shuffle, UtensilsCrossed } from "@/app/components/icons";
 import { CookMode } from "./cook-mode.js";
 import { SwapFinder, type SwapState } from "./swap-finder.js";
 
@@ -179,7 +179,10 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
                           <span>
                             {k.name} <span className="text-xs font-normal text-brand-600">· swap</span>
                           </span>
-                          <span className="text-ink-300 transition group-open:rotate-180" aria-hidden="true">▾</span>
+                          <ChevronDown
+                            className="h-4 w-4 shrink-0 text-ink-300 transition group-open:rotate-180"
+                            aria-hidden="true"
+                          />
                         </summary>
                         <ul className="mt-2 space-y-1 pl-3 text-sm text-ink-600">
                           {k.subs.map((s, i) => (
