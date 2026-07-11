@@ -4,9 +4,10 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
-- **2026-07-11 (run 63) — DEEP AUDIT (4-Haiku lens) + 2 file-disjoint clears (#514 growth-auth throw-safety /
-  #515 §11 media STAGING consumer); 4/4 Sonnet reviews APPROVE + 1 reviewer-suggested hardening folded in; 0
-  abandons.** DEEP AUDIT was DUE (last standalone run 59, >24h) → ran it BEFORE scouting. Baseline gate green
+- **2026-07-11 (run 63) — DEEP AUDIT (4-Haiku lens) + 3 file-disjoint clears (#514 growth-auth throw-safety /
+  #515 §11 media STAGING consumer / #517 LaunchGuard auth throw-safety); 6/6 Sonnet reviews APPROVE + 1
+  reviewer-suggested hardening folded in; 0 abandons.** DEEP AUDIT was DUE (last standalone run 59, >24h) → ran
+  it BEFORE scouting. Baseline gate green
   (typecheck 0, 977 core tests, prod build clean, self-validation 8/8). Highest-leverage takeaways:
   - **DEEP AUDIT 2026-07-11: 3 of 4 lenses CLEAN, 1 real correctness finding shipped.** SECURITY/ABUSE/RLS
     CLEAN (all 22 migrations' public tables RLS+policy; 41 routes rate-limited+zod-validated+error-hygienic;
@@ -23,7 +24,11 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
     whole reason to exist) and pages use `currentSession()`/`currentUserId()` — but three API ROUTES still
     called raw `auth()`. When a codebase has a non-throwing session wrapper, a bare `auth()` ANYWHERE is a
     latent 500; grep `await auth()` across routes/actions periodically. Reviewer B named a 4th site
-    (`session-actions.ts:13`) as a scoped follow-up — a pre-qualified candidate for a later run.**
+    (`session-actions.ts:13` — `forceSignOutAction`, run by LaunchGuard on EVERY launch), which this run ALSO
+    fixed as #517 (swapped the READ to `currentSession()` while leaving `signOut`'s NEXT_REDIRECT to propagate).
+    PROCESS LESSON: I pushed the bookkeeping PR (#516) BEFORE fixing #517, so #516 merged mislabelling it a
+    "later-run follow-up" → forcing a same-run correction. Sweep for ALL same-pattern sites (`grep 'await
+    auth()'` over routes + server actions) in the FIRST batch, before opening bookkeeping.**
   - **(2) #515 — completing the BUILDABLE half of a two-owner-gate capability (the §11 staging consumer).**
     Run 62 built the media ADAPTER and left §11 `[ ]`, naming the follow-up. Built `stageCreative(brief)`: a
     batch orchestrator that turns a `CreativeBrief` into a reviewable metadata-only `StagingManifest` + raw
