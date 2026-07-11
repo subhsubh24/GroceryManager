@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { currentSession } from "@/app/lib/tenant";
 import { parseJsonBody, serverError } from "../../_lib/guard";
 import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
 import { sendEmailBatch } from "@gm/core/email";
@@ -24,8 +24,9 @@ export async function POST(req: Request) {
   const rl = rateLimit(`growth-email:${ip}`, 5, 60_000);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
-  // 1. Check admin auth
-  const session = await auth();
+  // 1. Check admin auth. `currentSession()` NEVER throws — a corrupt/undecryptable session cookie
+  // (e.g. after an AUTH_SECRET rotation) must fall through to a clean 403, not an unhandled 500.
+  const session = await currentSession();
   const userEmail = (session?.user as { email?: string } | undefined)?.email;
   const adminEmail = process.env["ADMIN_EMAIL"];
 

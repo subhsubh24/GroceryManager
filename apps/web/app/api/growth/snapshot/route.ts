@@ -8,7 +8,7 @@ import {
 } from "@gm/db";
 import { buildGrowthSnapshot, computeMrrUsd, type ExperimentSummary } from "@gm/core/growth/snapshot";
 import { EXPERIMENTS, computeExperimentResult } from "@gm/core/growth/experiments";
-import { auth } from "@/auth";
+import { currentSession } from "@/app/lib/tenant";
 import { serverError } from "../../_lib/guard";
 import { normalizePlausibleDomain } from "../../../lib/plausible";
 import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
@@ -49,7 +49,10 @@ export async function GET(req: Request) {
     authorized = ab.length === bb.length && timingSafeEqual(ab, bb);
   }
   if (!authorized) {
-    const session = await auth();
+    // `currentSession()` NEVER throws — a corrupt/undecryptable session cookie (e.g. after an
+    // AUTH_SECRET rotation) must fall through to a clean 403, not an unhandled 500 (this read runs
+    // BEFORE the try/catch below).
+    const session = await currentSession();
     const userEmail = (session?.user as { email?: string } | undefined)?.email;
     const adminEmail = process.env["ADMIN_EMAIL"];
     authorized = !!userEmail && !!adminEmail && userEmail === adminEmail;
