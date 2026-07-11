@@ -12,13 +12,15 @@ The dashboard surfaces every `open` item, urgent first.
 ```yaml
 OWNER_ACTIONS:
   project: GroceryManager
-  as_of: "2026-07-09 (GTM run 10) — RE-VERIFIED, unchanged: a fresh authenticated snapshot pull returned a
-    payload identical in substance to runs 8-9 (all 4 sources still connected, funnel still 0/null); site
-    gate still up (now also confirmed /demo + /join, the new §34 public surfaces, are live and gate-exempt).
-    Zero movement on the open Human-Core items below (eas-build-submit-go-live, connect-revenuecat-iap,
-    spend-caps, turnstile-keys, rotate-envl-secrets) since run 8 — see docs/growth/GROWTH_STATUS.md +
-    GROWTH_MEMORY.md run 10 for full detail. NEW this window (added by the Product Factory, run 56, PR #475,
-    not by GTM): `gated-beta-invite-codes` — see that item below."
+  as_of: "2026-07-11 (GTM run 11) — RE-VERIFIED, unchanged on Human-Core items: a fresh authenticated snapshot
+    pull returned a payload identical in substance to runs 8-10 (all 4 sources still connected, funnel still
+    0/null); site gate still up (/demo + /join still live and gate-exempt). Zero movement on the open
+    Human-Core items below (eas-build-submit-go-live, connect-revenuecat-iap, spend-caps, turnstile-keys,
+    rotate-envl-secrets) since run 8 — see docs/growth/GROWTH_STATUS.md + GROWTH_MEMORY.md run 11 for full
+    detail. NOTE: QUALITY_SCORECARD (independent, product-loop-owned) regressed this window (overall A->B,
+    ship_gate_met false — a mobile icon-system gap) but that is Product-Factory build work, not a new
+    Human-Core item, so it is NOT added here. NEW this window (added by GTM run 11, not Human-Core, optional):
+    `gtm-content-validation-kit-v1` — see that item below."
   items:
     - id: gtm-connect-waitlist
       title: "DONE: waitlist source connected — the Growth Agent's own read need is satisfied via CRON_SECRET"
@@ -243,6 +245,24 @@ OWNER_ACTIONS:
       why: Current rate limiter + LLM quota + the PUBLIC demo spend ceiling (§34) use Node.js in-memory Maps — correct per-instance but not shared across multiple Vercel regions/instances. For single-instance deployments this is sufficient; for global Vercel this needs Redis. The demo ceiling (packages/core/src/security/demo-quota.ts) is the highest-priority of the three because it guards a PUBLIC, no-account paid-LLM endpoint — its global daily cap is currently per-instance, so a scaled-out deployment's effective ceiling is cap×instances. Pre-launch traffic is owner-gated, so wire this BEFORE driving real demo traffic (§13 Gate 1).
       how: "Install @upstash/ratelimit + @upstash/redis; set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN in Vercel env. Replace the Map-based buckets in _lib/rate-limit.ts, _lib/llm-quota.ts AND packages/core/src/security/demo-quota.ts (checkDemoQuota — back BOTH the per-IP and the global counter with a shared store) with Upstash Ratelimit."
       blocks: multi-instance-safety
+    - id: gtm-content-validation-kit-v1
+      title: "OPTIONAL: film + post the content-first demand-validation kit (receipt -> pantry demo)"
+      priority: normal
+      status: open
+      why: "GTM run 11 prepared a short-form content kit (docs/growth/CONTENT_VALIDATION_KIT.md) per the
+        new DEMAND_VALIDATION_PLAYBOOK.md — a low-cost, pre-launch way to test real demand signal via
+        TikTok/Reels/Shorts comments (not fabricated view/like counts) before spending more on the funnel.
+        Hero feature (receipt -> pantry auto-fill) is already corroborated by 2 independent picks (the
+        product factory's own /demo page + 2 of demand_signal's 3 durable cited themes), and the demo
+        footage source (/demo) is already live — no prototype build needed. This is genuinely optional:
+        skipping it has no downside beyond forgoing an early, cheap signal read."
+      how: "Read docs/growth/CONTENT_VALIDATION_KIT.md in full. Film 3-5 reaction takes per the shot list
+        (§D) using the live /demo page as the on-screen demo, pair with 2-3 of the 8 drafted hooks (§C),
+        post to your own TikTok/Reels/Shorts accounts (the GTM factory never creates accounts or posts).
+        Every on-screen/caption CTA points at the public waitlist, never /signup. Report back the real
+        comment signal (screenshots or counts) — or connect a channel read API — so the next GTM run can
+        analyze it per the kit's §G and feed a real result into demand_signal / positioning."
+      blocks: none
     - id: decide-ship-households-family-tier
       title: "PRODUCT DECISION: ship household sharing live (FEATURE_HOUSEHOLDS=1) or keep the Family tier dark?"
       priority: normal
