@@ -25,6 +25,14 @@ const EnvSchema = z.object({
   // FAST so callers degrade gracefully within the serverless timeout instead of the function being
   // killed mid-call (a user-visible dead-end). Keep under the smallest function limit (Hobby = 10s).
   LLM_TIMEOUT_MS: z.coerce.number().int().positive().optional(),
+  // Per-call wall-clock budget (ms) for a single media-GENERATION request (@gm/core/media). Kept
+  // SEPARATE from LLM_TIMEOUT_MS on purpose: media gen (image/video/music/voiceover) is materially
+  // slower than a text call, and it runs from the marketing STAGING context (worker/cron with a long
+  // maxDuration), not a user-facing Hobby serverless request — so its budget is sized for the staging
+  // job, not the 10s function limit. If a media call is ever wired into a short serverless route, the
+  // operator MUST set this UNDER that platform's limit so the local timeout wins before the function
+  // is killed. Defaults to MEDIA_GEN default in media-gen.ts when unset.
+  MEDIA_TIMEOUT_MS: z.coerce.number().int().positive().optional(),
   // Flash-Lite is public preview; when false we fall back to gemini-2.5-flash everywhere.
   LLM_USE_FLASH_LITE: z
     .enum(["true", "false"])
