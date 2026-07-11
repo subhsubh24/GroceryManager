@@ -52,7 +52,7 @@ code-execution tool** so prices→cents and totals are computed by executed Pyth
 at the cheapest tier, no regression).
 
 **Built & tested**
-- **Accounts & isolation** — **email + password** sign-up with a profile (name/age/gender stored in the semantic layer as `profile:*` signals); middleware-gated (public landing + share pages excepted); every page + query is scoped to the signed-in user via Postgres **RLS** + `withTenant`. (Google is kept only for the optional Gmail receipt connect.)
+- **Accounts & isolation** — **username + password** sign-up with a profile (name/age/gender stored in the semantic layer as `profile:*` signals); email is optional and set later only if you connect Gmail; middleware-gated (public landing + share pages excepted); every page + query is scoped to the signed-in user via Postgres **RLS** + `withTenant`. (Google is kept only for the optional Gmail receipt connect.)
 - **Pantry & depletion** — ledger-projected stock, confidence decay, expiring-soon.
 - **Reorder** — run-out prediction (purchase cadence **or declared dosage**), staples autopilot, **par auto-tuning** (buy less of what you waste), draft orders.
 - **Replenishment verticals** — groceries → Instacart; **household, personal-care & supplements** → Amazon (keyless Add-to-Cart). **Supplements** get **dosage-based depletion** (bottle size ÷ daily dose → accurate run-out from the first bottle, before any cadence exists).
