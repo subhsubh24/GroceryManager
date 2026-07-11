@@ -50,6 +50,9 @@ export const Discover = makeIcon("compass-outline");
 export const Spend = makeIcon("wallet-outline");
 export const Meals = makeIcon("nutrition-outline");
 export const Stats = makeIcon("stats-chart-outline");
-export const Wrapped = makeIcon("sparkles-outline");
+// Grocery Wrapped = a celebratory year-in-review. Deliberately NOT `sparkles` — the web registry
+// reserves the sparkle for AI-generated content ("Planned by AI") and flags it as an "AI flourish"
+// to avoid; a trophy reads as "your year's highlights" without that connotation.
+export const Wrapped = makeIcon("trophy-outline");
 export const QuickAdd = makeIcon("add-circle-outline");
 export const Profile = makeIcon("person-circle-outline");
