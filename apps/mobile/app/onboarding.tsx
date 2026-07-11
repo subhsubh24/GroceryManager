@@ -11,6 +11,7 @@ import {
 import { Redirect, router } from "expo-router";
 import { useAuth } from "../lib/auth";
 import { apiFetch } from "../lib/api";
+import { Check, ChevronLeft } from "../lib/icons";
 
 const STEPS = ["Profile", "Diets", "Cuisines", "Done"] as const;
 type Step = 0 | 1 | 2 | 3;
@@ -253,7 +254,7 @@ export default function OnboardingScreen() {
       {step === 3 && (
         <View style={styles.stepContent}>
           <View style={styles.doneMark}>
-            <Text style={styles.doneGlyph}>✓</Text>
+            <Check size={36} color="#ffffff" />
           </View>
           <Text style={styles.title}>You&apos;re all set</Text>
           <Text style={styles.blurb}>
@@ -276,8 +277,15 @@ export default function OnboardingScreen() {
       {/* Footer buttons */}
       <View style={styles.footer}>
         {step > 0 && step < 3 ? (
-          <TouchableOpacity style={styles.backBtn} onPress={goBack} disabled={saving}>
-            <Text style={styles.backBtnText}>← Back</Text>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={goBack}
+            disabled={saving}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+          >
+            <ChevronLeft size={18} color="#525d6a" />
+            <Text style={styles.backBtnText}>Back</Text>
           </TouchableOpacity>
         ) : (
           <View />
@@ -370,7 +378,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 20,
   },
-  doneGlyph: { color: "#ffffff", fontSize: 32 },
   doneNote: { fontSize: 13, color: "#a3acb5", marginTop: 16, lineHeight: 20 },
 
   errorBox: {
@@ -389,7 +396,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   footerRight: { flexDirection: "row", alignItems: "center", gap: 8 },
-  backBtn: { paddingVertical: 12, paddingHorizontal: 4 },
+  backBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+  },
   backBtnText: { fontSize: 15, color: "#525d6a" },
   skipBtn: { paddingVertical: 12, paddingHorizontal: 12 },
   skipBtnText: { fontSize: 15, color: "#a3acb5" },

@@ -19,6 +19,7 @@ import {
   restore,
 } from "../lib/purchases";
 import { SUBSCRIPTION_PLANS, PREMIUM_PERKS } from "@gm/core/billing";
+import { Check } from "../lib/icons";
 
 const MONTHLY = SUBSCRIPTION_PLANS.find((p) => p.tier === "premium_monthly");
 const ANNUAL = SUBSCRIPTION_PLANS.find((p) => p.tier === "premium_annual");
@@ -155,7 +156,9 @@ export default function UpgradeScreen() {
         <Text style={styles.sectionTitle}>What you unlock</Text>
         {PREMIUM_PERKS.map((perk) => (
           <View key={perk.feature} style={styles.perkRow}>
-            <Text style={styles.perkCheck}>✓</Text>
+            <View style={styles.perkCheck}>
+              <Check size={18} color="#0c8a3e" />
+            </View>
             <View style={styles.perkText}>
               <Text style={styles.perkTitle}>{perk.title}</Text>
               <Text style={styles.perkBlurb}>{perk.blurb}</Text>
@@ -303,7 +306,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   perkRow: { flexDirection: "row", marginBottom: 12 },
-  perkCheck: { color: "#0c8a3e", fontWeight: "700", fontSize: 16, marginRight: 10, marginTop: 1 },
+  perkCheck: { marginRight: 10, marginTop: 1 },
   perkText: { flex: 1 },
   perkTitle: { fontSize: 14, fontWeight: "700", color: "#1d2530" },
   perkBlurb: { fontSize: 13, color: "#525d6a", lineHeight: 18, marginTop: 2 },

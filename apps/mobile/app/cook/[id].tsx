@@ -11,6 +11,7 @@ import {
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "../../lib/auth";
 import { apiFetch } from "../../lib/api";
+import { ArrowLeft, ArrowRight, Check, ChevronLeft } from "../../lib/icons";
 
 type Recipe = {
   id: string;
@@ -97,8 +98,14 @@ export default function CookScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>{error ?? "Recipe not found."}</Text>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backText}>← Back</Text>
+        <Pressable
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
+          <ChevronLeft size={16} color="#ffffff" />
+          <Text style={styles.backText}>Back</Text>
         </Pressable>
       </View>
     );
@@ -115,8 +122,14 @@ export default function CookScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Pressable onPress={() => router.back()} style={styles.backLink}>
-        <Text style={styles.backLinkText}>← Recipes</Text>
+      <Pressable
+        onPress={() => router.back()}
+        style={styles.backLink}
+        accessibilityRole="button"
+        accessibilityLabel="Back to recipes"
+      >
+        <ChevronLeft size={16} color="#0c8a3e" />
+        <Text style={styles.backLinkText}>Recipes</Text>
       </Pressable>
 
       {recipe.imageUrl ? (
@@ -155,9 +168,12 @@ export default function CookScreen() {
               style={[styles.navBtn, step === 0 && styles.navBtnDisabled]}
               onPress={() => setStep((s) => Math.max(0, s - 1))}
               disabled={step === 0}
+              accessibilityRole="button"
+              accessibilityLabel="Previous step"
             >
+              <ArrowLeft size={16} color={step === 0 ? "#c8c1b8" : "#525d6a"} />
               <Text style={[styles.navBtnText, step === 0 && styles.navBtnTextDisabled]}>
-                ← Prev
+                Prev
               </Text>
             </Pressable>
             <Pressable
@@ -169,10 +185,13 @@ export default function CookScreen() {
                   setStep((s) => s + 1);
                 }
               }}
+              accessibilityRole="button"
+              accessibilityLabel={isLastStep ? "Start over" : "Next step"}
             >
               <Text style={styles.navBtnTextPrimary}>
-                {isLastStep ? "Start over" : "Next →"}
+                {isLastStep ? "Start over" : "Next"}
               </Text>
+              {!isLastStep ? <ArrowRight size={16} color="#ffffff" /> : null}
             </Pressable>
           </View>
         </View>
@@ -225,8 +244,13 @@ export default function CookScreen() {
         >
           {logging ? (
             <ActivityIndicator size="small" color="#ffffff" />
+          ) : logged ? (
+            <View style={styles.cookedBtnRow}>
+              <Check size={18} color="#ffffff" />
+              <Text style={styles.cookedBtnText}>Logged</Text>
+            </View>
           ) : (
-            <Text style={styles.cookedBtnText}>{logged ? "Logged ✓" : "I cooked this"}</Text>
+            <Text style={styles.cookedBtnText}>I cooked this</Text>
           )}
         </Pressable>
         {logged ? (
@@ -244,7 +268,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#faf8f3" },
   content: { padding: 20, paddingBottom: 48 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
-  backLink: { marginBottom: 12 },
+  backLink: { flexDirection: "row", alignItems: "center", gap: 2, marginBottom: 12 },
   backLinkText: { fontSize: 14, color: "#0c8a3e", fontWeight: "500" },
   hero: { width: "100%", height: 220, borderRadius: 16, marginBottom: 16 },
   eyebrow: { fontSize: 11, fontWeight: "600", color: "#0c8a3e", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 },
@@ -276,6 +300,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   cookedBtnDone: { backgroundColor: "#0a6e33" },
+  cookedBtnRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   cookedBtnText: { fontSize: 16, fontWeight: "700", color: "#ffffff" },
   cookedLink: { marginTop: 10, fontSize: 14, fontWeight: "600", color: "#0c8a3e", textAlign: "center" },
   cookedError: { marginTop: 10, fontSize: 13, color: "#8e261b", textAlign: "center" },
@@ -301,6 +326,9 @@ const styles = StyleSheet.create({
   stepNav: { flexDirection: "row", gap: 10 },
   navBtn: {
     flex: 1,
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 6,
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: "center",
@@ -314,6 +342,9 @@ const styles = StyleSheet.create({
   navBtnTextPrimary: { fontSize: 15, fontWeight: "600", color: "#ffffff" },
   errorText: { fontSize: 15, color: "#8e261b", textAlign: "center", marginBottom: 16 },
   backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     paddingVertical: 10,
     paddingHorizontal: 24,
     backgroundColor: "#0c8a3e",
