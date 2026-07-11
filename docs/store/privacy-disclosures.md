@@ -71,7 +71,7 @@ alerts) and are never used for cross-app advertising.
 |---|---|
 | Purchase history (in-app transactions) | **YES — collected, linked to identity, NOT for tracking** |
 
-**Notes:** GroceryManager offers in-app **subscriptions** (Free / Pro $4.99·mo / $39.99·yr /
+**Notes:** GroceryManager offers in-app **subscriptions** (Free / Premium $4.99·mo / $39.99·yr /
 Family $9.99·mo / $79.99·yr), sold through **RevenueCat** (Apple/Google in-app purchase) on mobile
 and **Stripe** on the web PWA. The app records the resulting **entitlement/tier** and the payment
 processor's customer id (`stripe_customer_id`) in the preference-signals ledger so premium features
