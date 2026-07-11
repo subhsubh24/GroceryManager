@@ -46,6 +46,7 @@ export default function LoginScreen() {
           style={styles.input}
           value={username}
           onChangeText={setUsername}
+          accessibilityLabel="Username"
           autoCapitalize="none"
           autoCorrect={false}
           placeholder="your_username"
@@ -58,6 +59,7 @@ export default function LoginScreen() {
           style={styles.input}
           value={password}
           onChangeText={setPassword}
+          accessibilityLabel="Password"
           secureTextEntry
           placeholder="••••••••"
           placeholderTextColor="#a3acb5"

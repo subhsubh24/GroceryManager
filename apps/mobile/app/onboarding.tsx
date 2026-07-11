@@ -150,6 +150,7 @@ export default function OnboardingScreen() {
             style={styles.input}
             value={name}
             onChangeText={setName}
+            accessibilityLabel="Name"
             placeholder="What should we call you?"
             placeholderTextColor="#a3acb5"
             autoComplete="name"
@@ -228,6 +229,7 @@ export default function OnboardingScreen() {
             style={styles.input}
             value={lovedText}
             onChangeText={setLovedText}
+            accessibilityLabel="Ingredients you love"
             placeholder="salmon, basil, feta"
             placeholderTextColor="#a3acb5"
             returnKeyType="next"
@@ -238,6 +240,7 @@ export default function OnboardingScreen() {
             style={styles.input}
             value={dislikedText}
             onChangeText={setDislikedText}
+            accessibilityLabel="Ingredients you avoid"
             placeholder="cilantro, olives"
             placeholderTextColor="#a3acb5"
             returnKeyType="done"
