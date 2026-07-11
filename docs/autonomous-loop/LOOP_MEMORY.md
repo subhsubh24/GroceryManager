@@ -4,6 +4,53 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-11 (run 63) — DEEP AUDIT (4-Haiku lens) + 2 file-disjoint clears (#514 growth-auth throw-safety /
+  #515 §11 media STAGING consumer); 4/4 Sonnet reviews APPROVE + 1 reviewer-suggested hardening folded in; 0
+  abandons.** DEEP AUDIT was DUE (last standalone run 59, >24h) → ran it BEFORE scouting. Baseline gate green
+  (typecheck 0, 977 core tests, prod build clean, self-validation 8/8). Highest-leverage takeaways:
+  - **DEEP AUDIT 2026-07-11: 3 of 4 lenses CLEAN, 1 real correctness finding shipped.** SECURITY/ABUSE/RLS
+    CLEAN (all 22 migrations' public tables RLS+policy; 41 routes rate-limited+zod-validated+error-hygienic;
+    login lockout; per-user LLM quota; Turnstile fail-closed; Stripe/Gmail/RevenueCat webhooks signature/
+    timing-safe; CSP/HSTS/headers; entitlements server-side; no hardcoded secrets). TEST/EVAL COVERAGE CLEAN
+    (~977 tests; "untested" files are barrel re-exports). DESIGN/a11y/ARTIFACTS CLEAN (no generated-looking
+    surface; BUSINESS_CASE prices/ARR byte-consistent with billing 499/3999/999¢, base $33,450, floor_met
+    false; privacy disclosures match data flows). CORRECTNESS: 1 real finding → #514.
+  - **(1) #514 — the "bare `auth()` outside try/catch" trap. `auth()` THROWS, it does not just return null.**
+    Three growth admin routes (snapshot/analytics/email) read the session with `await auth()` placed BEFORE
+    their try block; an undecryptable cookie (post-`AUTH_SECRET` rotation / stale cookie) raises a JWT error →
+    uncaught 500 instead of the intended 403. Fix: swap to the repo's existing non-throwing `currentSession()`
+    helper (app/lib/tenant.ts). **LESSON: this repo already learned once that `auth()` can throw (tenant.ts's
+    whole reason to exist) and pages use `currentSession()`/`currentUserId()` — but three API ROUTES still
+    called raw `auth()`. When a codebase has a non-throwing session wrapper, a bare `auth()` ANYWHERE is a
+    latent 500; grep `await auth()` across routes/actions periodically. Reviewer B named a 4th site
+    (`session-actions.ts:13`) as a scoped follow-up — a pre-qualified candidate for a later run.**
+  - **(2) #515 — completing the BUILDABLE half of a two-owner-gate capability (the §11 staging consumer).**
+    Run 62 built the media ADAPTER and left §11 `[ ]`, naming the follow-up. Built `stageCreative(brief)`: a
+    batch orchestrator that turns a `CreativeBrief` into a reviewable metadata-only `StagingManifest` + raw
+    results, preserving the adapter's degrade/never-throw contract. **LESSON (reinforces run 62): for a
+    capability whose real execution is owner-key-gated, the loop can still ship the ORCHESTRATION + the
+    keyless-testable contract (degrade, audit-first, manifest shape) and prove it with an injected fake
+    provider — but be HONEST in the box status: the §11 OUTCOME needs BOTH the owner key AND an invocation
+    site that authors a real brief on a schedule; neither is self-certifiable, so the box stays `[ ]`. Don't
+    let "I built the library function" masquerade as "the marketing loop produces staged creative."**
+  - **(3) A metadata-only manifest is the right persistence shape for owner-reviewed staged creative — no DB
+    table.** The scout floated a DB table + migration for staged assets; deliberately did NOT add one. The
+    manifest carries review metadata (status/model/mime/audit/bytes) with NO base64 payload (test asserts the
+    payload never leaks into `serializeManifest`), and the raw byte-carrying results are returned separately
+    for the caller's owner-gated edge. **LESSON: don't invent a storage schema before a concrete consumer
+    needs it (premature structure = churn the value bar rejects); a returned manifest + raw results lets the
+    (future) invocation site decide file/blob/DB. Reviewer B explicitly credited skipping the migration.**
+  - **(4) Apply a reviewer's non-blocking hardening when it defends a contract YOU claimed.** Reviewer A
+    (non-blocking) noted `toStagedItem` ran outside the try/catch and `generateForSpec` had no `default` arm,
+    so a runtime off-type `format` (which my own docstring said briefs could be authored from JSON) would
+    throw a TypeError out of the batch — contradicting the "NEVER throws" docstring. Folded in the exhaustive
+    `default → error` arm + a test pre-merge (still within the ≤2 review-cycle budget). **LESSON: a
+    "non-blocking" suggestion that directly falsifies a contract the diff's OWN comments assert is worth
+    fixing now, not deferring — the docstring becomes a lie otherwise.**
+  **Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated floor #190, base ≈ $33K
+  < $100K, owner-GTM, no buildable lever). §11 box stays `[ ]` (staging consumer built + keyless-proven; real-
+  key production + brief-authoring invocation site remain). Confidence stays UNCHECKED. Validation 8/8, 0 unmet.
+  2 real clears (1 audit correctness + 1 lowest-buildable-track), 4/4 approvals, 0 abandons = a coherent run.
 - **2026-07-11 (run 62) — Track-E §11 media-gen adapter FLAGSHIP (#509) + 3 file-disjoint LIVING-ARTIFACT/a11y
   clears (#510/#511/#512); the 3 small all 2/2 first-pass, the flagship 2/2 after ONE fix cycle; 0 abandons.**
   No DEEP AUDIT (run 59 standalone <24h). Advanced the LOWEST incomplete BUILDABLE track item (ROADMAP §11,
