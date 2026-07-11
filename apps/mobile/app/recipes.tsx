@@ -12,6 +12,7 @@ import {
 import { Link, Redirect } from "expo-router";
 import { useAuth } from "../lib/auth";
 import { apiFetch } from "../lib/api";
+import { ChevronRight } from "../lib/icons";
 
 type SavedRecipe = {
   id: string;
@@ -114,7 +115,9 @@ export default function RecipesScreen() {
                     <Text style={styles.cuisine}>{item.cuisine}</Text>
                   ) : null}
                 </View>
-                <Text style={styles.arrow}>›</Text>
+                <View style={styles.arrow}>
+                  <ChevronRight size={20} color="#c8c1b8" />
+                </View>
               </Pressable>
             </Link>
           )}
@@ -147,7 +150,7 @@ const styles = StyleSheet.create({
   cardText: { flex: 1, paddingHorizontal: 14, paddingVertical: 10 },
   title: { fontSize: 15, fontWeight: "600", color: "#1d2530", lineHeight: 20 },
   cuisine: { fontSize: 12, color: "#0c8a3e", marginTop: 4, fontWeight: "500" },
-  arrow: { fontSize: 22, color: "#c8c1b8", paddingRight: 14 },
+  arrow: { paddingRight: 14 },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40 },
   emptyTitle: { fontSize: 18, fontWeight: "700", color: "#1d2530" },
   emptyNote: { fontSize: 14, color: "#525d6a", marginTop: 6, textAlign: "center" },
