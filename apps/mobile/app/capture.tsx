@@ -67,6 +67,7 @@ export default function CaptureScreen() {
           style={styles.input}
           multiline
           numberOfLines={4}
+          accessibilityLabel="Quick add — describe what you need"
           placeholder="we're out of milk and need taco stuff…"
           placeholderTextColor="#a3acb5"
           value={text}
