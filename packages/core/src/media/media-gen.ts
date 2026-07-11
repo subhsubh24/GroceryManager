@@ -23,8 +23,23 @@ import { loadEnv, useVertex, type Env } from "@gm/config/env";
 import { MEDIA_MODELS, resolveImageModel, resolveMusicModel, type ImageQuality, type MediaFormat } from "./models.js";
 import { auditMediaAsset, type MediaAuditInput, type MediaAuditResult } from "./audit.js";
 
-/** Media generation is slower than text; still bounded so a hung preview surface can't stall a job. */
+/**
+ * Media generation is slower than text; still bounded so a hung preview surface can't stall a job.
+ * Sized for the marketing STAGING context (worker/cron, long maxDuration) this adapter runs in — NOT a
+ * user-facing Hobby serverless request. Override per-context with MEDIA_TIMEOUT_MS (kept separate from
+ * the text-call LLM_TIMEOUT_MS so tuning one never silently mis-bounds the other).
+ */
 const DEFAULT_MEDIA_TIMEOUT_MS = 45_000;
+
+/**
+ * The slice of the Gemini SDK the adapter uses. Kept as a structural seam so tests can inject a fake
+ * provider and exercise the success / error / timeout paths keyless (the real preview-model calls need
+ * a billed key). NOTE: GTM_STANDARD §11 / ROADMAP #308 name a `getProvider`/`geminiProvider` +
+ * Interactions-API surface, but neither exists in this repo and `interactions.create` is an unrelated
+ * agentic/tool-use API — so we deliberately mirror the existing `GeminiClient` (llm/client.ts) direct
+ * `ai.models.*` pattern instead. Conscious deviation, not a dropped requirement.
+ */
+export type MediaProvider = Pick<GoogleGenAI, "models">;
 
 export interface MediaAsset {
   format: MediaFormat;
@@ -89,22 +104,25 @@ function errText(err: unknown): string {
 }
 
 export class MediaGenClient {
-  private readonly ai: GoogleGenAI;
+  private readonly ai: MediaProvider;
   private readonly env: Env;
 
-  constructor(env: Env = loadEnv()) {
+  /** `provider` is an injectable seam for tests; production builds it from env like GeminiClient. */
+  constructor(env: Env = loadEnv(), provider?: MediaProvider) {
     this.env = env;
-    this.ai = useVertex(env)
-      ? new GoogleGenAI({
-          vertexai: true,
-          project: env.GOOGLE_VERTEX_PROJECT,
-          location: env.GOOGLE_VERTEX_LOCATION,
-        })
-      : new GoogleGenAI({ apiKey: env.GEMINI_API_KEY ?? "" });
+    this.ai =
+      provider ??
+      (useVertex(env)
+        ? new GoogleGenAI({
+            vertexai: true,
+            project: env.GOOGLE_VERTEX_PROJECT,
+            location: env.GOOGLE_VERTEX_LOCATION,
+          })
+        : new GoogleGenAI({ apiKey: env.GEMINI_API_KEY ?? "" }));
   }
 
   private get timeoutMs(): number {
-    return this.env.LLM_TIMEOUT_MS ?? DEFAULT_MEDIA_TIMEOUT_MS;
+    return this.env.MEDIA_TIMEOUT_MS ?? DEFAULT_MEDIA_TIMEOUT_MS;
   }
 
   /** True when a real Gemini/Vertex credential is configured; otherwise every call degrades. */

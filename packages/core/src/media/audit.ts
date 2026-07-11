@@ -8,8 +8,10 @@
  *
  * It enforces the two hard, mechanical requirements that do NOT need to look at the pixels:
  *   1. FTC disclosure — a non-empty AI-assisted disclosure must accompany the asset.
- *   2. Not-obviously-AI (prompt smell) — the generation prompt / caption must not lean on the
- *      VISION avoid-by-default slop vocabulary that reliably PRODUCES obvious-AI output.
+ *   2. Not-obviously-AI (prompt smell) — the generation prompt / caption must not lean on the curated
+ *      slop vocabulary below that reliably PRODUCES obvious-AI output. This operationalizes VISION's
+ *      anti-slop PRINCIPLE ("never obviously AI-generated") for image/video prompts; the specific
+ *      terms are a curated media-gen denylist, not a quote from VISION's (UI-focused) avoid list.
  *
  * The remaining, genuinely-visual "does this LOOK generated?" verdict needs a model to view the
  * rendered asset; that lives in the (best-effort, degradable) generation path, not here. This gate is
@@ -20,9 +22,10 @@
 const AI_DISCLOSURE_TERMS = ["ai", "generated", "synthetic", "assisted"];
 
 /**
- * Prompt/caption vocabulary that reliably yields obvious-AI slop (VISION avoid-by-default list).
- * A creative prompt reaching for these is a smell to reject, not a hard ban on the concept — the
- * author should describe the concrete scene instead of chasing a generator cliché.
+ * Curated denylist of prompt/caption vocabulary that reliably yields obvious-AI slop (generic
+ * text-to-image clichés). A creative prompt reaching for these is a smell to reject, not a hard ban on
+ * the concept — the author should describe the concrete scene instead of chasing a generator cliché.
+ * Not sourced from a doc; extend it as new clichés surface.
  */
 const SLOP_TERMS = [
   "hyper-realistic",
