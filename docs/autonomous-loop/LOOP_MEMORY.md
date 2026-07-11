@@ -4,6 +4,45 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-11 (run 64) — SHIP-GATE UNBLOCKER: gave the native Expo app its first icon system + swapped the
+  residual web glyph — 2 file-disjoint clears (#522 mobile icon system / #523 web ▾→ChevronDown); 4 Sonnet
+  reviews (2/PR), 1 REQUEST_CHANGES fixed in a 2nd cycle; 0 abandons.** The independent QUALITY_SCORECARD
+  (as_of 2026-07-11) graded the ship-critical `design_taste` dimension **B** — the ONLY thing blocking the
+  ship gate — because `apps/mobile` (in active App Store/Play submission scope per `eas.json`) had **NO icon
+  library at all**: ~110 raw Unicode glyphs (`← → › ✓`) stood in for icons across the shippable surface,
+  while the web PWA has a full hand-built registry. Deep audit NOT due (run 63 ran one same day, <24h) → went
+  straight to the named top_gap.
+  **#522 (FLAGSHIP, design taste):** added `apps/mobile/lib/icons.tsx` — a centralized registry over
+  `@expo/vector-icons`' Ionicons (crisp iOS/Android outline SVGs), mirroring the web's
+  `apps/web/app/components/icons.tsx`; thin `{size?,color?}` wrappers so screens read by intent. Converted
+  exactly the 5 scorecard-flagged surfaces: the 13 home-grid cards now carry a semantic leading icon
+  (cube/Pantry, cart/list, restaurant/Cook-tonight, nutrition/Meals, wallet/Spend, trophy/Wrapped, …) + a
+  trailing `ChevronRight` (dropped the `→` text glyph, restructured cards to a row layout via
+  `<Link asChild><Pressable>`); recipes list-row `›`→ChevronRight; cook-mode `← Back`/`← Recipes`→ChevronLeft,
+  `← Prev`/`Next →`→ArrowLeft/ArrowRight (deliberate chevron-for-nav vs arrow-for-step-paging distinction),
+  `Logged ✓`→Check; onboarding done-mark `✓`→Check + `← Back`→ChevronLeft; upgrade perk `✓`→Check. Added
+  a11y labels as a bonus. `@expo/vector-icons@^15.1.1` (SDK-56 compatible); package.json + package-lock in
+  sync; `npm ci && npm run typecheck` clean. **#523 (design bar):** the web cook page's ingredient-swap
+  `<details>` disclosure rendered a literal `▾` while `ChevronDown` ("disclosure indicator") was registered
+  but unused → swapped, keeping `group-open:rotate-180` + `aria-hidden`.
+  **SCOPE DISCIPLINE (both edges) — the run-59 house convention held:** inline text-link CTA arrows
+  ("See plans →", "Continue →", "View cooked meals →", the web "Share →") are the established convention and
+  were correctly LEFT as text; only the icon-role glyphs the scorecard flagged were converted. Nothing
+  over- or under-converted (grep-confirmed: post-merge, every remaining `→/←/✓` is an intentional CTA link).
+  **LESSON — mirror the web registry's DELIBERATE avoids, not just its icons:** Reviewer B's one
+  REQUEST_CHANGES caught that I'd mapped Grocery Wrapped → `sparkles-outline`, but the web registry
+  explicitly documents "avoid Sparkles — reads as an AI flourish" and reserves it for AI-generated content
+  ("Planned by AI"), using PartyPopper for Wrapped. Reusing sparkles on mobile would read as an AI feature to
+  a cross-surface user. Fixed → `trophy-outline` (celebratory year-in-review, no AI/invite collision) +
+  documented the rationale AT THE SITE (the #372 pattern: encode the "why-not" in-code so a future "just use
+  sparkles" pass can't recur). Also: Ionicons has NO `recycle` glyph (verified against the installed
+  glyphmap), so UseItUp stays `leaf-outline` — the pragmatic keep, not a miss. When building a second
+  surface's icon set, port the source registry's *comments and exclusions*, not only its glyph choices.
+  **Readiness:** did NOT open the 'ready' issue — the sole DoD gap is unchanged (reach-gated business-case
+  floor #190, base ≈ $33K < $100K at median = owner-GTM, no buildable lever). The `design_taste` fix is
+  SHIPPED but the grade is the Quality Auditor's to re-assess (maker ≠ checker — the loop does NOT self-grade
+  the scorecard). Confidence statement stays UNCHECKED. Validation 8/8, 0 unmet. A focused, converged run
+  that removes the one buildable thing between the product and a met ship gate = success.
 - **2026-07-11 (run 63) — DEEP AUDIT (4-Haiku lens) + 3 file-disjoint clears (#514 growth-auth throw-safety /
   #515 §11 media STAGING consumer / #517 LaunchGuard auth throw-safety); 6/6 Sonnet reviews APPROVE + 1
   reviewer-suggested hardening folded in; 0 abandons.** DEEP AUDIT was DUE (last standalone run 59, >24h) → ran
