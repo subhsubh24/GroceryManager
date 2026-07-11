@@ -30,6 +30,7 @@
     "./agent": "./src/agent/index.ts",
     "./vision": "./src/vision/index.ts",
     "./billing": "./src/billing/index.ts",
+    "./media": "./src/media/index.ts",
     "./lifecycle/emails": "./src/lifecycle/emails.ts",
     "./referral/rewards": "./src/referral/rewards.ts",
     "./chat": "./src/chat/index.ts",

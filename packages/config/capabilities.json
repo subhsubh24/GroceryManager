@@ -103,6 +103,21 @@
         "requiresCiEnv": [],
         "requiresOwnerSecret": []
       }
+    },
+    {
+      "id": "marketing-media-gen",
+      "summary": "The GTM §11 media-gen adapter (@gm/core/media): produces multi-format marketing creative (IMAGE via Nano Banana / VIDEO via Gemini Omni Flash / MUSIC via Lyria 3 / VOICEOVER via Gemini TTS) on the EXISTING Gemini key — no separate media-gen key to connect; publishing stays gated (Track H / §13), the adapter only STAGES + audits. Best-effort + degrade-by-default like every LLM call: AUDIT-FIRST (the deterministic maker!=checker not-obviously-AI + FTC-disclosure gate runs BEFORE any paid call, so a slop/undisclosed request is 'rejected' spending nothing), then DEGRADE (no Gemini/Vertex credential -> 'unavailable' without touching the network; any API failure/timeout -> 'error') so a media call can never block or crash the marketing loop. Preview model ids are pinned in one place (MEDIA_MODELS) and every call is wall-clock bounded. Validated keyless: the pre-publish audit gate (FTC disclosure presence + slop-vocabulary denylist) and the adapter's audit-first + no-key degrade + model-id pinning behaviour by unit test (the real preview-model calls need a billed key + are owner-gated, but the load-bearing gate + degrade paths are the keyless half and are fully exercised).",
+      "status": "active",
+      "ownerActionId": null,
+      "validation": {
+        "specs": [],
+        "tests": [
+          "packages/core/src/media/audit.test.ts",
+          "packages/core/src/media/media-gen.test.ts"
+        ],
+        "requiresCiEnv": [],
+        "requiresOwnerSecret": []
+      }
     }
   ]
 }
