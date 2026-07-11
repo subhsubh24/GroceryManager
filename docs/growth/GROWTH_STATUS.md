@@ -39,23 +39,24 @@ the owner sees pre-launch / launch / post-launch growth progress in one place.
 ```yaml
 GROWTH_STATUS:
   project: GroceryManager
-  as_of: 2026-07-09 (run 10)
+  as_of: 2026-07-11 (run 11)
   phase: pre_launch              # pre_launch | launching | post_launch — NOT "launching" despite the
                                  #   snapshot API's own `phase` field (see below): ANALYSIS_PLAYBOOK's phase
                                  #   definition requires EVERY ship-critical QUALITY_SCORECARD dim A/A+ AND
-                                 #   the store live. QUALITY_SCORECARD is A/ship_gate_met (RE-CONFIRMED
-                                 #   as_of 2026-07-09, unchanged overall grade since 2026-07-05 — 8/9 dims A,
-                                 #   performance still B), but PENDING_OPS
+                                 #   the store live. NEITHER holds now: QUALITY_SCORECARD as_of 2026-07-11
+                                 #   REGRESSED to overall B / ship_gate_met FALSE (design_taste A->B, a
+                                 #   mobile icon-system gap — see the `marketing` block below), AND PENDING_OPS
                                  #   `eas-build-submit-go-live` is still `status: open` — the mobile store
-                                 #   submission has NOT happened, so the store isn't live. The snapshot
+                                 #   submission has NOT happened, so the store isn't live either. The snapshot
                                  #   route's `phase` field (see GROWTH_STATUS.sources note) is a narrower
                                  #   code-level signal (stripeConnected && no active subs -> "launching")
-                                 #   that does NOT encode store-readiness — do not confuse the two.
+                                 #   that does NOT encode store-readiness or ship-gate status — do not confuse
+                                 #   the two.
   engine_built: true             # MUST equal (engine_pct == 100); preflight enforces it against real anchor files
   engine_pct: 100                # % of growth-execution engine pieces shipped — DERIVED from anchor files by preflight; NEVER hand-set
-  channels_connected: [email]    # RE-VERIFIED THIS RUN (run 10) via a FRESH authenticated GET
+  channels_connected: [email]    # RE-VERIFIED THIS RUN (run 11) via a FRESH authenticated GET
                                  #   /api/growth/snapshot call (Bearer $CRON_SECRET, again present in this
-                                 #   run's environment) — payload identical to runs 8-9: emailConnected:true (a
+                                 #   run's environment) — payload identical to runs 8-10: emailConnected:true (a
                                  #   supported provider key is set). Analytics + billing are real too but are
                                  #   MEASUREMENT/MONETIZATION infra, not marketing "channels" in the
                                  #   ANALYSIS_PLAYBOOK/§9 sense — tracked in `sources` below, not here. (Note:
@@ -71,12 +72,12 @@ GROWTH_STATUS:
                                  #   explicitly approves GATE 1. What DOES stay open: the agent acts on real
                                  #   (not assumed) funnel/analytics/billing data instead of all-null placeholders.
   site_gate_up: true             # RE-VERIFIED THIS RUN via direct curl: home 200, /signup + /admin/waitlist
-                                 #   401 (identical split to runs 5-9) — SITE_GATE_PASSWORD still set, unchanged.
-                                 #   ALSO re-verified this run: /demo and /join (the new §34 Part A/B public
-                                 #   surfaces, shipped since run 9 — PRs #471, #475) both return 200, gate-exempt
-                                 #   by design (public marketing surfaces), same pattern as the waitlist landing.
+                                 #   401 (identical split to runs 5-10) — SITE_GATE_PASSWORD still set, unchanged.
+                                 #   ALSO re-verified this run: /demo and /join (the §34 Part A/B public
+                                 #   surfaces) both return 200, gate-exempt by design (public marketing
+                                 #   surfaces), same pattern as the waitlist landing.
   sources:                       # per-source pull status (H7 snapshot): connected | awaiting_connect —
-                                 #   RE-PROBED run 10 (fresh authenticated call, not inferred from run 9):
+                                 #   RE-PROBED run 11 (fresh authenticated call, not inferred from run 10):
                                  #   payload identical, all 4 still genuinely connected.
     waitlist: connected          # REAL THIS RUN: the authenticated snapshot (CRON_SECRET, NOT ADMIN_EMAIL)
                                  #   returned a genuine DB-derived total (0) via getWaitlistSubmissions — the
@@ -228,6 +229,22 @@ GROWTH_STATUS:
     owner_sent_7d: 0             # how many the OWNER actually sent (owner-reported)
     replies_7d: 0                # replies received (OWNER-reported — NEVER fabricated)
     signal: none                 # none | weak | emerging | strong  (0/none pre-launch)
+  content_validation:             # NEW (run 11) — GTM_STANDARD's content-first demand-validation playbook
+                                 #   (docs/growth/DEMAND_VALIDATION_PLAYBOOK.md, added since run 10 as #498).
+                                 #   PREPARE-only: the factory prepares, the owner films + posts (same
+                                 #   boundary as outreach — no autonomous account creation or posting).
+    status: prepared              # prepared | posted | measured
+    kit: docs/growth/CONTENT_VALIDATION_KIT.md
+    hero_feature: "receipt -> pantry auto-fill (input -> reveal)"
+    hero_feature_rationale: "Independently converges with the product factory's own §34 Part A pick
+      (the live /demo page) and with 2 of demand_signal's 3 DURABLE cited themes (manual entry never
+      stays current; purchases don't auto-flow into the pantry) — not a new guess, a corroborated pick."
+    demo_source: "/demo (live, quality-audited, no rebuild needed — reused directly as the demo footage
+      source per the kit's §B, since it already clears the VISION design bar)"
+    hooks_drafted: 8
+    posted_7d: 0                  # 0: prepared only this run; the owner has not filmed/posted yet
+    comment_signal: none          # none | weak | emerging | strong — stays none until the owner reports
+                                 #   real posted results back (never inferred from view count alone)
   marketing:                     # GTM_STANDARD §13 — the two-gate autonomous marketing-launch system (added
                                  #   2026-07-05, PR #441; FIRST run this dashboard schema reflects it).
     kill_switch: not_present     # checked FIRST, every run, per §13: docs/growth/MARKETING_HOLD does not
@@ -236,29 +253,34 @@ GROWTH_STATUS:
     gate_1_start_waitlist_outreach:
       status: not_ready           # not_ready | awaiting_approval | approved
       preconditions:
-        ship_gate_met: true         # QUALITY_SCORECARD.md as_of 2026-07-09 (independent Quality Auditor):
-                                     # overall A, ship_gate_met true — unchanged grade since 2026-07-05, but the
-                                     # regrade now covers the two NEW public-facing §34 surfaces shipped since
-                                     # run 9 (/demo public no-account receipt-demo, #471; /join gated-beta invite
-                                     # redemption, #475) and both were audited hard (rate-limit + captcha +
-                                     # spend-ceiling + non-enumerating errors) with no new gap.
+        ship_gate_met: false        # REGRESSED this run (run 11): QUALITY_SCORECARD.md as_of 2026-07-11
+                                     # (independent Quality Auditor) now reads overall B, ship_gate_met FALSE —
+                                     # the ship-critical `design_taste` dimension dropped A->B. Per the scorecard's
+                                     # own text this is a RE-ASSESSMENT, not a fresh code regression: a more
+                                     # thorough design grader found the native Expo app (apps/mobile, in active
+                                     # App Store/Play submission scope) has NO icon system — ~110 raw Unicode
+                                     # glyphs (<-Back, Next->, chevrons, checks) stand in for icons, vs. the web
+                                     # PWA's full lucide-react registry. This is Product-Factory build work (a
+                                     # mobile icon-registry gap), not a GTM action — flagged as a next_action for
+                                     # the product loop, not an owner_blocker.
         computer_use_e2e_sweep_green: false   # docs/autonomous-loop/VALIDATOR_STATUS.md STILL does NOT exist
-                                     # (re-checked via `ls` this run — RE-VERIFIED, not assumed). ROADMAP.md:410
+                                     # (re-checked via `ls` this run — RE-VERIFIED, not assumed). ROADMAP.md
                                      # still shows the §29 sweep as an unchecked Product-Factory build item (epic
                                      # #413), unchanged since run 9. BROWSERBASE_API_KEY/BROWSERBASE_PROJECT_ID
                                      # are confirmed present in THIS run's own environment too (re-checked) — so
                                      # this remains un-built Product-Factory work, not an owner blocker.
-        waitlist_launch_assets_reviewed: true  # STRENGTHENED since run 9: beyond the waitlist landing + 4 blog
-                                     # posts + email lifecycle drafts, the §34 Part A/B assets are now REAL,
-                                     # LIVE, gate-exempt pages (verified this run via direct curl: /demo -> 200,
-                                     # /join -> 200), not just reviewed copy — a public no-account demo of the
-                                     # core "aha" and a gated-beta invite-redemption flow, both quality-audited.
-      blocking_precondition: computer_use_e2e_sweep_green
-      note: "GATE 1 is STILL NOT proposable this run — unchanged from run 9: 2 of 3 preconditions hold (now on
-        stronger evidence — real live /demo + /join pages, not just reviewed copy), but the §29 sweep has never
-        produced a real VALIDATOR_STATUS.md (re-verified absent this run). Correctly staying quiet rather than
-        proposing early: §13 requires ALL THREE, none self-certified. Once the Product Factory ships the sweep
-        GREEN, this flips and the Growth Agent should propose the waitlist plan + notify the owner the same run."
+        waitlist_launch_assets_reviewed: true  # Unchanged since run 10: beyond the waitlist landing + 4 blog
+                                     # posts + email lifecycle drafts, the §34 Part A/B assets are REAL, LIVE,
+                                     # gate-exempt pages (re-verified this run via direct curl: /demo -> 200,
+                                     # /join -> 200) — a public no-account demo of the core "aha" and a
+                                     # gated-beta invite-redemption flow, both previously quality-audited.
+      blocking_precondition: ship_gate_met, computer_use_e2e_sweep_green
+      note: "GATE 1 moved FURTHER from ready this run, not closer: run 10 had 2 of 3 preconditions held with
+        only the §29 sweep outstanding; run 11's independent quality re-audit (2026-07-11) found ship_gate_met
+        also FALSE (mobile icon-system gap on design_taste, a ship-critical dim) — now 1 of 3 preconditions
+        hold. This is an honest re-assessment surfacing a real, long-standing gap, not new breakage from this
+        window's commits (the scorecard's own text confirms no mobile-glyph-touching commit landed since
+        07-09). Correctly staying quiet: §13 requires ALL THREE, none self-certified, and 2 are now unmet."
     gate_2_launch:
       status: not_ready
       preconditions:
@@ -489,14 +511,55 @@ GROWTH_STATUS:
       both genuine negatives, not added. Zero outreach (OUTREACH.md categories still exhausted; also moot,
       GATE 1 not open). No ROADMAP/VISION/BUSINESS_CASE steer — the demo shipping is a real product change
       but has zero traffic/conversion data yet, so no number could be honestly computed from it."
+    - "RUN 11 (2026-07-11): re-verified infra directly — payload from a fresh authenticated GET
+      /api/growth/snapshot (CRON_SECRET present in this run's env) identical in substance to run 10 (all
+      4 sources connected, funnel all 0/null, same 3 experiments running/null); direct curl reproduced the
+      same site-gate split (home/`/demo`/`/join` 200, `/signup`+`/admin/waitlist` 401). `git log` since run
+      10's merge (053b581) showed ~22 new commits, mostly quality/bookkeeping + 4 new shared GTM playbooks
+      (`ONBOARDING_CONVERSION_PLAYBOOK.md`, `STORE_GROWTH_PLAYBOOK.md`,
+      `DEMAND_VALIDATION_PLAYBOOK.md`/#498, `PRODUCT_SIGNALS_PLAYBOOK.md`) — read all 4; ASO/onboarding/
+      post-launch-triage playbooks are correctly inert this run (store not live, zero real users), but the
+      NEW content-first demand-validation playbook (#498) is doable NOW in PREPARE mode. **A real
+      regression surfaced**: `QUALITY_SCORECARD` (independent Quality Auditor) re-graded as_of 2026-07-11 —
+      overall dropped A->B, `ship_gate_met` flipped true->FALSE (the ship-critical `design_taste` dimension
+      is now B: the native Expo app has NO icon system, ~110 raw Unicode glyphs vs. the web PWA's full
+      lucide-react registry — a long-standing gap a more thorough grader caught, not new breakage). This
+      moves GATE 1 FURTHER from ready (now 2 of 3 preconditions unmet, not 1) — reflected honestly in the
+      `marketing` block, not silently carried forward as still-true. **Did the NEW content-validation work**
+      (§10-adjacent, `DEMAND_VALIDATION_PLAYBOOK.md`): proposed the hero feature (receipt -> pantry
+      auto-fill, input->reveal) — not a fresh guess, it independently CONVERGES with the product factory's
+      own §34 Part A pick (the live `/demo` page) and 2 of `demand_signal`'s 3 durable cited themes. Built
+      `docs/growth/CONTENT_VALIDATION_KIT.md`: hook variations, a shot list reusing the LIVE `/demo` page
+      as the demo footage (no throwaway prototype needed — it already clears the VISION design bar),
+      reaction/audio direction, a volume plan, and how the comment signal feeds back into demand_signal/
+      BUSINESS_CASE/positioning once the owner posts + reports real results. This is PREPARE-only — zero
+      autonomous posting, zero fabricated metrics; the owner must film + post on their own accounts, same
+      boundary as outreach drafts. Ran an independent adversarial reviewer against the kit + this run's
+      full diff before committing (see verdict recorded below once returned). Demand-signal (§10 classic):
+      no new WebSearch angle attempted this run — runs 3-10 have exhausted the reliably-fetchable
+      aggregators (grand-screen.com, ComplaintsBoard) and this run's effort went to the new
+      content-validation kit instead; not a regression, a deliberate value-bar call. Outreach (§3b): no new
+      search this run — OUTREACH.md's target-type categories remain fully exhausted since run 7 with no new
+      reason surfaced by the QUALITY_SCORECARD regression or the new content kit (zero real traffic to cite
+      either way); also moot, GATE 1 not open. No ROADMAP/VISION/BUSINESS_CASE steer — no new causal,
+      significant, revenue-linked data this run (the quality regression is a product-loop signal, not a
+      GTM finding, and the content kit has zero posted/measured results yet)."
   next_actions:
-    - "STILL the highest-leverage GTM-adjacent action (run 9 -> run 10, unmoved): the §29 computer-use E2E
-      sweep (docs/autonomous-loop/VALIDATOR_STATUS.md) is the ONLY unmet precondition for GATE 1 (see the
-      `marketing` block above) — it is Product-Factory build work (ROADMAP.md:410, epic #413), not an
-      owner action (Browserbase keys are already live, re-confirmed present in this run's env too).
-      Flagging it again so the product loop (which reads GROWTH_STATUS as a data signal per
-      FACTORY_STANDARD §11) sees it is now gating a real, ready-to-fire GTM milestone — the §34 demo/invite
-      assets are shipped and waiting on exactly this one precondition."
+    - "UPDATED (run 11): GATE 1 now has TWO unmet preconditions, not one. (1) The §29 computer-use E2E
+      sweep (docs/autonomous-loop/VALIDATOR_STATUS.md) — unchanged since run 9, Product-Factory build work
+      (ROADMAP.md:410, epic #413), not an owner action (Browserbase keys already live). (2) NEW this run:
+      `ship_gate_met` flipped to FALSE — QUALITY_SCORECARD as_of 2026-07-11 grades `design_taste` (a
+      ship-critical dim) at B because the native Expo app has no icon system (~110 raw Unicode glyphs vs.
+      the web PWA's lucide-react registry). Both are product-loop work, not owner actions; flagging both
+      so the product loop (which reads GROWTH_STATUS as a data signal per FACTORY_STANDARD §11) sees GATE 1
+      is now further from ready, not closer, despite the §34 demo/invite assets being ready and waiting."
+    - "NEW (run 11): a content-first demand-validation kit is PREPARED and ready for the owner —
+      `docs/growth/CONTENT_VALIDATION_KIT.md` (hero feature: receipt -> pantry auto-fill, reusing the live
+      `/demo` page as the demo footage; 8 drafted hooks; a shot list; reaction/audio direction; a volume
+      plan). This is genuinely actionable NOW, independent of GATE 1/2 (it's short-form content pointing at
+      the public waitlist, not automated outbound) — the only remaining step is the OWNER filming + posting
+      per the shot list, then reporting back real comment-signal results (screenshots/counts) so the GTM
+      factory can read them per DEMAND_VALIDATION_PLAYBOOK.md §G. See owner_blockers for the tracked item."
     - "NEW (run 10): a GTM_SCORECARD (2026-07-08) top_gap flagged `computeExperimentResult` (lift.ts, the
       decided-vs-running monetization gate) as having zero direct tests — needs a `lift.test.ts` covering
       the refusal logic (both arms >= min N AND p<0.05). This is core code in
@@ -544,18 +607,26 @@ GROWTH_STATUS:
       curated outreach emails (press/newsletter) — the HARD BLOCK needs both, and only site_gate_up is
       met so far."
   owner_blockers:
-    - "CIRCUIT BREAKER (now 3 runs / 5 days, 2026-07-04 -> 2026-07-09, zero movement on the Human-Core items
-      below, re-confirmed against a fresh PENDING_OPS re-read this run): site_gate_up, analytics/billing/
-      email connection, and the QUALITY_SCORECARD ship gate are all RESOLVED and STABLE (re-verified run 10
-      via a fresh authenticated snapshot pull + a fresh live-HTTP curl — see `sources`/`funnel` above). What
-      has NOT moved since run 8, confirmed still `status: open` in PENDING_OPS this run: `eas-build-submit-
-      go-live` (mobile store submission), `connect-revenuecat-iap` (mobile IAP), `spend-caps` (urgent),
-      `turnstile-keys` (blocks launch-safety), `rotate-envl-secrets`. Per FACTORY brakes, naming this
-      prominently: the single highest-leverage pair is `eas-build-submit-go-live` + `connect-revenuecat-iap`
-      — both are the ONLY remaining blockers to the store going live, which is itself the ONLY remaining
-      blocker to `phase` advancing past `pre_launch`. The Product Factory HAS shipped real GTM-relevant work
-      in this window (§34 demo + gated-beta invite mechanism, run 55-56) — so this is inactivity on the
-      Human-Core items specifically, not overall stall."
+    - "CIRCUIT BREAKER (now 4 runs / 7 days, 2026-07-04 -> 2026-07-11, zero movement on the Human-Core items
+      below, re-confirmed against a fresh PENDING_OPS re-read this run): site_gate_up and analytics/billing/
+      email connection are RESOLVED and STABLE (re-verified run 11 via a fresh authenticated snapshot pull
+      + a fresh live-HTTP curl — see `sources`/`funnel` above). UPDATE: the QUALITY_SCORECARD ship gate is
+      NO LONGER resolved — it REGRESSED this run (overall A->B, ship_gate_met true->false; see `marketing`
+      block) on a real, honestly-surfaced mobile icon-system gap, which is Product-Factory build work, not
+      a Human-Core item, so it is NOT added to this owner_blockers list. What has NOT moved since run 8,
+      confirmed still `status: open` in PENDING_OPS this run: `eas-build-submit-go-live` (mobile store
+      submission), `connect-revenuecat-iap` (mobile IAP), `spend-caps` (urgent), `turnstile-keys` (blocks
+      launch-safety), `rotate-envl-secrets`. Per FACTORY brakes, naming this prominently: the single
+      highest-leverage pair is still `eas-build-submit-go-live` + `connect-revenuecat-iap` — both are the
+      ONLY remaining HUMAN-CORE blockers to the store going live, which is itself one of two remaining
+      blockers (alongside the mobile icon-system ship-gate gap) to `phase` advancing past `pre_launch`."
+    - "NORMAL, NEW (run 11): a content-first demand-validation kit is ready for the owner to execute —
+      `docs/growth/CONTENT_VALIDATION_KIT.md`. This is the ONE piece of this run's work that genuinely
+      needs owner action to produce a result: film the reaction+demo clip per the shot list (§D) and post
+      to TikTok/Reels/Shorts per the volume plan (§F), then report back the real comment signal (or connect
+      a channel read API) so the GTM factory can analyze it (§G). Zero cost, zero infra needed — the demo
+      footage source (`/demo`) is already live. Low urgency (optional pre-launch signal-gathering, not a
+      launch blocker) but genuinely additive whenever the owner has a few minutes to film."
     - "NORMAL, NEW (run 10): `gated-beta-invite-codes` — the §34 Part B mechanism (waitlist -> invite code ->
       /join -> gated /signup access) is fully built and quality-audited but requires 3 owner steps to
       activate (apply migration 0021, set `SITE_GATE_INVITE_SECRET`, mint codes via `invite:issue`) — see

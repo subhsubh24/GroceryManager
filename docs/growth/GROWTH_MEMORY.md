@@ -31,6 +31,90 @@ support it; the gap speaks for itself.
 
 ## RUN LOG (newest first)
 
+### 2026-07-11 (run 11) — pre_launch; QUALITY_SCORECARD REGRESSED (ship_gate_met true→false); shipped a new content-first demand-validation kit
+- **Mode**: Still the run-10 infra state (channels_connected: [email], awaiting_connect: false, site_gate_up:
+  true), RE-VERIFIED via a fresh authenticated `GET /api/growth/snapshot` (CRON_SECRET present) — payload
+  identical in substance to run 10 (all 4 sources connected, funnel all 0/null, same 3 experiments
+  running/null). Direct curl reproduced the same site-gate split (home/`/demo`/`/join` 200,
+  `/signup`+`/admin/waitlist` 401).
+- **Did**:
+  - Read GTM_STANDARD, FACTORY_STANDARD, VISION, ROADMAP, BUSINESS_CASE, GROWTH_STATUS, GROWTH_MEMORY (this
+    file), GTM_SCORECARD (as_of 2026-07-08 — no new grade since run 10; the one remaining top_gap,
+    `lift.test.ts` coverage, is core test-authoring outside the GTM Factory's remit, already correctly
+    flagged as a next_action, not attempted here either), GTM_AUDIT_MEMORY, ANALYSIS_PLAYBOOK, OUTREACH,
+    PENDING_OPS.
+  - `git fetch origin main` showed ~22 new commits since run 10's merge (053b581) — mostly quality/
+    bookkeeping runs, PLUS four new shared GTM playbooks added to `docs/growth/`:
+    `ONBOARDING_CONVERSION_PLAYBOOK.md` (#490), `STORE_GROWTH_PLAYBOOK.md` (#489),
+    `DEMAND_VALIDATION_PLAYBOOK.md` (#498, content-first pre-launch demand validation), and
+    `PRODUCT_SIGNALS_PLAYBOOK.md` (#497, post-launch pre-triage). Read all four. Onboarding-conversion
+    (needs real conversion data), store-growth/ASO (needs a live store listing), and product-signals
+    (explicitly post-launch, "INERT until the owner connects each source") are all correctly INERT this
+    run — store isn't live, zero real users exist. `DEMAND_VALIDATION_PLAYBOOK.md` is different: it's
+    explicitly pre-launch, PREPARE-mode work (the factory prepares a content kit; the owner films + posts) —
+    doable NOW, unlike the other three.
+  - **Caught a real regression**: `docs/quality/QUALITY_SCORECARD.md` (independent Quality Auditor,
+    maker≠checker, product-loop-owned — I only consume it) re-graded `as_of 2026-07-11`: overall dropped
+    A→B, `ship_gate_met` flipped **true→FALSE**. The ship-critical `design_taste` dimension is now B: a more
+    thorough design grader found the native Expo app (`apps/mobile`, in active App Store/Play submission
+    scope) has NO icon system at all — ~110 raw Unicode-glyph affordances (`← Back`, `Next →`, `›`
+    chevrons, `✓` checks) stand in for icons, while the web PWA has a full lucide-react registry. Per the
+    scorecard's own text this is a RE-ASSESSMENT of a long-standing gap, not fresh breakage (no
+    glyph-touching commit landed in the window). This directly changes GATE 1's precondition (a)
+    `ship_gate_met` from `true` to `false` — GATE 1 now has 2 of 3 preconditions unmet (was 1 of 3 at run
+    10). Updated `GROWTH_STATUS.marketing.gate_1_start_waitlist_outreach` to reflect this honestly (did NOT
+    silently carry forward the stale `true`), and added it to `next_actions` as product-loop work — NOT to
+    `owner_blockers`, since a mobile icon registry is Product-Factory build work, not a Human-Core item.
+  - **Shipped the NEW content-first demand-validation work** (`docs/growth/DEMAND_VALIDATION_PLAYBOOK.md`):
+    proposed the hero feature as receipt→pantry auto-fill (input→reveal) — not a fresh guess, it
+    independently CONVERGES with the product factory's own §34 Part A pick (the live `/demo` page,
+    verified via direct read of `apps/web/app/demo/page.tsx`) and with 2 of `demand_signal`'s 3 durable
+    cited themes ("manual entry never stays current," "purchases don't auto-flow into the pantry" — both
+    real, cited Paprika/KitchenPal reviews from runs 3/10). Wrote `docs/growth/CONTENT_VALIDATION_KIT.md`:
+    8 hook variations (grounded in the same real pain points, not copied from anywhere), a shot list that
+    REUSES the live `/demo` page as the demo footage (no throwaway prototype build needed — it already
+    clears the VISION design bar), reaction/audio direction, a volume plan, and how a real comment signal
+    would feed back into `demand_signal`/`BUSINESS_CASE` confidence/positioning once the owner posts and
+    reports results. Added a matching `content_validation` block to `GROWTH_STATUS.md` and a `normal`
+    priority, non-blocking `gtm-content-validation-kit-v1` item to `PENDING_OPS.md` (owner: film + post,
+    optional, zero infra cost). Strictly PREPARE-only per the playbook's hard boundary: zero autonomous
+    posting, zero fabricated metrics, `posted_7d: 0` / `comment_signal: none` (both literally true).
+  - Ran an independent adversarial reviewer subagent (fresh context) against the full diff (2 modified +
+    1 new file, all under `docs/growth/` + `PENDING_OPS.md`) before committing — **verdict: APPROVE**, no
+    changes requested. It independently re-verified the QUALITY_SCORECARD claim word-for-word, the `/demo`
+    page's actual behavior, the demand_signal theme match, YAML validity (both fenced blocks), scope
+    (nothing outside docs/growth + PENDING_OPS), and the absence of any fabricated number, ROADMAP/VISION/
+    BUSINESS_CASE touch, or outbound-boundary violation.
+  - Ran `node scripts/validate-gtm.mjs` (the GTM honesty gate) — passed. The full `scripts/preflight.sh`
+    (the PRODUCT ship-readiness gate) reported 6 pre-existing FAILs (unrun E2E journey/email-roundtrip
+    suites in this environment, uncommitted App Store screenshots, an unchecked Definition-of-Done box) —
+    all pre-existing product-factory gaps unrelated to and unaffected by this docs-only GTM change; the
+    GTM-specific gate (`validate-gtm.mjs`) is the correct one to gate a `docs/growth/` + `PENDING_OPS.md`
+    change and it passed clean.
+  - Did NOT re-run the classic §10 demand-signal WebSearch sweep or re-search OUTREACH.md's target-type
+    categories this run — both are exhausted per runs 3-10 (see prior entries) with no new reason surfaced
+    by either the quality regression or the new content kit; this run's effort went to the new
+    content-validation work instead, a deliberate value-bar call, not an oversight.
+  - Did NOT touch ROADMAP/VISION/BUSINESS_CASE — the quality regression is a product-loop signal (I only
+    read + reflect QUALITY_SCORECARD, never grade or contest it), and the content kit has zero posted/
+    measured results yet, so no causal, significant, revenue-linked finding exists to steer from.
+- **Hypothesis**: none new on the funnel (still zero real traffic). This run's work is (a) an honest
+  re-verification that infra state is unchanged, (b) correctly surfacing a real regression instead of
+  stale-carrying a resolved-sounding gate forward, (c) shipping new, genuinely actionable pre-launch demand-
+  validation prep work enabled by a brand-new playbook.
+- **Result**: Infra state confirmed unchanged. GATE 1 correctly moved from "1 precondition unmet" to "2
+  preconditions unmet" (an honest worsening, not something to hide). A real, reviewer-cleared content-
+  validation kit now exists for the owner to execute at zero cost. Funnel/PMF still 0/null.
+- **Decision**: Ship the GROWTH_STATUS/GROWTH_MEMORY/PENDING_OPS updates + the new kit (reviewer-cleared);
+  zero outreach (still exhausted, still moot — GATE 1 not open); no ROADMAP/VISION/BUSINESS_CASE steer.
+- **Operational note**: worth remembering for future runs — when a NEW shared playbook lands in
+  `docs/growth/` between GTM runs (this window added four), read ALL of them before deciding what's
+  actionable; three of the four were correctly inert this run (post-launch/store-live gated) but the
+  fourth (content-first demand validation) was immediately actionable in PREPARE mode and hadn't been
+  picked up yet. Also worth remembering: QUALITY_SCORECARD can regress on a RE-ASSESSMENT (a grader getting
+  more thorough) without any new code shipping — GATE 1's `ship_gate_met` precondition must be re-read from
+  the scorecard fresh every run, never assumed stable just because no relevant commit landed.
+
 ### 2026-07-09 (run 10) — pre_launch, unchanged infra; §34 demo/invite shipped by product loop; 2 scorecard nits fixed
 - **Mode**: Still the run-9 state (channels_connected: [email], awaiting_connect: false, site_gate_up: true,
   GATE 1 not_ready), RE-VERIFIED, not assumed. No owner movement on the Human-Core blockers.
