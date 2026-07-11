@@ -4,6 +4,53 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-11 (run 62) — Track-E §11 media-gen adapter FLAGSHIP (#509) + 3 file-disjoint LIVING-ARTIFACT/a11y
+  clears (#510/#511/#512); the 3 small all 2/2 first-pass, the flagship 2/2 after ONE fix cycle; 0 abandons.**
+  No DEEP AUDIT (run 59 standalone <24h). Advanced the LOWEST incomplete BUILDABLE track item (ROADMAP §11,
+  #442) — a first this cadence: most recent runs had only converged Track-F/G polish, but a genuine unbuilt
+  Track-E capability was sitting unchecked. Highest-leverage takeaways:
+  (1) **FLAGSHIP #509 — the §11 media-gen adapter (`@gm/core/media`), built fresh against current main.** A
+  thin, degrade-by-default adapter (image/video/music/voiceover on the existing Gemini key) that STAGES +
+  audits only (publishing stays owner-gated, Track H/§13). Design mirrors the LLM cheap-first contract:
+  AUDIT-FIRST (a deterministic FTC-disclosure + not-obviously-AI slop denylist runs BEFORE any paid call, so a
+  bad request is `rejected` spending nothing), then DEGRADE (no key → `unavailable`, no network; error/timeout
+  → `error`, never throws). **LESSON: for a "produces creative on a preview key we can't exercise in CI"
+  capability, the load-bearing keyless half is (a) the pure pre-publish AUDIT gate and (b) the degrade paths —
+  build those first-class + unit-test them, and register the capability on THAT keyless proof; the real
+  preview-model call is owner-gated and needs no CI key.**
+  (2) **An INJECTABLE provider seam turns an un-exercisable SDK path into keyless coverage.** Reviewer A's one
+  blocking-adjacent gap was zero coverage of the success-mapping + error/timeout branches (all tests used the
+  no-key degrade path). Fix: a `MediaProvider = Pick<GoogleGenAI,"models">` optional constructor param — tests
+  inject a fake that returns/throws/hangs, exercising image-bytes/video-op-name/inline-audio mapping + the
+  throw/empty/timeout→error paths. media-gen.ts coverage 46% → 90.6%, audit.ts 100%. **LESSON: when an adapter
+  wraps an SDK you can't call in CI, add a minimal structural-type seam (not a DI framework) so every branch of
+  YOUR logic is testable keyless; production still self-constructs the real client when no seam is injected.**
+  (3) **Don't cite a doc as a source unless the doc actually says it (the false-attribution trap).** Reviewer B
+  (correctly, blocking) caught `audit.ts` claiming its slop denylist WAS "the VISION avoid-by-default list" —
+  but VISION's list is UI/frontend smells (card spam, un-themed Tailwind, rainbow accents), NOT image-gen
+  prompt vocabulary. The terms (`octane render`, `8k`, `trending on artstation`…) were a reasonable but
+  CURATED/invented list. Fix: describe it honestly as a curated media-gen denylist that operationalizes
+  VISION's anti-slop PRINCIPLE. **LESSON: a docstring that attributes a curated list to a named standard is an
+  unverifiable-claim bug the reviewers watch for; cite only the PRINCIPLE that genuinely traces, and label
+  curated content as curated.**
+  (4) **A stale same-named remote branch from an ABANDONED prior attempt blocks the push — rename, don't
+  clobber.** `git push` of `claude/media-gen-adapter` was rejected (non-fast-forward): the remote branch already
+  existed at a run-54 commit (an abandoned earlier §11 attempt under `content/media-gen.ts`, based on old main
+  → 3900-line phantom-deletion diff vs current main). Renamed my local branch to `claude/gtm-media-gen` and
+  pushed clean. **LESSON: on a non-fast-forward push to a `claude/<name>` branch, `git ls-remote` + inspect the
+  remote branch FIRST — if it's a stale abandoned attempt, use a NEW branch name rather than force-clobbering
+  history you didn't create; a factory branch name can collide with a prior run's leftover.**
+  (5) **Rebase a flagship branch onto latest main before arming auto-merge when disjoint PRs merged mid-run.**
+  Both re-reviewers flagged that `git diff origin/main..branch` showed the 3 already-merged small PRs as
+  REVERSIONS — a 2-dot-diff artifact because the branch base predated them (a 3-way merge wouldn't actually
+  revert them, since disjoint). Still rebased onto latest main so the diff is clean + the branch is up-to-date,
+  re-ran the gate (969 tests, self-val 8/8), force-with-lease pushed. **LESSON (reinforces run-44): when small
+  disjoint PRs merge while a flagship is in review, rebase the flagship onto origin/main before merge so a
+  reviewer's 2-dot-diff read doesn't look like a regression and any "require up-to-date" branch rule is met.**
+  **Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated floor #190, base ≈ $33K
+  < $100K, owner-GTM, no buildable lever). §11 box stays `[ ]` (adapter built; end-to-end staged-creative wiring
+  is the follow-up — EVIDENCE-BASED DONE, no over-claim). Confidence stays UNCHECKED. Validation 8/8, 0 unmet.
+  1 real Track-E capability + 3 real clears, 8/8+2/2 approvals, 0 abandons = a productive coherent run = success.
 - **2026-07-10 (run 61) — 5-Haiku scout sweep + 3 file-disjoint clears (#504 spend-integrity throw-path
   settlement / #505 + #506 Track-F coverage); 6/6 Sonnet reviews APPROVE first-pass; 0 abandons.** No DEEP
   AUDIT (run 59 ran one same day, <24h). Baseline gate green (typecheck 0, 939 core tests, prod build clean,
