@@ -25,3 +25,13 @@ export {
   type VideoRequest,
   type AudioRequest,
 } from "./media-gen.js";
+export {
+  stageCreative,
+  serializeManifest,
+  type CreativeBrief,
+  type CreativeItemSpec,
+  type StagedItem,
+  type StagingCounts,
+  type StagingManifest,
+  type StagingResult,
+} from "./staging.js";
