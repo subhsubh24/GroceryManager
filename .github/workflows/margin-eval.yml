@@ -75,6 +75,13 @@ jobs:
         env:
           # Tie the emitted batch to the commit that triggered it: sessionId = "eval:<sha>".
           MARGIN_EVAL_RUN_ID: ${{ github.sha }}
+          # Neutralize GitHub's CI=true for THIS secrets-backed step ONLY. This is a DELIBERATE, keyed
+          # run whose whole point is to construct the meter and emit — the keyless hermetic gate that
+          # some tooling keys off `CI` must never turn it into a decorative no-op. CI stays =true for
+          # every other step + job, so the per-PR keyless gate elsewhere remains hermetic. (Verified:
+          # today's meter/SDK gate emission on MARGIN_INGEST_KEY, not CI, so this is belt-and-suspenders
+          # + forward-proofing against any future CI-keyed no-op.)
+          CI: ""
         run: |
           # Never fail main on a post-merge economics refresh — a pass-rate dip or a transient model /
           # ingest blip must not turn the branch red. Surface it as a one-line note; the economics that
