@@ -58,15 +58,17 @@ export function keepAlive(emit: Promise<unknown> | undefined): void {
  * exported so the mapping — the raw material for cost-per-outcome — is unit-testable without a live
  * meter (a wrong field or dropped default silently corrupts the dataset, since emit is fail-safe).
  *
- * Eval-batch tagging: when `MARGIN_SESSION_ID` is set (ONLY an eval runner ever sets it — it is unset
- * in prod, so this is inert on the app path), the call carries that `sessionId` so a batch of synthetic
- * eval traffic is separable from real user traffic in Margin.
+ * Eval-batch tagging (both env vars are set ONLY by an eval runner — unset in prod, so this is inert
+ * on the app path): `MARGIN_SESSION_ID` tags the call's `sessionId` so a batch of synthetic eval
+ * traffic is separable from real users, and `MARGIN_WORKFLOW_ID` overrides the workflow so a multi-
+ * workflow eval attributes each call to the workflow it actually exercised (default = plan-week).
  */
 export function buildLlmCallPayload(model: string, res: unknown, latencyMs: number): RecordCallInput {
   const md = (res as { usageMetadata?: UsageMetadata }).usageMetadata;
-  const sessionId = (typeof process !== "undefined" && process.env?.MARGIN_SESSION_ID) || undefined;
+  const env = typeof process !== "undefined" ? process.env : undefined;
+  const sessionId = env?.MARGIN_SESSION_ID || undefined;
   return {
-    workflowId: WORKFLOW_ID,
+    workflowId: env?.MARGIN_WORKFLOW_ID || WORKFLOW_ID,
     provider: "google",
     model,
     inputTokens: md?.promptTokenCount ?? 0,
