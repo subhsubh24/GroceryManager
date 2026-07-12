@@ -77,7 +77,7 @@ clearly disclosed with duration, renewal price, and cancellation terms.
 **Our implementation:**
 - Web PWA: currently uses Stripe (web-only, accessed via Safari browser, not an in-app
   purchase of digital goods within the native app)
-- **Native iOS app:** The upgrade/paywall screen (`apps/mobile/screens/UpgradeScreen.tsx`)
+- **Native iOS app:** The upgrade/paywall screen (`apps/mobile/app/upgrade.tsx`)
   must use RevenueCat + StoreKit (Apple IAP) — NOT Stripe — for in-app subscription.
   `REVENUECAT_API_KEY` is required (Human Core; see PENDING_OPS.md)
 - Trial disclosure in store description: 7-day free trial, $4.99/mo or $39.99/yr, auto-renewal,
