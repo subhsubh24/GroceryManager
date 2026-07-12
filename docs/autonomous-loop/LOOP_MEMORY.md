@@ -4,6 +4,36 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-12 (run 65) — 6-Haiku scout sweep + 3 file-disjoint clears (#525 mobile a11y / #526 Track-F
+  coverage / #527 auth silent-null hardening); 8 Sonnet reviews, 1 REQUEST_CHANGES resolved in a 2nd cycle;
+  0 abandons.** Deep audit NOT due (run 63 ran one <24h ago). Baseline green (typecheck 0, 977 core tests,
+  prod build clean, validation 8/8). **#527 (FLAGSHIP):** the functional scout caught a §28 silent-green on a
+  MONETIZED path — missing `TOKEN_ENC_KEY` made Connect-Gmail store null tokens silently, so sync failed
+  later with a cryptic `no valid google token`. Closed with the SAME canonical pattern as #378/#379/#380: a
+  pure env-injected `isProdRuntime` classifier in `packages/core/src/security/` (`token-enc-guard`,
+  `tokenEncryptionStatus`) + 7 keyless tests + a fail-open-but-loud prod log in `auth.ts`. **#525:** the last
+  unlabeled mobile input (delete-confirm) got an `accessibilityLabel` (WCAG 2.1 A; store scope). **#526:** a
+  real untested `lift.ts` branch (control-sufficient + no-challenger-data → `leading_variant: null`) got a
+  focused test (a reviewer mutation-tested it non-vacuous).
+  **LESSON — when adding a fail-open-but-loud classifier, use its decision field to ALSO gate the downstream
+  side-effect.** Reviewer A caught that `willEncrypt` (trims the key) and the storage gate (`&& key`,
+  untrimmed) could DIVERGE: a whitespace-only key → classifier says "missing/silent-null" but the untrimmed
+  key is truthy → `encryptSecret` throws → denies sign-in, contradicting the log. Fix: `const key =
+  encStatus.willEncrypt ? process.env.TOKEN_ENC_KEY : undefined` so the classifier and the real path can't
+  disagree. The classifier's boolean must DRIVE the code, not just describe it.
+  **LESSON — self-contained log messages, not doc pointers, in code branches.** Reviewer B rejected a log that
+  said "see PENDING_OPS.md" because the disjoint rule forbids adding that entry in the code branch, so the
+  pointer was false at merge time. Make the message stand alone ("Set TOKEN_ENC_KEY (a 32-byte key)…"); the
+  owner-action entry lands in the housekeeping PR (mirrors the captcha #380 precedent, but the CODE never
+  depends on the ledger existing).
+  **MONETIZATION re-confirmed reach-gated (again):** the monetization scout adversarially re-tested and found
+  the sum of ALL remaining marginal levers (T3/A0–A3/R1 lifecycle emails, annual pre-selection, promo codes)
+  is ~$4–9K/yr — none closes the ~$67K floor gap; the trial-ending T3 email was DEFERRED (honestly marked
+  "STAGED — do NOT send" in EMAIL_LIFECYCLE.md so no LIVING-ARTIFACT gap; building the full campaign =
+  multi-package sprawl for a ~$1K lever = padding on a converged product). **Readiness:** did NOT open 'ready'
+  — DoD gap unchanged (reach-gated floor #190 = owner-GTM). Scorecard still `design_taste` B / ship-gate NOT
+  MET; run 64's icon fix is the Quality Auditor's to re-grade (maker ≠ checker). Confidence UNCHECKED. A
+  focused, converged run with 3 real clears = success.
 - **2026-07-11 (run 64) — SHIP-GATE UNBLOCKER: gave the native Expo app its first icon system + swapped the
   residual web glyph — 2 file-disjoint clears (#522 mobile icon system / #523 web ▾→ChevronDown); 4 Sonnet
   reviews (2/PR), 1 REQUEST_CHANGES fixed in a 2nd cycle; 0 abandons.** The independent QUALITY_SCORECARD
