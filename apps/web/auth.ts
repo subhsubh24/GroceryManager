@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { encryptSecret, verifyPassword } from "@gm/core/crypto";
 import { normalizeUsername } from "@gm/core/personalization";
+import { tokenEncryptionStatus } from "@gm/core/security/token-enc-guard";
 import { attachGoogleToUser, getAdminDb, getUserByUsername, upsertGoogleAuth } from "@gm/db";
 import { authConfig } from "./auth.config";
 
@@ -92,6 +93,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const signedInUid = typeof token.uid === "string" ? token.uid : null;
         try {
           const key = process.env.TOKEN_ENC_KEY;
+          // §28: never a synthetic-green. If Google granted tokens but TOKEN_ENC_KEY is unset we
+          // store null (a plaintext token would be worse) — but in prod that silently breaks Gmail
+          // receipt import, so surface the misconfiguration LOUDLY (fail-open-but-loud, like captcha).
+          if (
+            tokenEncryptionStatus({
+              hasToken: Boolean(account.access_token || account.refresh_token),
+              env: process.env,
+            }).missingInProd
+          ) {
+            console.error(
+              "[auth] TOKEN_ENC_KEY is missing in a PRODUCTION runtime — Google OAuth tokens cannot " +
+                "be encrypted and will NOT be stored; Gmail receipt import will silently not work " +
+                "until it is set (see PENDING_OPS.md).",
+            );
+          }
           const payload = {
             email: user.email,
             name: user.name ?? null,
