@@ -303,6 +303,23 @@ describe("computeExperimentResult", () => {
     expect(r.leading_variant).toBe("b"); // still report who's ahead this run
   });
 
+  // Adjacent-but-DISTINCT branch: control has enough data but NO non-control variant has any stats
+  // at all (e.g. the earliest exposures, before any challenger is bucketed). `bestVariant` never gets
+  // assigned, so the guard must return `running` with leading_variant NULL — not throw, not pick the
+  // control, not fabricate a leader. The prior test covers an under-powered challenger that DOES have
+  // data (leading_variant "b"); this covers the no-challenger-data case (leading_variant null).
+  it("stays running with a NULL leading variant when no challenger has any data yet (control sufficient)", () => {
+    const stats: Record<string, PerVariantStats> = {
+      a: { exposed: exp.minSamplePerArm + 50, conversions: 5 }, // control: sufficient
+      // no entry for any challenger arm → bestVariant is never assigned
+    };
+    const r = computeExperimentResult(exp, stats);
+    expect(r.status).toBe("running");
+    expect(r.leading_variant).toBeNull(); // nobody to name yet
+    expect(r.lift_pct).toBeNull();
+    expect(r.result).toBeNull();
+  });
+
   // Zero-conversion control is a valid outcome, and lift over a 0% base is mathematically undefined
   // (division by zero). A significant winner must still DECIDE — with a real verdict — but report
   // lift_pct null rather than Infinity/NaN. The other "decided" tests all use a non-zero control.
