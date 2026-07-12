@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { encryptSecret, verifyPassword } from "@gm/core/crypto";
 import { normalizeUsername } from "@gm/core/personalization";
+import { tokenEncryptionStatus } from "@gm/core/security/token-enc-guard";
 import { attachGoogleToUser, getAdminDb, getUserByUsername, upsertGoogleAuth } from "@gm/db";
 import { authConfig } from "./auth.config";
 
@@ -91,7 +92,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account?.provider === "google" && user?.email) {
         const signedInUid = typeof token.uid === "string" ? token.uid : null;
         try {
-          const key = process.env.TOKEN_ENC_KEY;
+          // §28: never a synthetic-green. When Google grants tokens but TOKEN_ENC_KEY is missing (or
+          // blank) we store null — a plaintext token would be worse — but that silently breaks Gmail
+          // receipt import, so surface the misconfiguration LOUDLY in prod (fail-open-but-loud, like
+          // captcha). `willEncrypt` also gates storage below, so a blank/whitespace key is treated as
+          // unset CONSISTENTLY (an untrimmed truthy-but-blank key would otherwise reach encryptSecret
+          // and throw, denying the sign-in instead of degrading).
+          const encStatus = tokenEncryptionStatus({
+            hasToken: Boolean(account.access_token || account.refresh_token),
+            env: process.env,
+          });
+          if (encStatus.missingInProd) {
+            console.error(
+              "[auth] TOKEN_ENC_KEY is missing in a PRODUCTION runtime — Google OAuth tokens cannot " +
+                "be encrypted and will NOT be stored, so Gmail receipt import will silently not work. " +
+                "Set TOKEN_ENC_KEY (a 32-byte encryption key) to enable it.",
+            );
+          }
+          const key = encStatus.willEncrypt ? process.env.TOKEN_ENC_KEY : undefined;
           const payload = {
             email: user.email,
             name: user.name ?? null,

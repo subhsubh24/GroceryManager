@@ -46,7 +46,8 @@
     "./security/rate-limit-guard": "./src/security/rate-limit-guard.ts",
     "./security/captcha-guard": "./src/security/captcha-guard.ts",
     "./security/demo-quota": "./src/security/demo-quota.ts",
-    "./security/invite-code": "./src/security/invite-code.ts"
+    "./security/invite-code": "./src/security/invite-code.ts",
+    "./security/token-enc-guard": "./src/security/token-enc-guard.ts"
   },
   "scripts": {
     "lint": "echo \"(lint) @gm/core\"",
