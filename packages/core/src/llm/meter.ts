@@ -57,9 +57,14 @@ export function keepAlive(emit: Promise<unknown> | undefined): void {
  * `generateContent`/`embedContent` response) and defaulting every missing token count to 0. Pure +
  * exported so the mapping — the raw material for cost-per-outcome — is unit-testable without a live
  * meter (a wrong field or dropped default silently corrupts the dataset, since emit is fail-safe).
+ *
+ * Eval-batch tagging: when `MARGIN_SESSION_ID` is set (ONLY an eval runner ever sets it — it is unset
+ * in prod, so this is inert on the app path), the call carries that `sessionId` so a batch of synthetic
+ * eval traffic is separable from real user traffic in Margin.
  */
 export function buildLlmCallPayload(model: string, res: unknown, latencyMs: number): RecordCallInput {
   const md = (res as { usageMetadata?: UsageMetadata }).usageMetadata;
+  const sessionId = (typeof process !== "undefined" && process.env?.MARGIN_SESSION_ID) || undefined;
   return {
     workflowId: WORKFLOW_ID,
     provider: "google",
@@ -69,6 +74,7 @@ export function buildLlmCallPayload(model: string, res: unknown, latencyMs: numb
     cacheReadTokens: md?.cachedContentTokenCount ?? 0,
     latencyMs,
     status: "ok",
+    ...(sessionId ? { sessionId } : {}),
   };
 }
 
