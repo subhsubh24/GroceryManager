@@ -14,6 +14,7 @@ import { EMBEDDING_DIM, EMBEDDING_MODEL, type GeminiTier } from "@gm/config/cons
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { nextTier, resolveModel, thinkingBudgetFor } from "./models.js";
+import { recordLlmCall } from "./meter.js";
 import type { Tool, ToolContext } from "./semantic-layer.js";
 
 export interface ImagePart {
@@ -178,6 +179,18 @@ export class GeminiClient {
     return this.env.LLM_TIMEOUT_MS ?? DEFAULT_LLM_TIMEOUT_MS;
   }
 
+  /**
+   * Run one Gemini call under the per-call timeout AND meter its economics (tokens + latency) to
+   * Margin. Latency is timed around `withTimeout`; on success (the only path that returns a response)
+   * the call is emitted NON-BLOCKING via `recordLlmCall` — telemetry never delays or breaks the call.
+   */
+  private async timedGenerate<R>(model: string, label: string, call: () => Promise<R>): Promise<R> {
+    const start = Date.now();
+    const res = await withTimeout(call(), this.callTimeoutMs, label);
+    recordLlmCall(model, res, Date.now() - start);
+    return res;
+  }
+
   constructor(env: Env = loadEnv()) {
     this.env = env;
     this.ai = useVertex(env)
@@ -207,7 +220,7 @@ export class GeminiClient {
       for (const img of opts.images ?? []) {
         parts.push({ inlineData: { mimeType: img.mimeType, data: img.dataBase64 } });
       }
-      const res = await withTimeout(
+      const res = await this.timedGenerate(model, `generateStructured/codeExec ${model}`, () =>
         this.ai.models.generateContent({
           model,
           contents: { role: "user", parts },
@@ -217,8 +230,6 @@ export class GeminiClient {
             ...(mediaRes ? { mediaResolution: mediaRes } : {}),
           },
         }),
-        this.callTimeoutMs,
-        `generateStructured/codeExec ${model}`,
       );
       return schema.parse(extractJsonValue(res.text ?? "")) as z.infer<S>;
     }
@@ -230,7 +241,7 @@ export class GeminiClient {
     }
     const contents: Content = { role: "user", parts };
 
-    const res = await withTimeout(
+    const res = await this.timedGenerate(model, `generateStructured ${model}`, () =>
       this.ai.models.generateContent({
         model,
         contents,
@@ -244,8 +255,6 @@ export class GeminiClient {
           ...(budget !== -1 ? { thinkingConfig: { thinkingBudget: budget } } : {}),
         },
       }),
-      this.callTimeoutMs,
-      `generateStructured ${model}`,
     );
 
     const text = res.text ?? "";
@@ -310,7 +319,7 @@ export class GeminiClient {
       role: m.role === "assistant" ? "model" : "user",
       parts: [{ text: m.content }],
     }));
-    const res = await withTimeout(
+    const res = await this.timedGenerate(model, `chat ${model}`, () =>
       this.ai.models.generateContent({
         model,
         contents,
@@ -319,8 +328,6 @@ export class GeminiClient {
           ...(args.system ? { systemInstruction: args.system } : {}),
         },
       }),
-      this.callTimeoutMs,
-      `chat ${model}`,
     );
     return { text: res.text ?? "" };
   }
@@ -383,10 +390,8 @@ export class GeminiClient {
         steps++;
         let res: Awaited<ReturnType<typeof this.ai.models.generateContent>>;
         try {
-          res = await withTimeout(
+          res = await this.timedGenerate(model, `runChatWithTools ${model}`, () =>
             this.ai.models.generateContent({ model, contents, config: buildConfig(allowCodeExec) }),
-            this.callTimeoutMs,
-            `runChatWithTools ${model}`,
           );
         } catch (e) {
           // SOME models reject combining functionDeclarations + codeExecution (400 INVALID_ARGUMENT). That
@@ -396,10 +401,8 @@ export class GeminiClient {
           // and permanently drop code execution and start predicting numbers.
           if (allowCodeExec && steps === 1 && isToolCombineRejection(e)) {
             allowCodeExec = false;
-            res = await withTimeout(
+            res = await this.timedGenerate(model, `runChatWithTools ${model} (no code-exec)`, () =>
               this.ai.models.generateContent({ model, contents, config: buildConfig(false) }),
-              this.callTimeoutMs,
-              `runChatWithTools ${model} (no code-exec)`,
             );
           } else {
             throw e;
@@ -440,14 +443,15 @@ export class GeminiClient {
       }
 
       // Hit the step cap — make ONE final call with no tools so the model summarizes what it has.
-      const finalRes = await withTimeout(
-        this.ai.models.generateContent({
-          model,
-          contents,
-          ...(args.system ? { config: { systemInstruction: args.system } } : {}),
-        }),
-        this.callTimeoutMs,
+      const finalRes = await this.timedGenerate(
+        model,
         `runChatWithTools ${model} (final summary)`,
+        () =>
+          this.ai.models.generateContent({
+            model,
+            contents,
+            ...(args.system ? { config: { systemInstruction: args.system } } : {}),
+          }),
       );
       return { text: finalRes.text ?? "", steps };
     } catch (e) {
@@ -465,14 +469,12 @@ export class GeminiClient {
    * (required before cosine comparison against the pgvector index).
    */
   async embed(text: string): Promise<number[]> {
-    const res = await withTimeout(
+    const res = await this.timedGenerate(EMBEDDING_MODEL, `embed ${EMBEDDING_MODEL}`, () =>
       this.ai.models.embedContent({
         model: EMBEDDING_MODEL,
         contents: text,
         config: { outputDimensionality: EMBEDDING_DIM },
       }),
-      this.callTimeoutMs,
-      `embed ${EMBEDDING_MODEL}`,
     );
     const values = res.embeddings?.[0]?.values;
     if (!values || values.length === 0) throw new Error(`empty embedding from ${EMBEDDING_MODEL}`);

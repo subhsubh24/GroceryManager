@@ -14,6 +14,7 @@ import {
   type PlanEvaluation,
   type WeekPlan,
 } from "./evaluate.js";
+import { meter, WORKFLOW_ID } from "../llm/meter.js";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const DEFAULT_TARGET = 5;
@@ -72,7 +73,17 @@ export async function planWeek(
           return ev.ok ? { ok: true } : { ok: false, reason: ev.failures.join("; ") };
         },
       });
-      return { plan, evaluation: evaluateWeekPlan(plan, ctx), source: "llm", targetDinners };
+      const evaluation = evaluateWeekPlan(plan, ctx);
+      // Emit the productivity OUTCOME (the unit Margin divides AI spend by) — non-blocking, fail-safe.
+      void meter
+        ?.recordOutcome({
+          workflowId: WORKFLOW_ID,
+          passed: evaluation.ok,
+          qualityScore: evaluation.score,
+          qualityMethod: "ground_truth",
+        })
+        ?.catch(() => {});
+      return { plan, evaluation, source: "llm", targetDinners };
     } catch {
       // The LLM path is best-effort — drop to the deterministic floor on any failure
       // (no key, expired key, network, or verify-then-escalate exhausted).

@@ -142,6 +142,9 @@ importers:
       drizzle-orm:
         specifier: ^0.36.0
         version: 0.36.4(@types/react@19.2.17)(postgres@3.4.9)(react@19.2.7)
+      margin-meter:
+        specifier: ^0.1.0
+        version: 0.1.0
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -2358,6 +2361,10 @@ packages:
   make-dir@4.0.0:
     resolution: {integrity: sha512-hXdUTZYIVOt1Ex//jAQi+wTZZpUpwBj/0QsOzqegb3rGMMeJiSEu5xLHnYfBrRV4RH2+OCSOO95Is/7x1WJ4bw==}
     engines: {node: '>=10'}
+
+  margin-meter@0.1.0:
+    resolution: {integrity: sha512-SRXeMl5wfV+l1L5EhERplrZCMIKPOsJ0loU9zuiWcMfo4zmPhZx2OCADxYzvpj2g7uVIGQw/XcpA5syIqULMJw==}
+    engines: {node: '>=18'}
 
   merge2@1.4.1:
     resolution: {integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==}
@@ -4846,6 +4853,8 @@ snapshots:
   make-dir@4.0.0:
     dependencies:
       semver: 7.8.4
+
+  margin-meter@0.1.0: {}
 
   merge2@1.4.1: {}
 
