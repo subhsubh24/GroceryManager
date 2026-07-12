@@ -4,6 +4,42 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-12 (run 67) — 2 file-disjoint clears on the NEWEST merge #534 (Margin economics telemetry):
+  Track-F coverage (#535) + a LIVING-ARTIFACTS env doc (#536); 4 Sonnet reviews, 1 REQUEST_CHANGES fixed
+  in cycle 2; 0 abandons. No deep audit (run 66 ran one same day, <24h).** The repo was deep-audited THIS
+  morning (run 66, all-clean) + scout-swept in run 65, so instead of a wasteful third full sweep of a
+  just-audited converged surface (which reliably surfaces only the recurring false-positive traps), ran a
+  PROPORTIONATE 3-Haiku scout on the highest-probability NEW-work lenses: monetization-lever · newest-code
+  coverage · artifact-freshness. Both clears landed on #534 (merged hours earlier).
+  **#535 (FLAGSHIP, Track-F) — the silent-corruption test discipline extends to FAIL-SAFE telemetry.** #534
+  shipped `recordLlmCall`/`recordOutcome` with zero tests. Because emit is `void meter?.recordX(...)?.catch(
+  () => {})` (fail-safe + non-blocking), a mis-mapped token field or wrong outcome payload NEVER throws,
+  NEVER fails CI, and just silently poisons the external cost-per-outcome dataset — the exact invisible-
+  correctness surface that deserves a regression test even though nothing "breaks." Fix mirrored the house
+  pattern: extract a PURE exported `buildLlmCallPayload` (return type = the SDK's `RecordCallInput` so it
+  can't drift) to make the mapping unit-testable, + a hoisted `vi.mock` over `../llm/meter.js` to spy on
+  `recordOutcome` and prove it fires once on the LLM-success path (not fallback/skipped) with the ACTUAL
+  evaluation. **LESSON: "test the payload, not the emit" — for fire-and-forget telemetry the only testable
+  (and only bug-prone) part is the payload construction; extract it pure and assert the mapping + the
+  fire-vs-not-fire branch, don't try to assert on the swallowed network call.** Both reviewers mutation-
+  verified the tests are load-bearing (swap in/out tokens, drop `?? 0`, move recordOutcome to the catch →
+  each fails). Dropped an `undefined`-response assertion as an impossible-case (res is always the awaited
+  Gemini response — the run-42..47 impossible-case-test trap, self-caught).
+  **#536 (LIVING-ARTIFACTS) — maker≠checker caught a real doc-accuracy bug.** `MARGIN_INGEST_KEY` (the env
+  #534's telemetry activates on) was the only shipped-feature env missing from both optional-env inventories
+  (`.env.example` + `OPERATIONS.md`); documented it. Reviewer A REQUEST_CHANGES: I'd claimed
+  `MARGIN_INGEST_URL` "defaults to Margin's hosted endpoint," but the SDK's `DEFAULT_INGEST_URL` is
+  `http://127.0.0.1:8000` (localhost) — I'd conflated the README's usage EXAMPLE with the actual SDK default.
+  An operator setting only the key would silently POST to localhost and see no telemetry. **LESSON: when
+  documenting a dependency's default, read the SDK SOURCE (`DEFAULT_*` const + the `||` fallback chain), not
+  the README example — the README shows what you SHOULD set, not what the code defaults to.** Fixed cycle 2.
+  **Monetization RE-CONFIRMED reach-gated (adversarial scout, again):** every buildable pricing/tier/
+  conversion/retention lever is built; the only unbuilt "levers" (Instacart/Amazon affiliate) need external
+  keys + depend on unproven behavior + are unmodeled + ~$3–15K/yr = not a floor-mover. `capabilities.json`
+  correctly NOT extended for margin-meter (pure fail-safe internal telemetry ≠ a manifest capability).
+  **Readiness:** did NOT open 'ready' — sole DoD gap unchanged (reach-gated floor #190 = owner-GTM). Scorecard
+  `design_taste` still B / ship-gate NOT MET — run 64's mobile-icon fix is the Quality Auditor's to re-grade
+  (maker ≠ checker). Confidence UNCHECKED. Validation 8/8, 0 unmet. A quiet converged run = success.
 - **2026-07-12 (run 66) — DEEP AUDIT (5-Haiku lens sweep, due since run 63 >24h) + 2 file-disjoint clears
   (#532 signup uniqueness-race hardening / #531 store-doc path drift); 6 Sonnet reviews (2/PR + 2 on the
   doc PR), all APPROVE first-pass; 0 abandons.** Baseline green (typecheck 0, 977 core tests → 101 files,
