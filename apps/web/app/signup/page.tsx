@@ -15,6 +15,7 @@ import {
   isValidUsername,
   normalizeUsername,
 } from "@gm/core/personalization";
+import { isUniqueViolation } from "@gm/core/security/pg-error";
 import { signIn } from "@/auth";
 import { Leaf } from "@/app/components/icons";
 import { Turnstile } from "@/app/components/turnstile";
@@ -59,10 +60,20 @@ async function registerAction(formData: FormData) {
 
   // Provision the user on the admin connection (a brand-new row can't satisfy its own RLS). Email +
   // name start empty — name is captured in onboarding, email only if the user later connects Gmail.
-  const userId = await createUserWithPassword(getAdminDb(), {
-    username,
-    passwordHash: hashPassword(password),
-  });
+  // The getUserByUsername check above is NOT atomic with this insert: two concurrent signups for the
+  // same username can both pass the check, then one loses to the `users.username` UNIQUE constraint
+  // (SQLSTATE 23505). Surface the same friendly "username taken" path instead of an unhandled 500.
+  // (email is null at signup, so a unique violation on this insert is always the username.)
+  let userId: string;
+  try {
+    userId = await createUserWithPassword(getAdminDb(), {
+      username,
+      passwordHash: hashPassword(password),
+    });
+  } catch (e) {
+    if (isUniqueViolation(e)) redirect("/signup?error=exists"); // throws NEXT_REDIRECT, propagates out
+    throw e; // any other DB error is genuinely unexpected — surface it, don't swallow
+  }
 
   // Referral attribution — STRICTLY best-effort (FACTORY_STANDARD §32). The user already exists and is
   // about to be signed in; crediting the referrer is a NON-ESSENTIAL side-effect that must NEVER block or
