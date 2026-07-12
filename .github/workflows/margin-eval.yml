@@ -1,0 +1,89 @@
+name: Margin cost-per-outcome (change-triggered)
+
+# Refresh GroceryManager's cost-per-outcome in Margin whenever the AI / eval code that shapes it
+# actually ships. Runs the repo-specific eval suite (packages/core/src/llm/evals/margin) through the
+# REAL metered path — real Gemini calls + genuine `evaluateWeekPlan` grading — so each real change to
+# the plan-week workflow re-measures tokens+latency per successful weekly plan and emits it to Margin.
+#
+# Scope: PUSH to main, PATHS-FILTERED to the code that can move the number (LLM client, agent, and the
+# eval matrix). Docs/bookkeeping commits do NOT trigger it. It is NOT a required check and never gates a
+# merge — it runs post-merge as an economics refresh.
+#
+# GUARD: costs real Gemini spend + writes to Margin, so it stays INERT until the owner connects secrets.
+# With GEMINI_API_KEY or MARGIN_INGEST_KEY unset it SKIPS cleanly (never red). One-time owner setup:
+# add Actions secrets GEMINI_API_KEY (billing-enabled), MARGIN_INGEST_URL, MARGIN_INGEST_KEY (and
+# optionally DATABASE_URL — a dummy is used otherwise; the plan-week task never reads the DB), and set
+# a Gemini spend cap.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/core/src/llm/**"
+      - "packages/core/src/agent/**"
+      - "packages/core/src/llm/evals/margin/**"
+  workflow_dispatch: {} # manual on-demand refresh
+
+permissions:
+  contents: read
+
+jobs:
+  margin-eval:
+    name: margin cost-per-outcome (live, gated)
+    runs-on: ubuntu-latest
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      MARGIN_INGEST_URL: ${{ secrets.MARGIN_INGEST_URL }}
+      MARGIN_INGEST_KEY: ${{ secrets.MARGIN_INGEST_KEY }}
+      # Optional — the plan-week task never reads the DB, but loadEnv() requires a parseable URL; the
+      # runner falls back to a dummy when this is empty, so the secret is optional.
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # Evals run in CI, not under the serverless request budget — a slow-but-correct call must not be
+      # scored as a failure (the 8s prod default is far too tight here).
+      LLM_TIMEOUT_MS: "60000"
+      # Cost cap: a representative, capped slice of the ~50-case matrix per change (raise on demand).
+      MARGIN_EVAL_MAX_CASES: "12"
+    steps:
+      - name: Skip cleanly when eval secrets are not set (never red; inert until the owner connects them)
+        id: guard
+        run: |
+          if [ -z "${GEMINI_API_KEY}" ] || [ -z "${MARGIN_INGEST_KEY}" ]; then
+            echo "::warning::Margin eval secrets not set — need GEMINI_API_KEY (billing-enabled) +"
+            echo "::warning::MARGIN_INGEST_KEY (+ MARGIN_INGEST_URL). Skipping; this job stays inert"
+            echo "::warning::(never red) until they are added in Settings → Secrets and variables → Actions."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.guard.outputs.skip != 'true'
+
+      - uses: pnpm/action-setup@v4
+        if: steps.guard.outputs.skip != 'true'
+        with:
+          version: 9.12.0
+      - uses: actions/setup-node@v4
+        if: steps.guard.outputs.skip != 'true'
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        if: steps.guard.outputs.skip != 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Refresh Margin cost-per-outcome (RUN_EVALS=1, live Gemini, cost-capped)
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          # Tie the emitted batch to the commit that triggered it: sessionId = "eval:<sha>".
+          MARGIN_EVAL_RUN_ID: ${{ github.sha }}
+        run: |
+          # Never fail main on a post-merge economics refresh — a pass-rate dip or a transient model /
+          # ingest blip must not turn the branch red. Surface it as a one-line note; the economics that
+          # did emit are already in Margin.
+          set +e
+          pnpm --filter @gm/core eval:margin
+          code=$?
+          if [ "$code" -ne 0 ]; then
+            echo "::warning::Margin plan-week eval exited non-zero (code ${code}) — cost-per-outcome may have"
+            echo "::warning::regressed, or a transient Gemini/ingest blip. This job never fails main; see the log."
+          fi
+          exit 0
