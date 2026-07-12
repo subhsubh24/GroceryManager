@@ -54,7 +54,8 @@
     "lint": "echo \"(lint) @gm/core\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
-    "eval": "RUN_EVALS=1 vitest run src/llm/evals"
+    "eval": "RUN_EVALS=1 vitest run src/llm/evals",
+    "eval:margin": "RUN_EVALS=1 vitest run src/llm/evals/margin"
   },
   "dependencies": {
     "@gm/config": "workspace:*",
