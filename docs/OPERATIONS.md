@@ -54,6 +54,8 @@ Set these in your Vercel project settings (never commit to the repo):
 | `NEXTAUTH_URL` | Full public URL of your deployment | `https://your-domain.com` |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Web push notifications | Generate with `web-push generate-vapid-keys` |
 | `VAPID_PRIVATE_KEY` | Web push notifications (server) | Same command as above |
+| `MARGIN_INGEST_KEY` | Cost-per-outcome telemetry (Gemini spend + plan outcomes → Margin) | Issued by the Margin owner; fail-safe no-op when unset |
+| `MARGIN_INGEST_URL` | Margin ingest endpoint override | Optional; defaults to Margin's hosted endpoint |
 
 ---
 
