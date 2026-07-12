@@ -1,6 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import type { PlanCandidate } from "./evaluate.js";
 import { buildFallbackPlan, planWeek, type PlanGenerator, type PlanWeekInput } from "./plan-week.js";
+import { meter, WORKFLOW_ID } from "../llm/meter.js";
+
+// Replace the real (network-emitting) meter with a spy so we can assert the #534 economics OUTCOME
+// payload — which is otherwise invisible (emit is fail-safe + non-blocking, so a mis-map never errors).
+vi.mock("../llm/meter.js", async (importActual) => {
+  const actual = await importActual<typeof import("../llm/meter.js")>();
+  return {
+    ...actual,
+    meter: { recordOutcome: vi.fn(() => Promise.resolve()), recordCall: vi.fn(() => Promise.resolve()) },
+  };
+});
+
+const recordOutcome = () => (meter!.recordOutcome as Mock);
 
 const cand = (id: string, over: Partial<PlanCandidate> = {}): PlanCandidate => ({
   id,
@@ -115,5 +128,53 @@ describe("planWeek", () => {
     const res = await planWeek(input([]), { generate: gen });
     expect(called).toBe(false);
     expect(res.source).toBe("fallback");
+  });
+});
+
+describe("planWeek economics outcome (#534)", () => {
+  const validPlan = {
+    narrative: "A calm, simple week of dinners ahead.",
+    dinners: [{ recipeId: "a", day: "Monday", title: "R-a", reason: "good", usesExpiring: [] }],
+    addToList: [],
+  };
+
+  beforeEach(() => {
+    recordOutcome().mockClear();
+  });
+
+  it("emits a ground_truth outcome carrying the ACTUAL evaluation on the LLM-success path", async () => {
+    const gen: PlanGenerator = async (req) => {
+      const v = req.verify(validPlan);
+      if (!v.ok) throw new Error(v.reason);
+      return validPlan;
+    };
+    const res = await planWeek(input([cand("a")], { targetDinners: 1 }), { generate: gen });
+
+    expect(res.source).toBe("llm");
+    expect(recordOutcome()).toHaveBeenCalledTimes(1);
+    // The payload must reflect the REAL evaluation — a mis-map (e.g. passing the plan, or a stale
+    // pass flag) would silently poison Margin's cost-per-successful-plan denominator.
+    expect(recordOutcome()).toHaveBeenCalledWith({
+      workflowId: WORKFLOW_ID,
+      passed: res.evaluation.ok,
+      qualityScore: res.evaluation.score,
+      qualityMethod: "ground_truth",
+    });
+  });
+
+  it("does NOT emit an outcome on the deterministic fallback path (generator throws)", async () => {
+    const gen: PlanGenerator = async () => {
+      throw new Error("API key expired");
+    };
+    const res = await planWeek(input([cand("a"), cand("b")], { targetDinners: 2 }), { generate: gen });
+
+    expect(res.source).toBe("fallback");
+    expect(recordOutcome()).not.toHaveBeenCalled();
+  });
+
+  it("does NOT emit an outcome when the LLM is skipped (no generator / no candidates)", async () => {
+    await planWeek(input([cand("a")], { targetDinners: 1 }));
+    await planWeek(input([]), { generate: async () => validPlan });
+    expect(recordOutcome()).not.toHaveBeenCalled();
   });
 });

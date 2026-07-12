@@ -7,7 +7,7 @@
  * swallowed — telemetry must never crash, slow, or alter the host call path. With no `MARGIN_INGEST_KEY`
  * the SDK short-circuits before any network I/O, so this is a no-op in dev/CI.
  */
-import { MarginMeter } from "margin-meter";
+import { MarginMeter, type RecordCallInput } from "margin-meter";
 
 /** The one workflow this project meters — its "cost per successful weekly plan". */
 export const WORKFLOW_ID = "grocerymanager-plan-week";
@@ -29,21 +29,28 @@ interface UsageMetadata {
 }
 
 /**
- * Fire one measured LLM call at Margin, non-blocking. Reads `res.usageMetadata` defensively (any
- * Gemini `generateContent`/`embedContent` response) and never lets a telemetry failure surface.
+ * Build the Margin payload for one Gemini call, reading `res.usageMetadata` defensively (any
+ * `generateContent`/`embedContent` response) and defaulting every missing token count to 0. Pure +
+ * exported so the mapping — the raw material for cost-per-outcome — is unit-testable without a live
+ * meter (a wrong field or dropped default silently corrupts the dataset, since emit is fail-safe).
+ */
+export function buildLlmCallPayload(model: string, res: unknown, latencyMs: number): RecordCallInput {
+  const md = (res as { usageMetadata?: UsageMetadata }).usageMetadata;
+  return {
+    workflowId: WORKFLOW_ID,
+    provider: "google",
+    model,
+    inputTokens: md?.promptTokenCount ?? 0,
+    outputTokens: md?.candidatesTokenCount ?? 0,
+    cacheReadTokens: md?.cachedContentTokenCount ?? 0,
+    latencyMs,
+    status: "ok",
+  };
+}
+
+/**
+ * Fire one measured LLM call at Margin, non-blocking. Never lets a telemetry failure surface.
  */
 export function recordLlmCall(model: string, res: unknown, latencyMs: number): void {
-  const md = (res as { usageMetadata?: UsageMetadata }).usageMetadata;
-  void meter
-    ?.recordCall({
-      workflowId: WORKFLOW_ID,
-      provider: "google",
-      model,
-      inputTokens: md?.promptTokenCount ?? 0,
-      outputTokens: md?.candidatesTokenCount ?? 0,
-      cacheReadTokens: md?.cachedContentTokenCount ?? 0,
-      latencyMs,
-      status: "ok",
-    })
-    ?.catch(() => {});
+  void meter?.recordCall(buildLlmCallPayload(model, res, latencyMs))?.catch(() => {});
 }
