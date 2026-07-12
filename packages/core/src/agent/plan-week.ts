@@ -14,7 +14,7 @@ import {
   type PlanEvaluation,
   type WeekPlan,
 } from "./evaluate.js";
-import { meter, WORKFLOW_ID } from "../llm/meter.js";
+import { keepAlive, meter, WORKFLOW_ID } from "../llm/meter.js";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const DEFAULT_TARGET = 5;
@@ -74,15 +74,16 @@ export async function planWeek(
         },
       });
       const evaluation = evaluateWeekPlan(plan, ctx);
-      // Emit the productivity OUTCOME (the unit Margin divides AI spend by) — non-blocking, fail-safe.
-      void meter
-        ?.recordOutcome({
+      // Emit the productivity OUTCOME (the unit Margin divides AI spend by) — fail-safe and off the
+      // response path, but flushed via keepAlive/waitUntil so it survives the serverless freeze.
+      keepAlive(
+        meter?.recordOutcome({
           workflowId: WORKFLOW_ID,
           passed: evaluation.ok,
           qualityScore: evaluation.score,
           qualityMethod: "ground_truth",
-        })
-        ?.catch(() => {});
+        }),
+      );
       return { plan, evaluation, source: "llm", targetDinners };
     } catch {
       // The LLM path is best-effort — drop to the deterministic floor on any failure
