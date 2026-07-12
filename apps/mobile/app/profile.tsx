@@ -167,6 +167,7 @@ export default function ProfileScreen() {
               onChangeText={setDeleteConfirm}
               autoCapitalize="none"
               autoCorrect={false}
+              accessibilityLabel='Type "delete" to confirm account deletion'
               placeholder="delete"
               placeholderTextColor="#a3acb5"
             />
