@@ -4,6 +4,63 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-12 (run 66) — DEEP AUDIT (5-Haiku lens sweep, due since run 63 >24h) + 2 file-disjoint clears
+  (#532 signup uniqueness-race hardening / #531 store-doc path drift); 6 Sonnet reviews (2/PR + 2 on the
+  doc PR), all APPROVE first-pass; 0 abandons.** Baseline green (typecheck 0, 977 core tests → 101 files,
+  prod build clean 0 missing-export, self-validation 8/8). DEEP AUDIT was DUE (last standalone run 63) → ran
+  it BEFORE scouting.
+  **DEEP AUDIT 2026-07-12: 5 lenses, 3 CLEAN / 2 real findings shipped, several correctly-rejected false
+  positives.**
+  - SECURITY & ABUSE (Track G): SOLID — all 22 migrations' public tables RLS+policy; 41 routes rate-limited +
+    zod-validated + error-hygienic; login lockout (10→15min); per-user LLM quota (10 free/100 premium/day) +
+    per-IP/global demo ceiling; Turnstile fail-open-but-loud; Stripe constructEvent / Gmail / RevenueCat
+    webhooks signature/timing-safe; CSP/HSTS/X-Frame/X-Content-Type/Permissions-Policy set; entitlements
+    server-side only; secret scan clean. ONE real LOW finding → **#532** (the signup `getUserByUsername`
+    check is NOT atomic with the `createUserWithPassword` insert → a concurrent same-username race loses to
+    the `users.username` UNIQUE constraint (SQLSTATE 23505) and previously threw an UNHANDLED 500 on the
+    funnel-entry path). The other "finding" (multi-instance in-memory quota over-count) is already documented
+    owner-infra (Upstash Redis in PENDING_OPS) — not a code gap.
+  - CORRECTNESS & DEAD CODE: CLEAN — pantry ledger-only invariant holds (sole `pantry_stock` write is
+    persist.ts's upsert); every LLM/external call try/catch + `withTimeout(8s)` < serverless budget;
+    `loadEnv()` fails loud on `DATABASE_URL`, optionals degrade; no uncaught throws / TODO-debt on core paths.
+  - ARTIFACT FRESHNESS: 1 real store-review drift → **#531** (ACCEPTANCE_AUDIT.md referenced the native
+    paywall as `apps/mobile/screens/UpgradeScreen.tsx` — a path from an earlier structure; no `screens/` dir
+    exists. Real Expo Router paywall = `apps/mobile/app/upgrade.tsx` + `apps/mobile/lib/purchases.ts`,
+    RevenueCat/StoreKit). README / BUSINESS_CASE (prices 499/3999/999/7999¢, base $33,450, floor_met false) /
+    LAUNCH / ASO / PENDING_OPS all verified consistent with code.
+  - DESIGN & a11y: CLEAN — no generated-looking surface passes-fail THE DESIGNER QUESTION; onboarding/paywall/
+    home all intentional; lucide-only + mobile Ionicons (run 64); focus rings + labeled inputs. The scout's
+    lone finding (9 recipe thumbnails with `alt=""`) was CORRECTLY REJECTED as a false positive: each image
+    sits directly beside its `{title}` text, so `alt=""` (decorative) is the CORRECT WCAG choice — adding
+    `alt={title}` would double-announce for screen readers (the exact run-42..47 "recipe alt=''" trap already
+    in recurring-failures; the verify-before-select guard caught it again).
+  - TEST/EVAL COVERAGE & PERF: CLEAN above marginal — recently-added logic (token-enc-guard, media staging/gen,
+    plan-week) all tested; no flaky tests. Scout's `loadSavedRecipes` "unbounded payload" (no LIMIT) was
+    weighed and NOT shipped: saved recipes are naturally bounded (unsave DELETEs the row), the query layer has
+    no unit runner so a `.limit()` cap couldn't earn a regression test, and the scout self-hedged — a cap here
+    would be speculative churn on a converged product. The ingest N+1 / sequential-insert candidates stay
+    rejected (LLM-bound, run-38/41 verdict).
+  **#532 (FLAGSHIP, security/reliability):** wrapped the insert in try/catch; on a unique violation → the
+  EXISTING friendly `/signup?error=exists` path (no new enumeration surface — the pre-check already surfaced
+  that message). Detection is a pure driver-shape-only classifier `isUniqueViolation()` in
+  `packages/core/src/security/pg-error.ts` (matches SQLSTATE string `"23505"`), 6 keyless tests, exported via
+  a new `@gm/core/security/pg-error` subpath — apps/web has no unit runner, so the decision logic lives in
+  core per the captcha-guard/token-enc-guard convention. `email` is null at signup (NULLs distinct in
+  Postgres) so a 23505 on this insert is always the username — documented at the site. Reviewer A verified the
+  assumption against the actual `postgres`/`drizzle-orm` source (PostgresError carries `code` as an own string
+  property; drizzle never wraps the rejection) + confirmed `redirect()`'s `never` return proves `userId`
+  definitely-assigned. **LESSON — the "hunt the uncaught throw" discipline extends to check-then-write races,
+  not just bare external calls:** a pre-existing existence check reads as "handled," but under concurrency the
+  DB constraint is the real arbiter; the friendly error path must be reachable from the CONSTRAINT violation,
+  not only the pre-check. The canonical fix mirrors the §28 classifier pattern (pure `isX(err)` in
+  `packages/core/src/security/` + keyless test) even though the trigger is a race, not a missing env key.
+  **Readiness:** did NOT open the 'ready' issue — the sole DoD gap is unchanged (reach-gated business-case
+  floor #190, base ≈ $33K < $100K at median = owner-GTM, no buildable floor-mover; the security lens re-tested
+  and found only owner-infra gaps already in PENDING_OPS). Scorecard `design_taste` still B / ship-gate NOT
+  MET — the run-64 mobile-icon fix is the Quality Auditor's to re-grade (maker ≠ checker); this run's deep
+  audit independently found the design surface CLEAN, but the loop does NOT self-grade. Confidence statement
+  stays UNCHECKED. Validation 8/8, 0 unmet. A DEEP-AUDIT run with 2 real clears + correctly-rejected false
+  positives on a converged product = success.
 - **2026-07-12 (run 65) — 6-Haiku scout sweep + 3 file-disjoint clears (#525 mobile a11y / #526 Track-F
   coverage / #527 auth silent-null hardening); 8 Sonnet reviews, 1 REQUEST_CHANGES resolved in a 2nd cycle;
   0 abandons.** Deep audit NOT due (run 63 ran one <24h ago). Baseline green (typecheck 0, 977 core tests,
