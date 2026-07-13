@@ -38,6 +38,10 @@ export const ChevronRight = makeIcon("chevron-forward");
 export const ArrowLeft = makeIcon("arrow-back");
 export const ArrowRight = makeIcon("arrow-forward");
 export const Check = makeIcon("checkmark");
+// Premium mark on the paywall header. A filled star reads as "premium / featured" with none of the
+// AI connotation the sparkle carries (see Wrapped below) — replacing a raw `★` glyph so the flagship
+// monetization surface uses a real vector icon like every other affordance.
+export const Star = makeIcon("star");
 
 // ── Home / section navigation (one per home-grid destination) ────────────────
 export const Pantry = makeIcon("cube-outline");
