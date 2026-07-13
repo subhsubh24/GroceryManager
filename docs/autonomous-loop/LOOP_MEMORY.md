@@ -4,6 +4,55 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-13 (run 69) — 2 file-disjoint mobile clears advancing the design_taste ship-critical dimension
+  (#547 native a11y / #548 paywall icon); 4 Sonnet reviews all first-pass APPROVE; 0 abandons. No standalone
+  deep audit (run 66 3 runs ago; folded into a proportionate 5-lens Haiku scout sweep).** Baseline gate green
+  (root typecheck 0, 1023 core tests, prod build clean 0 missing-export, self-validation 8/8). Ran a 5-lens
+  scout sweep (newest-code correctness · Track-G security/RLS · design/a11y/taste · artifact-freshness ·
+  monetization+test-coverage) covering the deep-audit lenses rather than a separate standalone audit on a
+  just-audited converged surface.
+  **KEY FINDING — the ship-gate blocker in the QUALITY_SCORECARD is STALE (not a live gap).** The scorecard
+  (docs/quality, as of 2026-07-11) grades `design_taste` **B** (ship-critical → ship gate NOT met), naming
+  the native app's "no icon system + ~110 raw-glyph affordances + the residual web ▾" as the blocker. But that
+  gap was **already closed**: run 64/65 gave `apps/mobile` a full `@expo/vector-icons` Ionicons registry
+  (`lib/icons.tsx`; `cook/[id].tsx` uses ArrowLeft/ArrowRight/Check/ChevronLeft, `index.tsx` uses Ionicons),
+  and the web `cook/[id]/page.tsx:182` already renders `<ChevronDown>` (not `▾`). The scorecard was written the
+  SAME DAY the icon system merged and never refreshed. **The artifact-freshness scout independently flagged this
+  exact staleness — but docs/quality/ is OWNED BY the separate Quality Auditor routine (maker≠checker), so the
+  loop must NOT rewrite it; the Auditor owns re-grading `design_taste` to A now that the gap is gone.** This run
+  further closed the last residual glyphs the scorecard named, so the re-grade case is airtight.
+  **#547 (a11y — the design_taste residual, native surface).** Native RN `Pressable`/`Link` CTAs across 10
+  `apps/mobile` screens (the 6 error-state retry buttons + digest/use-it-up nav CTAs + the 5 paywall
+  upgrade-CTA `Link`s) had NO `accessibilityRole`/`accessibilityLabel`, so VoiceOver/TalkBack announced them as
+  static text, not buttons — inconsistent with `index.tsx`'s own convention (cards already set
+  `accessibilityRole="button"`). Added role + a glyph-stripped label ("See plans" not "See plans →") to each.
+  **Reviewer A traced expo-router `BaseExpoRouterLink.js` to confirm `<Link>` spreads `...rest` (incl. the a11y
+  props) onto the rendered `Text` at RUNTIME — not merely a typecheck pass** (LinkProps extends TextProps).
+  **#548 (design — last raw glyph on the flagship paywall).** `upgrade.tsx` header rendered a raw Unicode `★`
+  as a `<Text>` glyph while every other affordance uses the Ionicons registry. Added `Star = makeIcon("star")`
+  (filled star = premium mark; deliberately NOT the sparkle, which the registry reserves for AI content per the
+  `Wrapped` precedent) and used `<Star size={28} color="#ffffff" />`; dropped the now-orphaned `starGlyph`
+  style. Reviewer A ran `tsc` in an isolated worktree + confirmed `"star"` is a valid Ionicons glyph and no
+  dangling refs remain.
+  **REJECTED (verified, with evidence):** (1) **Correctness scout — `embed()` (llm/client.ts:512) not metered
+  for Margin telemetry** → receipt-extraction cost-per-outcome is under-reported because embeddings aren't
+  tagged. REAL gap, but the fix threads a `MeterContext` deep through the correctness-sensitive normalization
+  cascade (`persist.ts`/`resolve.ts`/`gmail-sync.ts` → `db-ports` → `createGeminiEmbedder` → `embed`) for
+  TELEMETRY-only accuracy with ZERO pre-launch data — poor risk/reward on a protected core path (the same
+  verdict as the standing ingest-N+1 rejection, runs 38/41). `persist.ts` has no session/meter in scope, so the
+  thread-through is genuinely cross-cutting. (2) **Security scout** — RLS PASSED (all 23+ tables), Track-G core
+  in place; every "gap" (spend caps, Turnstile/TOKEN_ENC/email-HMAC keys) is owner-config already surfaced in
+  PENDING_OPS, not buildable loop code. (3) **Monetization** — RE-CONFIRMED reach-gated (#190; every buildable
+  lever built; the affiliate deferral is external-key + unmodeled + not a floor-mover). No re-open trigger.
+  **LESSON: when the ship-gate-breaking scorecard grade is STALE (its named gap was closed by a prior run and
+  the doc wasn't refreshed), the fix is NOT to self-grade (maker≠checker forbids touching docs/quality/) — it's
+  to (a) close any residual instances of the named gap through the normal gates (done: #547/#548), and (b)
+  record the staleness in LOOP_HEALTH/LOOP_MEMORY so the Quality Auditor re-grades. Verify a scorecard claim
+  against the CURRENT code before treating it as a live blocker — a doc dated the same day a fix merged is a
+  prime staleness candidate.**
+  **Readiness:** did NOT open 'ready' — the sole DoD gap is unchanged (reach-gated floor #190 = owner-GTM;
+  Confidence stays UNCHECKED). Validation 8/8, 0 unmet. A quiet, coherent, converged run = success.
+
 - **2026-07-13 (run 68) — 2 file-disjoint clears: an artifact-freshness docs fix (#543) + the §11 launch-brief
   authoring consumer (#544, advances the LOWEST incomplete ROADMAP track); 4 Sonnet reviews all first-pass
   APPROVE, 0 abandons. No deep audit (run 66 ran one 2026-07-12 <24h ago).** Baseline green (typecheck 0,
