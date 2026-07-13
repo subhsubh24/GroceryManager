@@ -9,6 +9,7 @@
 import * as cheerio from "cheerio";
 import { ReceiptExtraction } from "@gm/shared";
 import type { GeminiClient, VerifyResult } from "../llm/client.js";
+import { WORKFLOWS, newSessionId } from "../llm/meter.js";
 import { verifyReceipt } from "./verify.js";
 
 const RECEIPT_SYSTEM =
@@ -56,6 +57,12 @@ export async function extractReceipt(
     // Prices → cents, line totals, and the grand total are computed by running Python, not predicted
     // (PLAN §8 — deterministic math belongs in code). flash-lite supports the code-exec tool.
     codeExecution: true,
+    // Every attempt (primary + verify-then-escalate retries) is a node under one shared session.
+    meter: {
+      workflowId: WORKFLOWS.receiptExtraction,
+      operation: "extract",
+      sessionId: newSessionId(WORKFLOWS.receiptExtraction),
+    },
   });
 }
 
@@ -79,5 +86,10 @@ export async function extractReceiptImage(
     maxAttempts: opts.maxAttempts ?? 3,
     codeExecution: true,
     images,
+    meter: {
+      workflowId: WORKFLOWS.receiptExtraction,
+      operation: "extract-vision",
+      sessionId: newSessionId(WORKFLOWS.receiptExtraction),
+    },
   });
 }

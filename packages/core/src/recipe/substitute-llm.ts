@@ -5,6 +5,7 @@
  */
 import { z } from "zod";
 import { getGeminiClient, type GeminiClient } from "../llm/client.js";
+import { WORKFLOWS, newSessionId } from "../llm/meter.js";
 import { findSubstitutions, type Substitution } from "./substitute.js";
 
 const SubsSchema = z.object({
@@ -33,7 +34,15 @@ export async function getSubstitutions(
     const res = await client.generateStructured(
       SubsSchema,
       `Ingredient: "${ingredient}". Suggest substitutions.`,
-      { tier: "cheap", system: SYSTEM },
+      {
+        tier: "cheap",
+        system: SYSTEM,
+        meter: {
+          workflowId: WORKFLOWS.substitution,
+          operation: "substitute",
+          sessionId: newSessionId(WORKFLOWS.substitution),
+        },
+      },
     );
     const subs = res.substitutions
       .map((s) => ({ text: s.text.trim(), uses: s.uses }))

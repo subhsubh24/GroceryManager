@@ -7,6 +7,7 @@
  */
 import type { GeminiClient, ImagePart } from "../llm/client.js";
 import { getGeminiClient } from "../llm/index.js";
+import { WORKFLOWS, newSessionId, type MeterContext } from "../llm/meter.js";
 import {
   RecipeImportFields,
   buildImportImagePrompt,
@@ -34,20 +35,31 @@ export interface ImportRecipeResult {
   method: "json-ld" | "llm";
 }
 
-async function llmImport(client: GeminiClient, text: string, sourceUrl?: string): Promise<ImportedRecipe> {
+async function llmImport(
+  client: GeminiClient,
+  text: string,
+  sourceUrl: string | undefined,
+  meter: MeterContext,
+): Promise<ImportedRecipe> {
   const fields = await client.generateStructured(RecipeImportFields, buildImportPrompt(text), {
     tier: "cheap",
     system: IMPORT_SYSTEM,
+    meter,
   });
   return fieldsToImportedRecipe(fields, sourceUrl);
 }
 
-async function visionImport(client: GeminiClient, image: ImagePart): Promise<ImportedRecipe> {
+async function visionImport(
+  client: GeminiClient,
+  image: ImagePart,
+  meter: MeterContext,
+): Promise<ImportedRecipe> {
   // Photos are harder than text → default to mid (Flash) for the vision read.
   const fields = await client.generateStructured(RecipeImportFields, buildImportImagePrompt(), {
     tier: "mid",
     system: IMPORT_SYSTEM,
     images: [image],
+    meter,
   });
   return fieldsToImportedRecipe(fields);
 }
@@ -60,9 +72,17 @@ export async function importRecipe(
   const url = input.url?.trim();
   const text = input.text?.trim();
 
+  // One shared session per import run links every LLM step this run makes into one Margin chain.
+  const sessionId = newSessionId(WORKFLOWS.recipeImport);
+  const meterFor = (operation: string): MeterContext => ({
+    workflowId: WORKFLOWS.recipeImport,
+    operation,
+    sessionId,
+  });
+
   if (input.image) {
     const client = deps.client ?? getGeminiClient();
-    return { recipe: await visionImport(client, input.image), method: "llm" };
+    return { recipe: await visionImport(client, input.image, meterFor("import-vision")), method: "llm" };
   }
 
   if (url) {
@@ -83,12 +103,15 @@ export async function importRecipe(
     if (jsonLd && jsonLd.ingredients.length > 0) return { recipe: jsonLd, method: "json-ld" };
     // No usable JSON-LD → fall back to the model over the cleaned page text.
     const client = deps.client ?? getGeminiClient();
-    return { recipe: await llmImport(client, recipeHtmlToText(html), url), method: "llm" };
+    return {
+      recipe: await llmImport(client, recipeHtmlToText(html), url, meterFor("import-url-fallback")),
+      method: "llm",
+    };
   }
 
   if (text) {
     const client = deps.client ?? getGeminiClient();
-    return { recipe: await llmImport(client, text), method: "llm" };
+    return { recipe: await llmImport(client, text, undefined, meterFor("import-text")), method: "llm" };
   }
 
   throw new Error("Provide a recipe URL or paste the recipe text.");

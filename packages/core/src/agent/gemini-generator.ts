@@ -6,6 +6,7 @@
  */
 import { z } from "zod";
 import { getGeminiClient, type GeminiClient } from "../llm/client.js";
+import { WORKFLOWS, newSessionId } from "../llm/meter.js";
 import type { PlanGenerator } from "./plan-week.js";
 
 const WeekPlanSchema = z.object({
@@ -31,6 +32,13 @@ export function geminiPlanGenerator(client: GeminiClient = getGeminiClient()): P
       tier: "mid",
       verify: req.verify,
       maxAttempts: 3,
+      // One shared session per plan run; each verify-then-escalate attempt is a node under it
+      // (the first primary, later ones tagged `isRetry` inside generateWithVerify).
+      meter: {
+        workflowId: WORKFLOWS.planWeek,
+        operation: "generate",
+        sessionId: newSessionId(WORKFLOWS.planWeek),
+      },
     });
     return value;
   };
