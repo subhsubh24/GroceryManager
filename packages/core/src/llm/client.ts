@@ -14,7 +14,7 @@ import { EMBEDDING_DIM, EMBEDDING_MODEL, type GeminiTier } from "@gm/config/cons
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { nextTier, resolveModel, thinkingBudgetFor } from "./models.js";
-import { recordLlmCall } from "./meter.js";
+import { recordLlmCall, type MeterContext } from "./meter.js";
 import type { Tool, ToolContext } from "./semantic-layer.js";
 
 export interface ImagePart {
@@ -42,6 +42,12 @@ export interface GenerateOptions {
    * in this mode we ask for JSON in the final text part and parse it. Use it for math-bearing tasks.
    */
   codeExecution?: boolean;
+  /**
+   * Margin supply-chain tagging for this call — the workflow it belongs to, the `operation` STEP
+   * label, and the SHARED `sessionId` linking one run's calls into a chain. Purely additive telemetry
+   * (never affects the model call); omitted → the call attributes to the default workflow.
+   */
+  meter?: MeterContext;
 }
 
 /** One turn of a free-text conversation (mirrors the public ChatMessage shape). */
@@ -58,6 +64,8 @@ export interface ChatOptions {
    * predicting numbers. Same wiring as `generateStructured` — adds `tools: [{ codeExecution: {} }]`.
    */
   codeExecution?: boolean;
+  /** Margin supply-chain tagging for this call (see {@link GenerateOptions.meter}). */
+  meter?: MeterContext;
 }
 
 /** A cheap, separate verification step — "the call that wrote it doesn't grade it." */
@@ -184,10 +192,15 @@ export class GeminiClient {
    * Margin. Latency is timed around `withTimeout`; on success (the only path that returns a response)
    * the call is emitted NON-BLOCKING via `recordLlmCall` — telemetry never delays or breaks the call.
    */
-  private async timedGenerate<R>(model: string, label: string, call: () => Promise<R>): Promise<R> {
+  private async timedGenerate<R>(
+    model: string,
+    label: string,
+    call: () => Promise<R>,
+    meter?: MeterContext,
+  ): Promise<R> {
     const start = Date.now();
     const res = await withTimeout(call(), this.callTimeoutMs, label);
-    recordLlmCall(model, res, Date.now() - start);
+    recordLlmCall(model, res, Date.now() - start, meter);
     return res;
   }
 
@@ -220,16 +233,20 @@ export class GeminiClient {
       for (const img of opts.images ?? []) {
         parts.push({ inlineData: { mimeType: img.mimeType, data: img.dataBase64 } });
       }
-      const res = await this.timedGenerate(model, `generateStructured/codeExec ${model}`, () =>
-        this.ai.models.generateContent({
-          model,
-          contents: { role: "user", parts },
-          config: {
-            tools: [{ codeExecution: {} }],
-            ...(opts.system ? { systemInstruction: opts.system } : {}),
-            ...(mediaRes ? { mediaResolution: mediaRes } : {}),
-          },
-        }),
+      const res = await this.timedGenerate(
+        model,
+        `generateStructured/codeExec ${model}`,
+        () =>
+          this.ai.models.generateContent({
+            model,
+            contents: { role: "user", parts },
+            config: {
+              tools: [{ codeExecution: {} }],
+              ...(opts.system ? { systemInstruction: opts.system } : {}),
+              ...(mediaRes ? { mediaResolution: mediaRes } : {}),
+            },
+          }),
+        opts.meter,
       );
       return schema.parse(extractJsonValue(res.text ?? "")) as z.infer<S>;
     }
@@ -241,20 +258,24 @@ export class GeminiClient {
     }
     const contents: Content = { role: "user", parts };
 
-    const res = await this.timedGenerate(model, `generateStructured ${model}`, () =>
-      this.ai.models.generateContent({
-        model,
-        contents,
-        config: {
-          responseMimeType: "application/json",
-          // Gemini accepts an OpenAPI-subset schema; zod-to-json-schema is close enough for
-          // most shapes. (Enums need an explicit "type":"string" — handled at schema authoring.)
-          responseSchema: jsonSchema,
-          ...(opts.system ? { systemInstruction: opts.system } : {}),
-          ...(mediaRes ? { mediaResolution: mediaRes } : {}),
-          ...(budget !== -1 ? { thinkingConfig: { thinkingBudget: budget } } : {}),
-        },
-      }),
+    const res = await this.timedGenerate(
+      model,
+      `generateStructured ${model}`,
+      () =>
+        this.ai.models.generateContent({
+          model,
+          contents,
+          config: {
+            responseMimeType: "application/json",
+            // Gemini accepts an OpenAPI-subset schema; zod-to-json-schema is close enough for
+            // most shapes. (Enums need an explicit "type":"string" — handled at schema authoring.)
+            responseSchema: jsonSchema,
+            ...(opts.system ? { systemInstruction: opts.system } : {}),
+            ...(mediaRes ? { mediaResolution: mediaRes } : {}),
+            ...(budget !== -1 ? { thinkingConfig: { thinkingBudget: budget } } : {}),
+          },
+        }),
+      opts.meter,
     );
 
     const text = res.text ?? "";
@@ -287,7 +308,13 @@ export class GeminiClient {
           ? `${opts.prompt}\n\n# Previous attempt failed verification\nReason: ${lastErr}\nReturn a corrected result.`
           : opts.prompt;
 
-        const value = await this.generateStructured(opts.schema, prompt, { ...opts, tier });
+        // Each attempt is its own metered node under the workflow's shared session: the first is the
+        // primary call, every escalation/retry after it is tagged `isRetry` so retried spend is
+        // separable from first-try spend in Margin's supply-chain view.
+        const meter: MeterContext | undefined = opts.meter
+          ? { ...opts.meter, isRetry: attempts > 1 }
+          : undefined;
+        const value = await this.generateStructured(opts.schema, prompt, { ...opts, tier, meter });
 
         const verdict = opts.verify ? opts.verify(value) : ({ ok: true } as const);
         if (verdict.ok) {
@@ -319,15 +346,19 @@ export class GeminiClient {
       role: m.role === "assistant" ? "model" : "user",
       parts: [{ text: m.content }],
     }));
-    const res = await this.timedGenerate(model, `chat ${model}`, () =>
-      this.ai.models.generateContent({
-        model,
-        contents,
-        config: {
-          ...(args.codeExecution ? { tools: [{ codeExecution: {} }] } : {}),
-          ...(args.system ? { systemInstruction: args.system } : {}),
-        },
-      }),
+    const res = await this.timedGenerate(
+      model,
+      `chat ${model}`,
+      () =>
+        this.ai.models.generateContent({
+          model,
+          contents,
+          config: {
+            ...(args.codeExecution ? { tools: [{ codeExecution: {} }] } : {}),
+            ...(args.system ? { systemInstruction: args.system } : {}),
+          },
+        }),
+      args.meter,
     );
     return { text: res.text ?? "" };
   }
@@ -352,6 +383,8 @@ export class GeminiClient {
     tier?: GeminiTier;
     /** Hard cap on tool-call rounds (the loop's circuit breaker). Default 8. */
     maxSteps?: number;
+    /** Margin supply-chain tagging applied to EVERY call of the agentic loop (see {@link GenerateOptions.meter}). */
+    meter?: MeterContext;
   }): Promise<{ text: string; steps: number }> {
     const tier = args.tier ?? "cheap";
     const model = resolveModel(tier, this.env.LLM_USE_FLASH_LITE);
@@ -390,8 +423,11 @@ export class GeminiClient {
         steps++;
         let res: Awaited<ReturnType<typeof this.ai.models.generateContent>>;
         try {
-          res = await this.timedGenerate(model, `runChatWithTools ${model}`, () =>
-            this.ai.models.generateContent({ model, contents, config: buildConfig(allowCodeExec) }),
+          res = await this.timedGenerate(
+            model,
+            `runChatWithTools ${model}`,
+            () => this.ai.models.generateContent({ model, contents, config: buildConfig(allowCodeExec) }),
+            args.meter ? { ...args.meter, isRetry: steps > 1 } : undefined,
           );
         } catch (e) {
           // SOME models reject combining functionDeclarations + codeExecution (400 INVALID_ARGUMENT). That
@@ -401,8 +437,11 @@ export class GeminiClient {
           // and permanently drop code execution and start predicting numbers.
           if (allowCodeExec && steps === 1 && isToolCombineRejection(e)) {
             allowCodeExec = false;
-            res = await this.timedGenerate(model, `runChatWithTools ${model} (no code-exec)`, () =>
-              this.ai.models.generateContent({ model, contents, config: buildConfig(false) }),
+            res = await this.timedGenerate(
+              model,
+              `runChatWithTools ${model} (no code-exec)`,
+              () => this.ai.models.generateContent({ model, contents, config: buildConfig(false) }),
+              args.meter ? { ...args.meter, isRetry: steps > 1 } : undefined,
             );
           } else {
             throw e;
@@ -452,6 +491,7 @@ export class GeminiClient {
             contents,
             ...(args.system ? { config: { systemInstruction: args.system } } : {}),
           }),
+        args.meter ? { ...args.meter, isRetry: true } : undefined,
       );
       return { text: finalRes.text ?? "", steps };
     } catch (e) {

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { buildLlmCallPayload, recordLlmCall, WORKFLOW_ID } from "./meter.js";
+import { afterEach, describe, expect, it } from "vitest";
+import { buildLlmCallPayload, newSessionId, recordLlmCall, WORKFLOW_ID, WORKFLOWS } from "./meter.js";
 
 describe("buildLlmCallPayload", () => {
   it("maps every Gemini usageMetadata field to the right Margin token count", () => {
@@ -32,6 +32,66 @@ describe("buildLlmCallPayload", () => {
     expect(p.inputTokens).toBe(7);
     expect(p.outputTokens).toBe(0);
     expect(p.cacheReadTokens).toBe(0);
+  });
+});
+
+describe("buildLlmCallPayload — supply-chain tagging (MeterContext)", () => {
+  const res = { usageMetadata: { promptTokenCount: 10 } };
+
+  it("tags the call with the context's workflow, operation, and session", () => {
+    const p: { workflowId: string; operation?: string; sessionId?: string; isRetry?: boolean } =
+      buildLlmCallPayload("gemini-flash-lite", res, 100, {
+        workflowId: WORKFLOWS.recipeImport,
+        operation: "import-text",
+        sessionId: "sess-1",
+      });
+    expect(p.workflowId).toBe(WORKFLOWS.recipeImport);
+    expect(p.operation).toBe("import-text");
+    expect(p.sessionId).toBe("sess-1");
+    expect(p.isRetry).toBeUndefined();
+  });
+
+  it("marks retries so escalated spend is separable from first-try spend", () => {
+    const first = buildLlmCallPayload("m", res, 1, { operation: "generate", sessionId: "s" });
+    const retry = buildLlmCallPayload("m", res, 1, { operation: "generate", sessionId: "s", isRetry: true });
+    expect(first.isRetry).toBeUndefined();
+    expect(retry.isRetry).toBe(true);
+  });
+
+  it("links multiple operations under one shared session (the journey chain)", () => {
+    const session = newSessionId(WORKFLOWS.planWeek);
+    const steps = ["generate", "substitute", "extract"].map((operation, i) =>
+      buildLlmCallPayload("m", res, i, { workflowId: WORKFLOWS.planWeek, operation, sessionId: session }),
+    ) as Array<ReturnType<typeof buildLlmCallPayload> & { operation?: string }>;
+    // All share ONE session; each carries its own distinct operation label → a multi-node chain.
+    expect(new Set(steps.map((s) => s.sessionId))).toEqual(new Set([session]));
+    expect(steps.map((s) => s.operation)).toEqual(["generate", "substitute", "extract"]);
+  });
+
+  it("newSessionId is unique per run and prefixed by the workflow", () => {
+    const a = newSessionId(WORKFLOWS.substitution);
+    const b = newSessionId(WORKFLOWS.substitution);
+    expect(a).not.toBe(b);
+    expect(a.startsWith(`${WORKFLOWS.substitution}:`)).toBe(true);
+  });
+
+  describe("env precedence (eval-batch tags win over per-call context)", () => {
+    afterEach(() => {
+      delete process.env.MARGIN_WORKFLOW_ID;
+      delete process.env.MARGIN_SESSION_ID;
+    });
+
+    it("MARGIN_WORKFLOW_ID / MARGIN_SESSION_ID override the ctx (single-threaded eval batch)", () => {
+      process.env.MARGIN_WORKFLOW_ID = "eval-workflow";
+      process.env.MARGIN_SESSION_ID = "eval:run-1";
+      const p = buildLlmCallPayload("m", res, 1, {
+        workflowId: WORKFLOWS.substitution,
+        operation: "substitute",
+        sessionId: "app-session",
+      });
+      expect(p.workflowId).toBe("eval-workflow");
+      expect(p.sessionId).toBe("eval:run-1");
+    });
   });
 });
 
