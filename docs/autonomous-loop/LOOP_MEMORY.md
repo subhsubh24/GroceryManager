@@ -4,6 +4,49 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-13 (run 70) — QUIET CONVERGED RUN: folded 5-lens deep-audit-equivalent scout sweep, ALL 5
+  LENSES CLEAN, 0 code PRs (nothing cleared the value bar). The sole concrete candidate was verified a
+  FALSE POSITIVE; monetization re-confirmed reach-gated. One housekeeping PR only.** Baseline gate green
+  (root typecheck 0, core tests exit 0 / 1028 pass, self-validation 8/8 + `--readiness` READY 0 unmet, tree
+  clean, 0 open PRs). Ran a proportionate 5-Haiku scout sweep covering all deep-audit lenses (it was ~24h /
+  4 runs since the run-66 standalone, so this folds as the deep audit): newest-code correctness+coverage ·
+  security/abuse+RLS/Track-G · design+a11y+taste · artifact-freshness · monetization+business-case.
+  **THE ONE CONCRETE CANDIDATE WAS A FALSE POSITIVE — documented so a future correctness scout doesn't
+  re-chase it.** The correctness scout flagged `client.ts:444`: in `runChatWithTools`, the tool-combine 400
+  fallback retry tags `isRetry: steps > 1` (= false, since `steps` is still 1), claiming it misattributes
+  the retry's Margin spend as a primary attempt; proposed fix `isRetry: true`. **VERIFIED WRONG against the
+  code:** `timedGenerate` calls `recordLlmCall` AFTER `await withTimeout(call())` (`client.ts:202-203`), so
+  when the first call THROWS the 400 (`isToolCombineRejection`), it throws before `recordLlmCall` is ever
+  reached → **the errored call is never metered.** The fallback at line 440 is therefore the FIRST and only
+  metered call for step 1, and `isRetry: false` correctly marks it the primary attempt. The proposed
+  `isRetry: true` would be the actual bug — emitting a retry record with no corresponding primary. No
+  double-count is possible (the catch is only entered when the first call threw, i.e. wasn't recorded).
+  **LESSON (reinforces run 66's "verify the assumption against the actual code"): when a scout claims a
+  metering/telemetry mis-tag, trace WHERE the record is emitted relative to the throw — a `record*()` call
+  placed AFTER `await` means a thrown call self-excludes from telemetry, and any downstream "isRetry/isPrimary"
+  tag on the fallback is reasoning about the FIRST SUCCESSFUL emit, not the throw. The fallback correctly
+  stands in as the primary.** The other 4 lenses: SECURITY/RLS/Track-G CLEAN (full matrix re-verified — all
+  22 migrations' tables RLS+policy, ~41 routes rate-limited/zod-validated/error-hygienic, demo public AI path
+  spend-capped + captcha'd, webhooks signature/timing-safe, headers set, Margin egress metadata-only);
+  DESIGN/a11y/TASTE CLEAN (demo/onboarding/paywall/home/signup — no slop, THE DESIGNER QUESTION passes);
+  ARTIFACT FRESHNESS CONSISTENT (README/OPERATIONS/.env.example/BUSINESS_CASE prices+SUMMARY YAML/
+  ACCEPTANCE_AUDIT/capabilities.json all match code — the run-68 #543 AUTH_SECRET/NEXTAUTH_SECRET fix holds);
+  MONETIZATION REACH-GATED RE-CONFIRMED (the scout's 4 candidate "levers" — a $2.99 sub-tier, more premium
+  teasers, upgrade-page A/B tests, flipping the owner-gated Family flag — are speculative pricing/experiment
+  changes with ZERO pre-launch signal, owner-flag-gated, or non-floor-movers that together close only ~20%
+  of the gap; the scout's own verdict is REACH-GATED, matching runs 41/42/60-69; base ≈ $33K < $100K =
+  owner-GTM #190, no buildable floor-mover → no re-open trigger).
+  **KEY STATE CHANGE THIS RUN: the QUALITY_SCORECARD ship gate is now MET.** The independent Quality Auditor
+  re-graded `design_taste` **B → A** (as of 2026-07-13, PR #550) now that the run-64/65 mobile Ionicons
+  system + run-69 #547/#548 residual-glyph fixes closed the named gap — so overall **A**, ship gate **MET**,
+  every ship-critical dim A/A+, non-SC performance B (≥B satisfies). This clears the last NON-business-case
+  DoD concern the loop had been carrying (the stale-B blocker the run-69 memo predicted the Auditor would
+  close). **The SOLE remaining DoD gap is now unambiguously the reach-gated business-case floor (#190) —
+  owner-GTM, not buildable.** Readiness: did NOT open 'ready' — Confidence stays UNCHECKED on the floor.
+  Validation 8/8, 0 unmet. **A quiet, coherent, converged run with a full folded deep audit + a rigorously
+  verified false-positive rejection = SUCCESS (per the value bar: ship ALL that clears it — here, zero code
+  cleared it, so zero shipped; padding would be the failure mode).**
+
 - **2026-07-13 (run 69) — 2 file-disjoint mobile clears advancing the design_taste ship-critical dimension
   (#547 native a11y / #548 paywall icon); 4 Sonnet reviews all first-pass APPROVE; 0 abandons. No standalone
   deep audit (run 66 3 runs ago; folded into a proportionate 5-lens Haiku scout sweep).** Baseline gate green
