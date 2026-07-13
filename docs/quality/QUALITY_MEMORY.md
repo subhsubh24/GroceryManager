@@ -5,6 +5,65 @@ new grade against the last entry. Append-only; newest entry on top.
 
 ---
 
+## 2026-07-13 — SHIP GATE RE-CLOSED (overall B → A): design_taste B → A (mobile icon system landed)
+
+**Overall: A. Ship gate: MET.** Mechanical gate this run: typecheck PASS (exit 0), `@gm/core` tests
+PASS (105 files pass / 11 skipped; **1028 tests pass** / 27 skipped — up from 977; coverage lines 88.46
+/ branches 88.2 / functions 90.72 / stmts 88.46 — thresholds 70/84/76/70 met), production `next build`
+PASS (no missing-export warnings; 102 kB shared; middleware 88.6 kB = gzip of a **280,299-byte** raw edge
+bundle, **byte-identical** to 07-11), self-validation PASS (8 capabilities, 8 active, all keyless;
+--readiness unmet [], unmet_unsurfaced []). Graded by 9 fresh adversarial per-dimension subagents, none
+having written the code.
+
+**The one dimension that moved: design_taste B → A (ship-critical → RE-CLOSES the gate).** Last cycle's
+sole gate-breaker — the native `apps/mobile` app having NO icon system and ~110 raw Unicode glyphs
+(`←`/`→`/`›`/`✓`/`★`) standing in for icons — is GENUINELY FIXED, verified independently (not
+rubber-stamped): **#522** ("add an Ionicons icon system, replace raw-glyph chrome") created
+`apps/mobile/lib/icons.tsx` — a real `@expo/vector-icons`/Ionicons registry mirroring the web PWA's, with
+tasteful choices (Star=`star`, Wrapped=`trophy-outline`, both deliberately avoiding the sparkle glyph the
+web registry reserves for "Planned by AI") — and **#548** removed the last raw glyph (`★` → `Star`) on the
+paywall header. An adversarial UTF-8 raw-glyph sweep over `apps/mobile/app`
+(U+2190/2192/2039/203A/25B8/25BE/2713/2714/2605/2606) now returns **ZERO structural offenders**: every
+previously-cited affordance renders a real component (`cook/[id].tsx` ChevronLeft/ArrowLeft/ArrowRight/
+Check; `recipes.tsx` ChevronRight list chevron; `upgrade.tsx` Star+Check; `onboarding.tsx` Check;
+`index.tsx` home cards map Icon components). The only residual `→` hits are trailing inline text-arrows in
+CTA labels ("See plans →") — a defensible typographic convention (A→A+ nit). The residual web `▾` nit is
+also closed (`cook/[id]/page.tsx:182` now renders `<ChevronDown>`). Per the scale this clears the A (ship)
+bar → **A** → **ship gate MET**.
+
+**Everything else held.** functional_reality **A+** (re-proven: zero fake-data hits, ledger-only cook
+loop via appendLedgerAndReproject, outcome-asserting e2e, throw-safe auth); correctness_reliability **A**
+(ledger invariant holds — sole pantry_stock write is persist.ts:128-134; depletion edges guarded; LLM
+degrades; only nit is the cosmetic redundant media-gen re-audit at media-gen.ts:168); security **A** (41
+routes, zero unauth'd surface, webhooks fail closed, RLS deny-by-default; in-memory-quota nit unchanged);
+launch_readiness **A** (billing both surfaces, real store PNGs, account deletion both surfaces; only nit is
+owner-supplied eas.json placeholders); tests_evals **A** (coverage enforced in required CI, non-vacuous
+vision eval with recall + anti-hallucination floors); artifact_integrity **A** (manifest HONEST — 3 caps
+re-verified deep genuinely exercise their code; no parked capability; pricing consistent to the cent);
+business_case **A** (all 3 scenarios recomputed to the dollar, floor honesty explicit; arr_year1 naming nit
+unchanged).
+
+**Grades:** functional_reality **A+**, correctness_reliability **A**, security **A**, design_taste **A**
+(↑from B, SC — re-closes gate), launch_readiness **A** (SC), tests_evals **A**, artifact_integrity **A**,
+business_case **A**, performance **B**. **8 at A/A+, 1 at B (non-SC).**
+
+**performance held at B (unchanged from #320, 6th cycle).** Both gaps re-confirmed by an independent
+grader: no CI perf-budget gate (grep = prose comments only, zero byte-assertion); edge middleware 280,299
+bytes raw, byte-identical (NextAuth→jose on the edge, broad matcher). Non-ship-critical — does not affect
+the met gate; it is now the ONLY below-A dim and the only thing keeping overall off A+.
+
+**Issues this run:** CLOSED **#520** (design_taste, gap verified closed by #522 + #548 — mobile icon system
+landed, zero structural glyphs remain, web `▾` swapped). #320 (performance) left open + accurate (byte
+figure unchanged). **Ship-critical dimension RECOVERED above the ship bar → OWNER NOTIFIED** (the blocker
+flagged on 07-11 is resolved; dashboard = this scorecard + closed #520).
+
+**What "raise to A+" looks like next run:** close `performance` (#320) — a real byte-assertion perf-budget
+gate + edge-middleware trim → overall A+. Then bounded A→A+ polish on already-A dims (mobile trailing-→ CTA
+labels → `<ArrowRight/>`; coverage-ratchet tightening; `arr_year1` → `arr_steady_state`; Redis-backed
+demo/rate-limit ceiling).
+
+---
+
 ## 2026-07-11 — SHIP GATE NOW NOT MET (overall A → B): design_taste A → B (re-assessment, not a regression)
 
 **Overall: B. Ship gate: NOT MET.** Mechanical gate this run: typecheck PASS (exit 0), `@gm/core`
