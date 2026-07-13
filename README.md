@@ -27,7 +27,7 @@ packages/db         # Drizzle schema + migrations + seed
 packages/shared     # shared Zod schemas + types
 packages/config     # env + constants
 services/workers    # BullMQ processors + cron
-services/amazon-mcp # optional, opt-in Playwright order-history scraper
+apps/mobile         # Expo / React Native app (excluded from the pnpm workspace; uses npm)
 ```
 
 ## Getting started (dev)

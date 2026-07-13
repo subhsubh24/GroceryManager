@@ -31,8 +31,8 @@ Set these in your Vercel project settings (never commit to the repo):
 |---|---|---|
 | `DATABASE_URL` | Full Postgres connection string (pooled) | Supabase Dashboard → Connect → Connection string (pooled) |
 | `DIRECT_DATABASE_URL` | Direct Postgres URL (for migrations) | Supabase Dashboard → Connect → Connection string (direct) |
-| `NEXTAUTH_SECRET` | Random 32+ char string for session tokens | `openssl rand -base64 32` |
-| `AUTH_SECRET` | Secret for mobile JWT signing | `openssl rand -base64 32` |
+| `AUTH_SECRET` | Random 32+ char string — NextAuth (Auth.js) web session secret (`auth.config.ts`) | `openssl rand -base64 32` |
+| `NEXTAUTH_SECRET` | Signs the mobile JWT issued by `/api/v1/auth/token` (also accepted as a web-session fallback) | `openssl rand -base64 32` |
 
 ### Optional (features degrade gracefully when absent)
 
