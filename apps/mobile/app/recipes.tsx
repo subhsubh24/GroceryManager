@@ -69,7 +69,12 @@ export default function RecipesScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>{error}</Text>
-        <Pressable style={styles.retryButton} onPress={() => load()}>
+        <Pressable
+          style={styles.retryButton}
+          onPress={() => load()}
+          accessibilityRole="button"
+          accessibilityLabel="Retry"
+        >
           <Text style={styles.retryText}>Retry</Text>
         </Pressable>
       </View>

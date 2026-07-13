@@ -71,7 +71,12 @@ export default function PantryScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>{error}</Text>
-        <Pressable style={styles.retryButton} onPress={onRefresh}>
+        <Pressable
+          style={styles.retryButton}
+          onPress={onRefresh}
+          accessibilityRole="button"
+          accessibilityLabel="Retry"
+        >
           <Text style={styles.retryText}>Retry</Text>
         </Pressable>
       </View>

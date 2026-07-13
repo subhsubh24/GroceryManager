@@ -78,7 +78,12 @@ export default function UseItUpScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>{error}</Text>
-        <Pressable style={styles.retryBtn} onPress={() => setAttempt((a) => a + 1)}>
+        <Pressable
+          style={styles.retryBtn}
+          onPress={() => setAttempt((a) => a + 1)}
+          accessibilityRole="button"
+          accessibilityLabel="Retry"
+        >
           <Text style={styles.retryBtnText}>Retry</Text>
         </Pressable>
       </View>
@@ -95,7 +100,12 @@ export default function UseItUpScreen() {
         <Text style={styles.emptyNote}>
           When pantry items are about to run out, recipe ideas appear here so nothing goes to waste.
         </Text>
-        <Pressable style={styles.retryBtn} onPress={() => router.push("/pantry")}>
+        <Pressable
+          style={styles.retryBtn}
+          onPress={() => router.push("/pantry")}
+          accessibilityRole="button"
+          accessibilityLabel="Check pantry"
+        >
           <Text style={styles.retryBtnText}>Check pantry →</Text>
         </Pressable>
       </View>

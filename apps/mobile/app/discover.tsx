@@ -115,7 +115,12 @@ export default function DiscoverScreen() {
           Upgrade to unlock unlimited Discover — swipe through recipes matched to what's in your
           pantry and train your taste.
         </Text>
-        <Link href="/upgrade" style={styles.upgradeBtn}>
+        <Link
+          href="/upgrade"
+          style={styles.upgradeBtn}
+          accessibilityRole="button"
+          accessibilityLabel="See plans"
+        >
           <Text style={styles.upgradeBtnText}>See plans →</Text>
         </Link>
       </View>
