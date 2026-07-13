@@ -4,6 +4,62 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-13 (run 68) — 2 file-disjoint clears: an artifact-freshness docs fix (#543) + the §11 launch-brief
+  authoring consumer (#544, advances the LOWEST incomplete ROADMAP track); 4 Sonnet reviews all first-pass
+  APPROVE, 0 abandons. No deep audit (run 66 ran one 2026-07-12 <24h ago).** Baseline green (typecheck 0,
+  1023 core tests / 27 declared-skips, prod build clean 0 missing-export, self-validation 8/8). Ran a
+  proportionate 5-Haiku scout sweep (newest-code correctness · Track-G security · artifact-freshness ·
+  design/a11y · monetization-lever) rather than a full re-audit of the just-audited converged surface.
+  **#543 (LIVING-ARTIFACTS) — a docs-vs-code sweep found 3 real inaccuracies, all shipped in one coherent PR.**
+  (a) `docs/OPERATIONS.md` documented `AUTH_SECRET`/`NEXTAUTH_SECRET` with their roles SWAPPED — code uses
+  `AUTH_SECRET` for the NextAuth web session (`auth.config.ts:13`) and `NEXTAUTH_SECRET` to sign the mobile
+  JWT (`/api/v1/auth/token`, throws when unset). An operator rotating keys per the doc would have broken auth.
+  Both Sonnet reviewers independently traced next-auth@5's own `lib/env` fallback (`config.secret ??=
+  AUTH_SECRET ?? NEXTAUTH_SECRET`) to confirm the "also a web-session fallback" note. (b) `.env.example`
+  listed `AUTH_SECRET` but omitted its REQUIRED sibling `NEXTAUTH_SECRET` — added. (c) `README.md` monorepo
+  layout listed a phantom `services/amazon-mcp` (never built; the Amazon feature is affiliate links in
+  `packages/core/src/integrations/amazon`) — replaced with the real, previously-omitted `apps/mobile`.
+  **LESSON: the artifact-freshness lens keeps paying off on a converged product — the highest-value doc bug
+  isn't stale prose, it's a doc that would actively MISLEAD an operator (secrets in the wrong slot). Verify
+  every claim against the code (and the dependency's source, not its README example — the run-67 #536 lesson)
+  before shipping a "fix."**
+  **#544 (FLAGSHIP, §11 lowest-incomplete track) — built the AUTHORING half of the media-staging pipeline.**
+  The §11 adapter (run 62 #509) + batch staging consumer (run 63 #515) were built; the ROADMAP build-status
+  note named the remaining keyless half precisely: "no invocation site yet AUTHORS a real CreativeBrief (from
+  the brand kit / launch plan) and calls stageCreative." Built `launch-briefs.ts`: `LAUNCH_CREATIVE_BRIEFS`
+  (hand-authored, deterministic briefs for the REAL launch beats in `docs/brand/LAUNCH_PLAN.md` — Product Hunt
+  listing, launch-day social, waitlist email header — styled per `BRAND_KIT.md`, every prompt a concrete scene
+  not a generator cliché, every item carrying an FTC disclosure so it passes `auditMediaAsset`),
+  `auditLaunchBriefs()` (keyless proof the authoring upholds the audit bar), and `stageLaunchCreative()` (the
+  batch driver). Reviewer A MUTATION-verified the load-bearing audit test (injected "vibrant colors" → the
+  test cascaded to 3 failures, then reverted). **LESSON: when a ROADMAP box's remaining work is split into a
+  keyless half + an owner-gated edge (real assets need the owner's Gemini preview key), BUILD the keyless half
+  through the normal gates and leave the box `[ ]` — the authoring + batch orchestration is EVIDENCE-BASED
+  progress even though it produces nothing until the key is connected, mirroring how the adapter + staging
+  layers were themselves built without a live invocation site.** Registered under the existing
+  `marketing-media-gen` capability (not a new one — same keyless-validated surface).
+  **PROCESS SNAG (branch-entanglement, 4th shape — runs 39/41/61/68):** the §11 files were created + committed
+  while HEAD was still on the docs branch (`claude/docs-artifact-accuracy`), so the media commit stacked on top
+  of the docs commit LOCALLY. Caught BEFORE creating the media PR by the run-61 pre-arm guard (`git rev-list
+  --count origin/main..<branch>` returned 0 → the branch had no commits; `git log` showed the media commit
+  sitting on the docs branch). Fixed cleanly: `git checkout -B claude/media-launch-briefs origin/main &&
+  git cherry-pick <media-commit>` (single commit, only the 4 media files — verified disjoint from docs via
+  `git show --stat`), then `git branch -f claude/docs-artifact-accuracy origin/<docs-branch>` to drop the stray
+  local commit. The REMOTES were never polluted (docs-artifact-accuracy remote only ever had the docs commit;
+  PR #543 stayed clean). No lost work, no bad merge. **LESSON: after `git checkout -b <newbranch>`, VERIFY the
+  switch actually happened (`git branch --show-current`) before creating files — and always confirm a
+  freshly-pushed branch is non-empty (`git rev-list --count origin/main..<branch> > 0`) + disjoint before
+  opening its PR. The 422 "No commits between main and <branch>" on PR-create is the tell that the commit
+  landed on the wrong branch.**
+  **Monetization RE-CONFIRMED reach-gated (adversarial scout, again):** every buildable pricing/tier/
+  conversion/retention lever is built; the only unbuilt "levers" (Instacart/Amazon affiliate) need external
+  keys + are unmodeled + ~$3–15K/yr = not a floor-mover. Security (Track G) + design/a11y scouts: their sole
+  findings were correctly REJECTED — the MARGIN_INGEST_URL "exfiltration" needs attacker-controls-env (not a
+  real boundary; metadata-only; and env.ts validation can't constrain the SDK which reads process.env directly),
+  and the cook-mode `<Check aria-label="in your pantry">` conveys REAL info to SR users so aria-hiding it would
+  REGRESS (marginal ordering nitpick, not a fix). **Readiness:** did NOT open 'ready' — sole DoD gap unchanged
+  (reach-gated floor #190 = owner-GTM; Confidence stays UNCHECKED). §11 box stays `[ ]` (real creative needs the
+  owner key). Validation 8/8, 0 unmet. A quiet, coherent, converged run = success.
 - **2026-07-12 (run 67) — 2 file-disjoint clears on the NEWEST merge #534 (Margin economics telemetry):
   Track-F coverage (#535) + a LIVING-ARTIFACTS env doc (#536); 4 Sonnet reviews, 1 REQUEST_CHANGES fixed
   in cycle 2; 0 abandons. No deep audit (run 66 ran one same day, <24h).** The repo was deep-audited THIS
