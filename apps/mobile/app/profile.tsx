@@ -126,7 +126,12 @@ export default function ProfileScreen() {
               <Text style={[styles.rowValue, isPremium && styles.premiumBadge]}>{tierLabel}</Text>
             </View>
             {!isPremium && (
-              <Link href="/upgrade" style={styles.upgradeLink}>
+              <Link
+                href="/upgrade"
+                style={styles.upgradeLink}
+                accessibilityRole="button"
+                accessibilityLabel="Upgrade to Premium"
+              >
                 <Text style={styles.upgradeLinkText}>Upgrade to Premium →</Text>
               </Link>
             )}

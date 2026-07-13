@@ -69,7 +69,12 @@ export default function DigestScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>{error}</Text>
-        <Pressable style={styles.retryBtn} onPress={() => setAttempt((a) => a + 1)}>
+        <Pressable
+          style={styles.retryBtn}
+          onPress={() => setAttempt((a) => a + 1)}
+          accessibilityRole="button"
+          accessibilityLabel="Retry"
+        >
           <Text style={styles.retryBtnText}>Retry</Text>
         </Pressable>
       </View>
@@ -134,10 +139,20 @@ export default function DigestScreen() {
 
       {/* CTAs */}
       <View style={styles.ctaRow}>
-        <Pressable style={styles.ctaBtn} onPress={() => router.push("/cooked")}>
+        <Pressable
+          style={styles.ctaBtn}
+          onPress={() => router.push("/cooked")}
+          accessibilityRole="button"
+          accessibilityLabel="Cook log"
+        >
           <Text style={styles.ctaBtnText}>Cook log →</Text>
         </Pressable>
-        <Pressable style={[styles.ctaBtn, styles.ctaBtnSecondary]} onPress={() => router.push("/cook-tonight")}>
+        <Pressable
+          style={[styles.ctaBtn, styles.ctaBtnSecondary]}
+          onPress={() => router.push("/cook-tonight")}
+          accessibilityRole="button"
+          accessibilityLabel="Cook tonight"
+        >
           <Text style={styles.ctaBtnTextSecondary}>Cook tonight →</Text>
         </Pressable>
       </View>

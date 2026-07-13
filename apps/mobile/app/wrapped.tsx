@@ -103,7 +103,12 @@ export default function WrappedScreen() {
       <View style={styles.center}>
         <Text style={styles.emptyTitle}>Premium feature</Text>
         <Text style={styles.emptyNote}>Upgrade to unlock your Grocery Wrapped summary.</Text>
-        <Link href="/upgrade" style={styles.upgradeButton}>
+        <Link
+          href="/upgrade"
+          style={styles.upgradeButton}
+          accessibilityRole="button"
+          accessibilityLabel="See plans"
+        >
           <Text style={styles.upgradeText}>See plans →</Text>
         </Link>
       </View>

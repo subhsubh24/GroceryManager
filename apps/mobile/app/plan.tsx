@@ -109,7 +109,12 @@ export default function PlanScreen() {
       <View style={styles.center}>
         <Text style={styles.emptyTitle}>Premium feature</Text>
         <Text style={styles.emptyNote}>Upgrade to unlock AI-powered weekly meal plans.</Text>
-        <Link href="/upgrade" style={styles.upgradeButton}>
+        <Link
+          href="/upgrade"
+          style={styles.upgradeButton}
+          accessibilityRole="button"
+          accessibilityLabel="See plans"
+        >
           <Text style={styles.upgradeText}>See plans →</Text>
         </Link>
       </View>

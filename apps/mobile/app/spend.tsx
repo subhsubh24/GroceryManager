@@ -66,7 +66,12 @@ export default function SpendScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>{error}</Text>
-        <Pressable style={styles.retryButton} onPress={load}>
+        <Pressable
+          style={styles.retryButton}
+          onPress={load}
+          accessibilityRole="button"
+          accessibilityLabel="Retry"
+        >
           <Text style={styles.retryText}>Retry</Text>
         </Pressable>
       </View>
@@ -78,7 +83,12 @@ export default function SpendScreen() {
       <View style={styles.center}>
         <Text style={styles.emptyTitle}>Premium feature</Text>
         <Text style={styles.emptyNote}>Spend insights are a premium feature.</Text>
-        <Link href="/upgrade" style={styles.upgradeButton}>
+        <Link
+          href="/upgrade"
+          style={styles.upgradeButton}
+          accessibilityRole="button"
+          accessibilityLabel="See plans"
+        >
           <Text style={styles.upgradeText}>See plans →</Text>
         </Link>
       </View>
