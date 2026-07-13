@@ -19,7 +19,7 @@ import {
   restore,
 } from "../lib/purchases";
 import { SUBSCRIPTION_PLANS, PREMIUM_PERKS } from "@gm/core/billing";
-import { Check } from "../lib/icons";
+import { Check, Star } from "../lib/icons";
 
 const MONTHLY = SUBSCRIPTION_PLANS.find((p) => p.tier === "premium_monthly");
 const ANNUAL = SUBSCRIPTION_PLANS.find((p) => p.tier === "premium_annual");
@@ -119,7 +119,7 @@ export default function UpgradeScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View style={styles.starMark}>
-          <Text style={styles.starGlyph}>★</Text>
+          <Star size={28} color="#ffffff" />
         </View>
         <Text style={styles.title}>{premium ? "You're Premium" : "Go Premium"}</Text>
         <Text style={styles.subtitle}>
@@ -249,7 +249,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 12,
   },
-  starGlyph: { color: "#ffffff", fontSize: 28 },
   title: { fontSize: 26, fontWeight: "700", color: "#1d2530", marginBottom: 8 },
   subtitle: { fontSize: 15, color: "#525d6a", textAlign: "center", lineHeight: 22 },
 
