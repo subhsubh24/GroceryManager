@@ -46,3 +46,6 @@ coverage/
 # playwright scratch output (traces, error contexts, reports) — regenerable, never commit
 test-results/
 playwright-report/
+# §44 live-prod smoke captures — transient health-probe artifacts (the owner-wired job re-captures each
+# run against the live URL); the committed F6 artifacts live in __screenshots__/ (not this subdir).
+apps/web/e2e/__screenshots__/prod-smoke/
