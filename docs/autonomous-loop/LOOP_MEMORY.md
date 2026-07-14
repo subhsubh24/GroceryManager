@@ -4,6 +4,47 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-14 (run 71) — §44 Layer A SHIPPED: the deterministic live-prod smoke backbone (#555, owner issue
+  #554). 1 file-disjoint change on a converged product; 2 Sonnet reviews (Reviewer B REQUEST_CHANGES→APPROVE
+  after the disjoint-rule clarification); 0 abandons.** Baseline gate green (root typecheck 0, 1028 core
+  tests, self-validation 8/8 + `--readiness` READY 0 unmet, 0 open PRs, tree clean). Deep audit NOT due (run
+  70 folded one 2026-07-13, <24h). Advanced FACTORY_STANDARD §44 (owner-filed #554) — the deterministic
+  backbone that re-probes LIVE PROD every cycle, catching the class of failure (hydration #418/#425, empty
+  `<title>`, broken first paint, 5xx, stale-chunk 404) that passes green CI and only appears on the live URL.
+  **KEY LESSON 1 — a §44 prod-smoke MUST be SITE-GATE-AWARE.** Running the new spec against a locally-built
+  prod server surfaced that `/signin`,`/signup` return **HTTP 401** pre-launch. Traced to the site-gate
+  `challengePage` (middleware.ts) returning 401 for non-exempt routes — CORRECT, intended behavior, NOT a
+  bug: `SITE_GATE_PASSWORD` is set in the deployed/container env, so the gate exempts the marketing/waitlist
+  surface (`/`, `/demo`, `/blog`, `/help`, `/privacy`, `/terms` per `SITE_GATE_EXEMPT`) at 200 but gates the
+  auth surface. So the spec tiers routes: gate-exempt → assert 200; auth → accept status ∈ {200 post-launch,
+  401 pre-launch} but a 401 that is NOT the recognizable `Private pre-launch` challenge FAILS. Verified 16/16
+  green in BOTH gate states (password set AND unset). A future prod-smoke author must NOT hardcode `expect
+  200` on every public route — pre-launch prod legitimately 401s the gated surface.
+  **KEY LESSON 2 — track network failures via the response/requestfailed listeners (they carry the URL), NOT
+  console text.** Chromium's console `"Failed to load resource: … 404/401"` line carries NO url in
+  `message.text()`, so it can't be classified same-origin-vs-third-party or benign-vs-real — it caused
+  false failures on the gate page's own 401 document + a favicon 404. Fix: DROP `/Failed to load resource/`
+  from console tracking and judge network health via `page.on('response')` (same-origin 5xx always; same-origin
+  sub-resource 4xx = stale-chunk class, EXCLUDING the navigation document — asserted per tier — and benign
+  assets favicon/manifest/icons) + `page.on('requestfailed')` (network-level failures, EXCLUDING `ERR_ABORTED`,
+  a normal Next prefetch/client-nav cancellation, not a failure). Reviewer A caught the initial 4xx blind spot
+  (stale JS/CSS chunk 404 = the #1 post-deploy break); incorporated + re-verified green.
+  **KEY LESSON 3 — a reviewer REQUEST_CHANGES vs the disjoint rule.** Reviewer B (correctly, from its diff-only
+  view) blocked because the PR's "tracked separately in PENDING_OPS" claim had no entry in the tree yet. The
+  binding constraint it couldn't know: shared-ledger files (PENDING_OPS/LOOP_MEMORY/LOOP_HEALTH/ROADMAP) are
+  edited ONLY in the same-run housekeeping PR, never a code branch (disjoint rule). Resolution that honors
+  BOTH: land the code PR, and GUARANTEE the same-run housekeeping PR files the OWNER_ACTION so the forward
+  reference resolves at RUN scope. Reviewer B accepted + APPROVED. When a reviewer's ask conflicts with a hard
+  operating rule, explain the rule + satisfy the SPIRIT via the mechanism the rule provides — don't unilaterally
+  override a REQUEST_CHANGES, and don't break the disjoint rule to literally comply.
+  **KEY STATE (unchanged):** the CI scheduling + `PROD_URL` wiring for the prod-smoke job lives under
+  `.github/` (loop-untouchable) → OWNER_ACTION `wire-live-prod-smoke-job` filed in PENDING_OPS (with the exact
+  command). §44 Layer B (agentic vision + AUTHED prod journeys) additionally needs a throwaway prod test
+  account — a separate future OWNER_ACTION. Monetization stays reach-gated (base ≈ $33K < $100K = owner-GTM
+  #190, no buildable floor-mover); QUALITY_SCORECARD ship gate stays MET (A, run 70). The sole remaining DoD
+  gap is the reach-gated floor — 'ready for submission' stays UN-opened. A focused, coherent, single-clear run
+  on a converged product = SUCCESS (the value bar is the limiter, not a count; padding would be the failure).
+
 - **2026-07-13 (run 70) — QUIET CONVERGED RUN: folded 5-lens deep-audit-equivalent scout sweep, ALL 5
   LENSES CLEAN, 0 code PRs (nothing cleared the value bar). The sole concrete candidate was verified a
   FALSE POSITIVE; monetization re-confirmed reach-gated. One housekeeping PR only.** Baseline gate green
