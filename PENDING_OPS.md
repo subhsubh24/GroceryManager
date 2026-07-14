@@ -22,6 +22,28 @@ OWNER_ACTIONS:
     Human-Core item, so it is NOT added here. NEW this window (added by GTM run 11, not Human-Core, optional):
     `gtm-content-validation-kit-v1` — see that item below."
   items:
+    - id: wire-live-prod-smoke-job
+      title: "Wire the §44 Layer A live-prod smoke job (post-deploy + scheduled) against PROD_URL"
+      priority: normal
+      status: open
+      why: "FACTORY_STANDARD §44 Layer A + owner issue #554: CI proves the BUILD compiles, NOT that the
+        DEPLOYED app renders for a real user (the hydration #418/#425, empty-<title>, broken-first-paint,
+        5xx/failed-chunk class passes green CI and only shows on the live URL). The deterministic prod-smoke
+        spec (apps/web/e2e/prod-smoke.spec.ts, added run 71 / PR #555) is BUILT + verified (16/16 green
+        against a locally-built prod server in BOTH gate states — pre-launch /signin,/signup correctly return
+        the 401 challenge, and 200 post-launch), but it only PROBES prod when a job points BASE_URL at the
+        live URL. That job lives under .github/ which the autonomous loop cannot edit (needs a human with
+        `workflow` scope — same constraint as the 2026-06-25 'wire E2E as CI checks' item) → owner step."
+      how: "Add a scheduled + post-deploy GitHub Actions job (or a job in the existing workflow) that runs:
+          pnpm --filter @gm/web exec playwright install --with-deps chromium
+          BASE_URL=https://<PROD_URL> pnpm --filter @gm/web e2e prod-smoke
+        Set PROD_URL to the deployed Vercel URL. Schedule it (e.g. cron every few hours) AND trigger it after
+        each production deploy. A failure files a `loop: bug` (§44 self-healing) and blocks 'healthy' in
+        LOOP_HEALTH until fixed. Pre-launch the site gate makes /signin,/signup return the 401 challenge — the
+        spec already accepts that, so no gate teardown is required to run it. NOTE (Layer B, separate): the
+        agentic vision + AUTHED prod journeys additionally need a dedicated THROWAWAY prod test account
+        (the loop never fabricates credentials, §9) — file that as its own OWNER_ACTION when Layer B is wired."
+      blocks: none
     - id: gtm-connect-waitlist
       title: "DONE: waitlist source connected — the Growth Agent's own read need is satisfied via CRON_SECRET"
       priority: normal
