@@ -4,6 +4,23 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-14 (run 73) — QUIET CONVERGED run: 4-lens scout sweep, NOTHING cleared the value bar; 0 code changes, single bookkeeping PR; 0 abandons, 0 circuit breaks
+
+Deep audit NOT due (run 72 ran one same-day, <24h) → went straight to fan-out. Baseline gate green at run start (1028 core tests pass, self-validation 8/8 + `--readiness` READY 0 unmet, 0 open PRs, branch synced to origin/main, tree clean). Ran 4 Haiku scouts on disjoint high-value lenses (design/a11y/taste on secondary surfaces · test/eval coverage · correctness/dead-path · artifact-freshness), each explicitly told a converged repo legitimately yields none — do not invent work.
+
+### Result: nothing cleared the value bar (a converged-run success, per the value-bar-is-the-only-limiter rule)
+- **2 lenses NO-FINDINGS (coverage, correctness/dead-path).** Coverage: the only truly-untested exports are thin wrappers/adapters (`geminiPlanGenerator`, `keepAlive`, `extractReceiptImage`) tested at the interface level; all logic-bearing money/security/depletion/reorder/capture code is covered. Correctness: all external/LLM calls have timeouts < serverless budget, auth uniformly enforced, webhooks fail-closed with signature verify, ledger invariant held, no uncaught throws on request paths.
+- **3 candidates VERIFIED sub-bar & REJECTED (verify-before-select earning its keep):**
+  - **(1)+(2) DESIGN a11y — REJECTED (cherry-picking an inconsistently-applied convention).** Scout flagged missing `aria-hidden` on 2 decorative icons (`plan/page.tsx:206` Sparkles, `digest/page.tsx:57` Flame). A grep showed the convention is applied INCONSISTENTLY app-wide — 86 `aria-hidden` sites but 40+ decorative lucide icons WITHOUT it across ~25 files. So the 2 flagged sites are not special gaps: a 2-site fix is arbitrary cherry-picking (churn), and a ~25-file sweep is disproportionate blast radius for a marginal, largely no-op screen-reader effect (lucide renders `<svg>` with no accessible name → most SRs already skip decorative icons). Run-72 deep audit also swept a11y CLEAN.
+  - **(3) ARTIFACT — REJECTED (canonical domain, not drift).** Scout flagged store docs using `grocerymanager.app` as a "ready-to-paste" domain. It is the CANONICAL brand domain used IDENTICALLY in code (`layout.tsx`, `robots.ts`, `sitemap.ts`, `apps/mobile/app.json`, `packages/core` email defaults + the `APP_URL` fallback) and every doc — the store metadata correctly matches the code's own default, so no reality-contradiction exists. Owner domain substitution is Human-Core, already noted (contact email) in `ACCEPTANCE_AUDIT.md`.
+
+### Lessons
+- When a scout flags N instances of an inconsistently-applied cosmetic convention, verify the convention's actual consistency BEFORE selecting — a cherry-pick is churn and a full sweep is disproportionate; low-severity + inconsistent-either-way = leave it (a converged-repo non-finding).
+- A value identical across code + docs is CONSISTENT, not "drift" — even if an owner will later swap it. The artifact-freshness bar is contradiction-with-reality, not "a placeholder the owner must change" (that's a launch-checklist item, tracked in ACCEPTANCE_AUDIT, not a doc bug).
+
+### Convergence — unchanged
+Monetization RE-CONFIRMED reach-gated (base ≈ $33K < $100K = owner-GTM #190; no buildable floor-mover). Did NOT open 'ready for submission'; Confidence statement stays UNCHECKED. Validation 8/8, 0 unmet. QUALITY_SCORECARD ship gate stays MET (overall A, run 70).
+
 ## 2026-07-14 (run 72) — folded 5-lens deep audit (all clean) + 1 file-disjoint LIVING-ARTIFACTS clear (#560 web-push env-var doc fix); 2 Sonnet reviews both first-pass APPROVE; 0 abandons
 
 Converged product (runs 66–71 all quiet/1-change). Baseline gate green at run start (1028 core tests pass, self-validation 8/8 + `--readiness` READY 0 unmet, 0 open PRs, tree clean). Ran a full 5-Haiku scout sweep covering the deep-audit lenses repo-wide (security/Track-G+RLS · design/a11y/taste · correctness/dead-code+functional · artifact-freshness/business-case · test-coverage+performance) — folding the ~24h deep audit into the sweep (prior standalone run 70, 2026-07-13). **ALL 5 LENSES CLEAN except one real artifact-drift finding shipped + the standing middleware perf gap (deferred).**

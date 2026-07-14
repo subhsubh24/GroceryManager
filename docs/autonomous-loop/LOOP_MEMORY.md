@@ -4,6 +4,40 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-14 (run 73) — QUIET CONVERGED run: 4-lens scout sweep, NOTHING cleared the value bar, 0 code
+  changes, single bookkeeping PR. 0 abandons, 0 circuit breaks.** Deep audit NOT due (run 72 ran one same-day,
+  <24h) → went straight to fan-out. Baseline green at run start (1028 core tests, self-validation 8/8 +
+  `--readiness` READY 0 unmet, 0 open PRs, branch synced to origin/main, tree clean). Ran 4 Haiku scouts on
+  disjoint high-value lenses (design/a11y/taste on secondary surfaces · test/eval coverage · correctness/dead-
+  path · artifact-freshness), each told a converged repo legitimately has none — do not invent work.
+  **2 lenses NO-FINDINGS (coverage, correctness/dead-path).** Coverage: the few truly-untested exports are thin
+  wrappers/adapters (geminiPlanGenerator, keepAlive, extractReceiptImage) tested at the interface level;
+  everything logic-bearing in money/security/depletion/reorder/capture is covered. Correctness: all external/LLM
+  calls have timeouts < serverless budget, auth uniformly enforced, webhooks fail-closed with signature verify,
+  ledger invariant held, no uncaught throws on request paths.
+  **3 candidates VERIFIED sub-bar & REJECTED (the verify-before-select step earning its keep):**
+  (1)+(2) DESIGN a11y — "aria-hidden missing on 2 decorative icons" (`plan/page.tsx:206` Sparkles,
+  `digest/page.tsx:57` Flame). REJECTED as cherry-picking: a `grep` showed the aria-hidden-on-decorative-icon
+  convention is applied INCONSISTENTLY across the app — 86 aria-hidden sites BUT 40+ decorative lucide icons
+  WITHOUT it, spread over ~25 files. So the 2 flagged sites are not special gaps; a 2-site fix is arbitrary
+  cherry-picking (churn), and a complete ~25-file sweep is disproportionate blast radius for a marginal,
+  largely no-op SR effect (lucide renders `<svg>` with no accessible name → most screen readers already skip
+  decorative icons). Today's deep audit (run 72) also swept a11y CLEAN. **LESSON: when a scout flags N
+  instances of an inconsistently-applied cosmetic convention, the fix is neither a cherry-pick (churn) nor a
+  disproportionate sweep — verify the convention's actual consistency first; low-severity + inconsistent-either-
+  way = leave it (a converged-repo non-finding), consistent with the design lens staying CLEAN.** (3) ARTIFACT —
+  "store docs present `grocerymanager.app` as ready-to-paste domain → owner-substitution risk". REJECTED as NOT
+  drift: `grocerymanager.app` is the CANONICAL brand domain used IDENTICALLY in code (`layout.tsx`,
+  `robots.ts`, `sitemap.ts`, `apps/mobile/app.json`, `packages/core` email defaults + the `APP_URL` fallback)
+  and every doc — the store metadata correctly matches the code's own default, so there is no reality-
+  contradiction. Owner domain substitution is Human-Core and already noted (contact email) in
+  `ACCEPTANCE_AUDIT.md`. **LESSON: a value that is identical across code + docs is CONSISTENT (not "drift"),
+  even if an owner will later swap it; the artifact-freshness bar is contradiction-with-reality, not "a
+  placeholder an owner must change" — that's a launch-checklist item, not a doc bug.**
+  **Convergence unchanged:** monetization RE-CONFIRMED reach-gated (base ≈ $33K < $100K = owner-GTM #190; no
+  buildable floor-mover), did NOT open the 'ready' issue, Confidence statement stays UNCHECKED, validation 8/8
+  0 unmet, QUALITY_SCORECARD ship gate stays MET (A, run 70). A quiet coherent run with nothing clearing the
+  value bar is a SUCCESS — the value bar is the ONLY volume limiter, and this run it correctly gated everything.
 - **2026-07-14 (run 72) — folded 5-Haiku deep-audit sweep (all clean) + 1 file-disjoint LIVING-ARTIFACTS
   clear (#560 web-push env-var doc fix); both Sonnet reviewers first-pass APPROVE; 0 abandons; 3 scout
   candidates verified false/sub-bar & rejected.** Converged product (runs 66–71 quiet/1-change). Baseline
