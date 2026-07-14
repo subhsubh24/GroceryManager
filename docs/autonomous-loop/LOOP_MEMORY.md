@@ -4,6 +4,45 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-14 (run 72) — folded 5-Haiku deep-audit sweep (all clean) + 1 file-disjoint LIVING-ARTIFACTS
+  clear (#560 web-push env-var doc fix); both Sonnet reviewers first-pass APPROVE; 0 abandons; 3 scout
+  candidates verified false/sub-bar & rejected.** Converged product (runs 66–71 quiet/1-change). Baseline
+  gate green at run start (1028 core tests pass, self-validation 8/8 + `--readiness` READY 0 unmet, 0 open
+  PRs, tree clean). At the ~24h mark since the run-70 standalone, ran a full 5-Haiku scout sweep covering the
+  deep-audit lenses repo-wide (security/Track-G+RLS · design/a11y/taste · correctness/dead-code+functional ·
+  artifact-freshness+business-case · test-coverage+performance) and folded it as the deep audit — ALL CLEAN
+  except one real artifact drift shipped + the standing middleware gap.
+  **SHIPPED #560:** `docs/OPERATIONS.md:55` listed the web-push public key as `NEXT_PUBLIC_VAPID_PUBLIC_KEY`,
+  but the app reads the BARE `VAPID_PUBLIC_KEY` everywhere (`env.ts:58`, `push-send.ts:12,14`,
+  `profile/page.tsx:108` + `digest/page.tsx:179` via `loadEnv()` then prop-drilled to the client `PushToggle`
+  — no client `process.env.NEXT_PUBLIC_*` read exists, so no prefix is needed AND a prefix would wrongly
+  imply a client read). An operator following the doc would set a var the app never reads → `push-send.ts`'s
+  `if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) return false` silently degrades → web push dead in
+  prod. Single-line fix; `.env.example`/code already agreed. **LESSON — for a "public" key that reaches the
+  browser, verify HOW it reaches it before assuming `NEXT_PUBLIC_`.** In this codebase server-visible-but-
+  client-needed config is read server-side via `loadEnv()` and PROP-DRILLED to `"use client"` components
+  (never `process.env.NEXT_PUBLIC_*` on the client), so the bare name is correct; a `NEXT_PUBLIC_` prefix
+  would be both unnecessary and misleading. This is the pattern to match for future push/analytics/config docs.
+  **REJECTED 3 scout candidates (the verify step earning its keep):** (1) SECURITY — "add
+  `Access-Control-Allow-Origin` to next.config CORS": would WEAKEN security (open cross-origin), no bug
+  manifests (mobile native fetch, web same-origin) — the exact run-35 rejected regression. (2) DESIGN — "raw
+  `→` in inline text-links → replace with ChevronRight": inline `→` text-link arrows are an ESTABLISHED
+  deliberate convention here (run-59 lesson); the registry-icon rule targets STANDALONE glyphs (★ premium
+  mark, ▾ disclosure), not inline affordance arrows — a recurring false positive, do NOT re-open. (3)
+  CORRECTNESS — "`consume.ts:150` `usedUnmeasured` wrongly buckets out-of-stock-but-measurable items": that
+  count is COMPUTED but NEVER surfaced — `cook-actions.ts` and the mobile cook route return only
+  `decremented`, so the "metric pollution" has zero user-visible or downstream effect; "fixing" it is churn
+  on an unconsumed value.
+  **DEFERRED — middleware #320 (the sole standing below-A perf dim):** edge `middleware.ts` pulls
+  next-auth/jose (~280KB raw) onto ~every request. Both fixes (narrow the `matcher` / move the session read
+  off-edge to an edge-JWT decode) are LOAD-BEARING AUTH refactors — narrowing the matcher risks silently
+  exposing unprotected routes; edge-JWT needs crypto testing under edge-runtime constraints. Wrong blast
+  radius for unattended auto-merge, and perf is non-ship-critical already at its ≥B target (the #320
+  CI-perf-budget-gate half lives under `.github/`, loop-untouchable). Correctly parked, not shipped — as in
+  5+ prior audits.
+  **Convergence unchanged:** monetization RE-CONFIRMED reach-gated (base ≈ $33K < $100K = owner-GTM #190; no
+  buildable floor-mover); did NOT open 'ready'; Confidence stays UNCHECKED; validation 8/8, 0 unmet;
+  QUALITY_SCORECARD ship gate stays MET (A, run 70).
 - **2026-07-14 (run 71) — §44 Layer A SHIPPED: the deterministic live-prod smoke backbone (#555, owner issue
   #554). 1 file-disjoint change on a converged product; 2 Sonnet reviews (Reviewer B REQUEST_CHANGES→APPROVE
   after the disjoint-rule clarification); 0 abandons.** Baseline gate green (root typecheck 0, 1028 core
