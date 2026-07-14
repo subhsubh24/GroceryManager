@@ -20,6 +20,24 @@ BASE_URL=http://localhost:3000 pnpm --filter @gm/web e2e
 | `/blog`, `/help`, `/privacy`, `/terms` | render without auth |
 | `/sitemap.xml`, `/robots.txt` | crawlable (in PUBLIC allowlist) |
 
+## §44 Layer A — DETERMINISTIC LIVE-PROD smoke — `prod-smoke.spec.ts`
+Deterministic (no LLM / no browser-agent) health re-probe of the DEPLOYED app, run against `BASE_URL`
+(localhost by default, the LIVE prod URL when the owner-wired post-deploy / scheduled job overrides it),
+at **mobile (390×844) AND desktop (1366×900)**. It catches the class of failure that passes green CI and
+only breaks on the live URL: hydration mismatches (#418/#425), an empty `<title>`, a broken first paint,
+a same-origin 5xx or failed critical-path request. For every no-account critical route it asserts:
+
+| Route tier | Routes | Asserted outcome |
+|---|---|---|
+| gate-EXEMPT marketing/legal/demo (`SITE_GATE_EXEMPT`) | `/`, `/demo`, `/blog`, `/help`, `/privacy`, `/terms` | HTTP **200**; non-empty `<title>`; body painted; ZERO hydration errors; ZERO uncaught page errors; ZERO console errors (cosmetic asset / third-party noise filtered); no failed critical-path network request; a screenshot artifact captured |
+| gate-sensitive auth surface | `/signin`, `/signup` | status ∈ {**200** gate-off/post-launch, **401** pre-launch site-gate challenge — a 401 that is NOT the recognizable `Private pre-launch` gate FAILS}; plus every health assertion above |
+
+Run it: `BASE_URL=https://<prod-url> pnpm --filter @gm/web e2e prod-smoke`. NOT in the CI `e2e` job's
+filter (that job runs `journeys` + `email-roundtrip` against a throwaway DB) — this is the target of the
+owner-wired LIVE-PROD job (needs `PROD_URL`; see PENDING_OPS.md). Authed prod journeys need a dedicated
+throwaway prod test account (an OWNER_ACTION — the loop never fabricates credentials) → §44 Layer B.
+Screenshots land in `__screenshots__/prod-smoke/` for the Layer B vision pass.
+
 ## Authed journeys — `journeys.spec.ts` (outcome-asserting; self-seeds via real signup)
 | Flow / route | Asserted INTENDED outcome |
 |---|---|
