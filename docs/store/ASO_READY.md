@@ -118,7 +118,7 @@ Questions? Visit https://grocerymanager.app/support
 ### 6. Support URL
 
 ```
-https://grocerymanager.app/help
+https://grocerymanager.app/support
 ```
 
 ### 7. Marketing URL
