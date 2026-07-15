@@ -289,7 +289,7 @@ Free tier: 500MB database, 1GB bandwidth. Upgrade to Pro ($25/mo) when:
 - [ ] `FEATURE_BILLING=1` set (only after Stripe keys + products configured)
 - [ ] Stripe webhook endpoint registered for `https://your-domain.com/api/webhooks/stripe`
 - [ ] Privacy policy URL in App Store Connect / Play Console matches live `/privacy`
-- [ ] Support URL in App Store Connect / Play Console: `https://your-domain.com/help`
+- [ ] Support URL in App Store Connect / Play Console: `https://your-domain.com/support`
 - [ ] Plausible domain set (`NEXT_PUBLIC_PLAUSIBLE_DOMAIN`) — verify tracking fires
 - [ ] Email service connected (ConvertKit / Mailchimp / Loops) + waitlist action wired
 - [ ] Test a full sign-up → pantry add → cook flow on production before launch day
