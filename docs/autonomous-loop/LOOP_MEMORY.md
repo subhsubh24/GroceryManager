@@ -4,6 +4,43 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-15 (run 74) — DEEP AUDIT (folded 5-lens scout sweep) + 1 file-disjoint Track-F clear (#565
+  reorder recommendQty branch coverage), 2/2 approve, 0 abandons.** Deep audit at the ~24h mark since the
+  run-72 folded sweep; ran it folded into a full 5-Haiku scout sweep across the deep-audit lenses
+  (correctness/dead-code+functional · security/RLS/Track-G+abuse · design/a11y/taste · artifact-freshness+
+  monetization/business-case · test-coverage+perf+mobile). Baseline green at run start (typecheck clean,
+  1028 core tests, self-validation 8/8 + `--readiness` READY 0 unmet, 0 open PRs, branch synced to
+  origin/main, tree clean, QUALITY_SCORECARD A ship-gate MET).
+  **4 of 5 lenses NO-FINDINGS** (correctness/functional CLEAN — timeouts < serverless budget, keepAlive
+  `.catch`→waitUntil, auth-race unique-violation caught, TOKEN_ENC_KEY loud-in-prod; SECURITY/RLS/Track-G
+  CLEAN — all public tables through 0021 RLS+policy incl. referral_credits/lifecycle_email_sends/
+  waitlist_invites; ~41 routes rate-limited+zod-validated+error-hygienic; login lockout 10/15min timing-safe;
+  per-user LLM quota + demo per-IP/global spend ceiling; Turnstile fail-open-dev/loud-in-prod; Stripe
+  constructEvent + timing-safe webhooks; full header set; entitlements server-side; no committed secrets;
+  DESIGN/a11y/taste CLEAN — icon registries only, ≥44px targets, labeled controls, humanize/titleCase, no
+  generated surfaces; ARTIFACT/monetization CLEAN — prices 499/3999/999/7999¢ byte-consistent across
+  billing↔BUSINESS_CASE↔store copy, grocerymanager.app canonical everywhere, privacy discloses IAP,
+  reach-gated RE-CONFIRMED base ≈ $33K < $100K = owner-GTM #190 with every buildable lever built).
+  **1 real finding shipped → #565 (Track F):** `predict.ts` `recommendQty` (drives the reorder quantity a
+  user is told to buy — a money path) had genuinely-uncovered branches on origin/main (90.9% branch; lines
+  113-114): the `needed===0` par-met short-circuit (→ order 0) and the no-`packageQty` path (→ order raw
+  shortfall). Added two focused regression guards via `predictReorder` + folded a one-line `recommendQty`
+  null-assertion into the existing null-par (supplement) test → recommendQty now 100% line / fully branch-
+  covered. **The reviewer FILTER earned its keep:** Reviewer B (value) REQUEST_CHANGES'd the FIRST cut — a
+  3rd standalone test that was a byte-for-byte duplicate of the existing supplements scenario adding 0 new
+  coverage (the `targetParQty==null` branch was already hit at baseline since `recommendQty` runs on every
+  `predictReorder` call); dropped it and folded the assertion inline instead → both reviewers 2/2 approve.
+  **LESSON: a "cover the null-par branch" test is padding when an existing sibling test already walks that
+  branch — assert the previously-unchecked field INLINE on the existing case, don't add a duplicate `it()`
+  block (measure the coverage DELTA per-test, not the end-state %, to catch a 0-delta test).** Also
+  RE-CONFIRMED (matching runs 40/59/70's rejections) that mobile "missing cancelled-flag → setState-on-
+  unmounted warning" candidates are NOT value-bar-clearing on React 19.2.7 (mobile's version) — that warning
+  was REMOVED in React 18 (2022); the late setState is a harmless no-op, so the stated harm doesn't exist =
+  cosmetic churn, rejected.
+  **Convergence unchanged:** did NOT open the 'ready' issue — sole DoD gap stays the reach-gated floor (#190,
+  owner-GTM, no buildable lever, re-confirmed this run's monetization lens). Confidence statement stays
+  UNCHECKED. validation 8/8 0 unmet. A converged run with a full folded deep audit + 1 genuine Track-F clear
+  = success.
 - **2026-07-14 (run 73) — QUIET CONVERGED run: 4-lens scout sweep, NOTHING cleared the value bar, 0 code
   changes, single bookkeeping PR. 0 abandons, 0 circuit breaks.** Deep audit NOT due (run 72 ran one same-day,
   <24h) → went straight to fan-out. Baseline green at run start (1028 core tests, self-validation 8/8 +

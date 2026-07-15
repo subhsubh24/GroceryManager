@@ -4,6 +4,28 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-15 (run 74) — DEEP AUDIT (folded 5-lens sweep) + 1 file-disjoint Track-F clear (#565 reorder recommendQty branch coverage); 2/2 approve after a value-reviewer request-change; 0 abandons
+
+Deep audit at the ~24h mark since the run-72 folded sweep → ran it folded into a full 5-Haiku scout sweep across the deep-audit lenses (correctness/dead-code+functional · security/RLS/Track-G+abuse · design/a11y/taste · artifact-freshness+monetization · test-coverage+perf+mobile). Baseline gate green at run start (typecheck clean, 1028 core tests pass, self-validation 8/8 + `--readiness` READY 0 unmet, 0 open PRs, branch synced to origin/main, tree clean, QUALITY_SCORECARD A ship-gate MET).
+
+### Result: 4 of 5 lenses CLEAN; 1 genuine Track-F clear shipped
+- **Correctness/functional CLEAN** — external/LLM calls `withTimeout`/`AbortSignal` < serverless budget; `keepAlive` `.catch`→`waitUntil`; signup unique-violation race caught + surfaced; `TOKEN_ENC_KEY` gap loud-in-prod; webhooks fail-closed; ledger invariant held; no uncaught throws / TODO debt on live paths.
+- **Security/RLS/Track-G CLEAN** — all public tables through `0021` RLS+policy (incl. `referral_credits`/`lifecycle_email_sends`/`waitlist_invites`); ~41 routes rate-limited + zod-validated + error-hygienic; login lockout (10→15min, timing-safe, no username enumeration); per-user LLM quota + demo per-IP/global spend ceiling; Turnstile fail-open-dev/loud-in-prod; Stripe `constructEvent` + timing-safe RevenueCat/Gmail/cron webhooks (fail-closed without `metadata.userId`; tiers default to lowest on misconfig); full header set; entitlements server-side; no committed secrets. (In-memory rate-limit/quota Maps are per-instance — Redis upgrade tracked in PENDING_OPS, mitigated pre-launch by the owner site-gate; not a code bug.)
+- **Design/a11y/taste CLEAN** — onboarding/paywall/home/signup/demo + mobile swept; lucide/Ionicons registries only, no generated surfaces, ≥44px targets, focus rings, `humanize`/`titleCase`, real DB-derived values.
+- **Artifact/monetization CLEAN** — prices `499/3999/999/7999`¢ byte-consistent across billing↔BUSINESS_CASE SUMMARY (base $33,450, `floor_met` false)↔store/ASO copy; `grocerymanager.app` canonical in code AND docs; privacy discloses IAP.
+
+### PR #565 — test(reorder): cover recommendQty money-path branches (Track F)
+`predict.ts` `recommendQty` drives the reorder quantity a user is told to buy (a money path). On `origin/main` it sat at 90.9% branch coverage with lines 113–114 uncovered: the `needed===0` par-met short-circuit (on-hand ≥ par → order **0**) and the no-`packageQty` path (order the **raw shortfall**). Added two focused regression guards via the exported `predictReorder` (par-met→0; no-package→1750) + folded a one-line `recommendQty` null-assertion into the existing null-par (supplements) test → `recommendQty` now **100% line / fully branch-covered**. A regression here (dropping the `Math.max(0,…)` clamp, or removing the `packageQty>0` guard → NaN/divide-by-zero order qty) would over/under-order for the user; exactly the money-path guard CLAUDE.md asks to leave behind.
+
+### The reviewer filter earned its keep
+Reviewer A (correctness) verified all asserted values against the real logic and approved. Reviewer B (value) **REQUEST_CHANGES'd the first cut**: a 3rd standalone test was a byte-for-byte duplicate of the existing supplements scenario adding **0** new coverage (the `targetParQty==null` branch was already hit at baseline, since `recommendQty` runs on every `predictReorder` call). Dropped it and folded the assertion inline instead → both reviewers 2/2 on re-review. **Lesson: measure the coverage DELTA per-test, not the end-state %, to catch a 0-delta padding test — assert a previously-unchecked field inline on an existing scenario rather than adding a duplicate `it()` block.**
+
+### Rejected (sub-bar) this run
+Two mobile "missing `cancelled`-flag → setState-on-unmounted-component warning" candidates (`cook/[id].tsx:74`, `recipes.tsx:40`) — REJECTED because the stated harm does NOT exist on React **19.2.7** (mobile's version): that warning was removed in React 18 (2022); a late `setState` is a harmless no-op, so this is cosmetic consistency churn (matches runs 40/59/70 rejecting the same shape).
+
+### Convergence — unchanged
+Monetization RE-CONFIRMED reach-gated (base ≈ $33K < $100K = owner-GTM #190; every buildable pricing/tier/conversion/retention lever built; no buildable floor-mover). Did NOT open 'ready for submission'; Confidence statement stays UNCHECKED. Validation 8/8, 0 unmet. QUALITY_SCORECARD ship gate stays MET (overall A, run 70).
+
 ## 2026-07-14 (run 73) — QUIET CONVERGED run: 4-lens scout sweep, NOTHING cleared the value bar; 0 code changes, single bookkeeping PR; 0 abandons, 0 circuit breaks
 
 Deep audit NOT due (run 72 ran one same-day, <24h) → went straight to fan-out. Baseline gate green at run start (1028 core tests pass, self-validation 8/8 + `--readiness` READY 0 unmet, 0 open PRs, branch synced to origin/main, tree clean). Ran 4 Haiku scouts on disjoint high-value lenses (design/a11y/taste on secondary surfaces · test/eval coverage · correctness/dead-path · artifact-freshness), each explicitly told a converged repo legitimately yields none — do not invent work.
