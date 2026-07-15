@@ -4,6 +4,41 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-15 (run 76) — QUIET CONVERGED run: full 5-Haiku scout sweep + 2 file-disjoint clears
+  (#573 humanize customer-facing copy, #574 OPERATIONS.md Support-URL consistency), 4/4 Sonnet approve
+  first-pass, 0 abandons.** Deep audit NOT due (run 74 ran a folded 5-lens sweep same-day, run 75 also
+  same-day, <24h) → straight to fan-out. Baseline green at run start (1030 core tests, typecheck clean
+  all 6 projects, self-validation 8/8 + `--readiness` READY 0 unmet, 0 open PRs, prod build exit 0,
+  tree clean, QUALITY_SCORECARD A ship-gate MET).
+  **3 of 5 lenses NO-FINDINGS:** CORRECTNESS/FUNCTIONAL CLEAN (all `auth()` via currentSession/
+  currentUserId try-wrapped, LLM/external calls withTimeout(8s) < serverless budget, Stripe webhook
+  fail-safe, money integer-cents, pantry depletion sound, no uncaught throws/TODO debt on live paths).
+  SECURITY/RLS/Track-G CLEAN (all public tables RLS+policy — tenant_isolation / catalog_access→
+  grocery_app / admin+child transitive; ~41 routes rate-limited+zod-validated+error-hygienic; login
+  lockout timing-safe; per-user LLM quota + demo per-IP/global ceiling; Turnstile; Stripe constructEvent
+  + timing-safe RevenueCat/Gmail/cron webhooks; full header set; entitlements server-side; no committed
+  secrets). COVERAGE/MOBILE NO-FINDINGS (uncovered branches all verified padding/unreachable —
+  `tauDays<=0` always-30, spend `analyze` `names.get ?? ""` map always-populated, default-param
+  fallbacks; mobile setState-on-unmount is a no-op on React 19.2.7).
+  **2 real findings shipped:** (design) #573 — the DB-unreachable notice on /list, /pantry, /review
+  told users "Set `DATABASE_URL` and run migrations/seed" (raw dev setup jargon a real user / store
+  reviewer can't act on) → "Please try again in a moment"; and /list's Amazon reorder section leaked
+  internal jargon ("no ASIN yet", "from the Amazon vertical") → plain "not yet on Amazon" / "matched on
+  Amazon". Both reviewers confirmed the 3 error-copy pages were OUTLIERS — 7+ other pages
+  (spend/digest/capture/cooked/use-it-up/wrapped/staples) + api routes already use the plain copy, so
+  this ALIGNS them, not new copy. (artifact) #574 — OPERATIONS.md:292 go-live checklist told the owner
+  to submit the store Support URL as `.../help`, but canonical is `/support` everywhere else (the
+  purpose-built `apps/web/app/support/page.tsx` alias, app-store-metadata.md, google-play-metadata.md,
+  ASO_READY.md, LAUNCH.md) — the SAME `/help`→`/support` drift #567 fixed in ASO_READY/LAUNCH; OPERATIONS
+  was the lone straggler. Placeholder domain `your-domain.com` left as-is (the checklist's intentional
+  fill-in convention, also on the Stripe-webhook + NEXTAUTH_URL lines). **LESSON: after fixing a
+  canonical-value drift, grep the WHOLE repo for the OLD value — a straggler in a sibling doc (here
+  OPERATIONS.md, one run after ASO_READY/LAUNCH) is the same bug re-surfacing; #567 and #574 were the
+  same drift found in two passes because the first pass didn't sweep exhaustively for `/help`.**
+  **Convergence unchanged:** did NOT open the 'ready' issue — sole DoD gap stays the reach-gated floor
+  (#190, owner-GTM, base ≈ $33K < $100K, no buildable lever; monetization/business-case re-confirmed
+  reach-gated, prices byte-consistent). Confidence statement stays UNCHECKED. validation 8/8 0 unmet. A
+  converged run with a full 5-lens scout sweep + 2 genuine file-disjoint clears = success.
 - **2026-07-15 (run 75) — QUIET CONVERGED run: 5-Haiku scout sweep, 1 file-disjoint LIVING-ARTIFACT clear
   (#567 ASO Support-URL consistency), 2/2 Sonnet approve first-pass, 0 abandons.** Deep audit NOT due (run 74
   ran a folded 5-lens audit same-day, <24h) → went straight to fan-out. Baseline green at run start (1030 core
