@@ -4,6 +4,21 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-15 (run 75) — Quiet converged run: 5-Haiku scout sweep, 1 file-disjoint living-artifact clear (#567 ASO Support-URL consistency); 2/2 Sonnet approve first-pass; 0 abandons
+
+Deep audit not due (run 74 ran a folded 5-lens audit same-day). Baseline green (1030 core tests, typecheck clean, self-validation 8/8 READY 0 unmet, prod build exit 0, 0 open PRs). 5 Haiku scouts across disjoint lenses.
+
+**Shipped (1):**
+- **#567 — `docs(store)`: align ASO Support URL field to canonical `/support`.** `ASO_READY.md:121` (the store-submission "Support URL" field) declared `/help` while every other reference — `app-store-metadata.md:40`/`:133`, `google-play-metadata.md:100`, ASO_READY's own description copy (115/234), and the purpose-built `apps/web/app/support/page.tsx` — uses `/support`. Aligned the lone outlier so the value entered into App Store Connect / Play Console is consistent across all store artifacts. Living-artifact consistency fix (store-submission accuracy). Docs-only, no code surface.
+- (This bookkeeping PR also folds the identical `/help`→`/support` drift in the `docs/LAUNCH.md` owner-handoff Support-URL line.)
+
+**Verified sub-bar & rejected (3):**
+- CORRECTNESS "itemConversions hardcoded `[]`" (ingest.ts:112 / log-cook.ts:129) — SPECULATIVE, not a live bug: `item_unit_conversions` is never written or queried at runtime; the empty default causes no wrong behavior today. Wiring it = new feature work.
+- COVERAGE "decayConfidence `tauDays<=0` guard uncovered" — impossible-case padding: `tauDays` is always the hardcoded default 30, never passed non-default anywhere.
+- COVERAGE "checkDemoQuota default-param fallbacks uncovered" — default-param padding (0 real-path delta).
+
+**Convergence unchanged:** did not open the 'ready' issue — sole DoD gap remains the reach-gated floor (#190, owner-GTM, base ≈ $33K < $100K, no buildable lever). Confidence statement stays unchecked.
+
 ## 2026-07-15 (run 74) — DEEP AUDIT (folded 5-lens sweep) + 1 file-disjoint Track-F clear (#565 reorder recommendQty branch coverage); 2/2 approve after a value-reviewer request-change; 0 abandons
 
 Deep audit at the ~24h mark since the run-72 folded sweep → ran it folded into a full 5-Haiku scout sweep across the deep-audit lenses (correctness/dead-code+functional · security/RLS/Track-G+abuse · design/a11y/taste · artifact-freshness+monetization · test-coverage+perf+mobile). Baseline gate green at run start (typecheck clean, 1028 core tests pass, self-validation 8/8 + `--readiness` READY 0 unmet, 0 open PRs, branch synced to origin/main, tree clean, QUALITY_SCORECARD A ship-gate MET).

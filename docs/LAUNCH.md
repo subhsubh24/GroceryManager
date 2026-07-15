@@ -243,7 +243,7 @@ Use `docs/store/ASO_READY.md` for all copy. Key fields:
 - **Keywords:** (100 chars) — see ASO_READY.md
 - **Description:** see ASO_READY.md
 - **Privacy policy URL:** `https://yourapp.com/privacy`
-- **Support URL:** `https://yourapp.com/help`
+- **Support URL:** `https://yourapp.com/support`
 - **Categories:** Food & Drink (primary), Productivity (secondary)
 - **Data Safety:** use `docs/store/privacy-disclosures.md` for the Apple Data Use questionnaire
 
