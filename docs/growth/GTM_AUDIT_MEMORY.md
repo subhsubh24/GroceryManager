@@ -16,6 +16,66 @@ writes: `GTM_RUBRIC.md`, `GTM_SCORECARD.md`, this file. It NEVER does GTM work o
 
 ## RUN LOG (newest first)
 
+### 2026-07-15 — THIRD GRADE — overall A, ship_gate_met: true (both filed gaps CLOSED; metric-integrity held A on a fresh, reproducible attribution finding)
+- **Context:** Third GTM Auditor run; diffed against the 2026-07-08 grade. Since then the GTM Factory ran
+  runs 10 (2026-07-09) and 11 (2026-07-11). Run 10 CLOSED both my filed gaps: content.published_7d corrected
+  1→0 (issue #470 closed 2026-07-10) and the two demand_signal reviewer misattributions re-fetched/"corrected"
+  (D. Bogan→P. Kerluke, Jane Sanders→Lars Uriel). Run 11 added a NEW prepare-only content-validation kit
+  (`CONTENT_VALIDATION_KIT.md` + a `content_validation` block) and honestly surfaced a QUALITY_SCORECARD
+  regression (overall A→B, ship_gate_met→false, design_taste A→B, mobile icon-system gap). BUSINESS_CASE
+  unchanged (as_of 2026-06-27). No open gtm-quality issues remained going in (#314, #470 both closed).
+- **Method:** 3 fresh adversarial Opus graders (self-validation+business-case; compliance+content-kit;
+  metric-integrity) + heavy first-hand auditor verification. Reproduced the LIVE authenticated snapshot (GET
+  /api/growth/snapshot, Bearer $CRON_SECRET → HTTP 200): all 4 sources connected, funnel all 0/null EXCEPT
+  visitors_7d:1 (dashboard reports 0 — the live tick is 4 days of real traffic AFTER the 07-11 stamp, i.e.
+  the dashboard UNDER-reports). The metric-integrity grader died on an API error mid-run; I completed that
+  dimension first-hand (WebFetched the source pages, checked the funnel/experiments/registry myself).
+- **Grades (Δ vs 2026-07-08):**
+  - METRIC INTEGRITY (ship-critical): **A** (held) — no fabrication (funnel live-verified honest/conservative;
+    all 3 demand_signal quote TEXTS verbatim-genuine at complaintsboard.com this cycle; experiments real per
+    registry.ts). The published_7d dock is RESOLVED (0). But a NEW, reproducible finding keeps it off A+: run
+    10 asserted the "marking an item...purchased...doesn't appear to increase" quote is P. Kerluke's, "not D.
+    Bogan" — and my fresh WebFetch of the same page THIS cycle attributes it back to **D. Bogan**. The same
+    unreliable tool that produced both names now contradicts the "correction," so the block over-asserts an
+    attribution it cannot verify. Quote text genuine → precision nit, not fabrication. FILED.
+  - BUSINESS-CASE HONESTY (ship-critical): **A+** (held) — unchanged doc; grader + I both recomputed all 3
+    scenarios ($3,085 / $33,450 / $342,144), churn 3.71%, ARPU $3.82; prices reconcile to billing config
+    exactly (499/3999/999/7999); YAML matches body; floor_met_year1:false consistent; nothing gamed up.
+  - ROADMAP-STEER JUSTIFICATION (ship-critical): **A+** (held) — git log confirms all ROADMAP/VISION commits
+    since 07-08 are OWNER-authored (airjordan33: #517, #545); zero Growth-Agent steers. Correct with 0/null funnel.
+  - SELF-VALIDATION HONESTY (ship-critical): **A+** (held) — sources block matches the live snapshot exactly;
+    every deviation UNDER-claims (channels_connected:[email] narrower than snapshot's 3; phase:pre_launch worse
+    than snapshot's 'launching'); email fail-closed on deliverability; 4 gtm-connect actions resolved.
+  - EXPERIMENT VALIDITY: **A** (held) — textbook stats; still NO lift.test.ts for computeExperimentResult
+    (unchanged since 07-08). Product-Factory code territory, already a GROWTH_STATUS next_action.
+  - PMF READ ACCURACY: **A+** (held) — pmf null/none; recommendations product/connect only, never scale-acquisition.
+  - COMPLIANCE: **A+** (held) — the new content-validation kit is clean PREPARE-only (owner films+posts; "no
+    autonomous posting, no manufactured engagement, no fabricated counts — ever"); the agent has NO
+    social-posting tool (Gmail create_draft only), so the boundary is enforced-by-absence-of-capability. No
+    fabricated blog metric; draft-only outreach intact; spend-caps an urgent owner blocker; zero spend. WATCH
+    (next auditor): if content_validation.status leaves 'prepared', re-check that reported comment signal cites
+    real text, never a fabricated/estimated count.
+  - ARTIFACT FRESHNESS: **A** (held) — published_7d fixed. Off A+: as_of 07-11 is 4 days stale AND the
+    marketing block's ship_gate_met:false / design_taste-B narrative is now materially stale — QUALITY_SCORECARD
+    re-closed to overall A / ship_gate_met true / design_taste B→A on 2026-07-13 (#550; #522 shipped the
+    Ionicons icon system that fixed the exact gap run 11 cited). Honest staleness (agent last ran 07-11); the
+    dashboard tells an outdated GATE-1 story until it re-reads QUALITY next run. Self-heals.
+- **Integrity check:** NO fabricated metric (funnel live-verified; all quote text genuine), NO gamed business
+  case, NO speculative roadmap steer (all owner-authored), NO auto-send, NO unauthorized spend, NO pricing drift.
+- **Ship gate:** MET (all 4 ship-critical A/A+; all others ≥ A). Overall A held — both my prior filed gaps
+  closed, offset by a fresh (equal-severity) metric-integrity attribution nit + the recurring freshness item.
+- **Issues:** #314 + #470 both remain CLOSED (verified). Filed ONE new issue: `gtm-quality: metric-integrity
+  A -> raise to A+` (the over-asserted demand_signal attribution — the most concrete, reproducible top gap).
+  Other two gaps (freshness self-heals next run; lift.test.ts is product-factory territory already flagged as a
+  GROWTH_STATUS next_action) recorded in the scorecard, not filed (lean).
+- **Note for next run:** DIFF against this. Watch for: (1) whether the demand_signal attribution got softened to
+  "uncertain" (metric A→A+); (2) whether as_of + the marketing block got re-stamped so ship_gate_met/design_taste
+  reflect the 07-13 QUALITY re-closure (freshness A→A+); (3) whether lift.test.ts was added (experiment A→A+);
+  (4) if content_validation.status moves off 'prepared' — grade any reported comment signal HARD (real cited text
+  only, never a fabricated/estimated count); (5) the FIRST non-zero funnel metric beyond incidental crawler
+  traffic — verify against the live authenticated snapshot; (6) any FIRST GTM-authored ROADMAP/VISION steer —
+  grade its data/N/significance/causal-mechanism HARD.
+
 ### 2026-07-08 — SECOND GRADE — overall A, ship_gate_met: true (structure improved; metric-integrity slipped A+→A on a nit)
 - **Context:** Second GTM Auditor run; diffed against the 2026-07-01 bootstrap grade. Big change since then:
   the GTM Factory ran runs 8-9 and moved from PREPARE (all sources awaiting_connect) to CONNECTED — flipped
