@@ -4,6 +4,49 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-15 (run 75) — QUIET CONVERGED run: 5-Haiku scout sweep, 1 file-disjoint LIVING-ARTIFACT clear
+  (#567 ASO Support-URL consistency), 2/2 Sonnet approve first-pass, 0 abandons.** Deep audit NOT due (run 74
+  ran a folded 5-lens audit same-day, <24h) → went straight to fan-out. Baseline green at run start (1030 core
+  tests, typecheck clean, self-validation 8/8 + `--readiness` READY 0 unmet, 0 open PRs, prod build exit 0,
+  QUALITY_SCORECARD A ship-gate MET). Ran 5 Haiku scouts on disjoint lenses (correctness/dead-path+functional ·
+  security/RLS/Track-G · design/a11y/taste · test-coverage+mobile · artifact-freshness+monetization).
+  **3 lenses NO-FINDINGS (security, design, and — after verification — the rest):** SECURITY/RLS/Track-G CLEAN
+  (all ~29 public tables through 0021 RLS+policy; ~41 routes rate-limited+zod-validated+error-hygienic; login
+  lockout 10/15min timing-safe; Stripe constructEvent + timing-safe webhooks; full header set; per-user LLM
+  quota + demo per-IP/global ceiling; no committed secrets; entitlements server-side). DESIGN/a11y CLEAN (icon
+  registries only, ≥44px targets, titleCase/humanize, real empty/loading/error states, no generated surfaces).
+  **3 candidates VERIFIED sub-bar & REJECTED (the verify-before-select step earning its keep):**
+  (1) CORRECTNESS "itemConversions param hardcoded to []" at ingest.ts:112 / log-cook.ts:129 — REJECTED as
+  SPECULATIVE, not a live bug: the `item_unit_conversions` table is NEVER written or queried anywhere at runtime
+  (only a seed-comment references it), so the empty-array default produces zero wrong behavior today; wiring it
+  up would be NEW feature work (load per-item conversions + thread through), not a bug fix. (2) COVERAGE
+  "decayConfidence `tauDays<=0` guard branch uncovered" (depletion.ts:67) — REJECTED as impossible-case padding:
+  `tauDays` is grepped to be ALWAYS the hardcoded default 30, never passed non-default from anywhere, so the
+  guard is unreachable in production — a test for it tests a caller that doesn't exist. (3) COVERAGE
+  "checkDemoQuota `opts.now ?? Date.now()` / `?? demoQuotaLimits()` default fallbacks uncovered" — REJECTED as
+  default-param padding (0 real-path delta). **1 real finding shipped → #567 (LIVING ARTIFACTS):** the store
+  "Support URL" field in `docs/store/ASO_READY.md:121` declared `/help`, but the canonical store Support URL is
+  `/support` EVERYWHERE else — `app-store-metadata.md:40`+`:133` (the Apple field), `google-play-metadata.md:100`,
+  ASO_READY's own description copy (lines 115/234), and purpose-built in `apps/web/app/support/page.tsx` (whose
+  docstring states `/support` is the URL published in App Store/Play listings, redirecting → /help). Line 121 was
+  the lone outlier; aligned it so the value submitted to the store consoles is consistent. Folded the identical
+  drift in the LAUNCH.md owner-handoff Support-URL line (`yourapp.com/help`→`/support`) into THIS bookkeeping PR
+  (LAUNCH.md is a shared handoff file — code-branch-forbidden). **LESSON 1: the scout's fix DIRECTION can be
+  backwards — the design scout proposed changing the /support description copy to /help; the CODE (the
+  purpose-built `/support` alias's own docstring) is the strongest evidence of canonical intent and named
+  `/support` as the published field, so the one-off `/help` FIELD was the drift, not the majority. Always resolve
+  "which value is canonical" from the load-bearing code, not by counting doc lines.** **LESSON 2 (env hazard):
+  local `main` in this container was DIVERGENT from origin/main (squash-merge SHAs differ from the pre-squash
+  branch commits), and `git pull` no-op'd with "divergent branches." A branch cut from the stale local main and
+  pushed still gets a CLEAN one-line PR diff (GitHub nets against the merge-base, and every stale-main change is
+  already in origin/main as a squash) — BUT appending to a shared-ledger file off stale main would REVERT the
+  newer run's entries. ALWAYS recreate ledger/housekeeping branches with `git checkout -B <b> origin/main` (hard
+  reset to the fetched remote), never off local `main`, and verify with `git merge-base --is-ancestor` before
+  trusting a "behind" assumption.**
+  **Convergence unchanged:** did NOT open the 'ready' issue — sole DoD gap stays the reach-gated floor (#190,
+  owner-GTM, base ≈ $33K < $100K, no buildable lever; monetization lens re-confirmed prices byte-consistent +
+  every lever built). Confidence statement stays UNCHECKED. validation 8/8 0 unmet. A converged run with a full
+  5-lens scout sweep + 1 genuine living-artifact clear = success.
 - **2026-07-15 (run 74) — DEEP AUDIT (folded 5-lens scout sweep) + 1 file-disjoint Track-F clear (#565
   reorder recommendQty branch coverage), 2/2 approve, 0 abandons.** Deep audit at the ~24h mark since the
   run-72 folded sweep; ran it folded into a full 5-Haiku scout sweep across the deep-audit lenses
