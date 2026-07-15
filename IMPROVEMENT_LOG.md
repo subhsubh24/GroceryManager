@@ -4,6 +4,20 @@ Dated entries from each autonomous loop run.
 
 ---
 
+## 2026-07-15 (run 76) — Quiet converged run: 5-Haiku scout sweep, 2 file-disjoint clears (#573 humanize copy, #574 OPERATIONS Support-URL consistency); 4/4 Sonnet approve first-pass; 0 abandons
+
+Deep audit not due (runs 74 + 75 both ran/within same day, <24h). Baseline green (1030 core tests, typecheck clean all 6 projects, self-validation 8/8 READY 0 unmet, prod build exit 0, 0 open PRs). Full 5-Haiku scout sweep across disjoint lenses (correctness/functional · security/RLS/Track-G · design/a11y/taste · coverage/mobile · artifact-freshness/monetization).
+
+**Shipped (2, file-disjoint):**
+- **#573 — `fix(ui)`: humanize customer-facing copy (design bar).** The DB-unreachable notice on `/list`, `/pantry`, `/review` rendered "Couldn't reach the database. Set `DATABASE_URL` and run migrations/seed." — a raw developer setup instruction a real user (or an App/Play Store reviewer on a test account) hitting a transient DB blip can't act on. Replaced with "…Please try again in a moment." Both reviewers confirmed these 3 pages were the OUTLIERS — 7+ other pages (spend/digest/capture/cooked/use-it-up/wrapped/staples) + api routes already use the plain copy, so this aligns them rather than inventing new copy. Same PR reworded the `/list` Amazon reorder section's internal jargon ("(no ASIN yet)", "…once items have an ASIN (from the Amazon vertical)") to plain language ("(not yet on Amazon)", "…once these items are matched on Amazon"). Copy-only; typecheck + prod build green.
+- **#574 — `docs(ops)`: align go-live Support URL path to canonical `/support` (was `/help`).** OPERATIONS.md's go-live checklist told the owner to submit the store Support URL as `.../help`, but `/support` is canonical everywhere else — the purpose-built `apps/web/app/support/page.tsx` alias ("published in the App Store / Google Play listings"), `app-store-metadata.md`, `google-play-metadata.md`, `ASO_READY.md`, `LAUNCH.md`. The same `/help`→`/support` drift #567 fixed in ASO_READY/LAUNCH; OPERATIONS was the lone straggler. Placeholder domain `your-domain.com` left unchanged (this checklist's intentional fill-in convention). Living-artifact / store-acceptance consistency fix.
+
+**Verified sub-bar & rejected (3):** all from the coverage/mobile lens — `pantry/depletion.ts` `tauDays<=0` guard (unreachable; tau always the hardcoded 30), `spend/analyze.ts` `names.get(id) ?? ""` fallback (map always populated before lookup in the same loop), assorted default-param `?? Date.now()` fallbacks. Correctness, security, and design lenses returned NO FINDINGS.
+
+**Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated floor #190, owner-GTM, base ≈ $33K < $100K at median, no buildable lever). Confidence statement stays UNCHECKED. validation 8/8, 0 unmet. QUALITY_SCORECARD ship gate stays MET (A). A converged run with a full 5-lens sweep + 2 real file-disjoint clears, 4/4 first-pass approvals, 0 abandons = success.
+
+---
+
 ## 2026-07-15 (run 75) — Quiet converged run: 5-Haiku scout sweep, 1 file-disjoint living-artifact clear (#567 ASO Support-URL consistency); 2/2 Sonnet approve first-pass; 0 abandons
 
 Deep audit not due (run 74 ran a folded 5-lens audit same-day). Baseline green (1030 core tests, typecheck clean, self-validation 8/8 READY 0 unmet, prod build exit 0, 0 open PRs). 5 Haiku scouts across disjoint lenses.
