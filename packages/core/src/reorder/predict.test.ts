@@ -59,6 +59,18 @@ describe("predictReorder", () => {
     expect(r.recommendQty).toBe(2000); // needed 1750 → ceil to 2×1000
   });
 
+  it("recommends nothing to buy when on-hand already meets the par target", () => {
+    // baseQtyOnHand (2000) ≥ targetParQty (2000) → needed 0 → recommendQty 0 (never a false reorder qty).
+    const r = predictReorder(stock({ baseQtyOnHand: 2000 }), policy({ targetParQty: 2000, packageQty: 1000 }), { asOf });
+    expect(r.recommendQty).toBe(0);
+  });
+
+  it("recommends the raw shortfall when no package size is configured", () => {
+    // No packageQty → no whole-package rounding; order exactly the shortfall (needed 1750).
+    const r = predictReorder(stock({ baseQtyOnHand: 250 }), policy({ targetParQty: 2000, packageQty: null }), { asOf });
+    expect(r.recommendQty).toBe(1750);
+  });
+
   it("respects a disabled policy", () => {
     const r = predictReorder(stock({ baseQtyOnHand: 0 }), policy({ enabled: false }), { asOf });
     expect(r.shouldReorder).toBe(false);
@@ -74,6 +86,7 @@ describe("predictReorder", () => {
     );
     expect(r.predictedRunOutAt).toEqual(new Date(asOf.getTime() + 5 * 86_400_000));
     expect(r.shouldReorder).toBe(true);
+    expect(r.recommendQty).toBeNull(); // no par target → no guessed order quantity
   });
 });
 
