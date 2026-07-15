@@ -105,7 +105,7 @@ export default async function ListPage() {
 
       {error && (
         <p className="notice-warn mt-6 mb-4">
-          Couldn&apos;t reach the database. Set <code>DATABASE_URL</code> and run migrations/seed.
+          Couldn&apos;t reach the database. Please try again in a moment.
         </p>
       )}
 
@@ -180,7 +180,7 @@ export default async function ListPage() {
             {draft.amazon.items.map((i) => (
               <li key={i.canonicalItemId}>
                 {titleCase(i.name)}
-                {i.asin ? "" : " · (no ASIN yet)"}
+                {i.asin ? "" : " · (not yet on Amazon)"}
               </li>
             ))}
           </ul>
@@ -195,7 +195,7 @@ export default async function ListPage() {
             </a>
           ) : (
             <p className="mt-3 text-xs text-ink-400">
-              The Add-to-Cart link appears once items have an ASIN (from the Amazon vertical).
+              The Add-to-Cart link appears once these items are matched on Amazon.
             </p>
           )}
         </section>

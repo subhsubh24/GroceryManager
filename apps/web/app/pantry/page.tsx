@@ -347,7 +347,7 @@ export default async function PantryPage({
 
       {error && (
         <p className="notice-warn mt-6">
-          Couldn&apos;t reach the database. Set <code>DATABASE_URL</code> and run the migrations/seed.
+          Couldn&apos;t reach the database. Please try again in a moment.
         </p>
       )}
 
