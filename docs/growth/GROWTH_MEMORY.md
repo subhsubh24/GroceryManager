@@ -20,7 +20,16 @@ This is the narrative companion to the machine-readable `GROWTH_STATUS` block in
 - Real data only. No invented metrics, no fabricated wins. A quiet, honest entry is a good entry.
 
 ## DURABLE LESSONS (the compounding layer — distilled, carried forward)
-_None yet — the first run established the baseline. Promote a finding here once confirmed across ≥2 runs._
+
+### LESSON-1 (established 2026-07-15, confirmed across runs 10/12): aggregator reviewer-name extraction is unreliable — cite by quote+URL, never trust a single attributed name
+Run 10 caught two real reviewer misattributions on complaintsboard.com (quote text always verbatim-genuine,
+attributed NAME wrong both times); run 12 tried to "re-confirm" one of those names a third time and got a
+THIRD different answer (2-for-Kerluke, 1-for-Bogan across 3 fetches of the identical page — no majority).
+This is not "sometimes wrong," it's genuinely non-deterministic extraction on this multi-review aggregator
+page. RULE going forward: cite demand_signal quotes by exact quote text + source URL only. Never assert a
+specific reviewer name as a "correction" — mark it explicitly uncertain instead, since a future fetch is
+likely to contradict any asserted name again. (Distinct from run 7's URL-slug bug — a different failure
+mode, wrong-URL-not-fetched vs. a fetched-page's name misread; don't conflate the two.)
 
 ### LESSON-0 (established 2026-06-29): Receipt-auto-fill is the real differentiator
 Competitor research (Paprika, Mealime, AnyList, KitchenPal, SuperCook, Foodat) confirms that manual
@@ -30,6 +39,81 @@ just a marketing claim. Use this in every positioning surface. Do NOT invent use
 support it; the gap speaks for itself.
 
 ## RUN LOG (newest first)
+
+### 2026-07-15 (run 12) — pre_launch; QUALITY_SCORECARD ship gate RECOVERED; fixed a metric-integrity gap on a non-deterministic reviewer attribution; first non-zero visitor
+- **Mode**: Still the run-11 infra state (channels_connected: [email], awaiting_connect: false, site_gate_up:
+  true), RE-VERIFIED via a fresh authenticated `GET /api/growth/snapshot` (CRON_SECRET present). Payload
+  identical in substance to run 11 except one real change: `visitors_7d` ticked `0 -> 1` — the first
+  non-zero funnel number this product has ever produced, matching the independent GTM Auditor's own live
+  pull the same day. Direct curl reproduced the same site-gate split (home/`/demo`/`/join` 200,
+  `/signup`+`/admin/waitlist` 401).
+- **Did**:
+  - Read GTM_STANDARD, FACTORY_STANDARD, GROWTH_STATUS, GROWTH_MEMORY (this file), GTM_SCORECARD (as_of
+    2026-07-15 — fresh the same day as this run), QUALITY_SCORECARD (as_of 2026-07-13), ANALYSIS_PLAYBOOK,
+    OUTREACH, PENDING_OPS. `git fetch origin main` showed the repo has moved on substantially since run 11
+    (~40+ commits) — read the log for anything GTM-relevant: FACTORY_STANDARD gained §44 (a lighter,
+    non-blocking live-prod smoke check, distinct from the full §29 computer-use sweep GATE 1 still needs)
+    and several harness/design-taste sections; none of it is a GTM-authored change (confirmed via `git log
+    --format='%ae' -- ROADMAP.md VISION.md` — only the owner's email appears).
+  - **Confirmed the run-11 QUALITY_SCORECARD regression is genuinely fixed, not just re-asserted**: read
+    `docs/quality/QUALITY_SCORECARD.md` directly (as_of 2026-07-13) — overall A, `ship_gate_met: true`,
+    `design_taste` back to A. The evidence is concrete: #522 added a real Ionicons icon registry
+    (`apps/mobile/lib/icons.tsx`, `@expo/vector-icons`, mirroring the web lucide-react registry) and #548
+    removed the last raw glyph (paywall `★` -> `Star` icon); the scorecard's own adversarial UTF-8
+    raw-glyph sweep of `apps/mobile/app` now returns zero structural offenders. Updated
+    `GROWTH_STATUS.marketing.gate_1_start_waitlist_outreach.preconditions.ship_gate_met` to `true` and
+    corrected the gate note: GATE 1 is back to ONE unmet precondition (the §29 computer-use E2E sweep,
+    `docs/autonomous-loop/VALIDATOR_STATUS.md`, re-confirmed absent via `ls`) instead of two. Explicitly
+    noted that FACTORY_STANDARD's new §44 live-prod smoke check is a DIFFERENT, lighter mechanism that does
+    NOT satisfy this precondition, so a future run doesn't mistake one for the other.
+  - **Resolved the GTM_SCORECARD's (as_of 2026-07-15) `metric_integrity` top_gap**: the independent GTM
+    Auditor found that run 10's demand_signal attribution correction ("this quote is P. Kerluke's, not
+    D. Bogan") was itself contradicted by the auditor's own fresh WebFetch of the identical
+    complaintsboard.com page, which returned "D. Bogan" again. To resolve rather than just acknowledge it,
+    re-fetched the SAME page a third independent time this run and got "P. Kerluke" once more — three
+    fetches, two different names, no stable consensus (2-for-Kerluke, 1-for-Bogan). Concluded the
+    reviewer-name extraction on this specific aggregator page is genuinely NON-DETERMINISTIC (not merely
+    "sometimes wrong," which run 10 assumed when it "corrected" the name) and downgraded the affected
+    quote's `source` field in `GROWTH_STATUS.demand_signal` to explicitly state the reviewer name is
+    UNCERTAIN, rather than re-asserting any specific name a future fetch would likely flip again. The quote
+    TEXT and URL remain independently verified verbatim-genuine across all three attempts — only the byline
+    is unreliable, and the block no longer overclaims certainty it cannot support.
+  - Re-verified PENDING_OPS in full: `eas-build-submit-go-live`, `connect-revenuecat-iap`, `spend-caps`,
+    `turnstile-keys`, `rotate-envl-secrets` all still `status: open`, byte-identical to run 8 — 11 days of
+    zero Human-Core owner movement now. `gtm-content-validation-kit-v1` also still open (owner hasn't
+    filmed/posted the run-11 content kit yet).
+  - Noted (not acted on, no tool access): `ListConnectors` now shows a **Vercel** connector as
+    `connected:true` for the first time (previously only Gmail + Google Drive) — but `enabledInChat:false`,
+    so no Vercel tools are actually usable from this routine this run. Worth checking again next run in
+    case it gets enabled; would be a genuinely useful direct-read source if so.
+  - Did NOT re-run OUTREACH.md's exhausted search-angle categories (still no new reason since run 7) or the
+    classic §10 WebSearch demand-signal sweep (this run's demand-signal effort went entirely to resolving
+    the attribution non-determinism finding — a deliberate value-bar call: fixing a ship-critical
+    metric-integrity gap the independent auditor named outranks a fresh, likely-negative search pass).
+  - Did NOT touch ROADMAP/VISION/BUSINESS_CASE — no new causal, significant, revenue-linked data this run
+    (the quality-gate recovery is a product-loop signal I only read and reflect; one extra visitor is real
+    but statistically meaningless — nowhere near a steerable finding).
+  - Ran an independent adversarial reviewer subagent (fresh context) against the full diff (GROWTH_STATUS.md,
+    GROWTH_MEMORY.md, PENDING_OPS.md) before committing — see its verdict recorded below once returned.
+- **Hypothesis**: none new on the funnel (one visitor is not a hypothesis-testable N). This run's work is
+  (a) an honest re-verification that infra is unchanged plus one real, small, honestly-reported funnel
+  tick, (b) correctly reflecting a real product-loop recovery (GATE 1 closer, not stale-regressed) instead
+  of silently carrying forward outdated bad news, (c) actually RESOLVING a named metric-integrity gap
+  instead of just re-reporting the contradiction.
+- **Result**: Infra state confirmed with one real, non-zero funnel change (visitors_7d: 1). GATE 1 correctly
+  moved from "2 preconditions unmet" back to "1 precondition unmet" (an honest, verified improvement, not
+  optimism). The demand_signal attribution instability is now honestly disclosed as UNCERTAIN rather than
+  re-asserting a name likely to flip again on the next fetch.
+- **Decision**: Ship the GROWTH_STATUS/GROWTH_MEMORY/PENDING_OPS updates (reviewer-cleared); zero outreach
+  (still exhausted, still moot — GATE 1 not open); no ROADMAP/VISION/BUSINESS_CASE steer.
+- **Operational note**: a durable lesson worth promoting — WebFetch's reviewer-name extraction on
+  complaintsboard.com's Paprika page has now returned THREE different results across 3 independent fetches
+  (runs 7-ish and this run) with no majority winner. This is stronger evidence than run 10's "verify twice"
+  lesson: for THIS specific page, no single fetch's attributed name should ever be treated as ground truth
+  again — cite by quote+URL only, and treat any future "correction" of this attribution with the same
+  skepticism this run applied, not as settled fact. Also: re-check `ListConnectors` for Vercel every run
+  from now on — if `enabledInChat` ever flips true, it could replace the CRON_SECRET+curl re-verification
+  method with a more direct read.
 
 ### 2026-07-11 (run 11) — pre_launch; QUALITY_SCORECARD REGRESSED (ship_gate_met true→false); shipped a new content-first demand-validation kit
 - **Mode**: Still the run-10 infra state (channels_connected: [email], awaiting_connect: false, site_gate_up:
