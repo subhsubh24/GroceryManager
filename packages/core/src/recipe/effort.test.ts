@@ -20,6 +20,21 @@ describe("estimateEffort", () => {
     expect(big.cleanupLoad).not.toBe("low");
   });
 
+  it("rates a mid-complexity, multi-pan recipe as med cleanup", () => {
+    // 9 ingredients + 5 sentence-steps + 5 cook verbs, no one-pan hint → effortScore lands in the
+    // [0.4, 0.7) band, the "med" cleanup tier the low/high tests never exercise. This is the tier
+    // the low-energy ranking uses to keep a moderate recipe from reading as "easy".
+    const e = estimateEffort({
+      ingredientCount: 9,
+      instructions:
+        "Boil the pasta. Fry the onions. Saute the garlic. Simmer the sauce. Roast the peppers.",
+    });
+    expect(e.onePan).toBe(false);
+    expect(e.effortScore).toBeGreaterThanOrEqual(0.4);
+    expect(e.effortScore).toBeLessThan(0.7);
+    expect(e.cleanupLoad).toBe("med");
+  });
+
   it("one-pan reduces the score", () => {
     const instr = "Saute and simmer everything.";
     const normal = estimateEffort({ ingredientCount: 8, instructions: instr });
