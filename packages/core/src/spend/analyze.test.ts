@@ -43,14 +43,18 @@ describe("spendByPeriod", () => {
 });
 
 describe("topItemsBySpend", () => {
-  it("sums per item and ranks", () => {
+  it("sums per item and ranks, skipping rows with a null line total", () => {
     const out = topItemsBySpend([
       { canonicalItemId: "milk", name: "whole milk", lineTotalCents: 300 },
       { canonicalItemId: "milk", name: "whole milk", lineTotalCents: 350 },
       { canonicalItemId: "eggs", name: "large egg", lineTotalCents: 500 },
+      // A receipt line whose total didn't parse — must be dropped, not summed as NaN/0.
+      { canonicalItemId: "butter", name: "butter", lineTotalCents: null },
     ]);
+    expect(out).toHaveLength(2); // butter excluded entirely
     expect(out[0]).toEqual({ canonicalItemId: "milk", name: "whole milk", totalCents: 650 });
     expect(out[1]!.canonicalItemId).toBe("eggs");
+    expect(out.some((i) => i.canonicalItemId === "butter")).toBe(false);
   });
 });
 
@@ -60,6 +64,8 @@ describe("cheaperRetailer", () => {
       { canonicalItemId: "milk", name: "whole milk", retailer: "whole_foods", unitPriceCents: 449 },
       { canonicalItemId: "milk", name: "whole milk", retailer: "instacart", unitPriceCents: 399 },
       { canonicalItemId: "eggs", name: "large egg", retailer: "whole_foods", unitPriceCents: 599 }, // only one retailer → excluded
+      // A milk row with no unit price — must be skipped, not counted as a (free) third retailer.
+      { canonicalItemId: "milk", name: "whole milk", retailer: "aldi", unitPriceCents: null },
     ]);
     expect(out).toHaveLength(1);
     expect(out[0]).toMatchObject({ canonicalItemId: "milk", bestRetailer: "instacart", bestCents: 399, savingsVsWorstCents: 50 });
@@ -67,10 +73,12 @@ describe("cheaperRetailer", () => {
 });
 
 describe("unitPriceTrends", () => {
-  it("computes latest/avg/min/max chronologically", () => {
+  it("computes latest/avg/min/max chronologically, ignoring null-priced points", () => {
     const out = unitPriceTrends([
       { canonicalItemId: "milk", name: "whole milk", unitPriceCents: 400, purchasedAt: d("2026-06-01") },
       { canonicalItemId: "milk", name: "whole milk", unitPriceCents: 300, purchasedAt: d("2026-06-15") },
+      // A later purchase with no unit price must not skew latest/avg (would otherwise read as 0/NaN).
+      { canonicalItemId: "milk", name: "whole milk", unitPriceCents: null, purchasedAt: d("2026-06-20") },
     ]);
     expect(out[0]).toMatchObject({ latestCents: 300, avgCents: 350, minCents: 300, maxCents: 400 });
   });
