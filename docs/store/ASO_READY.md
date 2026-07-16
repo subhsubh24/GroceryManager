@@ -103,7 +103,7 @@ Your pantry data stays private. GroceryManager does not sell your data or use it
 
 ----- SUBSCRIPTION -----
 
-GroceryManager is free to download. The core pantry, cook, and shopping-list features are free. A subscription unlocks power features: automatic Gmail receipt import, AI weekly meal planning, unlimited recipe remix, and Grocery Wrapped+.
+GroceryManager is free to download. The core pantry, cook, and shopping-list features are free. A subscription unlocks power features: automatic Gmail receipt import, AI weekly meal planning, unlimited recipe remix, an unlimited Discover feed, advanced spend insights, and Grocery Wrapped+.
 
 • Monthly: $4.99/month
 • Annual: $39.99/year (save 33%)
@@ -222,7 +222,7 @@ GroceryManager does not sell your data or use it to serve ads. Gmail access is r
 
 ━━━ SUBSCRIPTION ━━━
 
-GroceryManager is free to download. The core pantry, cook, and shopping-list features are free forever. A subscription unlocks power features: automatic Gmail receipt import, AI weekly meal planning, unlimited recipe remix, and Grocery Wrapped+.
+GroceryManager is free to download. The core pantry, cook, and shopping-list features are free forever. A subscription unlocks power features: automatic Gmail receipt import, AI weekly meal planning, unlimited recipe remix, an unlimited Discover feed, advanced spend insights, and Grocery Wrapped+.
 
 Monthly plan: $4.99 per month
 Annual plan: $39.99 per year (save 33%)
