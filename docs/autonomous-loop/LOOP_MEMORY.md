@@ -4,6 +4,58 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-16 (run 77) — DEEP AUDIT (folded 5-Haiku lens sweep, ~24h since run 74) + 4 file-disjoint
+  clears (3 Track-F coverage + 1 ASO living-artifact), all 2/2 Sonnet approve, 0 abandons, 1 review-driven
+  scope trim.** Baseline green at run start (typecheck 6/6 projects, 1030 core tests, self-validation 8/8 +
+  `--readiness` READY 0 unmet, 0 open PRs, tree clean). Deep audit was ~at the 24h mark (last folded run 74),
+  so the 5-lens scout sweep doubled as the folded deep audit.
+  **Lenses:** (1) **SECURITY/RLS/Track-G — CLEAN.** All public tables through 0021 RLS+policy
+  (tenant_isolation / catalog_access→grocery_app / admin); ~41 routes rate-limited + zod-validated +
+  error-hygienic; login lockout (10→15min, timing-safe, no username enumeration); per-user LLM quota +
+  demo per-IP/global daily spend ceiling; Turnstile fail-open-dev/loud-prod; Stripe `constructEvent` +
+  timing-safe Gmail/RevenueCat/cron webhooks; CSP/HSTS/X-Frame/nosniff/Permissions-Policy; entitlements
+  server-side; no committed secrets. (2) **DESIGN/a11y/TASTE — CLEAN.** onboarding/paywall/home/signup/demo/
+  cook/list swept + 20+ components; lucide registry only, no generated surfaces, labels/focus/≥44px,
+  humanize/titleCase, real empty/loading/error states. (3) **CORRECTNESS/FUNCTIONAL — 7 candidates REJECTED
+  (see lesson below), no real finding.** (4) **ARTIFACT/MONETIZATION — 1 real drift shipped (#578);**
+  monetization REACH-GATED re-confirmed (base ≈ $33K < $100K = owner-GTM #190; every buildable lever built).
+  (5) **COVERAGE/PERF/MOBILE — 3 real Track-F coverage clears (#576/#577/#579);** perf/mobile no new findings
+  (ingest N+1 + React-19 setState still rejected).
+  **Changes:** **#576** — lift.ts `computeExperimentResult` had no test for a significant result where the
+  leading challenger LOSES to control (direction "lower", NEGATIVE lift — the "kill this variant" verdict);
+  added it via the real `landing_hero` entry (40% vs 10% over 4× minSamplePerArm). Reviewer B TRIMMED two
+  proposed defensive tests (empty-variants + `minSamplePerArm:0` divide-by-zero) as unreachable-guard churn —
+  they need a synthetic `ExperimentDefinition` that violates the registry contract (variants always ≥2,
+  minSamplePerArm floored at 100), so no real caller can reach those branches. Kept only the reachable
+  decision branch. **#577** — user-model `projectUserModel` tested the net-positive cuisine→`loves` branch
+  but not the mirror net-negative→`dislikes` (an anti-preference the recommender uses); added a 3×skip test
+  (net −0.45 → tanh ≈ −0.42 < −0.3). **#578** — ASO_READY.md subscription blurb (both Apple + Play variants)
+  understated premium value: missing "unlimited Discover feed" + "advanced spend insights" vs the canonical
+  app-store-metadata.md AND the billing catalog (both features are real, code-gated via `canUse`). **#579** —
+  spend/analyze.ts: `topItemsBySpend`/`cheaperRetailer`/`unitPriceTrends` each skip null-price rows (nullable
+  DB columns = dirty receipt data), but only sibling `spendByPeriod` tested its guard; folded a null row into
+  each (completing the established precedent) — protects the Premium "advanced spend insights" from NaN/0
+  poisoning. Reviewers mutation-confirmed each assertion fails if its guard is removed.
+  **LESSONS:** (1) **The recurring "DB write/read throws → Next error boundary" finding is a KNOWN non-bug
+  here — stop re-attempting it.** A scout re-flagged 7 server actions (capture, cook, profile, staples, plan)
+  whose `withTenant(...loadPreferenceSignals/write)` calls lack try/catch. REJECTED (prior audits 59/63/70/72/74
+  held the same CLEAN): `currentUserId`/`currentSession` are ALREADY the non-throwing auth wrappers (the real
+  "bare auth()" hole is closed); the remaining throws are DB reads/writes on the SAME Postgres as the action's
+  PRIMARY write — during a real outage the primary write fails regardless, so guarding an *enhancement* read
+  (premium-signal lookup for LLM-quota gating) changes NO real outcome, and defaulting a premium user to
+  free-tier quota on a transient blip is arguably WORSE. Error boundary already gives a friendly screen. The
+  §-violation the standard targets is a *bare auth()/loadEnv()/untimed-LLM* call — not a DB write that
+  legitimately surfaces failure. (2) **Reviewer B's impossible-case discipline (reinforced):** a coverage test
+  that lifts branch-% by constructing an input the type/registry contract forbids (`variants:[]`,
+  `minSamplePerArm:0`) is churn even when technically correct — cover only branches a real caller can reach;
+  the remaining uncovered lines in lift.ts (null-coalescing in the decided state) are unreachable-once-significant
+  and correctly left. (3) **Coverage-completion via sibling precedent is legitimate value, not padding:** when
+  N of M identically-shaped guards are tested and the rest aren't (spendByPeriod vs the other 3 analyzers),
+  closing the gap is a consistency fix a reviewer will pass — distinct from padding an isolated impossible branch.
+  **Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated floor #190, base ≈ $33K
+  < $100K = owner-GTM). Confidence statement stays UNCHECKED. Validation 8/8, 0 unmet. A coherent converged run
+  with 4 real clears + a full folded deep audit = success.
+
 - **2026-07-15 (run 76) — QUIET CONVERGED run: full 5-Haiku scout sweep + 2 file-disjoint clears
   (#573 humanize customer-facing copy, #574 OPERATIONS.md Support-URL consistency), 4/4 Sonnet approve
   first-pass, 0 abandons.** Deep audit NOT due (run 74 ran a folded 5-lens sweep same-day, run 75 also
