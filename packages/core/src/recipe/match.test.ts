@@ -79,6 +79,41 @@ describe("rankRecipes with personalization", () => {
     const ranked = rankRecipes(recipes, { prefs: { cuisineAffinity: { thai: 0.9 } } });
     expect(ranked[0]!.id).toBe("thai");
   });
+
+  it("boosts a recipe containing a loved ingredient", () => {
+    // `loves` are ingredient-level preferences (distinct from cuisineAffinity) learned from meal
+    // logging — a recipe using a loved ingredient should score above the same recipe without the pref.
+    const base = rankRecipes(recipes).find((r) => r.id === "thai")!.score;
+    const loved = rankRecipes(recipes, { prefs: { loves: ["eggs"] } }).find((r) => r.id === "thai")!.score;
+    expect(loved).toBeGreaterThan(base); // thai has eggs → love boost applied
+  });
+
+  it("penalizes a recipe containing a disliked ingredient (without excluding it)", () => {
+    // Unlike allergens, a `dislike` is a soft penalty — the recipe still appears, just ranked lower.
+    const base = rankRecipes(recipes).find((r) => r.id === "peanutty")!.score;
+    const disliked = rankRecipes(recipes, { prefs: { dislikes: ["peanuts"] } }).find((r) => r.id === "peanutty")!;
+    expect(disliked.score).toBeLessThan(base); // peanutty has peanuts → dislike penalty
+  });
+});
+
+describe("rankRecipes – batchCook and limit options", () => {
+  const recipes = (
+    [
+      { id: "stew", title: "Big batch stew", ingredients: [{ name: "eggs" }], batchScore: 0.9 },
+      { id: "toast", title: "Fresh toast", ingredients: [{ name: "eggs" }], batchScore: 0.1 },
+    ] as RawRecipe[]
+  ).map((r) => annotateRecipe(r, pantry));
+
+  it("batch-cook mode up-weights dishes that keep/reheat/scale well", () => {
+    const normal = rankRecipes(recipes).find((r) => r.id === "stew")!.score;
+    const batch = rankRecipes(recipes, { batchCook: true }).find((r) => r.id === "stew")!.score;
+    expect(batch).toBeGreaterThan(normal); // batchScore 0.9 → strong batchFit boost
+  });
+
+  it("limit slices the ranked results to the top N", () => {
+    expect(rankRecipes(recipes)).toHaveLength(2);
+    expect(rankRecipes(recipes, { limit: 1 })).toHaveLength(1);
+  });
 });
 
 describe("rankRecipes – dietKeywords vs allergens", () => {
