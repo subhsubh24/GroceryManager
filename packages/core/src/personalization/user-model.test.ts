@@ -31,6 +31,20 @@ describe("projectUserModel", () => {
     expect(m.loves).toContain("cuisine:thai");
   });
 
+  it("accumulates cuisine affinity from behavior (net negative → disliked)", () => {
+    // Mirror of the "loved" case: repeated skips drive net affinity below the −0.3 dislike threshold
+    // (3 skips → net −0.45 → tanh ≈ −0.42), so the cuisine becomes an anti-preference the recommender
+    // steers away from — not merely absent from `loves`.
+    const m = projectUserModel([
+      signalFromSkip("thai"),
+      signalFromSkip("thai"),
+      signalFromSkip("thai"),
+    ]);
+    expect(m.cuisineAffinity.thai).toBeLessThan(-0.3);
+    expect(m.dislikes).toContain("cuisine:thai");
+    expect(m.loves).not.toContain("cuisine:thai");
+  });
+
   it("flags a disliked ingredient from repeated waste", () => {
     const m = projectUserModel([
       signalFromWaste("cilantro"),
