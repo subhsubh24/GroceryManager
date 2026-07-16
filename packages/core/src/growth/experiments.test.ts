@@ -337,4 +337,23 @@ describe("computeExperimentResult", () => {
     expect(r.leading_variant).toBe("b");
     expect(r.ci_lower).not.toBeNull();
   });
+
+  // A significant result where the leading challenger LOSES to control is a real, actionable outcome
+  // ("kill this variant") — the verdict must read "lower" and report a NEGATIVE lift, not silently
+  // suppress it. Every other "decided" test has the winner beating control (direction "higher"); this
+  // locks the opposite branch (winnerRate < pControl) plus the negative-lift text formatting.
+  it("decides 'lower' with a negative lift when the leading challenger significantly underperforms control", () => {
+    const n = exp.minSamplePerArm * 4;
+    const stats: Record<string, PerVariantStats> = {
+      a: { exposed: n, conversions: Math.round(n * 0.4) }, // control: strong 40%
+      b: { exposed: n, conversions: Math.round(n * 0.1) }, // best challenger but far below control
+    };
+    const r = computeExperimentResult(exp, stats);
+    expect(r.status).toBe("decided");
+    expect(r.leading_variant).toBe("b");
+    expect(r.lift_pct).not.toBeNull();
+    expect(r.lift_pct!).toBeLessThan(0); // real negative lift, not clamped/hidden
+    expect(r.result).toContain("lower"); // direction reads correctly
+    expect(r.result).not.toContain("(lift +"); // no "+" sign on a negative lift
+  });
 });
