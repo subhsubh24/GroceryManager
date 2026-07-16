@@ -60,6 +60,15 @@ describe("UnitConverter", () => {
     expect(conv.convert(2, "each", "g")).toBeNull();
   });
 
+  it("returns null when an item edge exists but no path reaches the target", () => {
+    // A clove↔g edge exists, so the BFS start set is non-empty (unlike the COUNT↔MASS case above,
+    // which has no start edge at all), but neither the direct hop nor any 2-hop chain reaches
+    // "each" — the converter must exhaust the search and fall through to null so logCook's caller
+    // can degrade instead of inventing a bogus quantity.
+    const itemConv: ItemConversion[] = [{ fromCode: "clove", toCode: "g", factor: 5, confidence: 0.9 }];
+    expect(conv.convert(3, "clove", "each", itemConv)).toBeNull();
+  });
+
   it("chains two item conversions (each → g via clove) as item_base", () => {
     // No direct each↔g edge, so the converter must walk each → clove → g (a 2-hop BFS).
     const itemConv: ItemConversion[] = [
