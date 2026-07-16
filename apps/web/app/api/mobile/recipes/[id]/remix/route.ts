@@ -36,17 +36,17 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   if (!id) return Response.json({ error: "Recipe id required" }, { status: 400 });
   const axis = parseAxis(new URL(req.url).searchParams.get("axis"));
 
-  // Entitlement runs outside the main try/catch so a DB error during signal loading fails closed
-  // (a 500 via serverError) rather than silently bypassing the gate. No-op when billing is off.
   const billingOn = process.env.FEATURE_BILLING === "1";
   try {
-    let premium = false;
-    if (billingOn) {
-      const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
-      premium = isPremium(signals);
-      if (!canUse("remix", premium, billingOn)) {
-        return Response.json({ upgradeRequired: true });
-      }
+    // Load preference signals once, UNCONDITIONALLY, so BOTH the entitlement gate (when billing is
+    // on) and the per-user daily AI quota tier below reflect the user's REAL entitlement — not the
+    // billing flag. (Gating premium on `billingOn` would silently throttle a real premium user to
+    // the free AI cap whenever the flag is off; plan/route.ts + the web remix page load it the same
+    // way.) A DB error here throws into the catch → serverError, so the gate still fails closed.
+    const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+    const premium = isPremium(signals);
+    if (billingOn && !canUse("remix", premium, billingOn)) {
+      return Response.json({ upgradeRequired: true });
     }
 
     const recipe = UUID.test(id)
@@ -59,6 +59,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const env = loadEnv();
     const hasLlm = !!(env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT);
     if (hasLlm) {
+      // premium (computed above) sets the daily-quota tier — a real entitlement gets the higher cap.
       const quota = checkLlmQuota(userId, premium);
       if (!quota.allowed) return Response.json({ quotaExceeded: true });
     }

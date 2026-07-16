@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -42,16 +42,21 @@ export default function RemixScreen() {
   const [error, setError] = useState<string | null>(null);
   const [upgradeRequired, setUpgradeRequired] = useState(false);
   const [quotaExceeded, setQuotaExceeded] = useState(false);
+  // Monotonic request id: rapid axis-tab switches fire overlapping fetches that can resolve out of
+  // order, so only the LATEST request is allowed to commit state — an older one bails after its await.
+  const reqGen = useRef(0);
 
   const load = useCallback(
     async (which: Axis) => {
       if (!token || !id) return;
+      const gen = ++reqGen.current;
       setLoading(true);
       setError(null);
       try {
         const res = await apiFetch(`/api/mobile/recipes/${id}/remix?axis=${which}`, token);
         if (!res.ok) throw new Error("fetch failed");
         const data = (await res.json()) as RemixResponse;
+        if (gen !== reqGen.current) return; // superseded by a newer axis request
         if ("upgradeRequired" in data) {
           setUpgradeRequired(true);
           setRemix(null);
@@ -67,9 +72,9 @@ export default function RemixScreen() {
         setRemix(data.remix);
         setTitle(data.title);
       } catch {
-        setError("Couldn't load this remix — check your connection.");
+        if (gen === reqGen.current) setError("Couldn't load this remix — check your connection.");
       } finally {
-        setLoading(false);
+        if (gen === reqGen.current) setLoading(false);
       }
     },
     [token, id],
