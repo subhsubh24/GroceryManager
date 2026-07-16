@@ -89,7 +89,7 @@ export function GmailUpgradeBanner({
           type="button"
           onClick={handleDismiss}
           aria-label="Dismiss Gmail import promotion"
-          className="shrink-0 rounded-lg p-1 text-ink-400 transition-colors hover:bg-brand-100 hover:text-ink-600"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-ink-400 transition-colors hover:bg-brand-100 hover:text-ink-600"
         >
           <X className="h-4 w-4" strokeWidth={2} aria-hidden />
         </button>
