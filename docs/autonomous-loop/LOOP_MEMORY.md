@@ -4,6 +4,35 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
 (Intentionally NOT under `.claude/` — see lesson 1.)
 
 ## Lessons
+- **2026-07-16 (run 78) — QUIET CONVERGED run: full 5-Haiku scout sweep + 2 file-disjoint clears
+  (#583 rankRecipes option coverage, #584 Gmail-banner tap-target a11y), 4/4 Sonnet approve first-pass,
+  0 abandons.** Deep audit not due (run 77 folded one earlier same day, <24h). Baseline green at start
+  (typecheck 6/6, 1032 core tests + 27 skipped, self-validation 8/8 READY 0 unmet, 0 open PRs, clean tree).
+  **Shipped:** **#583** — `match.test.ts` covered `lowEnergy`+`cuisineAffinity` but not the sibling options
+  `prefs.loves`/`prefs.dislikes` (the recommender's learned ingredient signals), `opts.batchCook` (meal-prep
+  mood toggle), `opts.limit` (homepage top-N); added 4 deterministic mutation-sensitive tests. Reviewer A
+  traced every production caller (plan/recipes/discover/use-it-up + semantic-layer + 3 mobile routes) →
+  real public API, sibling-precedent, not impossible-case. **#584** — Gmail-banner dismiss button was `p-1`
+  + 16px icon (~24px hit area) < the app's 44px bar; switched to the repo `flex h-11 w-11 items-center
+  justify-center` idiom (theme-toggle precedent), 44px target, quiet-until-hover, no layout regression.
+  **LESSONS:** (1) **Two scout findings correctly REJECTED on verification — the maker's job is to verify,
+  not just relay.** (a) A correctness scout's "refund/negative-total asymmetry" in `verify.ts:46` was a
+  FALSE POSITIVE: lines 35–37 already reject negative `lineTotalCents`, so the reconciliation only runs with
+  all line totals ≥0 and the negative-sum scenario is unreachable — the scout missed the upstream guard.
+  (b) A living-artifact scout's "Family-tier / household-sharing missing from store ASO docs" is NOT drift:
+  `upgrade/page.tsx:38–45` deliberately gates the Family card + household perk behind `FEATURE_HOUSEHOLDS`
+  ("never sell a feature a new user can't reach"), so the store docs are consistent with the pre-launch dark
+  state — ADDING Family to store copy would risk advertising a dark feature (the opposite of the intended fix).
+  When a scout flags "doc omits X that code has," check whether the omission is an intentional store-honesty
+  gate before treating it as drift. (2) **DB-bound coverage isn't a clean core-test clear:** `log-cook.ts:129`
+  unit-conversion is real but sits behind `db.select().innerJoin`; the repo keeps core tests DB-free, so
+  covering it needs heavy mocking the repo avoids — skip in favor of pure-logic gaps like the `match.ts` ones.
+  (3) **run 77 bookkeeping gap noted:** run 77's IMPROVEMENT_LOG entry is absent (LOOP_MEMORY has run 77, the
+  log's newest was run 76); didn't backfill (no fabricated details) — just resumed numbering at run 78.
+  **Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated floor #190, base ≈ $33K
+  < $100K = owner-GTM). Confidence statement stays UNCHECKED. Security/RLS/Track-G re-confirmed CLEAN. A
+  coherent converged run with 2 real clears = success.
+
 - **2026-07-16 (run 77) — DEEP AUDIT (folded 5-Haiku lens sweep, ~24h since run 74) + 4 file-disjoint
   clears (3 Track-F coverage + 1 ASO living-artifact), all 2/2 Sonnet approve, 0 abandons, 1 review-driven
   scope trim.** Baseline green at run start (typecheck 6/6 projects, 1030 core tests, self-validation 8/8 +
