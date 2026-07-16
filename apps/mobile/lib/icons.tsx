@@ -60,3 +60,7 @@ export const Stats = makeIcon("stats-chart-outline");
 export const Wrapped = makeIcon("trophy-outline");
 export const QuickAdd = makeIcon("add-circle-outline");
 export const Profile = makeIcon("person-circle-outline");
+// AI recipe remix (the "healthier / cheaper / faster / vegan" swap generator). A magic wand mirrors
+// the web registry's Wand2 for the same perk — it reads as "transform this recipe" and, unlike the
+// sparkle reserved for generic "planned by AI" flourishes, carries a concrete make-it-your-way intent.
+export const Remix = makeIcon("color-wand-outline");
