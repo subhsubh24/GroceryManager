@@ -11,7 +11,7 @@ import {
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "../../lib/auth";
 import { apiFetch } from "../../lib/api";
-import { ArrowLeft, ArrowRight, Check, ChevronLeft } from "../../lib/icons";
+import { ArrowLeft, ArrowRight, Check, ChevronLeft, Remix } from "../../lib/icons";
 
 type Recipe = {
   id: string;
@@ -152,6 +152,18 @@ export default function CookScreen() {
             </Text>
           </View>
         ))}
+        {/* AI recipe remix — the premium "make it your way" perk (healthier/cheaper/faster/vegan
+            swaps). Gated server-side; free users hit the upgrade state on the remix screen. */}
+        <Pressable
+          style={styles.remixBtn}
+          onPress={() => router.push(`/remix/${id}`)}
+          accessibilityRole="button"
+          accessibilityLabel="Remix this recipe"
+        >
+          <Remix size={18} color="#7c3aed" />
+          <Text style={styles.remixBtnText}>Remix this recipe</Text>
+          <ArrowRight size={16} color="#7c3aed" />
+        </Pressable>
       </View>
 
       {/* Step-through cook mode */}
@@ -316,6 +328,20 @@ const styles = StyleSheet.create({
   ingredientRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 6 },
   bullet: { fontSize: 15, color: "#0c8a3e", marginRight: 8, lineHeight: 22 },
   ingredientText: { flex: 1, fontSize: 15, color: "#1d2530", lineHeight: 22 },
+  remixBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    minHeight: 44,
+    marginTop: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#e4d7fb",
+    backgroundColor: "#f8f4ff",
+    paddingHorizontal: 16,
+  },
+  remixBtnText: { fontSize: 15, fontWeight: "600", color: "#7c3aed" },
   stepCard: {
     backgroundColor: "#faf8f3",
     borderRadius: 12,
