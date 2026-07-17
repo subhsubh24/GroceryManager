@@ -24,6 +24,13 @@ import { Check, Star } from "../lib/icons";
 const MONTHLY = SUBSCRIPTION_PLANS.find((p) => p.tier === "premium_monthly");
 const ANNUAL = SUBSCRIPTION_PLANS.find((p) => p.tier === "premium_annual");
 
+// Store-acceptance honesty (Apple 2.3.1 / Google accurate-listing): never advertise a perk the user
+// can't reach from this app. "Household sharing" is behind FEATURE_HOUSEHOLDS (dark pre-launch) and
+// has no native surface yet, so drop it from the mobile paywall — mirroring the web upgrade page,
+// which filters the same perk (+ the Family card) until the owner flips the flag at launch. When a
+// native household screen ships alongside the flag, restore it here.
+const MOBILE_PERKS = PREMIUM_PERKS.filter((perk) => perk.feature !== "household");
+
 const MONTHLY_PRICE = MONTHLY?.priceMonthCents ? (MONTHLY.priceMonthCents / 100).toFixed(2) : "4.99";
 const ANNUAL_PRICE = ANNUAL?.priceAnnualCents ? (ANNUAL.priceAnnualCents / 100).toFixed(2) : "39.99";
 // Effective monthly cost of the annual plan
@@ -154,7 +161,7 @@ export default function UpgradeScreen() {
       {/* Premium features */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>What you unlock</Text>
-        {PREMIUM_PERKS.map((perk) => (
+        {MOBILE_PERKS.map((perk) => (
           <View key={perk.feature} style={styles.perkRow}>
             <View style={styles.perkCheck}>
               <Check size={18} color="#0c8a3e" />
