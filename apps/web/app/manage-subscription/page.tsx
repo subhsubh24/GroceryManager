@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getDb, loadPreferenceSignals, withTenant } from "@gm/db";
+import { getDb, householdsEnabled, loadPreferenceSignals, withTenant } from "@gm/db";
 import {
   getCurrentSubscriptionTier,
   isTrialEligible,
@@ -50,8 +50,16 @@ export default async function ManageSubscriptionPage() {
   const { tier, trialEligible } = data;
   const isPremium = tier !== "free";
   const billingOn = process.env.FEATURE_BILLING === "1";
+  // Store-acceptance honesty (Apple 2.3.1 / Google accurate-listing): only advertise household
+  // sharing + the Family tier when the feature is actually live (FEATURE_HOUSEHOLDS). When it's
+  // dark, drop the perk copy and the Family card so this surface never sells a feature a new user
+  // can't reach — mirrors the /upgrade, landing, and /help gates.
+  const householdsLive = householdsEnabled();
 
   const plan = SUBSCRIPTION_PLANS.find((p) => p.tier === tier) ?? SUBSCRIPTION_PLANS[0];
+  const upgradePlans = SUBSCRIPTION_PLANS.filter(
+    (p) => p.tier !== "free" && (householdsLive || p.tier !== "premium_family"),
+  );
 
   return (
     <main className="page-narrow">
@@ -93,13 +101,13 @@ export default async function ManageSubscriptionPage() {
         <section className="card-pad mt-4">
           <h2 className="section-title">Upgrade to Premium</h2>
           <p className="mt-1 text-sm text-ink-500">
-            Unlock the AI planner, unlimited Discover, recipe remix, Gmail import, household
-            sharing, and more.
+            Unlock the AI planner, unlimited Discover, recipe remix, Gmail import
+            {householdsLive && ", household sharing"}, and more.
             {trialEligible && " Start with a 7-day free trial — cancel anytime."}
           </p>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {SUBSCRIPTION_PLANS.filter((p) => p.tier !== "free").map((p) => (
+            {upgradePlans.map((p) => (
               <div key={p.tier} className="rounded-xl border border-ink-200 bg-surface p-4">
                 <p className="font-semibold">{p.label}</p>
                 {p.priceMonthCents && p.tier === "premium_monthly" && (
