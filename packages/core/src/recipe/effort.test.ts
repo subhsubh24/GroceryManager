@@ -41,4 +41,18 @@ describe("estimateEffort", () => {
     const onePan = estimateEffort({ ingredientCount: 8, instructions: `One-pan: ${instr}` });
     expect(onePan.effortScore).toBeLessThan(normal.effortScore);
   });
+
+  it("treats a recipe with no instructions as pure ingredient-count effort", () => {
+    // Provider recipes (semantic-layer.ts passes r.instructions straight through) can arrive with
+    // null/empty instructions. Guards the `instructions ?? ""` coalescing and the false arm of
+    // `instr.trim() ? 1 : 0` — an empty body must contribute 0 steps, never a phantom step.
+    const none = estimateEffort({ ingredientCount: 6 });
+    const nulled = estimateEffort({ ingredientCount: 6, instructions: null });
+    const oneSentence = estimateEffort({ ingredientCount: 6, instructions: "Mix and serve." });
+    expect(nulled.effortScore).toBe(none.effortScore);
+    // 0 steps < 1 step at the same ingredient count → strictly less effort (fails if the ternary flips).
+    expect(none.effortScore).toBeLessThan(oneSentence.effortScore);
+    expect(none.onePan).toBe(false);
+    expect(none.cleanupLoad).toBe("low");
+  });
 });
