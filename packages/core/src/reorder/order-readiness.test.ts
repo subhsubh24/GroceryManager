@@ -41,6 +41,22 @@ describe("assessOrderReadiness", () => {
     expect(r.urgentCount).toBe(1);
   });
 
+  it("pluralizes the urgent reason when more than one item runs out soon", () => {
+    const r = assessOrderReadiness({ reorderCount: 2, dueDates: [inDays(1), inDays(2)], listCount: 0, now });
+    expect(r.state).toBe("urgent");
+    expect(r.urgentCount).toBe(2);
+    // guards the plural branch of `${n} ${n === 1 ? "item runs" : "items run"} out ...`
+    expect(r.reason).toBe("2 items run out in the next few days.");
+  });
+
+  it("uses the singular reason when the building list has exactly one item", () => {
+    const r = assessOrderReadiness({ reorderCount: 1, dueDates: [inDays(20)], listCount: 0, now });
+    expect(r.state).toBe("building");
+    expect(r.count).toBe(1);
+    // guards the singular branch of `${n} ${n === 1 ? "item" : "items"} so far ...`
+    expect(r.reason).toBe("1 item so far — I'll flag it when it's worth ordering.");
+  });
+
   it("ignores far-off and null due dates for urgency", () => {
     const r = assessOrderReadiness({ reorderCount: 2, dueDates: [null, inDays(30)], listCount: 0, now });
     expect(r.urgentCount).toBe(0);
