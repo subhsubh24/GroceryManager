@@ -1,3 +1,4 @@
+import { householdsEnabled } from "@gm/db";
 import { PageHeader } from "@/app/components/page-header";
 import { BookOpen, Mail } from "@/app/components/icons";
 
@@ -38,6 +39,10 @@ function UL({ children }: { children: React.ReactNode }) {
 }
 
 export default function HelpPage() {
+  // Store-acceptance honesty (Apple 2.3.1 / Google accurate-listing): only document household
+  // sharing when it's actually live — same gate the landing + /upgrade apply via householdsEnabled().
+  // FEATURE_HOUSEHOLDS defaults off, so the help content drops household references until it ships.
+  const householdsLive = householdsEnabled();
   return (
     <main className="page-narrow">
       <PageHeader
@@ -190,18 +195,20 @@ export default function HelpPage() {
           </P>
         </QA>
 
-        <QA question="How does household sharing work?">
-          <P>
-            Invite household members from the Shared Household section of your profile. Each member
-            signs in with their own account and is added to your household. The pantry, shopping list,
-            and cook history are shared across all household members in real time. Each member's
-            receipt imports and cook sessions update the shared pantry.
-          </P>
-          <P>
-            Household sharing is available on the Premium plan. The household owner manages
-            membership; members can be removed at any time.
-          </P>
-        </QA>
+        {householdsLive && (
+          <QA question="How does household sharing work?">
+            <P>
+              Invite household members from the Shared Household section of your profile. Each member
+              signs in with their own account and is added to your household. The pantry, shopping
+              list, and cook history are shared across all household members in real time. Each
+              member's receipt imports and cook sessions update the shared pantry.
+            </P>
+            <P>
+              Household sharing is available on the Premium plan. The household owner manages
+              membership; members can be removed at any time.
+            </P>
+          </QA>
+        )}
       </Section>
 
       {/* ── Account & subscription ─────────────────────────────────────── */}
@@ -230,7 +237,7 @@ export default function HelpPage() {
             <li>Unlimited cookbook saves and custom collections.</li>
             <li>Gmail receipt import (automatic, continuous sync).</li>
             <li>Recipe Remix powered by AI.</li>
-            <li>Household sharing.</li>
+            {householdsLive && <li>Household sharing.</li>}
             <li>Nutrition tracking with macro targets.</li>
             <li>Advanced depletion model with per-item shelf-life tuning.</li>
             <li>Priority support.</li>
@@ -329,8 +336,9 @@ export default function HelpPage() {
             connection; the pantry requires a live connection to sync the latest ledger state.
           </P>
           <P>
-            If you recently joined a household or transferred devices, allow up to a minute for the
-            pantry to fully replicate. Contact support if items remain missing after that.
+            If you recently {householdsLive ? "joined a household or " : ""}transferred devices,
+            allow up to a minute for the pantry to fully replicate. Contact support if items remain
+            missing after that.
           </P>
         </QA>
 
