@@ -40,6 +40,77 @@ support it; the gap speaks for itself.
 
 ## RUN LOG (newest first)
 
+### 2026-07-17 (run 13) — pre_launch; unchanged infra, one more visitor; confirmed the demand-signal aggregator well is genuinely dry; GATE 1's sole blocker now unmoved for 12 days
+- **Mode**: Still the run-12 infra state (channels_connected: [email], awaiting_connect: false, site_gate_up:
+  true), RE-VERIFIED via a fresh authenticated `GET /api/growth/snapshot` (CRON_SECRET present). Payload
+  identical in substance to run 12 except one real change: `visitors_7d` ticked `1 -> 2`. Direct curl
+  reproduced the same site-gate split (home/`/demo`/`/join` 200, `/signup`+`/admin/waitlist` 401).
+- **Did**:
+  - Read GTM_STANDARD, FACTORY_STANDARD, GROWTH_STATUS, GROWTH_MEMORY (this file), GTM_SCORECARD (as_of
+    2026-07-15 — no newer grade since run 12; overall A, ship_gate_met true, all top_gaps low-severity
+    A→A+ polish, one already addressed by run 12's attribution fix), ANALYSIS_PLAYBOOK, OUTREACH,
+    PENDING_OPS. `git fetch origin main` showed ~11 new commits since run 12's merge (#572) — all
+    Product-Factory bookkeeping (Track-F test-coverage clears, an a11y fix, two FEATURE_HOUSEHOLDS
+    store-honesty fixes gating the dark Family tier out of the mobile paywall and help docs, and three
+    FACTORY_STANDARD additions — §6b Mobbin-grounding self-report, §50 autonomy bias, §44 Layer-B bug-hunter
+    mode). Confirmed via `git log --format='%ae' -- ROADMAP.md VISION.md docs/BUSINESS_CASE.md` since run
+    12's merge: only one commit touched a tracked file (a mobile a11y PR touching nothing GTM-relevant) —
+    zero ROADMAP/VISION/BUSINESS_CASE changes by anyone, so no reconciliation was needed.
+  - **Re-verified QUALITY_SCORECARD directly** (not assumed carried-forward): still as_of 2026-07-13,
+    unchanged since run 12 — overall A, `ship_gate_met: true`. Re-confirmed `docs/autonomous-loop/
+    VALIDATOR_STATUS.md` still does not exist (`ls` failed) and ROADMAP.md's §29 computer-use-sweep item
+    (epic #413) is still unchecked, unchanged wording since run 9. This is now the SOLE unmet GATE 1
+    precondition, unmoved specifically since run 9 (2026-07-05) — 12 days / 4 intervening GTM runs (10, 11,
+    12, this one) with zero progress on it, even though nothing blocks building it (Browserbase keys live,
+    ROADMAP's own text calls it "exploratory FINDER, not a merge gate"). Named this plainly in the
+    `marketing` block's GATE 1 note as a read for the product loop's queue, not a claim GTM can build it
+    itself (out of GTM's remit — `docs/growth` + `PENDING_OPS` only).
+  - **Demand-signal (§10)**: it had been 3 runs (11, 12) since a real search was attempted — re-checked
+    whether that exhaustion still holds rather than assuming it does. Fresh (not cached) WebSearch of
+    grand-screen.com's pantry/grocery/fridge category surfaced 2 listings not seen in prior runs (Fry's,
+    Wholesome Yum) — WebFetch-equivalent read of the search summary confirmed both are off-theme (a
+    grocery-chain shopping app and a recipe blog, neither pantry-inventory). Also checked whether "Fridgely"
+    (an unverified WebSearch-summary complaint named in run 2's learnings, never independently confirmed)
+    has a ComplaintsBoard page — it does not. CONCLUSION: both reliably-fetchable aggregators
+    (grand-screen.com, complaintsboard.com) are genuinely exhausted for this product category, confirmed
+    fresh rather than re-asserted from memory. No new theme or citation this run; recorded the
+    re-confirmation in `disconfirming_or_limitations` so a future run doesn't re-spend a cycle rediscovering
+    the same dead end.
+  - Re-verified PENDING_OPS in full: `eas-build-submit-go-live`, `connect-revenuecat-iap`, `spend-caps`,
+    `turnstile-keys`, `rotate-envl-secrets` all still `status: open`, unchanged since run 8 — 13 days of zero
+    Human-Core owner movement now. `gtm-content-validation-kit-v1` also still open (owner hasn't
+    filmed/posted the run-11 content kit yet). `decide-ship-households-family-tier` also still open, and
+    this window's product-factory commits (#594, #596) further HARDENED the dark-tier store-honesty
+    boundary (hiding the Family perk from the mobile paywall and gating household docs behind the flag) —
+    a real product-loop signal that the flag-off decision is being maintained correctly, not a GTM action.
+  - Re-checked `ListConnectors` for Vercel per run 12's note: still `connected:true` but `enabledInChat:false`
+    — unchanged, still not usable from this routine.
+  - Did NOT re-run OUTREACH.md's exhausted search-angle categories (no new reason since run 7 — still moot,
+    GATE 1 not open).
+  - Did NOT touch ROADMAP/VISION/BUSINESS_CASE — no new causal, significant, revenue-linked data this run
+    (one more visitor, N=2, is not a hypothesis-testable finding; the product-factory commits this window are
+    read-and-reflect, not a GTM finding).
+  - Ran an independent adversarial reviewer subagent (fresh context) against the full diff (GROWTH_STATUS.md,
+    GROWTH_MEMORY.md, PENDING_OPS.md) before committing — see its verdict recorded below once returned.
+- **Hypothesis**: none new on the funnel (N=2 visitors over 7 days is still statistically vacuous). This
+  run's work is (a) an honest re-verification that infra is unchanged plus one more small, honestly-reported
+  funnel tick, (b) naming the GATE-1 blocker's now-12-day stall plainly rather than re-stating it flatly each
+  run, (c) a genuine (not assumed) re-confirmation that the demand-signal aggregator well is dry.
+- **Result**: Infra state confirmed with one real, non-zero funnel change (visitors_7d: 1→2). GATE 1
+  unchanged (still 1 of 3 preconditions unmet, now named as a 12-day-stalled item). Demand-signal aggregator
+  exhaustion re-confirmed fresh, not stale-carried.
+- **Decision**: Ship the GROWTH_STATUS/GROWTH_MEMORY/PENDING_OPS updates (reviewer-cleared); zero outreach
+  (still exhausted, still moot — GATE 1 not open); no ROADMAP/VISION/BUSINESS_CASE steer.
+- **Operational note**: worth carrying forward — when a named blocker (here, the §29 computer-use sweep) sits
+  unmet for several consecutive runs despite having no hard prerequisite gap (keys are live), the honest
+  response is to keep RE-VERIFYING it (never assume-carry-forward) but also to say plainly how long it's been
+  stalled, since that is itself useful signal for the product loop's prioritization — a silently-unchanging
+  note reads as "nothing to see here" when the real story is "this has been buildable and unbuilt for 12
+  days." Also: re-running a WebSearch that trended toward "exhausted" in memory is worth doing periodically
+  (this run did, after a 3-run gap) rather than assuming a categorical dead-end read from run 6-10 still holds
+  forever — a category can gain new competitor apps over time, and confirming "still nothing new" fresh is
+  more honest than citing a stale prior negative.
+
 ### 2026-07-15 (run 12) — pre_launch; QUALITY_SCORECARD ship gate RECOVERED; fixed a metric-integrity gap on a non-deterministic reviewer attribution; first non-zero visitor
 - **Mode**: Still the run-11 infra state (channels_connected: [email], awaiting_connect: false, site_gate_up:
   true), RE-VERIFIED via a fresh authenticated `GET /api/growth/snapshot` (CRON_SECRET present). Payload
