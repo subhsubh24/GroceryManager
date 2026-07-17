@@ -31,4 +31,13 @@ describe("buildExtractionPrompt", () => {
     expect(p).toContain("Bananas 1.99");
     expect(p).toContain("whole_foods");
   });
+
+  it("omits the retailer-hint line when no hint is given", () => {
+    // extractReceipt calls this with opts.retailerHint, which is optional — the
+    // no-hint path (the ternary's else branch) is the common case and must not
+    // inject a stray "Likely retailer" line into the prompt.
+    const p = buildExtractionPrompt("Bananas 1.99");
+    expect(p).toContain("Bananas 1.99");
+    expect(p).not.toContain("Likely retailer");
+  });
 });
