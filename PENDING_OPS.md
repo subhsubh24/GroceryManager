@@ -12,16 +12,14 @@ The dashboard surfaces every `open` item, urgent first.
 ```yaml
 OWNER_ACTIONS:
   project: GroceryManager
-  as_of: "2026-07-15 (GTM run 12) — RE-VERIFIED, unchanged on Human-Core items: a fresh authenticated snapshot
-    pull returned all 4 sources still connected (funnel now visitors_7d:1, the first real non-zero tick;
-    everything else still 0/null); site gate still up (/demo + /join still live and gate-exempt). Zero
-    owner movement on the Human-Core items below (eas-build-submit-go-live, connect-revenuecat-iap,
-    spend-caps, turnstile-keys, rotate-envl-secrets) since run 8 — 11 days now — see
-    docs/growth/GROWTH_STATUS.md + GROWTH_MEMORY.md run 12 for full detail. UPDATE: the QUALITY_SCORECARD
-    regression noted as of run 11 (overall A->B, ship_gate_met false — a mobile icon-system gap) is RESOLVED
-    — the independent Quality Auditor re-closed the ship gate as_of 2026-07-13 (design_taste B->A, #522/#548).
-    That was always Product-Factory build work, not a Human-Core item, so it was never listed here either
-    way. Unchanged, still open, optional: `gtm-content-validation-kit-v1` — see that item below."
+  as_of: "2026-07-17 (GTM run 13) — RE-VERIFIED, unchanged on Human-Core items: a fresh authenticated snapshot
+    pull returned all 4 sources still connected (funnel now visitors_7d:2, up from 1; everything else still
+    0/null); site gate still up (/demo + /join still live and gate-exempt). Zero owner movement on the
+    Human-Core items below (eas-build-submit-go-live, connect-revenuecat-iap, spend-caps, turnstile-keys,
+    rotate-envl-secrets) since run 8 — 13 days now — see docs/growth/GROWTH_STATUS.md + GROWTH_MEMORY.md
+    run 13 for full detail. QUALITY_SCORECARD (as_of 2026-07-13, re-read fresh this run) remains unchanged
+    since run 12: overall A, ship_gate_met true. Unchanged, still open, optional:
+    `gtm-content-validation-kit-v1` — see that item below."
   items:
     - id: wire-live-prod-smoke-job
       title: "Wire the §44 Layer A live-prod smoke job (post-deploy + scheduled) against PROD_URL"

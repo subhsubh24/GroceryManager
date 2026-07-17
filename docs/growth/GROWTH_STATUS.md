@@ -39,25 +39,25 @@ the owner sees pre-launch / launch / post-launch growth progress in one place.
 ```yaml
 GROWTH_STATUS:
   project: GroceryManager
-  as_of: 2026-07-15 (run 12)
+  as_of: 2026-07-17 (run 13)
   phase: pre_launch              # pre_launch | launching | post_launch — NOT "launching" despite the
                                  #   snapshot API's own `phase` field (see below): ANALYSIS_PLAYBOOK's phase
                                  #   definition requires EVERY ship-critical QUALITY_SCORECARD dim A/A+ AND
-                                 #   the store live. RUN 12: QUALITY_SCORECARD (independent Quality Auditor,
-                                 #   as_of 2026-07-13) RE-CLOSED — overall A, ship_gate_met TRUE again
-                                 #   (design_taste B->A: #522 shipped a real Ionicons registry for apps/mobile,
-                                 #   #548 removed the last raw glyph). So ship-critical quality now clears, but
-                                 #   PENDING_OPS `eas-build-submit-go-live` is STILL `status: open` (re-verified
-                                 #   this run) — the mobile store submission has NOT happened, so the store
-                                 #   isn't live and `phase` correctly stays `pre_launch`. The snapshot route's
-                                 #   `phase` field (see GROWTH_STATUS.sources note) is a narrower code-level
-                                 #   signal (stripeConnected && no active subs -> "launching") that does NOT
-                                 #   encode store-readiness or ship-gate status — do not confuse the two.
+                                 #   the store live. RUN 13: re-read QUALITY_SCORECARD.md fresh this run —
+                                 #   as_of 2026-07-13, UNCHANGED since run 12 (no newer grade exists): overall
+                                 #   A, ship_gate_met TRUE (design_taste held at A). So ship-critical quality
+                                 #   still clears, but PENDING_OPS `eas-build-submit-go-live` is STILL
+                                 #   `status: open` (re-verified this run) — the mobile store submission has
+                                 #   NOT happened, so the store isn't live and `phase` correctly stays
+                                 #   `pre_launch`. The snapshot route's `phase` field (see GROWTH_STATUS.sources
+                                 #   note) is a narrower code-level signal (stripeConnected && no active subs
+                                 #   -> "launching") that does NOT encode store-readiness or ship-gate status —
+                                 #   do not confuse the two.
   engine_built: true             # MUST equal (engine_pct == 100); preflight enforces it against real anchor files
   engine_pct: 100                # % of growth-execution engine pieces shipped — DERIVED from anchor files by preflight; NEVER hand-set
-  channels_connected: [email]    # RE-VERIFIED THIS RUN (run 12) via a FRESH authenticated GET
+  channels_connected: [email]    # RE-VERIFIED THIS RUN (run 13) via a FRESH authenticated GET
                                  #   /api/growth/snapshot call (Bearer $CRON_SECRET, again present in this
-                                 #   run's environment) — payload identical in substance to runs 8-11:
+                                 #   run's environment) — payload identical in substance to runs 8-12:
                                  #   emailConnected:true (a supported provider key is set). Analytics + billing
                                  #   are real too but are
                                  #   MEASUREMENT/MONETIZATION infra, not marketing "channels" in the
@@ -79,7 +79,7 @@ GROWTH_STATUS:
                                  #   surfaces) both return 200, gate-exempt by design (public marketing
                                  #   surfaces), same pattern as the waitlist landing.
   sources:                       # per-source pull status (H7 snapshot): connected | awaiting_connect —
-                                 #   RE-PROBED run 12 (fresh authenticated call, not inferred from run 11):
+                                 #   RE-PROBED run 13 (fresh authenticated call, not inferred from run 12):
                                  #   payload identical in substance, all 4 still genuinely connected.
     waitlist: connected          # REAL THIS RUN: the authenticated snapshot (CRON_SECRET, NOT ADMIN_EMAIL)
                                  #   returned a genuine DB-derived total (0) via getWaitlistSubmissions — the
@@ -131,14 +131,13 @@ GROWTH_STATUS:
                                  #   click_rate stay null below until a real send + open/click round-trips.
       owner_action: gtm-connect-email (RESOLVED — see PENDING_OPS; deliverability still unverified)
   funnel:                        # REAL numbers, VERIFIED THIS RUN via authenticated GET /api/growth/snapshot
-                                 #   (all 4 sources genuinely connected — see `sources` above). RUN 12: for the
-                                 #   FIRST time visitors_7d ticked from 0 to 1 (matches the independent GTM
-                                 #   Auditor's own live pull, as_of 2026-07-15) — one real, organic visitor in
-                                 #   the last 7 days, source unknown (this routine has driven ZERO external
-                                 #   traffic to date; still pre_launch / WAITLIST-ONLY, no campaign launched).
-                                 #   Not attributed to any action of this routine — reported honestly as-is,
-                                 #   not rounded back down to 0.
-    visitors_7d: 1
+                                 #   (all 4 sources genuinely connected — see `sources` above). RUN 13:
+                                 #   visitors_7d ticked 1 -> 2 (matches the live snapshot pulled this run) — two
+                                 #   real, organic visitors in the last 7 days, source unknown (this routine has
+                                 #   driven ZERO external traffic to date; still pre_launch / WAITLIST-ONLY, no
+                                 #   campaign launched). N=2 remains statistically vacuous for any rate — reported
+                                 #   honestly as-is, not rounded back down and not treated as a trend.
+    visitors_7d: 2
     waitlist_signups_total: 0
     waitlist_signups_7d: 0
     waitlist_confirmed: 0          # double-opt-in confirmed signups (own datastore — always real)
@@ -253,43 +252,42 @@ GROWTH_STATUS:
   marketing:                     # GTM_STANDARD §13 — the two-gate autonomous marketing-launch system (added
                                  #   2026-07-05, PR #441; FIRST run this dashboard schema reflects it).
     kill_switch: not_present     # checked FIRST, every run, per §13: docs/growth/MARKETING_HOLD does not
-                                 #   exist in this repo (verified via Glob this run) -> not held.
+                                 #   exist in this repo (re-verified via `ls` this run) -> not held.
     stage: prepare                # prepare | waitlist (after GATE 1 approval) | launch (after GATE 2)
     gate_1_start_waitlist_outreach:
       status: not_ready           # not_ready | awaiting_approval | approved
       preconditions:
-        ship_gate_met: true         # RECOVERED this run (run 12): QUALITY_SCORECARD.md as_of 2026-07-13
-                                     # (independent Quality Auditor) RE-CLOSED — overall A, ship_gate_met TRUE,
-                                     # design_taste B->A. Verified by directly reading the scorecard this run:
-                                     # #522 shipped a real Ionicons icon registry (apps/mobile/lib/icons.tsx,
-                                     # @expo/vector-icons, mirroring the web lucide-react registry) replacing the
-                                     # raw-glyph chrome run 11 flagged; #548 removed the last raw glyph (paywall
-                                     # star). The scorecard's own adversarial UTF-8 raw-glyph sweep of
-                                     # apps/mobile/app now returns ZERO structural offenders. This is a genuine
-                                     # Product-Factory fix, not a GTM action — the GTM Factory only reads and
-                                     # reflects it (maker != checker: never self-certified here).
+        ship_gate_met: true         # RE-VERIFIED this run (run 13): QUALITY_SCORECARD.md as_of 2026-07-13
+                                     # (independent Quality Auditor) is UNCHANGED since run 12 — no newer grade
+                                     # exists. Overall A, ship_gate_met TRUE, design_taste held at A. This is a
+                                     # genuine Product-Factory state, not a GTM action — the GTM Factory only
+                                     # reads and reflects it (maker != checker: never self-certified here).
         computer_use_e2e_sweep_green: false   # docs/autonomous-loop/VALIDATOR_STATUS.md STILL does NOT exist
                                      # (re-checked via `ls` this run — RE-VERIFIED, not assumed). ROADMAP.md
                                      # still shows the §29 sweep as an unchecked Product-Factory build item (epic
-                                     # #413). BROWSERBASE_API_KEY/BROWSERBASE_PROJECT_ID are confirmed present in
-                                     # THIS run's own environment too (re-checked) — note: FACTORY_STANDARD §44
-                                     # (a LIGHTER, non-blocking live-prod smoke check, PR #555/#564) has since
-                                     # shipped and is DISTINCT from the full §29 computer-use sweep this
-                                     # precondition names — §44's existence does NOT satisfy this precondition;
-                                     # VALIDATOR_STATUS.md is still the literal, unmet requirement. Still un-built
-                                     # Product-Factory work, not an owner blocker.
+                                     # #413), UNCHANGED wording since run 9. BROWSERBASE_API_KEY/
+                                     # BROWSERBASE_PROJECT_ID remain confirmed present in THIS run's own
+                                     # environment too (re-checked). FACTORY_STANDARD §44 (the lighter,
+                                     # non-blocking live-prod smoke check) remains DISTINCT from the full §29
+                                     # computer-use sweep this precondition names — its existence does NOT
+                                     # satisfy this precondition. Still un-built Product-Factory work, not an
+                                     # owner blocker. This is now the SOLE unmet GATE 1 precondition across 5
+                                     # straight runs (9, 10, 12, 13; run 11 had a temporary second regression
+                                     # that has since resolved) with zero movement on it specifically.
         waitlist_launch_assets_reviewed: true  # Unchanged since run 10: beyond the waitlist landing + 4 blog
                                      # posts + email lifecycle drafts, the §34 Part A/B assets are REAL, LIVE,
                                      # gate-exempt pages (re-verified this run via direct curl: /demo -> 200,
                                      # /join -> 200) — a public no-account demo of the core "aha" and a
                                      # gated-beta invite-redemption flow, both previously quality-audited.
       blocking_precondition: computer_use_e2e_sweep_green
-      note: "GATE 1 moved CLOSER to ready this run: the run-11 regression (ship_gate_met FALSE on a mobile
-        icon-system gap) is GENUINELY FIXED per the independent QUALITY_SCORECARD (as_of 2026-07-13, re-verified
-        by this run's own read of the file, not assumed) — 2 of 3 preconditions now hold, same state as run 10
-        before the run-11 regression. The SOLE remaining blocker is the §29 full computer-use E2E sweep
-        (`docs/autonomous-loop/VALIDATOR_STATUS.md`, still absent) — Product-Factory build work, not an owner
-        action (Browserbase keys already live). Correctly staying quiet: §13 requires ALL THREE, none
+      note: "GATE 1 state UNCHANGED this run: 2 of 3 preconditions hold (ship_gate_met, launch assets), and the
+        SOLE remaining blocker is still the §29 full computer-use E2E sweep
+        (`docs/autonomous-loop/VALIDATOR_STATUS.md`, re-confirmed absent this run) — Product-Factory build work,
+        not an owner action (Browserbase keys already live). Worth naming plainly: this specific precondition
+        has now sat unmet since run 9 (2026-07-05) with zero movement across 12 days / 4 intervening GTM runs,
+        even though nothing blocks building it (keys live, epic #413 open, marked 'exploratory FINDER, not a
+        merge gate' in ROADMAP.md's own text). This is the GTM Factory's read for the product loop's queue, not
+        a claim the GTM Factory can build it. Correctly staying quiet: §13 requires ALL THREE, none
         self-certified, and one still doesn't hold."
     gate_2_launch:
       status: not_ready
@@ -640,10 +638,20 @@ GROWTH_STATUS:
     - "Once a channel (email provider or social) connects on top of the now-true site_gate_up: draft 1-2
       curated outreach emails (press/newsletter) — the HARD BLOCK needs both, and only site_gate_up is
       met so far."
+    - "RUN 13 (2026-07-17): re-checked the ONE demand-signal source category not exhausted for staleness —
+      searched grand-screen.com's pantry/grocery/fridge app listing fresh (not re-fetching cached run 6/7
+      results) and confirmed no NEW app exists in the category beyond the 7 already reviewed (KitchenPal, My
+      Pantry Tracker, Wonder Fridge, Grocery AI, CookBook, AnyList, Our Groceries) — the two new hits (Fry's,
+      Wholesome Yum) are a grocery-store-chain app and a recipe blog, both off-theme. Also checked whether
+      'Fridgely' (the one app named in run 2's learnings as an unverified WebSearch-summary complaint,
+      never independently confirmed) has a ComplaintsBoard page — it does not. This is a genuine, bounded
+      re-confirmation that the two reliably-fetchable aggregators are now exhausted for this product
+      category, not a new theme — recorded so a future run doesn't re-spend a cycle re-discovering the same
+      dead end."
   owner_blockers:
-    - "CIRCUIT BREAKER (now 5 runs / 11 days, 2026-07-04 -> 2026-07-15, zero owner movement on the
+    - "CIRCUIT BREAKER (now 6 runs / 13 days, 2026-07-04 -> 2026-07-17, zero owner movement on the
       Human-Core items below, re-confirmed against a fresh PENDING_OPS re-read this run): site_gate_up and
-      analytics/billing/email connection are RESOLVED and STABLE (re-verified run 12 via a fresh
+      analytics/billing/email connection are RESOLVED and STABLE (re-verified run 13 via a fresh
       authenticated snapshot pull + a fresh live-HTTP curl — see `sources`/`funnel` above). UPDATE (run
       12): the QUALITY_SCORECARD ship gate, which run 11 reported as regressed, is RE-CLOSED — the
       Product Factory genuinely fixed the mobile icon-system gap (#522/#548; verified via this run's own
@@ -684,19 +692,21 @@ GROWTH_STATUS:
     - "LOW (unchanged since run 8): ADMIN_EMAIL — only gates the human `/admin/waitlist` UI page; the Growth
       Agent's own analytics read need is already satisfied via CRON_SECRET."
   demand_signal:                 # GTM_STANDARD §10 — pre-launch demand validation (leading indicator, NOT PMF)
-    as_of: 2026-07-15
-    method: "RUN 12: re-fetched complaintsboard.com/paprika-recipe-manager-3-b149019 a THIRD independent
-      time to resolve the GTM_SCORECARD (as_of 2026-07-15) metric_integrity top_gap — the auditor's own
-      fresh WebFetch had contradicted run 10's 'P. Kerluke, not D. Bogan' attribution correction, reverting
-      to 'D. Bogan'. This run's fetch returned 'P. Kerluke' again — a THIRD distinct outcome across 3
-      attempts on the same page (2 for Kerluke, 1 for Bogan), no stable consensus. Concluded the
-      reviewer-name extraction is non-deterministic on this page and downgraded the affected quote's
-      attribution to explicitly UNCERTAIN (see the theme below) rather than re-asserting a name a future
-      fetch would likely flip again — quote TEXT + URL stay verbatim-verified across all 3 fetches. No new
-      search angle attempted this run (runs 3-10 already exhausted the reliably-fetchable aggregators;
-      this run's demand-signal effort went to the attribution-integrity fix instead). Prior runs' method
-      note stands: 6 Reddit-scoped WebSearch queries across runs 1-4 returned NO citable exact-quote
-      threads — an honest method gap, not a claim that Reddit pain doesn't exist."
+    as_of: 2026-07-17
+    method: "RUN 13: it had been 3 runs (11, 12) since a real demand-signal search was attempted (run 10 was
+      the last), so this run re-checked the ONE angle worth re-visiting for staleness rather than assuming
+      exhaustion still holds: a fresh (not cached) WebSearch of grand-screen.com's pantry/grocery/fridge
+      category. Result: no NEW app exists in the category beyond the 7 already reviewed across runs 3-10 —
+      the only two new hits (Fry's, a grocery-chain shopping app; Wholesome Yum, a recipe blog) are off-theme,
+      not pantry-inventory apps. Also checked 'Fridgely' (named in run 2's learnings as an unverified
+      WebSearch-summary complaint, never independently confirmed) for a ComplaintsBoard page — none exists.
+      CONCLUSION: the two reliably-fetchable aggregators (grand-screen.com, complaintsboard.com) are
+      genuinely exhausted for this product category — confirmed fresh, not re-asserted from memory. No new
+      theme or citation added this run; the existing 3-theme synthesis stands unchanged. Prior runs' method
+      notes stand: 6 Reddit-scoped WebSearch queries across runs 1-4 returned NO citable exact-quote threads
+      (a hard tool-access limitation); run 12 resolved a demand_signal reviewer-attribution non-determinism
+      finding (see LESSON-1 in GROWTH_MEMORY.md) — not re-litigated this run since no new fetch was made of
+      that page."
     themes:
       - theme: "Manual pantry entry never stays current"
         durability: durable        # recurs across structurally different competitor apps
@@ -769,6 +779,13 @@ GROWTH_STATUS:
           complaint (scan failures forcing manual entry) across 3 structurally-similar apps, upgrading
           confidence in this theme's durability further."
     disconfirming_or_limitations:
+      - "UPDATE (run 13, 2026-07-17): re-checked grand-screen.com's pantry/grocery/fridge category fresh
+        (not from memory) — no app exists there beyond the 7 already reviewed (runs 3-10); the only 2 new
+        listings (Fry's, Wholesome Yum) are off-theme. 'Fridgely' (an unverified WebSearch-summary complaint
+        from run 2, never independently confirmed) has no ComplaintsBoard page. This is a genuine, dated
+        re-confirmation that both reliably-fetchable aggregators are exhausted for this category — a future
+        run should not re-spend a cycle re-discovering this; a NEW citable theme now requires either a
+        genuinely new aggregator becoming fetchable or a new competitor app entering the category."
       - "UPDATE (run 4, 2026-07-03): confirmed Reddit is categorically unreachable to this routine's
         WebSearch tool (explicit 'domain not accessible to our user agent' error on 2 direct
         allowed_domains:[reddit.com] queries) — a hard tool-access limitation, not a phrasing gap as
