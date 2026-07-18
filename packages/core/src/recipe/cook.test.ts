@@ -57,6 +57,14 @@ describe("scaleMeasure", () => {
     expect(scaleMeasure("1/4 tsp", 2)).toBe("½ tsp");
   });
 
+  it("falls back to a 2-decimal number when scaling lands off any common fraction", () => {
+    // Real recipe measures aren't always round ("1.1 cups", "0.7 lb"); scaled by ×2/×3 they produce
+    // decimals that match no common fraction, so formatQty renders the plain rounded number.
+    expect(scaleMeasure("1.1 cups", 2)).toBe("2.2 cups"); // 2.2 → no ⅛…⅞ within 0.02 → "2.2"
+    expect(scaleMeasure("0.7 lb", 3)).toBe("2.1 lb"); // 2.1 → plain number
+    expect(scaleMeasure("0.35 kg", 2)).toBe("0.7 kg"); // whole part 0 → bare "0.7", not "0…"
+  });
+
   it("scales both ends of a range", () => {
     expect(scaleMeasure("1-2 tbsp", 2)).toBe("2-4 tbsp");
     expect(scaleMeasure("1 to 2 cloves", 2)).toBe("2 to 4 cloves");
