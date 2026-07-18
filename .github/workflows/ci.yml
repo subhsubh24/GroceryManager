@@ -5,6 +5,12 @@ on:
     branches: ["**"]
   pull_request:
 
+# Cancel superseded in-progress runs for the same PR — the autonomous loop pushes commits in rapid
+# succession; without this every intermediate push ran full CI to completion. Only PR runs cancel.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # Native (Expo) app gate. apps/mobile is excluded from the pnpm workspace and starts life as a
   # non-functional skeleton, so this job GRACEFULLY SKIPS until Expo is initialized (a tsconfig.json
