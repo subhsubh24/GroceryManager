@@ -46,9 +46,11 @@ Set these in your Vercel project settings (never commit to the repo):
 | `STRIPE_WEBHOOK_SECRET` | Billing webhook verification | Stripe Dashboard → Webhooks → signing secret |
 | `STRIPE_PRICE_MONTHLY` | Monthly plan ($4.99/mo) price ID | Stripe Dashboard → Products → Price ID |
 | `STRIPE_PRICE_ANNUAL` | Annual plan ($39.99/yr) price ID | Stripe Dashboard → Products → Price ID |
+| `STRIPE_PRICE_FAMILY` | Family plan ($9.99/mo) price ID — required before flipping `FEATURE_HOUSEHOLDS` | Stripe Dashboard → Products → Price ID |
 | `FEATURE_BILLING` | Enable billing UI + paywall | Set to `1` once Stripe keys are verified |
-| `FEATURE_HOUSEHOLDS` | Enable household sharing | Set to `1` to activate |
-| `REVENUECAT_API_KEY` | Mobile in-app purchases | RevenueCat Dashboard |
+| `FEATURE_HOUSEHOLDS` | Enable household sharing (needs `STRIPE_PRICE_FAMILY`) | Set to `1` to activate |
+| `REVENUECAT_API_KEY` | Mobile in-app purchases (server-side verification) | RevenueCat Dashboard → API keys (secret) |
+| `REVENUECAT_WEBHOOK_AUTH` | Mobile IAP webhook auth — the `/api/webhooks/revenuecat` route checks it before syncing entitlements | RevenueCat → Project → Webhooks → Authorization header value |
 | `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` | Privacy-first analytics | Your domain without `https://` |
 | `EXPO_PUBLIC_PROJECT_ID` | Expo push notifications | EAS Dashboard after project creation |
 | `NEXTAUTH_URL` | Full public URL of your deployment | `https://your-domain.com` |
