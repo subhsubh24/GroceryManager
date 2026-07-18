@@ -25,11 +25,15 @@ const MONTHLY = SUBSCRIPTION_PLANS.find((p) => p.tier === "premium_monthly");
 const ANNUAL = SUBSCRIPTION_PLANS.find((p) => p.tier === "premium_annual");
 
 // Store-acceptance honesty (Apple 2.3.1 / Google accurate-listing): never advertise a perk the user
-// can't reach from this app. "Household sharing" is behind FEATURE_HOUSEHOLDS (dark pre-launch) and
-// has no native surface yet, so drop it from the mobile paywall — mirroring the web upgrade page,
-// which filters the same perk (+ the Family card) until the owner flips the flag at launch. When a
-// native household screen ships alongside the flag, restore it here.
-const MOBILE_PERKS = PREMIUM_PERKS.filter((perk) => perk.feature !== "household");
+// can't reach from this app.
+//   • "Household sharing" is behind FEATURE_HOUSEHOLDS (dark pre-launch) with no native surface yet.
+//   • "Gmail receipt import" is a Gmail-OAuth flow that only exists on the web app — the native app
+//     has no way to connect a Gmail account (capture is snap/quick-add only), so a mobile-only user
+//     can't reach it. Advertising it here would be a 2.3.1-style "feature the app can't deliver".
+// Drop both from the mobile paywall until a native surface ships. When a native Gmail-connect and/or
+// household screen lands, restore the matching perk here.
+const MOBILE_HIDDEN_PERKS = new Set(["household", "gmail_import"]);
+const MOBILE_PERKS = PREMIUM_PERKS.filter((perk) => !MOBILE_HIDDEN_PERKS.has(perk.feature));
 
 const MONTHLY_PRICE = MONTHLY?.priceMonthCents ? (MONTHLY.priceMonthCents / 100).toFixed(2) : "4.99";
 const ANNUAL_PRICE = ANNUAL?.priceAnnualCents ? (ANNUAL.priceAnnualCents / 100).toFixed(2) : "39.99";
