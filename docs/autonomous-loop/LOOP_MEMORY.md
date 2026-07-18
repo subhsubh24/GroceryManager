@@ -2948,3 +2948,34 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   **Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated floor #190, base ≈ $33K <
   $100K = owner-GTM). Confidence statement stays UNCHECKED. Validation 8/8, 0 unmet. A full 6-lens DEEP AUDIT
   with 3 real clears + a documented decision reversal = success.
+
+- **2026-07-18 (run 84) — QUIET CONVERGENT run (0 code changes; bookkeeping-only); adversarial re-confirmation
+  that the loop is holding at the owner-GTM boundary, not stuck.** DEEP AUDIT not due — run 83 ran a standalone
+  6-lens sweep the same day (<24h). On the IDENTICAL commit (fa3985c), rather than re-fan-out a full scout
+  sweep (which would only re-tread run 83's ground and risk re-surfacing its already-deferred marginal items =
+  padding, FORBIDDEN), spawned TWO lean adversarial Haiku scouts (maker≠checker) targeted at the only two
+  questions that could plausibly yield NEW value:
+  (1) **"Find any genuinely-NEW value-bar-clearing change, NOT among run 83's deferred list and NOT a purist A+
+  nit."** → **NOTHING clears the bar.** Verified the branch is converged/mature; grade A is warranted; the
+  run-83 deferrals (reconcile confidence-dedup [already covered on the sibling branch], onboarding cleanOptions
+  cap, semantic plan_my_week degrade, ingest idempotency) remain correctly sub-bar; no A→A+ purist nit
+  (e.g. media-gen.ts double-audit call) clears the value bar either (gate already MET at A; A+ is not required).
+  (2) **"Adversarially hunt any buildable NON-REACH revenue lever."** → **NO buildable non-reach lever remains —
+  the gap is genuinely reach.** Every monetization/retention lever is BUILT: 4 tiers (Free / Premium Monthly
+  $4.99 / Annual $39.99 / Family $9.99), 7 real premium gates (plan_week, discover, remix, gmail_import,
+  household, spend_insights, wrapped_plus), referral rewards, annual-nudge (H14) + win-back (H15) experiments,
+  household lock-in, staged lifecycle emails; ~97% gross margin; pricing at the SaaS sweet spot. The scout
+  evaluated + rejected 7 speculative levers (usage-based caps, Family+ member tiers, email-frequency gating,
+  a 2nd spend-analytics tier, warehouse add-on, recipe marketplace, data-export add-on) — each either
+  number-gaming, cannibalizing, reach-gated, or a non-floor-mover. The honest $67K gap to the floor is
+  demand-driven: clearing $100K needs ~4,000–4,500 sustained downloads/mo (~2.7–3× the base 1,500) = owner GTM
+  (connect + fund channels: Product Hunt, ASO, content, paid) — NOT a code lever.
+  **Decision:** correctly shipped NOTHING this run (padding to hit a count is the worst failure mode; a quiet
+  coherent run is a SUCCESS). Did NOT open 'ready' — sole DoD gap unchanged (reach-gated floor #190, base ≈ $33K
+  < $100K = owner-GTM; Confidence statement stays UNCHECKED). This is the mission's acknowledged market-ceiling
+  LAST-RESORT state (a real reach/downloads limit the loop cannot build), already surfaced to the owner over many
+  runs (#190, GTM run 13) — so NO new FYI issue (spamming one every run is noise). Validation 8/8, 0 unmet; ship
+  gate MET (A). **LESSON: when a comprehensive deep audit ran the same day on the same commit, the disciplined
+  move is a TARGETED adversarial probe (2 lean scouts on the highest-value open questions) + honest convergence,
+  NOT a redundant full fan-out that manufactures padding. Re-running a superior sweep 0 changes later cannot beat
+  it — recognizing that is anti-churn discipline, not artificial scarcity.**
