@@ -2900,3 +2900,51 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   prod Redis — if ever deployed, `removeJobScheduler("predict-nightly")` once. **Readiness:** did NOT open the
   'ready' issue — the sole DoD gap is unchanged (reach-gated floor #190, owner-GTM). Confidence statement stays
   UNCHECKED. Validation 5/5, 0 unmet. A focused backlog-clearing run = success.
+
+- **2026-07-18 (run 83) — DEEP AUDIT (standalone 6-Haiku lens sweep, due since run 77) + 3 file-disjoint clears
+  (#605 mobile gmail-perk store-honesty, #606 billing env-var docs, #607 cook decimal-scale coverage); 6/6 Sonnet
+  approve first-pass; 0 abandons, 0 rejections.** Last standalone/folded deep audit was run 77 (2026-07-16);
+  runs 78-82 were scout sweeps, so a standalone was due. Six read-only Haiku lenses over the whole repo:
+  (1) **SECURITY/RLS/Track-G — CLEAN.** All 21 migrations' public tables RLS-enabled + correct policy
+  (tenant_isolation / transitive-child / catalog_access→grocery_app / admin_access); ~42 routes auth +
+  rate-limited + zod-validated + error-hygienic; login lockout timing-safe no-enumeration; per-user LLM quota +
+  demo per-IP/global spend ceiling; Turnstile fail-open-loud; Stripe constructEvent + timing-safe
+  Gmail/RevenueCat/cron webhooks (RevenueCat fails closed 401 without auth); CSP/HSTS/nosniff/Permissions-Policy;
+  entitlements server-side; no committed secrets.
+  (2) **CORRECTNESS/FUNCTIONAL — CLEAN.** 84-tool-use sweep: all server actions/routes try/catch→degrade;
+  external/LLM calls withTimeout/AbortSignal < serverless budget; .optional() envs degrade or fail-loud
+  correctly; billing/entitlement tier detection fail-loud on misconfig; ledger invariant + trial-once held; no
+  uncaught throws / TODO debt on live paths.
+  (3) **TEST-F COVERAGE — 1 real gap shipped (#607), 4 deferred.** cook.ts:60 `formatQty` decimal fallback was
+  the only uncovered line (scaleMeasure gets decimal ingredient qtys "1.1 cups" ×2→"2.2"); covered to 100% line.
+  Deferred as marginal/redundant: reconcile.ts confidence-dedup (already covered on the sibling confirmations
+  branch), onboarding cleanOptions cap, semantic-layer plan_my_week degrade, ingest idempotency.
+  (4) **DESIGN/a11y/TASTE — 1 finding REJECTED as an anti-pattern.** The scout flagged recipe images `alt=""`
+  across 9 pages → `alt={title}`; REJECTED — in every layout the title is rendered as adjacent/overlaid text
+  (`{r.title}` card label, the share-hero `<h1>`), so empty alt is the CORRECT decorative-redundant choice;
+  `alt={title}` would double-announce (the recurring `alt=''` Haiku trap, runs 42-47). No new customer-facing
+  design defect.
+  (5) **ARTIFACT/MONETIZATION — 1 living-artifact drift shipped (#606).** `.env.example` had NO billing section
+  while env.ts validates the full Stripe+RevenueCat set; OPERATIONS.md omitted STRIPE_PRICE_FAMILY +
+  REVENUECAT_WEBHOOK_AUTH (both load-bearing — Family checkout 503 / entitlement webhook 401 without them).
+  Documented both. Prices 499/3999/999/7999¢ + BUSINESS_CASE SUMMARY (base $33,450, floor_met false) re-confirmed
+  consistent. Monetization RE-CONFIRMED reach-gated (owner-GTM #190; no buildable non-reach lever).
+  (6) **PERF/MOBILE — 1 store-honesty finding shipped (#605), but see the REVERSAL note.** The mobile paywall
+  advertised `gmail_import` ("Gmail receipt import") with no native Gmail surface. Filtered it out.
+  **⚠️ THE gmail_import REVERSAL — a re-litigation trap I fell into, kept but documented:** run 80 (IMPROVEMENT_LOG
+  line ~45) DELIBERATELY chose NOT to filter `gmail_import`, reasoning it's a LIVE cross-platform feature (connect
+  Gmail on web → shared pantry benefits the mobile account, so the value IS deliverable; filtering understates
+  real value), and flagged it as "a considered judgment call (filter vs. build a deep-link-to-web connect path),
+  not an oversight" for future runs; run 82 re-affirmed it. My perf/mobile scout re-surfaced it as a "new" bug
+  and I shipped #605 as a fresh oversight WITHOUT cross-checking the ledger first — PR #605 auto-merged before I
+  found run 80's note. **The reversal STANDS on the merits:** the mission's binding constraint is store acceptance
+  at HIGH confidence (a hard launch gate); a reviewer tests the mobile binary in ISOLATION with no in-app path to
+  Gmail import → a real Apple 2.3.1 vector; dropping one of six perks is a marginal value cost; and run 80 named
+  "filter" as a legitimate option. The filtered state is strictly safer on the binding constraint at marginal
+  cost = the better state. So the decision is now settled the OTHER way, WITH engagement. **LESSON: a scout
+  finding on a known-deferrable surface MUST be cross-checked against the ledger's SPECIFIC prior decision BEFORE
+  arming auto-merge — checking the pattern (household/Family) is not enough; check the exact item. The scout's
+  'already-settled' brief should have named gmail_import.** (Added to recurring_failures.)
+  **Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated floor #190, base ≈ $33K <
+  $100K = owner-GTM). Confidence statement stays UNCHECKED. Validation 8/8, 0 unmet. A full 6-lens DEEP AUDIT
+  with 3 real clears + a documented decision reversal = success.
