@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { SignJWT } from "jose";
 import { getUserByUsername, getAdminDb } from "@gm/db";
-import { verifyPassword } from "@gm/core/crypto";
+import { verifyPasswordConstantTime } from "@gm/core/crypto";
 import { normalizeUsername } from "@gm/core/personalization";
 import { rateLimit, tooManyRequests } from "../../../_lib/rate-limit";
 
@@ -42,7 +42,9 @@ export async function POST(req: Request) {
       );
     }
     const user = await getUserByUsername(getAdminDb(), username);
-    if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) {
+    // Constant-work verify FIRST (always runs scrypt) so a non-existent username can't be
+    // distinguished from a wrong password by response latency — closes username enumeration.
+    if (!verifyPasswordConstantTime(password, user?.passwordHash) || !user) {
       return NextResponse.json(
         { error: "invalid credentials" },
         { status: 401 },
