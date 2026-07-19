@@ -12,13 +12,13 @@ The dashboard surfaces every `open` item, urgent first.
 ```yaml
 OWNER_ACTIONS:
   project: GroceryManager
-  as_of: "2026-07-17 (GTM run 13) — RE-VERIFIED, unchanged on Human-Core items: a fresh authenticated snapshot
-    pull returned all 4 sources still connected (funnel now visitors_7d:2, up from 1; everything else still
+  as_of: "2026-07-19 (GTM run 14) — RE-VERIFIED, unchanged on Human-Core items: a fresh authenticated snapshot
+    pull returned all 4 sources still connected (funnel now visitors_7d:3, up from 2; everything else still
     0/null); site gate still up (/demo + /join still live and gate-exempt). Zero owner movement on the
     Human-Core items below (eas-build-submit-go-live, connect-revenuecat-iap, spend-caps, turnstile-keys,
-    rotate-envl-secrets) since run 8 — 13 days now — see docs/growth/GROWTH_STATUS.md + GROWTH_MEMORY.md
-    run 13 for full detail. QUALITY_SCORECARD (as_of 2026-07-13, re-read fresh this run) remains unchanged
-    since run 12: overall A, ship_gate_met true. Unchanged, still open, optional:
+    rotate-envl-secrets) since run 8 — 15 days now — see docs/growth/GROWTH_STATUS.md + GROWTH_MEMORY.md
+    run 14 for full detail. QUALITY_SCORECARD (as_of 2026-07-13, re-read fresh this run) remains unchanged
+    since run 12/13: overall A, ship_gate_met true. Unchanged, still open, optional:
     `gtm-content-validation-kit-v1` — see that item below."
   items:
     - id: wire-live-prod-smoke-job

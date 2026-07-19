@@ -40,6 +40,76 @@ support it; the gap speaks for itself.
 
 ## RUN LOG (newest first)
 
+### 2026-07-19 (run 14) — pre_launch; unchanged infra, one more visitor; extended the aggregator-honesty lesson to a new source type (blog listicles); GATE 1's sole blocker now unmoved for 14 days
+- **Mode**: Still the run-8 infra state (channels_connected: [email], awaiting_connect: false, site_gate_up:
+  true), RE-VERIFIED via a fresh authenticated `GET /api/growth/snapshot` (CRON_SECRET present). Payload
+  identical in substance to run 13 except one real change: `visitors_7d` ticked `2 -> 3`. Direct curl
+  reproduced the same site-gate split (home/`/demo`/`/join` 200, `/signup`+`/admin/waitlist` 401).
+- **Did**:
+  - Read GTM_STANDARD, FACTORY_STANDARD, GROWTH_STATUS, GROWTH_MEMORY (this file), GTM_SCORECARD (as_of
+    2026-07-15 — no newer grade since run 12; overall A, ship_gate_met true, all top_gaps low-severity
+    A→A+ polish, already addressed by runs 12/13), ANALYSIS_PLAYBOOK, OUTREACH, PENDING_OPS. `git fetch
+    origin main` showed 23 new commits since run 13's merge (c6acb61) — all Product-Factory
+    bookkeeping/quality/security work: Track-F test-coverage clears, Track-G6 gating the cook-log macro
+    LLM behind the per-user daily quota on both web and mobile, a real security fix (constant-time
+    credential verify closing a username-enumeration timing side-channel, #622), 3 more FACTORY_STANDARD
+    sections (§53 doctrine currency, §54 graph-of-loops, §55 anti-AI-tell writing), a vendored design-audit
+    skill, and continued store-honesty hardening around the dark FEATURE_HOUSEHOLDS tier (mobile paywall +
+    billing-env docs). Confirmed via `git log --format='%ae' -- ROADMAP.md VISION.md docs/BUSINESS_CASE.md`
+    since run 13's merge: zero commits touched any GTM-tracked file — no reconciliation needed.
+  - **Re-verified QUALITY_SCORECARD directly** (not assumed carried-forward): still as_of 2026-07-13,
+    unchanged since run 12/13 — overall A, `ship_gate_met: true`. Re-confirmed `docs/autonomous-loop/
+    VALIDATOR_STATUS.md` still does not exist and ROADMAP.md's §29 computer-use-sweep item (epic #413) is
+    still unchecked. This is now the SOLE unmet GATE 1 precondition, unmoved specifically since run 9
+    (2026-07-05) — 14 days / 5 intervening GTM runs (10, 11, 12, 13, this one) with zero progress on it,
+    even though nothing blocks building it (Browserbase keys live, ROADMAP's own text calls it "exploratory
+    FINDER, not a merge gate"). Named this plainly in the `marketing` block's GATE 1 note.
+  - **Demand-signal (§10)**: deliberately tried a source type NOT yet searched in 13 prior runs — 2026
+    blog-listicle "best pantry tracking app" roundups (groceriestracker.com, yomio.app, recipyapp.com,
+    foodat.co, mealthinker.com), plus a Trustpilot-scoped search. WebSearch's summary of these results
+    surfaced specific-sounding candidate complaints (Cooklist not tracking quantity units — ounces vs.
+    pounds; slow manual expiration-date entry; cross-device sync failures) — but a direct WebFetch of the
+    most specific cited source (recipyapp.com's roundup) found NONE of those quotes actually present on the
+    page. This is the SAME failure mode runs 2-10 already documented for review-aggregator search summaries
+    (LESSON: WebSearch summarization sometimes fabricates specificity a source doesn't support), now
+    confirmed to extend to a different source type (blog listicles, not just review aggregators) — a
+    genuinely useful negative result, not a dead-end repeat, since it broadens the honesty-bar rule rather
+    than just re-confirming grand-screen.com/complaintsboard.com are dry (which run 13 already established).
+    Trustpilot itself carries zero pantry-tracker/grocery-inventory app review pages for this category — a
+    clean negative. Added neither as evidence; no new theme or citation this run.
+  - Re-verified PENDING_OPS in full: `eas-build-submit-go-live`, `connect-revenuecat-iap`, `spend-caps`,
+    `turnstile-keys`, `rotate-envl-secrets` all still `status: open`, unchanged since run 8 — 15 days of zero
+    Human-Core owner movement now. `gtm-content-validation-kit-v1` also still open (owner hasn't
+    filmed/posted the run-11 content kit yet). `decide-ship-households-family-tier` also still open.
+  - Re-checked `ListConnectors`: Gmail (connected, chat-enabled), Google Drive (connected, chat-disabled),
+    Vercel (connected, chat-disabled — unchanged since run 12, still not usable from this routine), Google
+    Calendar (unknown), Mobbin (connected, chat-enabled, not GTM-relevant). No social/analytics/billing MCP
+    tool newly available.
+  - Did NOT re-run OUTREACH.md's exhausted search-angle categories (no new reason since run 7 — still moot,
+    GATE 1 not open).
+  - Did NOT touch ROADMAP/VISION/BUSINESS_CASE — no new causal, significant, revenue-linked data this run
+    (one more visitor, N=3, is not a hypothesis-testable finding; the product-factory commits this window are
+    read-and-reflect, not a GTM finding).
+  - Ran an independent adversarial reviewer subagent (fresh context) against the full diff (GROWTH_STATUS.md,
+    GROWTH_MEMORY.md, PENDING_OPS.md) before committing — see its verdict recorded below once returned.
+- **Hypothesis**: none new on the funnel (N=3 visitors over 7 days is still statistically vacuous). This
+  run's work is (a) an honest re-verification that infra is unchanged plus one more small, honestly-reported
+  funnel tick, (b) naming the GATE-1 blocker's now-14-day stall plainly, (c) a genuinely new demand-signal
+  search angle (blog listicles) that came back a confirmed negative rather than a repeat of an already-known
+  dead end.
+- **Result**: Infra state confirmed with one real, non-zero funnel change (visitors_7d: 2→3). GATE 1
+  unchanged (still 1 of 3 preconditions unmet, now 14 days stalled). Demand-signal: a new source type tried
+  and found unreliable-by-summary, same as the two aggregators already known — the honesty-bar lesson now
+  covers a third source category.
+- **Decision**: Ship the GROWTH_STATUS/GROWTH_MEMORY/PENDING_OPS updates (reviewer-cleared); zero outreach
+  (still exhausted, still moot — GATE 1 not open); no ROADMAP/VISION/BUSINESS_CASE steer.
+- **Operational note**: worth carrying forward — when the two known-exhausted aggregators have nothing left
+  to give, the right move is to widen the SOURCE TYPE (this run: blog listicles) rather than either
+  re-searching the same exhausted sources or stopping demand-signal work altogether. The WebSearch-summary
+  fabrication risk applies broadly, not just to the two aggregators already flagged — verify any NEW source
+  type against a direct WebFetch before citing it, the same discipline runs 2-10 established for
+  review-aggregator pages.
+
 ### 2026-07-17 (run 13) — pre_launch; unchanged infra, one more visitor; confirmed the demand-signal aggregator well is genuinely dry; GATE 1's sole blocker now unmoved for 12 days
 - **Mode**: Still the run-12 infra state (channels_connected: [email], awaiting_connect: false, site_gate_up:
   true), RE-VERIFIED via a fresh authenticated `GET /api/growth/snapshot` (CRON_SECRET present). Payload
