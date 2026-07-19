@@ -39,12 +39,12 @@ the owner sees pre-launch / launch / post-launch growth progress in one place.
 ```yaml
 GROWTH_STATUS:
   project: GroceryManager
-  as_of: 2026-07-17 (run 13)
+  as_of: 2026-07-19 (run 14)
   phase: pre_launch              # pre_launch | launching | post_launch — NOT "launching" despite the
                                  #   snapshot API's own `phase` field (see below): ANALYSIS_PLAYBOOK's phase
                                  #   definition requires EVERY ship-critical QUALITY_SCORECARD dim A/A+ AND
-                                 #   the store live. RUN 13: re-read QUALITY_SCORECARD.md fresh this run —
-                                 #   as_of 2026-07-13, UNCHANGED since run 12 (no newer grade exists): overall
+                                 #   the store live. RUN 14: re-read QUALITY_SCORECARD.md fresh this run —
+                                 #   as_of 2026-07-13, UNCHANGED since run 12/13 (no newer grade exists): overall
                                  #   A, ship_gate_met TRUE (design_taste held at A). So ship-critical quality
                                  #   still clears, but PENDING_OPS `eas-build-submit-go-live` is STILL
                                  #   `status: open` (re-verified this run) — the mobile store submission has
@@ -55,9 +55,9 @@ GROWTH_STATUS:
                                  #   do not confuse the two.
   engine_built: true             # MUST equal (engine_pct == 100); preflight enforces it against real anchor files
   engine_pct: 100                # % of growth-execution engine pieces shipped — DERIVED from anchor files by preflight; NEVER hand-set
-  channels_connected: [email]    # RE-VERIFIED THIS RUN (run 13) via a FRESH authenticated GET
+  channels_connected: [email]    # RE-VERIFIED THIS RUN (run 14) via a FRESH authenticated GET
                                  #   /api/growth/snapshot call (Bearer $CRON_SECRET, again present in this
-                                 #   run's environment) — payload identical in substance to runs 8-12:
+                                 #   run's environment) — payload identical in substance to runs 8-13:
                                  #   emailConnected:true (a supported provider key is set). Analytics + billing
                                  #   are real too but are
                                  #   MEASUREMENT/MONETIZATION infra, not marketing "channels" in the
@@ -74,12 +74,12 @@ GROWTH_STATUS:
                                  #   explicitly approves GATE 1. What DOES stay open: the agent acts on real
                                  #   (not assumed) funnel/analytics/billing data instead of all-null placeholders.
   site_gate_up: true             # RE-VERIFIED THIS RUN via direct curl: home 200, /signup + /admin/waitlist
-                                 #   401 (identical split to runs 5-11) — SITE_GATE_PASSWORD still set, unchanged.
+                                 #   401 (identical split to runs 5-13) — SITE_GATE_PASSWORD still set, unchanged.
                                  #   ALSO re-verified this run: /demo and /join (the §34 Part A/B public
                                  #   surfaces) both return 200, gate-exempt by design (public marketing
                                  #   surfaces), same pattern as the waitlist landing.
   sources:                       # per-source pull status (H7 snapshot): connected | awaiting_connect —
-                                 #   RE-PROBED run 13 (fresh authenticated call, not inferred from run 12):
+                                 #   RE-PROBED run 14 (fresh authenticated call, not inferred from run 13):
                                  #   payload identical in substance, all 4 still genuinely connected.
     waitlist: connected          # REAL THIS RUN: the authenticated snapshot (CRON_SECRET, NOT ADMIN_EMAIL)
                                  #   returned a genuine DB-derived total (0) via getWaitlistSubmissions — the
@@ -131,13 +131,13 @@ GROWTH_STATUS:
                                  #   click_rate stay null below until a real send + open/click round-trips.
       owner_action: gtm-connect-email (RESOLVED — see PENDING_OPS; deliverability still unverified)
   funnel:                        # REAL numbers, VERIFIED THIS RUN via authenticated GET /api/growth/snapshot
-                                 #   (all 4 sources genuinely connected — see `sources` above). RUN 13:
-                                 #   visitors_7d ticked 1 -> 2 (matches the live snapshot pulled this run) — two
+                                 #   (all 4 sources genuinely connected — see `sources` above). RUN 14:
+                                 #   visitors_7d ticked 2 -> 3 (matches the live snapshot pulled this run) — three
                                  #   real, organic visitors in the last 7 days, source unknown (this routine has
                                  #   driven ZERO external traffic to date; still pre_launch / WAITLIST-ONLY, no
-                                 #   campaign launched). N=2 remains statistically vacuous for any rate — reported
+                                 #   campaign launched). N=3 remains statistically vacuous for any rate — reported
                                  #   honestly as-is, not rounded back down and not treated as a trend.
-    visitors_7d: 2
+    visitors_7d: 3
     waitlist_signups_total: 0
     waitlist_signups_7d: 0
     waitlist_confirmed: 0          # double-opt-in confirmed signups (own datastore — always real)
@@ -257,11 +257,11 @@ GROWTH_STATUS:
     gate_1_start_waitlist_outreach:
       status: not_ready           # not_ready | awaiting_approval | approved
       preconditions:
-        ship_gate_met: true         # RE-VERIFIED this run (run 13): QUALITY_SCORECARD.md as_of 2026-07-13
-                                     # (independent Quality Auditor) is UNCHANGED since run 12 — no newer grade
-                                     # exists. Overall A, ship_gate_met TRUE, design_taste held at A. This is a
-                                     # genuine Product-Factory state, not a GTM action — the GTM Factory only
-                                     # reads and reflects it (maker != checker: never self-certified here).
+        ship_gate_met: true         # RE-VERIFIED this run (run 14): QUALITY_SCORECARD.md as_of 2026-07-13
+                                     # (independent Quality Auditor) is UNCHANGED since run 12/13 — no newer
+                                     # grade exists. Overall A, ship_gate_met TRUE, design_taste held at A. This
+                                     # is a genuine Product-Factory state, not a GTM action — the GTM Factory
+                                     # only reads and reflects it (maker != checker: never self-certified here).
         computer_use_e2e_sweep_green: false   # docs/autonomous-loop/VALIDATOR_STATUS.md STILL does NOT exist
                                      # (re-checked via `ls` this run — RE-VERIFIED, not assumed). ROADMAP.md
                                      # still shows the §29 sweep as an unchecked Product-Factory build item (epic
@@ -271,9 +271,9 @@ GROWTH_STATUS:
                                      # non-blocking live-prod smoke check) remains DISTINCT from the full §29
                                      # computer-use sweep this precondition names — its existence does NOT
                                      # satisfy this precondition. Still un-built Product-Factory work, not an
-                                     # owner blocker. This is now the SOLE unmet GATE 1 precondition across 5
-                                     # straight runs (9, 10, 12, 13; run 11 had a temporary second regression
-                                     # that has since resolved) with zero movement on it specifically.
+                                     # owner blocker. This is now the SOLE unmet GATE 1 precondition across 6
+                                     # straight runs (9, 10, 12, 13, 14; run 11 had a temporary second
+                                     # regression that has since resolved) with zero movement on it specifically.
         waitlist_launch_assets_reviewed: true  # Unchanged since run 10: beyond the waitlist landing + 4 blog
                                      # posts + email lifecycle drafts, the §34 Part A/B assets are REAL, LIVE,
                                      # gate-exempt pages (re-verified this run via direct curl: /demo -> 200,
@@ -284,7 +284,7 @@ GROWTH_STATUS:
         SOLE remaining blocker is still the §29 full computer-use E2E sweep
         (`docs/autonomous-loop/VALIDATOR_STATUS.md`, re-confirmed absent this run) — Product-Factory build work,
         not an owner action (Browserbase keys already live). Worth naming plainly: this specific precondition
-        has now sat unmet since run 9 (2026-07-05) with zero movement across 12 days / 4 intervening GTM runs,
+        has now sat unmet since run 9 (2026-07-05) with zero movement across 14 days / 5 intervening GTM runs,
         even though nothing blocks building it (keys live, epic #413 open, marked 'exploratory FINDER, not a
         merge gate' in ROADMAP.md's own text). This is the GTM Factory's read for the product loop's queue, not
         a claim the GTM Factory can build it. Correctly staying quiet: §13 requires ALL THREE, none
@@ -577,6 +577,10 @@ GROWTH_STATUS:
       quality-gate recovery is a product-loop signal I only read and reflect; the single extra visitor is
       real but far too small an N to act on)."
   next_actions:
+    - "RE-VERIFIED (run 14, 2026-07-19): the run-12 finding directly below still holds byte-for-byte — GATE 1
+      is still exactly ONE unmet precondition (the §29 sweep), now unmoved for 14 days / 5 intervening GTM
+      runs (9->14) despite zero hard prerequisite gap (Browserbase keys live). Nothing new to add; recorded
+      here so a future run trusts this is freshly re-checked, not stale-carried."
     - "UPDATED (run 12): GATE 1 is back to ONE unmet precondition, not two. Run 11's `ship_gate_met` FALSE
       finding is RESOLVED — QUALITY_SCORECARD as_of 2026-07-13 (independent Quality Auditor) re-closed the
       ship gate (design_taste B->A via #522/#548), re-verified by this run's own direct read of the file.
@@ -648,10 +652,37 @@ GROWTH_STATUS:
       re-confirmation that the two reliably-fetchable aggregators are now exhausted for this product
       category, not a new theme — recorded so a future run doesn't re-spend a cycle re-discovering the same
       dead end."
+    - "RUN 14 (2026-07-19): re-verified infra directly — fresh authenticated GET /api/growth/snapshot
+      (CRON_SECRET present) identical in substance to run 13 (all 4 sources connected, funnel all 0/null
+      except visitors_7d ticked 2->3, same 3 experiments running/null). Direct curl reproduced the same
+      site-gate split (home/`/demo`/`/join` 200, `/signup`+`/admin/waitlist` 401). `git log` since run 13's
+      merge (c6acb61) showed 23 new commits, ALL Product-Factory bookkeeping/quality/security (Track-F test
+      coverage, Track-G6 monetization LLM daily-quota gating on both platforms, a security fix closing a
+      username-enumeration timing side-channel via constant-time credential verify, 3 more FACTORY_STANDARD
+      sections, and continued store-honesty hardening around the dark FEATURE_HOUSEHOLDS tier) — confirmed
+      via `git log --format='%ae' -- ROADMAP.md VISION.md docs/BUSINESS_CASE.md` that ZERO of them touched a
+      GTM-tracked file, so no reconciliation was needed. Re-verified QUALITY_SCORECARD (still as_of
+      2026-07-13, unchanged) and that `docs/autonomous-loop/VALIDATOR_STATUS.md` still does not exist —
+      GATE 1's sole blocker (the §29 computer-use sweep, epic #413) is now unmoved for 14 days / 5
+      intervening GTM runs. Demand-signal: tried a genuinely NEW angle this run (2026 blog-listicle
+      'best pantry app' roundups, not the review-aggregator sources runs 3-13 already exhausted) —
+      WebSearch summaries surfaced candidate complaints (Cooklist quantity-unit tracking, slow manual
+      expiration entry, cross-device sync failures), but a direct WebFetch of the specific cited source
+      (recipyapp.com's 2026 roundup) found NONE of those quotes actually present on the page — the summary
+      paraphrased claims the source doesn't verbatim support. Also tried a Trustpilot-scoped search for
+      pantry/grocery-inventory apps specifically — Trustpilot does not carry this app category at all (a
+      genuine negative, not a fetch failure). Per the honesty bar (runs 2-10's established lesson), added
+      NEITHER as evidence. This extends the existing 'WebSearch summaries of aggregator pages are not
+      reliably verbatim' lesson to a NEW source type (blog listicles, not just review aggregators) — a
+      useful confirmation, not a new theme. No new demand_signal citation this run. Zero outreach
+      (OUTREACH.md categories still exhausted since run 7, still moot — GATE 1 not open). No
+      ROADMAP/VISION/BUSINESS_CASE steer — no new causal, significant, revenue-linked data (one more
+      visitor, N=3, remains statistically vacuous). Ran an independent adversarial reviewer subagent
+      against the full diff before committing."
   owner_blockers:
-    - "CIRCUIT BREAKER (now 6 runs / 13 days, 2026-07-04 -> 2026-07-17, zero owner movement on the
+    - "CIRCUIT BREAKER (now 7 runs / 15 days, 2026-07-04 -> 2026-07-19, zero owner movement on the
       Human-Core items below, re-confirmed against a fresh PENDING_OPS re-read this run): site_gate_up and
-      analytics/billing/email connection are RESOLVED and STABLE (re-verified run 13 via a fresh
+      analytics/billing/email connection are RESOLVED and STABLE (re-verified run 14 via a fresh
       authenticated snapshot pull + a fresh live-HTTP curl — see `sources`/`funnel` above). UPDATE (run
       12): the QUALITY_SCORECARD ship gate, which run 11 reported as regressed, is RE-CLOSED — the
       Product Factory genuinely fixed the mobile icon-system gap (#522/#548; verified via this run's own
@@ -692,21 +723,22 @@ GROWTH_STATUS:
     - "LOW (unchanged since run 8): ADMIN_EMAIL — only gates the human `/admin/waitlist` UI page; the Growth
       Agent's own analytics read need is already satisfied via CRON_SECRET."
   demand_signal:                 # GTM_STANDARD §10 — pre-launch demand validation (leading indicator, NOT PMF)
-    as_of: 2026-07-17
-    method: "RUN 13: it had been 3 runs (11, 12) since a real demand-signal search was attempted (run 10 was
-      the last), so this run re-checked the ONE angle worth re-visiting for staleness rather than assuming
-      exhaustion still holds: a fresh (not cached) WebSearch of grand-screen.com's pantry/grocery/fridge
-      category. Result: no NEW app exists in the category beyond the 7 already reviewed across runs 3-10 —
-      the only two new hits (Fry's, a grocery-chain shopping app; Wholesome Yum, a recipe blog) are off-theme,
-      not pantry-inventory apps. Also checked 'Fridgely' (named in run 2's learnings as an unverified
-      WebSearch-summary complaint, never independently confirmed) for a ComplaintsBoard page — none exists.
-      CONCLUSION: the two reliably-fetchable aggregators (grand-screen.com, complaintsboard.com) are
-      genuinely exhausted for this product category — confirmed fresh, not re-asserted from memory. No new
-      theme or citation added this run; the existing 3-theme synthesis stands unchanged. Prior runs' method
-      notes stand: 6 Reddit-scoped WebSearch queries across runs 1-4 returned NO citable exact-quote threads
-      (a hard tool-access limitation); run 12 resolved a demand_signal reviewer-attribution non-determinism
-      finding (see LESSON-1 in GROWTH_MEMORY.md) — not re-litigated this run since no new fetch was made of
-      that page."
+    as_of: 2026-07-19
+    method: "RUN 14: tried a genuinely NEW angle (2026 blog-listicle 'best pantry tracking app' roundups —
+      groceriestracker.com, yomio.app, recipyapp.com, foodat.co, mealthinker.com — a source type not yet
+      searched in runs 1-13, which had focused on review aggregators + Reddit) plus a Trustpilot-scoped
+      search. WebSearch summaries surfaced plausible candidate complaints (Cooklist not tracking quantity
+      units properly, slow manual expiration-date entry, cross-device sync failures), but a direct WebFetch
+      of the specific cited source (recipyapp.com's 2026 roundup) confirmed NONE of those quotes are
+      actually present on the page — the search summary paraphrased/invented specificity the source doesn't
+      support. Trustpilot carries no pantry-tracker/grocery-inventory app review pages at all for this
+      category (a genuine negative, not a fetch failure). Per the honesty bar established runs 2-10, added
+      NEITHER as evidence — this EXTENDS that lesson to a new source type (blog listicles), not just review
+      aggregators. RUN 13's finding stands unchanged: grand-screen.com + complaintsboard.com (the two
+      reliably-fetchable review aggregators) remain exhausted for this category. Prior runs' method notes
+      stand: 6 Reddit-scoped WebSearch queries across runs 1-4 returned NO citable exact-quote threads (a
+      hard tool-access limitation); run 12 resolved a demand_signal reviewer-attribution non-determinism
+      finding (see LESSON-1 in GROWTH_MEMORY.md)."
     themes:
       - theme: "Manual pantry entry never stays current"
         durability: durable        # recurs across structurally different competitor apps
@@ -779,6 +811,16 @@ GROWTH_STATUS:
           complaint (scan failures forcing manual entry) across 3 structurally-similar apps, upgrading
           confidence in this theme's durability further."
     disconfirming_or_limitations:
+      - "UPDATE (run 14, 2026-07-19): tried a NEW source type (2026 blog-listicle 'best pantry app'
+        roundups — groceriestracker.com, yomio.app, recipyapp.com, foodat.co, mealthinker.com) plus a
+        Trustpilot-scoped search. WebSearch summaries surfaced candidate complaints (Cooklist quantity-unit
+        tracking, slow expiration entry, cross-device sync), but direct WebFetch of the specific cited
+        source (recipyapp.com) found none of those quotes actually on the page — the summary paraphrased
+        beyond what the source supports. Trustpilot carries no pantry/grocery-inventory app reviews for
+        this category at all. Neither added as evidence. EXTENDS the run 6/2026-07-04 lesson below (WebSearch
+        summaries of aggregator pages aren't reliably verbatim) to blog listicles as a source type, not just
+        review-aggregator pages — a future run should apply the same WebFetch-verification bar to ANY new
+        source type before citing it, not just the two aggregators already known to be unreliable-by-summary."
       - "UPDATE (run 13, 2026-07-17): re-checked grand-screen.com's pantry/grocery/fridge category fresh
         (not from memory) — no app exists there beyond the 7 already reviewed (runs 3-10); the only 2 new
         listings (Fry's, Wholesome Yum) are off-theme. 'Fridgely' (an unverified WebSearch-summary complaint
