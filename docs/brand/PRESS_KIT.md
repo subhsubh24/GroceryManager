@@ -49,8 +49,7 @@ or connect Gmail — the app reads what you bought and builds a pantry automatic
 ### Who it's for
 
 Busy millennials and Gen-Z households who cook at home but don't want to think about groceries.
-The app is personal-first but built for households — shared shopping list, household sharing,
-and a multi-tenant architecture that keeps every household's data private.
+The app is personal-first, with a multi-tenant architecture that keeps every user's data private.
 
 ### Technical summary (for tech press)
 
@@ -97,8 +96,8 @@ and the whole kitchen runs itself."
 - Grocery Wrapped: a shareable annual recap of your kitchen habits
 
 GroceryManager is free to download. A Premium subscription ($4.99/month or $39.99/year)
-unlocks automatic Gmail receipt import, unlimited AI meal planning, unlimited recipe remix,
-household sharing, and Grocery Wrapped+. A 7-day free trial is available.
+unlocks automatic Gmail receipt import, unlimited AI meal planning and recipe remix, the full
+Discover feed, advanced spend insights, and Grocery Wrapped+. A 7-day free trial is available.
 
 The app is available now on the App Store, Google Play, and at [APP_URL].
 
