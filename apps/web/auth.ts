@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { encryptSecret, verifyPassword } from "@gm/core/crypto";
+import { encryptSecret, verifyPasswordConstantTime } from "@gm/core/crypto";
 import { normalizeUsername } from "@gm/core/personalization";
 import { tokenEncryptionStatus } from "@gm/core/security/token-enc-guard";
 import { attachGoogleToUser, getAdminDb, getUserByUsername, upsertGoogleAuth } from "@gm/db";
@@ -72,8 +72,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!username || !password) return null;
         if (isLockedOut(username)) return null;
         const user = await getUserByUsername(getAdminDb(), username);
-        if (!user?.passwordHash) { recordFail(username); return null; } // unknown username or a Google-only account
-        if (!verifyPassword(password, user.passwordHash)) { recordFail(username); return null; }
+        // Constant-work verify FIRST (always runs scrypt, even for an unknown username or a
+        // Google-only account with no password) so response latency can't enumerate valid
+        // usernames — the per-username lockout blunts brute force but not a timing oracle.
+        if (!verifyPasswordConstantTime(password, user?.passwordHash) || !user) {
+          recordFail(username);
+          return null;
+        }
         clearLock(username);
         return { id: user.id, email: user.email ?? undefined, name: user.name ?? undefined };
       },

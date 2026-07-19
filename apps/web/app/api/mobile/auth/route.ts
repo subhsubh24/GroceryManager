@@ -1,5 +1,5 @@
 import { getAdminDb, getUserByUsername } from "@gm/db";
-import { verifyPassword } from "@gm/core/crypto";
+import { verifyPasswordConstantTime } from "@gm/core/crypto";
 import { normalizeUsername } from "@gm/core/personalization";
 import { signMobileToken } from "../_lib";
 import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
@@ -47,7 +47,9 @@ export async function POST(req: Request) {
     console.error("[mobile/auth]", err);
     return Response.json({ error: "Auth temporarily unavailable" }, { status: 503 });
   }
-  if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) {
+  // Constant-work verify FIRST (always runs scrypt) so a non-existent username can't be
+  // distinguished from a wrong password by response latency — closes username enumeration.
+  if (!verifyPasswordConstantTime(password, user?.passwordHash) || !user) {
     return Response.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
