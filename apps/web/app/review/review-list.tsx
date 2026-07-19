@@ -77,7 +77,7 @@ export function ReviewList({ items }: { items: ReviewItem[] }) {
             type="button"
             disabled={selected.size === 0 || pending}
             onClick={() => run("add", confirmReviewItems)}
-            className="btn-primary btn-sm"
+            className="btn-primary min-h-[44px]"
           >
             {busy === "add" ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} /> : <Check className="h-4 w-4" strokeWidth={2} />}
             Add to pantry
@@ -89,7 +89,7 @@ export function ReviewList({ items }: { items: ReviewItem[] }) {
               type="button"
               disabled={selected.size === 0 || pending}
               onClick={() => run(r.reason, (ids) => dismissReviewItems(ids, r.reason))}
-              className="btn-ghost btn-sm"
+              className="btn-ghost min-h-[44px]"
             >
               {busy === r.reason && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />}
               {r.label}
