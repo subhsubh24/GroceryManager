@@ -60,6 +60,22 @@ describe("UnitConverter", () => {
     expect(conv.convert(2, "each", "g")).toBeNull();
   });
 
+  it("returns null when a unit code is unknown to the table", () => {
+    // Recipe measures are parsed from arbitrary provider/user text, so `convert` can be handed a code
+    // that isn't in the canonical units table. It must return null (→ logCook records the ingredient
+    // as unmeasured) rather than throw or invent a quantity that would corrupt the EWMA depletion rate.
+    expect(conv.convert(5, "smidgen", "g")).toBeNull();
+    expect(conv.convert(5, "g", "smidgen")).toBeNull();
+  });
+
+  it("skips a zero-factor item conversion so it can't divide by zero on the reverse edge", () => {
+    // A factor-0 conversion in the item data is meaningless (and 1/0 on the reverse edge is Infinity);
+    // it must be dropped, leaving no path, so the converter falls through to null instead of scaling
+    // the pantry drawdown by a garbage factor.
+    const itemConv: ItemConversion[] = [{ fromCode: "clove", toCode: "each", factor: 0, confidence: 0.9 }];
+    expect(conv.convert(3, "clove", "each", itemConv)).toBeNull();
+  });
+
   it("returns null when an item edge exists but no path reaches the target", () => {
     // A clove↔g edge exists, so the BFS start set is non-empty (unlike the COUNT↔MASS case above,
     // which has no start edge at all), but neither the direct hop nor any 2-hop chain reaches
