@@ -1,11 +1,13 @@
-import { getDb, withTenant } from "@gm/db";
+import { getDb, loadPreferenceSignals, withTenant } from "@gm/db";
 import { loadEnv } from "@gm/config/env";
 import { logCook } from "@gm/core/recipe/log-cook";
 import { estimateMealMacros } from "@gm/core/nutrition";
 import { GeminiClient } from "@gm/core/llm";
+import { isPremium } from "@gm/core/billing";
 import { verifyMobileToken } from "../_lib";
 import { parseJsonBody, requireString, serverError } from "../../_lib/guard";
 import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
+import { checkLlmQuota } from "../../_lib/llm-quota";
 import { isPersistedRecipeId, loadRecipeAnySource } from "../../../lib/recipe";
 
 export const runtime = "nodejs";
@@ -53,7 +55,17 @@ export async function POST(req: Request) {
     if (!recipe) return Response.json({ error: "Recipe not found" }, { status: 404 });
 
     const env = loadEnv();
-    const llm = env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT ? new GeminiClient(env) : null;
+    // Macros are best-effort. When the LLM would run (a key is configured), spend a slot from the
+    // per-user daily AI quota FIRST (G7 spend ceiling) — mirrors mobile plan/remix. `cook-log-write`
+    // rate-limits 30/min, which alone would let a client bypass the 10-free/100-premium daily LLM cap
+    // via unresolved-ingredient macro calls. If the quota is exhausted, degrade to keyless (FDC-only)
+    // macros rather than blocking the core "I cooked this" write — the quota must never break the
+    // primary pantry drawdown.
+    let llm: GeminiClient | null = null;
+    if (env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT) {
+      const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+      if (checkLlmQuota(userId, isPremium(signals)).allowed) llm = new GeminiClient(env);
+    }
     const macros = await estimateMealMacros(recipe.ingredients, servingsMade, {
       fdcApiKey: env.FDC_API_KEY,
       llm,
