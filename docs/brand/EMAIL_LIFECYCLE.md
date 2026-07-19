@@ -223,7 +223,7 @@ Here's what Premium adds on top of what you're already doing:
 
 **AI weekly planner.** Tell the app what you feel like eating this week. It checks your pantry, fills gaps, and builds a shopping list of only what you're missing — one tap.
 
-**Household sharing.** Share your pantry and list with your partner or housemates. Real-time sync, no duplicates.
+**AI recipe remix.** Make any recipe fit what you already have — healthier, cheaper, or vegan in a tap.
 
 Try all of it free for 7 days — no charge until the trial ends, cancel anytime.
 
@@ -256,7 +256,6 @@ Here's what's now unlocked for you:
 - **AI weekly planner** — tap Plan on the home screen
 - **Unlimited Discover feed** — scroll meal ideas tuned to your pantry
 - **AI recipe remix** — make any recipe fit what you have
-- **Household sharing** — invite people from your profile
 - **Advanced spend insights** — see your grocery budget breakdown
 
 The most useful first step: **connect Gmail**. It's the feature that makes everything else feel automatic.
@@ -289,7 +288,7 @@ If you haven't connected Gmail yet, this is the move: Import → Connect Gmail �
 After your trial ends:
 
 - Free features stay: pantry tracking, receipt scan, cook logging, shopping list, recipes
-- Premium features pause: Gmail import, AI planner, household sharing, Discover, remix
+- Premium features pause: Gmail import, AI planner, Discover, remix
 
 Keep everything for $4.99/month. Cancel anytime.
 
@@ -314,7 +313,7 @@ Hi {{user.first_name | default: "there"}},
 
 Your free trial of [APP_NAME] ends today.
 
-After today, Gmail import, AI meal planning, household sharing, and unlimited recipe discovery will pause. Your pantry and all your data stay — nothing is deleted.
+After today, Gmail import, AI meal planning, and unlimited recipe discovery will pause. Your pantry and all your data stay — nothing is deleted.
 
 If the trial has been useful, keep it going:
 

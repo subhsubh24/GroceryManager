@@ -86,7 +86,7 @@ The free tier gives you everything for the core loop: pantry tracking, receipt c
 shopping list, and recipes. No credit card needed.
 
 If you want the full autopilot — AI weekly planner, unlimited recipe discovery, Gmail receipt
-import, household sharing — start your 7-day free trial inside the app.
+import, AI recipe remix — start your 7-day free trial inside the app.
 
 Welcome aboard.
 
@@ -141,7 +141,7 @@ Premium takes it further:
 - **Unlimited recipe discovery** — swipe through meal ideas tuned to your taste
 - **Automatic Gmail receipt import** — no photos needed
 - **AI recipe remix** — make any recipe healthier, cheaper, or vegan in a tap
-- **Household sharing** — share your pantry and list with your family
+- **Advanced spend insights** — see exactly where your grocery budget goes
 
 $4.99/month or $39.99/year (save ~33%). Start with a 7-day free trial — cancel anytime, no charge
 until the trial ends.
