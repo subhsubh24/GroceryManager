@@ -56,6 +56,21 @@ describe("UnitConverter", () => {
     expect(r!.method).toBe("heuristic");
   });
 
+  it("applies the water-density fallback in the mass→volume direction too", () => {
+    // The reverse of the case above: convert must handle MASS→VOLUME, not only VOLUME→MASS. This
+    // direction is load-bearing in ingestion (`ingest.ts` uses the heuristic qty UNFILTERED) when a
+    // receipt line is measured by mass but its canonical item's base unit is volumetric — e.g. a
+    // "500 g" line for an item stored in ml. Same ~1 g/ml assumption, same heuristic confidence.
+    const r = conv.convert(500, "g", "ml"); // 500 g ≈ 500 ml
+    expect(r!.qty).toBeCloseTo(500, 6);
+    expect(r!.confidence).toBeLessThan(0.5);
+    expect(r!.method).toBe("heuristic");
+
+    const kgToL = conv.convert(2, "kg", "l"); // 2000 g ≈ 2000 ml = 2 l
+    expect(kgToL!.qty).toBeCloseTo(2, 6);
+    expect(kgToL!.method).toBe("heuristic");
+  });
+
   it("returns null for COUNT↔MASS with no item data", () => {
     expect(conv.convert(2, "each", "g")).toBeNull();
   });
