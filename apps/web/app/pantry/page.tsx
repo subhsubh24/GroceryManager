@@ -382,7 +382,10 @@ export default async function PantryPage({
                       <form key={o.outcome} action={resolveExpiringAction}>
                         <input type="hidden" name="canonicalItemId" value={r.canonicalItemId} />
                         <input type="hidden" name="outcome" value={o.outcome} />
-                        <button type="submit" className="btn-ghost btn-sm">
+                        {/* ≥44px hit target (WCAG 2.5.5 / Apple HIG) — these chips record a real
+                            ledger event (still have it / used / tossed), matching the 44px Remove
+                            control in the same row. */}
+                        <button type="submit" className="btn-ghost btn-sm min-h-[44px]">
                           {o.label}
                         </button>
                       </form>
