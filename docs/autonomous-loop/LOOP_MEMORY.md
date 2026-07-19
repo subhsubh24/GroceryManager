@@ -3009,3 +3009,59 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   NOT trusting the prior run's word, and NOT a redundant full deep-audit fan-out. Confirming convergence
   independently on the CURRENT commit is the honest way to hold at the owner-GTM boundary without either
   rubber-stamping or manufacturing churn.**
+
+- **2026-07-19 (run 86) — DEEP AUDIT (standalone 6-Haiku lens sweep, due since run 83 ~24h) + 3 file-disjoint
+  clears (#618 mobile-cook G7, #620 web-cook G7, #619 units Track-F coverage); 6/6 Sonnet approve (one on a
+  re-judge); 0 abandons, 0 circuit-breaks.** Baseline green at start (typecheck 6/6, 1043 core tests + 27
+  skipped, prod build exit 0 no missing-export, self-validation 8/8 READY 0 unmet, 0 open PRs, clean tree).
+  Own independent maker spot-checks first (maker≠checker, not a re-trust of runs 84/85): migration chain 0021
+  intact; BUSINESS_CASE SUMMARY valid YAML (base $33,450 == body base scenario, floor_met false); prices
+  499/3999/999/7999¢ byte-consistent billing↔BUSINESS_CASE ($4.99/$39.99/$9.99/$79.99). Then a genuine 6-lens
+  Haiku deep audit (DEEP AUDIT was DUE — run 83 was the last, ~24h prior). **FLAGSHIP finding — a real Track-G
+  G7 wallet-drain gap on BOTH cook-logging surfaces (#618 mobile + #620 web).** The security scout found
+  `apps/web/app/api/mobile/cook/route.ts` estimates macros via `new GeminiClient(env)` → `estimateMealMacros`
+  with NO `checkLlmQuota` gate — unlike every other LLM surface (ask/scan/make/import/onboarding/mobile
+  plan+remix/web remix all charge the per-user daily spend ceiling). `cook-log-write` rate-limits only 30/min
+  (~43,200/day), unrelated to the 10-free/100-premium DAILY cap, so an authed user could spend un-metered
+  Gemini calls all day via FDC-unresolvable ingredients (a paid-API drain). I verified `estimateMealMacros`
+  makes exactly ONE LLM call (nutrition/estimate.ts:106, single `generateStructured` gated by `needsLlm.length
+  > 0 && deps.llm`), so charging 1 slot is accurate. Fixed by mirroring the remix tier logic:
+  `loadPreferenceSignals → isPremium → checkLlmQuota` BEFORE constructing the LLM; on exhaustion the LLM stays
+  null and macros degrade to keyless FDC-only rather than blocking the core "I cooked this" pantry-drawdown
+  write (macros are best-effort; the quota must never break the primary flow). **Reviewer B on #618 then
+  surfaced the WEB counterpart** — `apps/web/app/lib/cook-actions.ts` `logCookedRecipe` (the server action the
+  mobile route's docstring says it "mirrors exactly") had the IDENTICAL unguarded pattern AND no rate limit at
+  all (strictly worse than mobile's pre-fix state). Confirmed it myself (not just a scout claim) and shipped
+  the same gate as #620, file-disjoint → both auto-merged independently, closing cook-logging G7 across both
+  platforms in one run. **#619 (Track-F):** `UnitConverter.convert` gets unit codes parsed from arbitrary
+  provider/user recipe text; two reachable null branches were uncovered — unknown code (index.ts:69) + zero-
+  factor item edge (:109, where `1/0=Infinity` on the reverse edge). Added 2 focused tests → src/units branch
+  89.74%→95.12%; deliberately left 124/141 (a bidirectional-graph dead guard + a direction-symmetric water-
+  density mirror = impossible-case padding). **REJECTED with evidence:** (a) the correctness scout's
+  loadEnv/DB-outside-try findings on the gmail/stripe/revenuecat webhooks + gmail/digest/lifecycle crons — the
+  already-examined class (runs 57/74/77 held it CLEAN): a loadEnv throw = whole-app misconfig = correct
+  fail-loud; a cron 500 → the next scheduled run reconciles (cursor/idempotent, no data loss); the per-item
+  webhook sync is already try-wrapped; benign Vercel retry, zero real-outcome change (run 57's own log records
+  the identical cron rejection). (b) the perf scout's ingest N+1 in vision/persist + capture/add — the runs
+  38/41 sub-bar verdict (LLM-bound, correctness-sensitive per-(user,item) ledger invariant, low-frequency).
+  (c) design scout's `manage-subscription` `←` entity — within the established inline-text-arrow convention
+  (run-59/72; the registry rule targets standalone ▾/★, and grep confirms `larr` is a lone one-off, but it's
+  an inline text-link arrow, not a standalone glyph affordance). (d) `wrapped` shareText emoji — idiomatic
+  social-share copy, not a UI icon. Artifact/monetization + design/a11y lenses otherwise CLEAN (all
+  household/Family surfaces gated; no new generated surface; NO buildable non-reach lever — reach-gated #190).
+  **PROCESS LESSON — a REQUEST_CHANGES on a stale premise is resolved by a factual correction, not an
+  override.** Reviewer A on #620 (web) first returned REQUEST_CHANGES claiming the mobile route was still
+  unguarded — true of `main`, which its branch (cut from main) saw, but #618 fixes that exact file the same
+  run. Its own code assessment PASSED all three axes; the blocker was purely the "both platforms" narrative
+  vs. its stale view. I re-sent it the fact (verify `git diff main..claude/mobile-cook-llm-quota`), it
+  independently confirmed #618 is file-disjoint + applies the identical gate, and revised to APPROVE. When
+  shipping two halves of one fix as file-disjoint PRs in the same run, each reviewer sees only its own branch's
+  base — cross-reference the sibling PR in the body AND be ready to hand a reviewer the sibling diff so a
+  same-run parity claim isn't mistaken for an unclosed gap. **LESSON — the "mirrors exactly" docstring is a
+  parity-audit signal.** The web gap was found because Reviewer B checked the server-action counterpart the
+  mobile route's docstring claims to mirror; when a route says it mirrors another, audit BOTH for the same
+  hardening — a security gate added to one half of a mirrored pair almost always belongs on the other.
+  **Readiness:** did NOT open the 'ready' issue — sole DoD gap unchanged (reach-gated floor #190, base ≈ $33K
+  < $100K at median = owner-GTM; ~$67K gap = a ~2.7–3× download multiplier, not a buildable lever). Confidence
+  statement stays UNCHECKED. validation 8/8, 0 unmet (the cook fixes reuse the EXISTING G7 checkLlmQuota
+  capability — no new capability to register); ship gate MET (A).
