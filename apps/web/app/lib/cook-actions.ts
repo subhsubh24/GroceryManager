@@ -1,11 +1,13 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { loadEnv } from "@gm/config/env";
-import { getDb, withTenant } from "@gm/db";
+import { getDb, loadPreferenceSignals, withTenant } from "@gm/db";
 import { logCook } from "@gm/core/recipe/log-cook";
 import { estimateMealMacros } from "@gm/core/nutrition";
 import { GeminiClient } from "@gm/core/llm";
+import { isPremium } from "@gm/core/billing";
 import { currentUserId } from "@/app/lib/tenant";
+import { checkLlmQuota } from "@/app/api/_lib/llm-quota";
 import { isPersistedRecipeId, loadRecipeAnySource } from "@/app/lib/recipe";
 
 export interface CookedResult {
@@ -30,7 +32,16 @@ export async function logCookedRecipe(id: string, servings = 1): Promise<CookedR
     const servingsMade = Number.isFinite(servings) && servings > 0 ? servings : 1;
 
     const env = loadEnv();
-    const llm = env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT ? new GeminiClient(env) : null;
+    // Best-effort macros. When the LLM would run (a key is configured), charge a slot from the
+    // per-user daily AI quota FIRST (G7 spend ceiling) — mirrors the mobile cook route + plan/remix.
+    // logCookedRecipe has no rate limit, so without this an authed user could spend un-metered Gemini
+    // macro calls past the 10-free/100-premium daily cap (a paid-API drain). On exhaustion, degrade to
+    // keyless FDC-only macros rather than blocking the core "I cooked this" pantry-drawdown write.
+    let llm: GeminiClient | null = null;
+    if (env.GEMINI_API_KEY || env.GOOGLE_VERTEX_PROJECT) {
+      const signals = await withTenant(getDb(), userId, (tx) => loadPreferenceSignals(tx, userId));
+      if (checkLlmQuota(userId, isPremium(signals)).allowed) llm = new GeminiClient(env);
+    }
     const macros = await estimateMealMacros(recipe.ingredients, servingsMade, {
       fdcApiKey: env.FDC_API_KEY,
       llm,
