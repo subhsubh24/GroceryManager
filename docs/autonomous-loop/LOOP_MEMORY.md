@@ -3065,3 +3065,41 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   < $100K at median = owner-GTM; ~$67K gap = a ~2.7–3× download multiplier, not a buildable lever). Confidence
   statement stays UNCHECKED. validation 8/8, 0 unmet (the cook fixes reuse the EXISTING G7 checkLlmQuota
   capability — no new capability to register); ship gate MET (A).
+
+- **2026-07-19 (run 87) — targeted independent re-verification (3-Haiku adversarial) + 1 file-disjoint Track-G
+  clear (#622 constant-time auth verify); 2/2 Sonnet approve first-pass; 0 abandons, 0 circuit-breaks.** DEEP
+  AUDIT NOT due (run 86 ran a standalone 6-lens sweep the same day; tree moved only by the run-86 merges since).
+  Per the run-85 lesson, the disciplined maker≠checker move on a fresh run since a same-day deep audit is a
+  targeted INDEPENDENT re-verification of convergence on the CURRENT commit (a few lean adversarial scouts on the
+  highest-yield lenses + own spot-checks) — NOT trusting the prior run's word, NOT a redundant full fan-out. Own
+  maker spot-checks first: migration chain 0021 intact; BUSINESS_CASE SUMMARY valid YAML (base $33,450 == body,
+  floor_met false); prices 499/3999/999/7999¢ byte-consistent (billing ↔ growth snapshot ↔ business case);
+  validation 8/8 READY 0 unmet; QUALITY_SCORECARD overall A, ship gate MET. Then 3 Haiku scouts: monetization →
+  **NO BUILDABLE NON-REACH LEVER** (independently corroborates runs 82–86; the $67K gap is entirely reach); and
+  correctness/artifact/design → **NO NEW FINDINGS**; but security → **1 genuinely-new real finding**, which I
+  independently confirmed before acting. **FLAGSHIP finding — a username-enumeration TIMING oracle on all three
+  login entry points.** `apps/web/auth.ts` (web NextAuth authorize), `/api/v1/auth/token`, `/api/mobile/auth` all
+  used `!user?.passwordHash || verifyPassword(...)` — the `||` short-circuits and **skips `scryptSync` entirely
+  when the username doesn't exist** (or is a Google-only account), so the "no such user" path is measurably
+  faster than a real-but-wrong password (scrypt is deliberately ~tens of ms). A per-IP rate-limit (defeated by
+  distributed IPs) + a generic error do NOT close a timing side-channel. Fix (#622): `verifyPasswordConstantTime`
+  in `@gm/core/crypto` runs the full scrypt cost against a lazily-derived throwaway hash on the no-hash path (the
+  discarded result can't bypass — it unconditionally returns false), and all three sites verify FIRST then branch
+  (the `|| !user` after the call is load-bearing for TS narrowing, not dead). Reused the existing auth capability
+  — no capabilities.json entry. Both reviewers raised the SAME non-blocking note: the first no-user request on a
+  cold container pays a one-time extra scrypt to compute the dummy hash — a one-time-per-container artifact
+  swamped by cold-start jitter, NOT a per-request oracle; eager top-level init would fix it but tax every cold
+  `@gm/core/crypto` import (~80ms scrypt, incl. many tests), so lazy memoization is the deliberate correct
+  tradeoff. **LESSON — the short-circuit auth pattern `!user?.hash || verify(...)` is a recurring timing-oracle
+  smell: any auth check that skips the KDF on the no-user branch leaks account existence by latency, and neither
+  rate-limiting nor a generic error message closes it. The fix is to run the KDF UNCONDITIONALLY (dummy-hash on
+  the no-user path) before branching. When one login endpoint has this shape, grep every `verifyPassword` caller
+  — they usually share it (all 3 here did).** **PROCESS LESSON — re-confirmed run-85's: on a fresh run since a
+  same-day deep audit, a lean 3-scout independent re-verification is the right spend (not a full 6-lens fan-out,
+  not rubber-stamping); it caught nothing false and freed budget to ship the one real security find the security
+  lens surfaced. Convergence held on monetization (reach-gated) + correctness/design; the ONE new lens-specific
+  finding is exactly what an independent re-verification exists to catch.** **Readiness:** did NOT open the
+  'ready' issue — sole DoD gap unchanged (reach-gated floor #190, base ≈ $33K < $100K = owner-GTM; no buildable
+  non-reach lever, independently re-confirmed). Confidence statement stays UNCHECKED. validation 8/8, 0 unmet;
+  ship gate MET (A). A quiet, coherent converged run — one real Track-G security clear + independent convergence
+  re-verification; padding to a count is the worst failure mode, a quiet convergent run is a SUCCESS.
