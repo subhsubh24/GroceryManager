@@ -226,7 +226,8 @@ export default async function RecipesPage({
                 <div className="mt-1 text-xs text-ink-400">missing: {r.missing.join(", ")}</div>
               )}
               <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                <a href={`/cook/${r.id}`} className="btn-secondary btn-sm">
+                {/* ≥44px hit target (WCAG 2.5.5 / Apple HIG) — primary control in the core cook loop. */}
+                <a href={`/cook/${r.id}`} className="btn-secondary min-h-[44px]">
                   Cook →
                 </a>
                 <CookedItButton recipeId={r.id} />

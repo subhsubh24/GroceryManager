@@ -10,7 +10,9 @@ import { Check, Loader2, UtensilsCrossed } from "@/app/components/icons";
 export function CookedItButton({
   recipeId,
   servings = 1,
-  className = "btn-primary btn-sm",
+  // ≥44px hit target (WCAG 2.5.5 / Apple HIG) — one-tap primary control in the core cook loop.
+  // Base `.btn` sizing (px-4 py-2.5 text-sm) + min-h, NOT btn-sm (which would be a tall pill on a 12px label).
+  className = "btn-primary min-h-[44px]",
 }: {
   recipeId: string;
   servings?: number;
