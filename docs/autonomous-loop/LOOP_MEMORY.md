@@ -3105,3 +3105,43 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   non-reach lever, independently re-confirmed). Confidence statement stays UNCHECKED. validation 8/8, 0 unmet;
   ship gate MET (A). A quiet, coherent converged run — one real Track-G security clear + independent convergence
   re-verification; padding to a count is the worst failure mode, a quiet convergent run is a SUCCESS.
+
+- **2026-07-20 (run 90) — targeted independent re-verification (4-Haiku adversarial) + 1 file-disjoint
+  correctness/UX-honesty clear (ingest count honesty); 3 Sonnet reviews approve (1st cycle both APPROVE,
+  2nd cycle a folded verb-agreement delta APPROVE); 0 abandons, 0 circuit-breaks.** DEEP AUDIT NOT due
+  (run 89 ran a standalone 4-lens sweep the same day; tree moved only by run-88/89 merges since). Per the
+  run-85/87 lesson, the disciplined maker≠checker move on a fresh run since a same-day deep audit is a
+  targeted INDEPENDENT re-verification on the CURRENT commit (lean adversarial scouts on the highest-yield
+  lenses + own spot-checks) — not trusting the prior run, not a redundant full fan-out. Own maker spot-checks
+  first: typecheck 6/6, 1050 core tests pass + 27 skipped, prod build exit 0 no missing-export, validation 8/8
+  READY 0 unmet, migration 0021 intact, prices 499/3999/999/7999¢ byte-consistent, SUMMARY valid YAML base
+  $33,450 == body / floor_met false, 0 open PRs. Also evaluated the sole genuinely-unbuilt buildable-looking
+  ROADMAP box §29 (deployed-app validator): app IS live (vercel HTTP 200) + Browserbase keys present, BUT the
+  REAL green-sweep outcome needs the live site-gate secret + prod test/Stripe-test provisioning this env can't
+  supply — building the harness would ship an un-runnable spec (a fabricated green the DoD forbids), so §29 is
+  effectively owner-gated like §11/§34 (matches why 8 prior runs deferred it). Four Haiku scouts:
+  **security/Track-G CLEAN**, **monetization NO BUILDABLE NON-REACH LEVER** (re-confirmed $67K gap = reach =
+  owner-GTM #190), **design/a11y/artifact CLEAN**, **correctness → 1 genuinely-new real finding** I confirmed
+  before acting. **FLAGSHIP finding — a UX-honesty/fake-data bug on the core receipt→pantry loop.** The
+  ingest success copy led with `linesIngested` ("Added N items"), but that counts EVERY parsed line including
+  the low-confidence ones parked in the Review inbox (NOT in the pantry). A 10-item receipt with 4 unresolved
+  lines told the user "Added 10 items" then showed 6 in the pantry (violates "render real DB-derived values
+  only"). Fixed at the SOURCE: added `addedToPantry` to `IngestResult`, incremented at exactly the
+  `appendLedgerAndReproject` site (ledger-truth, not display-layer arithmetic that could drift), threaded
+  through the Gmail rollup; both ingest surfaces now lead with items actually added, review parkers reported
+  separately; all-parked edge → "Captured your receipt." Keyless guard: pure gmail-sync.test.ts rollup
+  assertions + a DB-level invariant in the skip-gated integration test. Reviewer B surfaced a PRE-EXISTING
+  verb-agreement bug in the SAME copy (`need${plural(n)}` misapplies a NOUN pluralizer to the VERB "need",
+  inverting agreement both ways) — since I already owned those strings I folded the fix in and ran a focused
+  2nd review cycle. **LESSON — a UI "count" must be sourced from the SAME operation its verb claims: "Added N"
+  from a PARSE count instead of the WRITE count is fake-data even though every number is real (it's the wrong
+  number for the verb); fix it with a source-of-truth field at the actual write site, not arithmetic
+  re-derived per view.** **PROCESS LESSON — Reviewer A's "scope creep" note (extra a11y files) was a STALE
+  LOCAL-MAIN artifact** (local `main` was 3 commits behind origin/main after the run-88/89 merges; `git diff
+  main..HEAD` showed those merged files). The REAL PR diff is `git diff origin/main..HEAD` — always give
+  reviewers the origin-based base, and `git branch -f main origin/main` after fetch so stale-ref false flags
+  don't recur. **Readiness:** did NOT open 'ready' — sole DoD gap unchanged (reach-gated floor #190, base ≈
+  $33K < $100K = owner-GTM; no buildable non-reach lever, independently re-confirmed). Confidence statement
+  stays UNCHECKED. validation 8/8, 0 unmet (reuses existing capabilities); ship gate MET (A). A quiet,
+  coherent convergent run — one real core-loop correctness/UX-honesty clear; a quiet convergent run is a
+  SUCCESS.
