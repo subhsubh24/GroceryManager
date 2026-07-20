@@ -40,6 +40,7 @@ function summaryQuery(summary: GmailSyncSummary): string {
     ingested: String(summary.ingested),
     deduped: String(summary.deduped),
     lines: String(summary.linesIngested),
+    added: String(summary.addedToPantry),
     review: String(summary.needsReview),
   }).toString();
 }

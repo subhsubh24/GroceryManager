@@ -49,6 +49,9 @@ describe.skipIf(!url)("ingestReceipt (live DB)", () => {
     expect(res.deduped).toBe(false);
     expect(res.linesIngested).toBe(3);
     expect(res.needsReview).toBeGreaterThanOrEqual(1); // the mystery snack
+    // addedToPantry is the count actually written to the ledger — never the review parkers.
+    expect(res.addedToPantry).toBe(res.linesIngested - res.needsReview);
+    expect(res.addedToPantry).toBeGreaterThanOrEqual(1); // milk resolved onto the pantry ledger
 
     // Milk should be on hand at ~1000 ml (1 l → ml).
     const milk = (
@@ -71,5 +74,6 @@ describe.skipIf(!url)("ingestReceipt (live DB)", () => {
     );
     expect(dup.deduped).toBe(true);
     expect(dup.linesIngested).toBe(0);
+    expect(dup.addedToPantry).toBe(0);
   });
 });

@@ -43,6 +43,7 @@ const ingested = (lines: number, review = 0): ParseReceiptResult => ({
   deduped: false,
   purchaseId: "p",
   linesIngested: lines,
+  addedToPantry: lines - review,
   needsReview: review,
 });
 const deduped: ParseReceiptResult = {
@@ -50,6 +51,7 @@ const deduped: ParseReceiptResult = {
   deduped: true,
   purchaseId: "p",
   linesIngested: 0,
+  addedToPantry: 0,
   needsReview: 0,
 };
 const skipped: ParseReceiptResult = { skipped: true };
@@ -62,6 +64,7 @@ describe("gmail sync summary accumulation", () => {
       ingested: 0,
       deduped: 0,
       linesIngested: 0,
+      addedToPantry: 0,
       needsReview: 0,
       failed: 0,
     });
@@ -75,6 +78,7 @@ describe("gmail sync summary accumulation", () => {
       ingested: 0,
       deduped: 0,
       linesIngested: 0,
+      addedToPantry: 0,
       needsReview: 0,
       failed: 0,
     });
@@ -88,6 +92,7 @@ describe("gmail sync summary accumulation", () => {
       ingested: 1,
       deduped: 0,
       linesIngested: 5,
+      addedToPantry: 3, // 5 lines − 2 parked for review
       needsReview: 2,
       failed: 0,
     });
@@ -107,6 +112,7 @@ describe("gmail sync summary accumulation", () => {
       ingested: 2,
       deduped: 1,
       linesIngested: 5, // 3 + 2
+      addedToPantry: 4, // (3−1) + (2−0)
       needsReview: 1,
       failed: 0,
     });
