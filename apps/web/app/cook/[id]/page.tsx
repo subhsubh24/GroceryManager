@@ -220,7 +220,7 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
                     type="number"
                     min="1"
                     defaultValue={1}
-                    className="ml-1.5 w-16 rounded-lg border border-line bg-surface px-2 py-1 text-sm shadow-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20"
+                    className="ml-1.5 min-h-[44px] w-16 rounded-lg border border-line bg-surface px-2 py-1 text-base shadow-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20"
                   />
                 </label>
                 <button type="submit" className="btn-primary inline-flex items-center gap-1.5">
