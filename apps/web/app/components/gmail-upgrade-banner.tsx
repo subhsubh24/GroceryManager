@@ -75,9 +75,10 @@ export function GmailUpgradeBanner({
               Connect Gmail once and your Amazon, Whole Foods, and Instacart receipt
               emails automatically update your pantry.
             </p>
+            {/* ≥44px hit target (WCAG 2.5.5 / Apple HIG) — Premium conversion CTA; base .btn sizing + min-h. */}
             <a
               href="/upgrade?feature=gmail_import"
-              className="btn-primary btn-sm mt-3 inline-flex"
+              className="btn-primary mt-3 inline-flex min-h-[44px]"
             >
               See Premium
             </a>

@@ -124,8 +124,9 @@ export function InstallPrompt() {
               : "Add it to your home screen — works offline."}
           </div>
         </div>
+        {/* ≥44px hit target (WCAG 2.5.5 / Apple HIG) — primary install CTA; base .btn sizing + min-h. */}
         {deferred && (
-          <button type="button" onClick={install} className="btn-primary btn-sm shrink-0">
+          <button type="button" onClick={install} className="btn-primary min-h-[44px] shrink-0">
             Install
           </button>
         )}
