@@ -163,6 +163,7 @@ export default async function PantryPage({
     scanned?: string;
     ingested?: string;
     lines?: string;
+    added?: string;
     review?: string;
     from?: string;
   }>;
@@ -179,7 +180,9 @@ export default async function PantryPage({
   } else if (sp.scanned !== undefined) {
     const scanned = Number(sp.scanned);
     const ingested = Number(sp.ingested ?? 0);
-    const lines = Number(sp.lines ?? 0);
+    // `added` = items confidently written to the pantry; the review parkers aren't in the pantry
+    // yet, so the item count must reflect addedToPantry (fall back to lines for pre-`added` links).
+    const added = Number(sp.added ?? sp.lines ?? 0);
     const review = Number(sp.review ?? 0);
     syncBanner =
       ingested > 0
@@ -187,7 +190,7 @@ export default async function PantryPage({
             kind: "ok",
             text: `Synced ${scanned} message${plural(scanned)} — added ${ingested} receipt${plural(
               ingested,
-            )}, ${lines} item${plural(lines)}${review > 0 ? `; ${review} need review` : ""}.`,
+            )}, ${added} item${plural(added)} to your pantry${review > 0 ? `; ${review} need${review === 1 ? "s" : ""} review` : ""}.`,
           }
         : {
             kind: "info",

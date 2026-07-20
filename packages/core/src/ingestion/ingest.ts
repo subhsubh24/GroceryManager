@@ -30,6 +30,12 @@ export interface IngestInput {
 export interface IngestResult {
   purchaseId: string | null;
   linesIngested: number;
+  /**
+   * Line items actually written to the pantry ledger (confidently resolved). This is
+   * `linesIngested - needsReview` — the rest are parked in the Review inbox and are NOT yet in the
+   * pantry, so user-facing "added to your pantry" copy must use THIS count, not `linesIngested`.
+   */
+  addedToPantry: number;
   needsReview: number;
   deduped: boolean;
 }
@@ -56,7 +62,7 @@ export async function ingestReceipt(deps: IngestDeps, input: IngestInput): Promi
       .where(and(eq(purchases.userId, input.userId), eq(purchases.gmailMessageId, input.gmailMessageId)))
       .limit(1);
     if (existing[0]) {
-      return { purchaseId: existing[0].id, linesIngested: 0, needsReview: 0, deduped: true };
+      return { purchaseId: existing[0].id, linesIngested: 0, addedToPantry: 0, needsReview: 0, deduped: true };
     }
   }
 
@@ -94,6 +100,7 @@ export async function ingestReceipt(deps: IngestDeps, input: IngestInput): Promi
 
   let needsReview = 0;
   let lines = 0;
+  let addedToPantry = 0;
 
   for (const li of extraction.lineItems) {
     const norm = await normalizeLineItem({ rawText: li.rawText, name: li.name, upc: li.upc }, deps.ports);
@@ -148,6 +155,7 @@ export async function ingestReceipt(deps: IngestDeps, input: IngestInput): Promi
         refId: lineRows[0]!.id,
         occurredAt: purchasedAt,
       });
+      addedToPantry++;
     }
   }
 
@@ -155,5 +163,5 @@ export async function ingestReceipt(deps: IngestDeps, input: IngestInput): Promi
     await db.update(purchases).set({ status: "needs_review" }).where(eq(purchases.id, purchaseId));
   }
 
-  return { purchaseId, linesIngested: lines, needsReview, deduped: false };
+  return { purchaseId, linesIngested: lines, addedToPantry, needsReview, deduped: false };
 }

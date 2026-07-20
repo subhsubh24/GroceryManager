@@ -107,12 +107,18 @@ export async function analyzeAndIngestReceipt(
 
     const reviewNote =
       result.needsReview > 0
-        ? ` ${result.needsReview} need${plural(result.needsReview)} a quick review.`
+        ? ` ${result.needsReview} need${result.needsReview === 1 ? "s" : ""} a quick review.`
         : "";
+    // "Added" must reflect what actually landed in the pantry — the review parkers are NOT in the
+    // pantry yet (they wait in the Review inbox), so lead with addedToPantry, not linesIngested.
+    const lead =
+      result.addedToPantry > 0
+        ? `Added ${result.addedToPantry} item${plural(result.addedToPantry)} to your pantry.`
+        : `Captured your receipt.`;
     return {
       status: "ready",
-      message: `Added ${result.linesIngested} item${plural(result.linesIngested)} from your receipt.${reviewNote}`,
-      addedCount: result.linesIngested,
+      message: `${lead}${reviewNote}`,
+      addedCount: result.addedToPantry,
       needsReview: result.needsReview,
     };
   } catch (e) {

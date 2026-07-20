@@ -198,6 +198,7 @@ export interface GmailSyncSummary {
   ingested: number; // new purchases written (not already seen)
   deduped: number; // receipts already ingested before (idempotent skip)
   linesIngested: number; // line items written across all receipts
+  addedToPantry: number; // line items confidently resolved into the pantry (linesIngested - needsReview)
   needsReview: number; // line items that couldn't be confidently resolved
   failed: number; // messages that errored (isolated — didn't abort the batch)
 }
@@ -209,6 +210,7 @@ export function emptyGmailSyncSummary(): GmailSyncSummary {
     ingested: 0,
     deduped: 0,
     linesIngested: 0,
+    addedToPantry: 0,
     needsReview: 0,
     failed: 0,
   };
@@ -222,6 +224,7 @@ export function accumulateParseResult(s: GmailSyncSummary, r: ParseReceiptResult
   if (r.deduped) s.deduped += 1;
   else s.ingested += 1;
   s.linesIngested += r.linesIngested;
+  s.addedToPantry += r.addedToPantry;
   s.needsReview += r.needsReview;
   return s;
 }
