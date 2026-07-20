@@ -99,8 +99,10 @@ export function GettingStarted({ state }: { state: FirstRunState }) {
               <p className="mt-2 text-xs leading-relaxed text-ink-500">{s.blurb}</p>
               {!s.done && (
                 <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
+                  {/* ≥44px hit targets (WCAG 2.5.5 / Apple HIG) — first-run activation CTAs; base .btn
+                      sizing + min-h, not btn-sm (which would be a tall pill on a 12px label). */}
                   {s.links.map((l) => (
-                    <a key={l.href} href={l.href} className="btn-ghost btn-sm">
+                    <a key={l.href} href={l.href} className="btn-ghost min-h-[44px]">
                       {l.label}
                     </a>
                   ))}
