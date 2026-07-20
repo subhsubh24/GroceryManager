@@ -3104,3 +3104,36 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   non-reach lever, independently re-confirmed). Confidence statement stays UNCHECKED. validation 8/8, 0 unmet;
   ship gate MET (A). A quiet, coherent converged run — one real Track-G security clear + independent convergence
   re-verification; padding to a count is the worst failure mode, a quiet convergent run is a SUCCESS.
+
+- **2026-07-20 (run 89) — DEEP AUDIT (standalone 5-Haiku lens sweep, due since run 86 ~24h) + 2 file-disjoint
+  clears (Track-G upload-size guard + cook-flow 44px a11y); 4/4 Sonnet approve first-pass; 0 abandons, 0
+  circuit-breaks.** Own maker spot-checks first: migration chain 0021 intact + wired in order; BUSINESS_CASE
+  SUMMARY valid YAML (base $33,450 == body, floor_met false); prices 499/3999/999/7999¢ byte-consistent;
+  validation 8/8 READY 0 unmet. Five Haiku lens scouts over the whole repo, each handed the runs-82–88
+  deferred list: CORRECTNESS · MOBILE · TESTS · ARTIFACTS · MONETIZATION all **converged** (no findings —
+  depletion/reorder/nutrition/recipe math clean; mobile critical flows complete; ~1050 core tests cover the
+  load-bearing branches; artifacts consistent; **NO BUILDABLE NON-REACH LEVER**, independently corroborating
+  runs 82–88 that the ~$67K floor gap is entirely reach/owner-GTM). Two lenses surfaced genuinely-new value.
+  **FLAGSHIP finding — a memory-exhaustion/DoS asymmetry on the authenticated upload paths.** `add-receipt`
+  (`analyzeAndIngestReceipt`) + `scan` (`analyzeScan`) server actions base64-inflate arbitrary-size uploads
+  (~+33%) into memory before the Gemini call with NO size guard, while the public parse-receipt route (2 MB)
+  and manual import (6 MB) already cap it — so 2 of the 4 upload entry points let any signed-in user pin
+  serverless heap on a paid LLM path. Fixed with a per-file 6 MB guard (parity with import) that rejects
+  BEFORE the arrayBuffer/base64 copy; typed error, no leak. **LESSON — when hardening ONE upload/entry path,
+  grep every sibling that reaches the same expensive operation (here: every FormData→arrayBuffer→base64→LLM
+  action); size/rate/quota guards added to one entry point almost always belong on ALL of them, and a public
+  path being capped while the authenticated one isn't is a classic asymmetry a security lens catches.** The
+  2nd clear: two cook-flow tap targets (×N ingredient-scaling buttons ~32px, servings input ~28px) raised to
+  the project's 44px standard, `min-h-[44px]` applied LOCALLY (the in-file timer-button precedent; `.tab`
+  keeps text-sm so it's NOT the off-precedent `btn-sm+min-h` #628 flagged), servings input also text-sm→
+  text-base to stop iOS zoom. **DEFERRED (not shipped):** capture mic button (~34px, absolute inside a ~40px
+  input → 44px would overflow, needs a layout rethink + visual check; passes AA). **REJECTED:** `.empty-emoji`
+  rename (cosmetic churn), redundant `aria-disabled` on native-disabled buttons (inert), `aria-hidden` on
+  labelled decorative Lucide icons (no-op). **PROCESS — DEEP AUDIT cadence held: run 86 was the last standalone
+  6-lens sweep ~24h prior, so a full lens sweep (not a lean 3-scout re-verification) was correctly due this
+  run; 5/5 lenses re-confirmed convergence and 2 surfaced real new value — exactly what the periodic full
+  sweep exists to catch that a same-day re-verification would skip.** **Readiness:** did NOT open the 'ready'
+  issue — sole DoD gap unchanged (reach-gated floor #190, base ≈ $33K < $100K = owner-GTM; no buildable
+  non-reach lever, re-confirmed). Confidence statement stays UNCHECKED. validation 8/8, 0 unmet; ship gate MET
+  (A). A quiet, coherent convergent run — one Track-G security clear + one core-loop a11y clear + a full deep
+  audit; padding to a count is the worst failure mode, a quiet convergent run is a SUCCESS.
