@@ -33,6 +33,10 @@ export type AnalyzeState =
       unconfirmed: UnconfirmedItem[];
     };
 
+// Cap each uploaded image before we buffer it into memory + base64-inflate it (~+33%) for Gemini.
+// Matches the 6 MB guard on the manual import path; a large upload would otherwise pin serverless heap.
+const MAX_UPLOAD_BYTES = 6 * 1024 * 1024;
+
 /** Detect items in the uploaded photo(s) and reconcile against the pantry — read-only (no writes). */
 export async function analyzeScan(_prev: AnalyzeState, formData: FormData): Promise<AnalyzeState> {
   const env = loadEnv();
@@ -63,6 +67,9 @@ export async function analyzeScan(_prev: AnalyzeState, formData: FormData): Prom
       .getAll("photos")
       .filter((f): f is File => f instanceof File && f.size > 0);
     if (files.length === 0) return { status: "error", message: "Add at least one photo." };
+    if (files.some((f) => f.size > MAX_UPLOAD_BYTES)) {
+      return { status: "error", message: "That image is too large — keep each photo under ~6 MB." };
+    }
 
     const images = await Promise.all(
       files.slice(0, 4).map(async (f) => ({

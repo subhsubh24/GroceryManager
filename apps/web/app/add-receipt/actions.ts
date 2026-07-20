@@ -30,6 +30,10 @@ export type AnalyzeReceiptState =
 
 const plural = (n: number) => (n === 1 ? "" : "s");
 
+// Cap each uploaded image before we buffer it into memory + base64-inflate it (~+33%) for Gemini.
+// Matches the 6 MB guard on the manual import path; a large upload would otherwise pin serverless heap.
+const MAX_UPLOAD_BYTES = 6 * 1024 * 1024;
+
 /** Map a raw ingest/LLM error to a calm, actionable line — quota is the common one (free-tier keys). */
 function friendlyError(raw: string): string {
   const r = raw.toLowerCase();
@@ -54,6 +58,9 @@ export async function analyzeAndIngestReceipt(
     .getAll("photos")
     .filter((f): f is File => f instanceof File && f.size > 0);
   if (files.length === 0) return { status: "error", message: "Add at least one photo of your receipt." };
+  if (files.some((f) => f.size > MAX_UPLOAD_BYTES)) {
+    return { status: "error", message: "That image is too large — keep each photo under ~6 MB." };
+  }
 
   const userId = await currentUserId();
   if (!userId) return { status: "error", message: "You're signed out — sign in again, then retry." };
