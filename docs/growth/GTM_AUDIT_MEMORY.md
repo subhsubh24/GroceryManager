@@ -16,6 +16,68 @@ writes: `GTM_RUBRIC.md`, `GTM_SCORECARD.md`, this file. It NEVER does GTM work o
 
 ## RUN LOG (newest first)
 
+### 2026-07-22 — FOURTH GRADE — overall A, ship_gate_met: true (complaintsboard half of #570 FIXED; the gap MOVED to grand-screen; compliance A+→A on an auditor self-correction)
+- **Context:** Fourth GTM Auditor run; diffed against the 2026-07-15 grade. Since then the GTM Factory ran
+  runs 12 (2026-07-15), 13 (2026-07-17) and 14 (2026-07-19). GROWTH_STATUS now as_of 2026-07-19 (run 14);
+  visitors_7d ticked 1→2→3 across runs (real organic, N tiny). Run 12 DIRECTLY answered my filed gap #570:
+  it re-fetched complaintsboard a third time, documented the two-name non-determinism as a LESSON, and
+  downgraded the complaintsboard reviewer names to "reviewer name UNCERTAIN". Business case unchanged
+  (as_of 2026-06-27). QUALITY_SCORECARD unchanged (as_of 2026-07-13, overall A, gate met, design_taste A).
+- **Method:** 2 fresh adversarial Opus-class graders (metric-integrity; business-case+self-validation+
+  compliance) + heavy first-hand auditor verification. Reproduced the LIVE authenticated snapshot (the prod
+  URL is **https://grocery-manager-web.vercel.app**, NOT grocerymanager.vercel.app which 404s — corrected
+  this run; GET /api/growth/snapshot, Bearer $CRON_SECRET → HTTP 200): all 4 sources connected, funnel
+  visitors_7d:2, everything else 0/null, 3 experiments running/null. The metric grader WebFetched BOTH
+  demand_signal source pages; grader 2 recomputed the business case and audited compliance.
+- **Grades (Δ vs 2026-07-15):**
+  - METRIC INTEGRITY (ship-critical): **A** (held) — no fabrication (all SIX demand_signal quote TEXTS
+    verbatim-genuine on the real pages; funnel live-verified; experiments match registry.ts). #570 PARTLY
+    closed: the complaintsboard names are now honestly UNCERTAIN (exemplary fix). BUT the factory kept the
+    GRAND-SCREEN.COM names asserted ('Lars Uriel, not Jane Sanders', GROWTH_STATUS:793-798), and a fresh
+    grader WebFetch this cycle returned 'JANE SANDERS' again — the same source-class non-determinism that
+    triggered #570. The gap MOVED (complaintsboard→grand-screen), didn't close. #570 KEPT OPEN + updated.
+  - BUSINESS-CASE HONESTY (ship-critical): **A+** (held) — grader recomputed all 3 scenarios to the doc's
+    numbers ($3,085/$33,449/$342,144), churn 3.71%, ARPU $3.82; prices == billing config exactly; YAML
+    matches body; floor_met_year1:false consistent; nothing gamed up. Unchanged doc still reconciles.
+  - ROADMAP-STEER JUSTIFICATION (ship-critical): **A+** (held) — git log confirms the ONLY ROADMAP/VISION
+    commit since 07-15 is owner-authored (airjordan33, #586); full-history grep -v airjordan33 is EMPTY (no
+    Growth-Agent steer ever). Correct with 0/null funnel.
+  - SELF-VALIDATION HONESTY (ship-critical): **A+** (held) — sources match the live snapshot exactly; every
+    deviation UNDER-claims (channels_connected:[email] narrower than snapshot's 3; phase:pre_launch worse
+    than 'launching'); email fail-closed on deliverability; all 4 gtm-connect actions status:done.
+  - EXPERIMENT VALIDITY: **A** (held) — textbook stats; still NO lift.test.ts for computeExperimentResult
+    (only stats.test.ts). Unchanged since 07-08. Product-Factory code territory, already a next_action.
+  - PMF READ ACCURACY: **A+** (held) — pmf null/none; recommendations product/connect only, never scale-acq.
+  - COMPLIANCE: **A** (was A+) — an HONESTY-PRECISION correction of the AUDITOR's OWN prior framing, NOT a
+    factory regression. The 07-15 scorecard credited A+ partly on "the agent has NO social-posting tool
+    (enforced-by-absence-of-capability)". FALSE: a real owned-channel publisher EXISTS + is cron-wired
+    (packages/core/src/content/scheduler.ts posts to X/Buffer/Typefully via apps/web/app/api/cron/publish/
+    route.ts). NOT a violation — credential-gated (skips without keys), community-channels hard-blocked in
+    code, fully dormant (published_7d:0, no social channel connected), openly DISCLOSED as engine anchor 3.
+    Behavior is clean; the airtight "by-absence" claim that earned A+ doesn't hold → A. Draft-only + prepare-
+    only intact; no fabricated metric; zero spend.
+  - ARTIFACT FRESHNESS: **A** (held) — the 07-15 filed concern is RESOLVED (the §13 marketing block now
+    correctly re-reads QUALITY_SCORECARD fresh: ship_gate_met true, as_of 07-13, design_taste A — no stale
+    GATE-1 story). Off A+: as_of 07-19 is 3 days stale + visitors_7d:3 trails the live 2 (honest window
+    aging). Self-heals next run.
+- **Integrity check:** NO fabricated metric (funnel live-verified; all quote text genuine), NO gamed business
+  case, NO speculative roadmap steer (all owner-authored), NO auto-send, NO unauthorized spend, NO pricing
+  drift, NO fake engagement.
+- **Ship gate:** MET (all 4 ship-critical A/A+; all others ≥ A). Overall A held — the complaintsboard half of
+  #570 genuinely closed, offset by the grand-screen half surfacing + the compliance A+→A self-correction.
+- **Issues:** #314 + #470 remain CLOSED. #570 KEPT OPEN, updated with the grand-screen finding (the gap
+  moved, so the issue is still live — do not close). No new issues filed (lean; the other 3 gaps are
+  auditor-framing / product-factory territory / self-healing).
+- **Note for next run:** DIFF against this. Watch for: (1) whether the grand-screen.com reviewer names got
+  softened to UNCERTAIN like complaintsboard (metric A→A+, close #570); (2) whether the scheduler/publisher
+  "enforced-by-absence" framing was corrected anywhere + whether the publisher stays dormant/published_7d:0
+  (if content.published_7d ever goes non-zero, grade compliance HARD — a real send must be owner-authorized,
+  never auto, and any reported engagement must cite real data, never a fabricated/estimated count); (3)
+  whether lift.test.ts was added (experiment A→A+); (4) the FIRST non-zero funnel metric beyond incidental
+  crawler traffic — verify against the live snapshot (prod URL grocery-manager-web.vercel.app); (5) any FIRST
+  GTM-authored ROADMAP/VISION steer — grade its data/N/significance/causal-mechanism HARD; (6) if
+  content_validation.status moves off 'prepared', grade any reported comment signal HARD (real cited text only).
+
 ### 2026-07-15 — THIRD GRADE — overall A, ship_gate_met: true (both filed gaps CLOSED; metric-integrity held A on a fresh, reproducible attribution finding)
 - **Context:** Third GTM Auditor run; diffed against the 2026-07-08 grade. Since then the GTM Factory ran
   runs 10 (2026-07-09) and 11 (2026-07-11). Run 10 CLOSED both my filed gaps: content.published_7d corrected
