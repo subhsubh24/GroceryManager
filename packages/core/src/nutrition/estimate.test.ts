@@ -95,6 +95,42 @@ describe("estimateMealMacros", () => {
     expect(two.fatG).toBeCloseTo(one.fatG * 2, 5);
   });
 
+  it("scales DOWN for a fractional serving (half a recipe ⇒ half the macros)", async () => {
+    // A half-batch cook (servings 0.5) must log half the macros so the stored figure matches the
+    // pantry drawdown (planConsumption scales by the same 0.5). Regression: `Math.max(1, servings)`
+    // used to clamp 0.5 → 1, logging full-recipe macros for a half batch.
+    const full = await estimateMealMacros(
+      [{ name: "chicken breast", measure: "200 g" }],
+      1,
+      { fdcApiKey: "k", fetchImpl: fdcFetch({ kcal: 165, protein: 31, carbs: 0, fat: 3.6 }) },
+    );
+    const half = await estimateMealMacros(
+      [{ name: "chicken breast", measure: "200 g" }],
+      0.5,
+      { fdcApiKey: "k", fetchImpl: fdcFetch({ kcal: 165, protein: 31, carbs: 0, fat: 3.6 }) },
+    );
+    expect(half.kcal).toBe(Math.round(full.kcal * 0.5));
+    expect(half.proteinG).toBeCloseTo(full.proteinG * 0.5, 5);
+    expect(half.fatG).toBeCloseTo(full.fatG * 0.5, 5);
+  });
+
+  it("defaults a non-positive or non-finite serving to a full 1×", async () => {
+    const one = await estimateMealMacros(
+      [{ name: "chicken breast", measure: "200 g" }],
+      1,
+      { fdcApiKey: "k", fetchImpl: fdcFetch({ kcal: 165, protein: 31, carbs: 0, fat: 3.6 }) },
+    );
+    for (const bad of [0, -2, Number.NaN]) {
+      const macros = await estimateMealMacros(
+        [{ name: "chicken breast", measure: "200 g" }],
+        bad,
+        { fdcApiKey: "k", fetchImpl: fdcFetch({ kcal: 165, protein: 31, carbs: 0, fat: 3.6 }) },
+      );
+      expect(macros.kcal).toBe(one.kcal);
+      expect(macros.proteinG).toBeCloseTo(one.proteinG, 5);
+    }
+  });
+
   it("skips optional ingredients", async () => {
     let llmCalls = 0;
     const countingLlm = {
