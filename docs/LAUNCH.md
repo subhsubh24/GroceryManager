@@ -267,7 +267,42 @@ Do the same for Google Play Console (separate metadata in ASO_READY.md).
 
 ---
 
-### Step 10 — Submit to stores
+### Step 10 — Provision a shared rate-limit/quota store + set provider spend caps
+
+> **Do this BEFORE driving any real public traffic (Step 12).** The app ships correct abuse protection
+> for a single instance, but two of its defenses need shared state and hard budget caps to hold at scale.
+> This is owner infra (provider provisioning + spend caps), not a code gap — the code is built and
+> degrades safely until you wire it. Tracked in `PENDING_OPS.md` as `llm-quota-redis-upgrade`.
+
+**a. Shared rate-limit / quota / demo-spend store (multi-instance safety).** The rate limiter
+(`apps/web/app/api/_lib/rate-limit.ts`), the per-user LLM daily quota (`_lib/llm-quota.ts`), and the
+**public demo spend ceiling** (`packages/core/src/security/demo-quota.ts`) currently count in per-process
+in-memory Maps — correct on one instance, but on a scaled-out Vercel deployment each region/instance
+keeps its own counters, so the effective ceiling becomes `cap × instances`. The highest-priority of the
+three is the demo ceiling: it guards a **public, no-account, paid-LLM endpoint** (`/api/public/parse-receipt`),
+so a per-instance cap is a wallet-drain exposure once traffic scales.
+
+1. Create an [Upstash Redis](https://upstash.com) database (free tier is fine to start).
+2. Set in **Vercel env** (never commit): `UPSTASH_REDIS_REST_URL=…` + `UPSTASH_REDIS_REST_TOKEN=…`.
+3. Redeploy. Verify: from two different regions/instances, confirm the per-IP and global demo counters
+   share one total (a second instance sees the first's count) — e.g. exceed the daily demo cap from one
+   client and confirm a different instance also returns `429`.
+
+**b. Provider spend caps + alerts (hard cost ceilings).** Even with per-user quotas, set an absolute
+budget ceiling at each provider so no bug or abuse can run up an unbounded bill:
+
+- **Gemini / Google Cloud** (LLM — receipt parse, macros, meal-gen): set a **billing budget + alert**
+  in Google Cloud Billing → Budgets & alerts (e.g. alert at 50/90/100% of a monthly cap), and a per-key
+  quota in the AI Studio / Vertex console. This is the single largest variable cost.
+- **Upstash / Stripe:** enable usage alerts; Stripe Radar is on by default for fraud.
+- Record the exact caps you set here and in `PENDING_OPS.md` so the business-case COGS stays honest.
+
+**Verify:** trigger a test alert (or confirm the budget shows in the provider console) and confirm the
+demo endpoint still returns real results under the cap and a clean `429` over it.
+
+---
+
+### Step 11 — Submit to stores
 
 1. **App Store Connect:** Upload build via `eas submit --platform ios`. Fill in all metadata (Step 8). Submit for review.
 2. **Google Play Console:** Upload AAB via `eas submit --platform android`. Complete store listing. Submit for review.
@@ -275,7 +310,7 @@ Do the same for Google Play Console (separate metadata in ASO_READY.md).
 
 ---
 
-### Step 11 — Go-to-market (day 1+)
+### Step 12 — Go-to-market (day 1+)
 
 **First, activate the growth-execution engine:** follow `docs/growth/CONNECT.md` (the ~20-min owner
 runbook) to connect web analytics, the email provider, social token(s), and billing. Until each channel's
@@ -290,7 +325,7 @@ Then follow `docs/brand/LAUNCH_PLAN.md` for the sequenced go-to-market calendar.
 
 ---
 
-### Step 12 — Post-launch rituals (only when the trigger applies)
+### Step 13 — Post-launch rituals (only when the trigger applies)
 
 These keep the **store listings** and the **business case** honest as the product evolves. Both are
 owner actions because they depend on a live decision or live data.

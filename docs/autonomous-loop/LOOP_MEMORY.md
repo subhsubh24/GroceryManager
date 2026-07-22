@@ -3145,3 +3145,60 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   stays UNCHECKED. validation 8/8, 0 unmet (reuses existing capabilities); ship gate MET (A). A quiet,
   coherent convergent run — one real core-loop correctness/UX-honesty clear; a quiet convergent run is a
   SUCCESS.
+
+- **2026-07-22 (run 91) — targeted INDEPENDENT re-verification (4-Haiku adversarial) + 1 file-disjoint
+  nutrition core-loop correctness clear (#634) + 1 LAUNCH handoff-completeness fix (bookkeeping); 3
+  Sonnet reviews (Reviewer A APPROVE 1st pass; Reviewer B REQUEST_CHANGES on framing → APPROVE cycle 2);
+  0 abandons, 0 circuit-breaks.** DEEP AUDIT NOT due — run 89 ran a standalone 4-lens sweep ~2 runs
+  prior (< the ~4-run/~24h cadence); tree moved only by the run-90 #633 merge since. Per the
+  run-85/87/90 discipline, the maker≠checker move on a fresh run since a recent deep audit is a
+  targeted INDEPENDENT re-verification on the CURRENT commit (lean adversarial Haiku scouts on the
+  highest-yield lenses + own maker spot-checks) — not trusting the prior run, not a redundant full
+  fan-out. Own maker spot-checks first: typecheck 6/6, 1050 core tests pass +27 skipped, prod build
+  exit 0 no missing-export, validation 8/8 READY 0 unmet, 0 open PRs, prices 499/3999/999/7999¢
+  byte-consistent, SUMMARY valid YAML base $33,450 == body / floor_met false. Four Haiku scouts:
+  **security/Track-G — 1 finding, OWNER-GATED** (the in-memory-Map rate-limit/LLM-quota/demo-spend
+  ceiling is per-instance, so a scaled-out Vercel deployment's effective cap = cap×instances — real at
+  scale, but already tracked in PENDING_OPS as `llm-quota-redis-upgrade`; the real fix needs owner
+  Upstash provisioning + is UN-PROVABLE keyless in CI [the degrade path stays in-memory, so a
+  Redis-backed wrapper would ship an un-exercised critical protection path — the DoD trap], so it stays
+  correctly deferred; ALL other Track-G lenses CLEAN — RLS on all public tables, constant-time auth
+  verify, captcha, CSP/HSTS/nosniff, Stripe constructEvent + timing-safe webhooks, server-side
+  entitlements); **monetization NO buildable non-reach lever** (every pricing/tier/conversion/retention/
+  margin lever built; ~$67K gap = reach = owner-GTM #190, re-confirmed); **design/a11y/artifact — 2
+  candidates REJECTED**; **correctness → 1 genuinely-new real finding I confirmed before acting.**
+  **FLAGSHIP finding — a nutrition data-integrity bug on the cook-logging loop.** `estimateMealMacros`
+  opened with `const s = Math.max(1, servings)`, which over-clamped any `0<servings<1` UP to a full 1×.
+  Meanwhile `logCook`→`planConsumption` scale the pantry drawdown by the SAME fractional `servingsScale`
+  (preserved, `x>0?x:1`). So a half-batch cook (servings 0.5) drew down 0.5× of the pantry but logged
+  FULL-recipe macros (2× what was eaten) — the function's own docstring says the stored figure is "for
+  everything actually cooked". Fixed to `Number.isFinite(servings) && servings > 0 ? servings : 1`,
+  matching the two sibling scaling sites; Reviewer A noted it ALSO closes a latent `Math.max(1, NaN) =
+  NaN` propagation bug (the old clamp would have scaled the whole macro total to NaN). +2 regression
+  tests (fractional 0.5 ⇒ half macros; 0/-2/NaN ⇒ 1×). **PROCESS LESSON — Reviewer B's REQUEST_CHANGES
+  was a FRAMING correction, not a code objection: my scout+summary overstated reachability ("a bug
+  every paying user hits on all 3 cook surfaces"). Reviewer B traced it: the shipped web form
+  (`<input min=1>`, default step=1) and the mobile stepper (integers 1–12, `−` disabled at 1) are
+  integer-clamped by construction; fractional servings reach `estimateMealMacros` ONLY via the mobile
+  API route `/api/mobile/cook` (no integer check) or a crafted/direct POST to the web `logThisCook`
+  server action (`min=1` is client-only HTML, the server enforces only `finite && >0`). The code was
+  right; the CLAIM was inflated. Lesson: when a scout says "reachable on all N surfaces," VERIFY each
+  surface's actual input control + server-side validation before writing the value claim — an inflated
+  reachability claim pollutes the audit trail the project uses for prioritization even when the fix is
+  correct. Both reviewers approved the code; I corrected the commit/PR framing and re-ran a 2nd review
+  cycle to convert B → APPROVE (maker≠checker satisfied via honest re-framing, not an override).**
+  **PROCESS LESSON — the NaN/Infinity half is "latent": all 3 current callers pre-guard `finite && >0`
+  before calling, so no live caller can feed NaN today either — it's a defensive-boundary fix at the
+  function's own contract level, and I labelled it "latent" rather than production-reachable (Reviewer B
+  confirmed the hedge was honest).** **LIVING-ARTIFACT fix (this bookkeeping PR) — the security scout's
+  finding was in PENDING_OPS but ABSENT from LAUNCH.md's owner remaining-steps checklist, which also had
+  NO provider-spend-cap step at all despite "PROVIDER SPEND CAPS + alerts" being a required Human-Core
+  handoff item. Added LAUNCH.md Step 10 (provision an Upstash-Redis shared rate-limit/quota/demo-spend
+  store for multi-instance safety + set Gemini/Upstash/Stripe spend caps + alerts before driving public
+  traffic; renumbered Submit/GTM/Post-launch → 11/12/13). Also filled a run-90 gap in
+  LOOP_HEALTH.changes_shipped (the chain jumped 89→88, missing #633).** **Readiness:** did NOT open
+  'ready' — sole DoD gap unchanged (reach-gated floor #190, base ≈ $33K < $100K = owner-GTM; no
+  buildable non-reach lever, independently re-confirmed for the ~9th consecutive run). Confidence
+  statement stays UNCHECKED. validation 8/8, 0 unmet; ship gate MET (A). A quiet, coherent convergent
+  run — one real nutrition-loop correctness clear + one owner-facing security/cost handoff fix; a quiet
+  convergent run is a SUCCESS.
