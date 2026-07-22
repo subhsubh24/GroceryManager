@@ -66,7 +66,12 @@ export async function estimateMealMacros(
   deps: EstimateDeps,
 ): Promise<MealMacros> {
   try {
-    const s = Math.max(1, servings);
+    // Preserve fractional servings (e.g. cooking half a recipe ⇒ 0.5) so the stored macros match
+    // both logCook's `servingsMade` and planConsumption's `servingsScale` — all three key off the SAME
+    // `servings > 0 ? servings : 1` convention. A bad value (0, negative, NaN) defaults to a full 1×.
+    // `Math.max(1, servings)` here previously over-clamped valid fractional servings up to 1×, logging
+    // full-recipe macros for a half-batch while the pantry drawdown correctly scaled by 0.5.
+    const s = Number.isFinite(servings) && servings > 0 ? servings : 1;
 
     // Base totals are computed for the recipe AS WRITTEN; we scale by servings once at the end.
     let total = EMPTY_MACROS;
