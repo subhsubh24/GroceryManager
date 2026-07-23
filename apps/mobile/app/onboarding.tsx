@@ -110,10 +110,17 @@ export default function OnboardingScreen() {
       // Finish: project model + mark onboarded
       try {
         setSaving(true);
-        await apiFetch("/api/mobile/onboarding", token, {
+        const res = await apiFetch("/api/mobile/onboarding", token, {
           method: "POST",
           body: JSON.stringify({ action: "finish" }),
         });
+        // apiFetch only rejects on a network/timeout error — a 5xx resolves normally. Navigating
+        // home on a failed `finish` would leave onboarding unmarked server-side and bounce the user
+        // straight back here on the next launch, so gate the redirect on the real outcome.
+        if (!res.ok) {
+          setError("Couldn't finish setup — please try again.");
+          return;
+        }
         router.replace("/");
       } catch {
         setError("Couldn't finish setup — please try again.");
