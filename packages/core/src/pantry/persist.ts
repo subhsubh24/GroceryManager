@@ -57,24 +57,31 @@ export async function reprojectStock(
   ratePerDay: number | null,
   source?: StockSource,
 ) {
-  const events = await db
-    .select({
-      delta: stockLedger.baseQtyDelta,
-      occurredAt: stockLedger.occurredAt,
-      eventType: stockLedger.eventType,
-    })
-    .from(stockLedger)
-    .where(and(eq(stockLedger.userId, userId), eq(stockLedger.canonicalItemId, canonicalItemId)));
-
-  const itemRows = await db
-    .select({
-      perishability: canonicalItems.perishability,
-      fridge: canonicalItems.shelfLifeFridgeDays,
-      pantryDays: canonicalItems.shelfLifePantryDays,
-    })
-    .from(canonicalItems)
-    .where(eq(canonicalItems.id, canonicalItemId))
-    .limit(1);
+  // The ledger events and the item's shelf-life metadata are independent reads — dispatch them
+  // together instead of awaiting one before issuing the other. postgres.js still serializes both
+  // statements on the tenant's reserved connection (in call order), so this doesn't cut a wire
+  // round-trip; it removes the JS-side await stall between them. reprojectStock runs on the hottest
+  // write path (once per purchase line item, once per recipe-cook ingredient), so the saved stall
+  // compounds. Same pattern already used in ask/actions.ts.
+  const [events, itemRows] = await Promise.all([
+    db
+      .select({
+        delta: stockLedger.baseQtyDelta,
+        occurredAt: stockLedger.occurredAt,
+        eventType: stockLedger.eventType,
+      })
+      .from(stockLedger)
+      .where(and(eq(stockLedger.userId, userId), eq(stockLedger.canonicalItemId, canonicalItemId))),
+    db
+      .select({
+        perishability: canonicalItems.perishability,
+        fridge: canonicalItems.shelfLifeFridgeDays,
+        pantryDays: canonicalItems.shelfLifePantryDays,
+      })
+      .from(canonicalItems)
+      .where(eq(canonicalItems.id, canonicalItemId))
+      .limit(1),
+  ]);
   const item = itemRows[0];
 
   const mapped = events.map((e) => ({ baseQtyDelta: Number(e.delta), occurredAt: e.occurredAt }));
