@@ -3202,3 +3202,58 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   statement stays UNCHECKED. validation 8/8, 0 unmet; ship gate MET (A). A quiet, coherent convergent
   run — one real nutrition-loop correctness clear + one owner-facing security/cost handoff fix; a quiet
   convergent run is a SUCCESS.
+
+- **2026-07-23 (run 92) — DEEP AUDIT (7-Haiku lens sweep, DUE since run 89 ~4 days/>24h) + 4
+  file-disjoint clears (2 mobile correctness bugs #637/#638, 1 hot-path perf #639, 1 a11y #640);
+  8/8 first-pass Sonnet approvals; 0 abandons, 0 circuit-breaks.** DEEP AUDIT was DUE — the last
+  standalone sweep was run 89 (2026-07-19); 4 days + runs 90/91 since, past the ~4-run/~24h cadence.
+  Ran a 7-lens read-only Haiku fan-out over the WHOLE repo BEFORE scouting (correctness/dead-code,
+  security/RLS/Track-G, design/a11y, perf, test/eval coverage, artifact-freshness, mobile/functional-
+  reality). Own maker spot-checks first: typecheck 6/6, 1060 core tests pass +27 skipped, prod build
+  exit 0 no missing-export, validation 8/8 READY 0 unmet, prices 499/3999/999/7999¢ byte-consistent,
+  SUMMARY valid YAML base $33,450 == body / floor_met false, 0 open PRs, clean tree.
+  **FLAGSHIP finding — a CRITICAL dead-on-arrival bug on the native mobile Pantry screen.** The
+  screen read `{ id, quantity, unit, daysUntilExpiry }` but `/api/mobile/pantry` returns
+  `getPantryView` rows (`{ canonicalItemId, name, baseQtyOnHand, status, estimatedRunOutAt, … }`).
+  Across the untyped JSON boundary TS couldn't catch it, so every item rendered a blank quantity, an
+  undefined React key, and "undefinedd left" — a core mobile feature was non-functional.
+  **#638 (fix/mobile pantry contract):** reconciled the shapes in ONE pure, tested place —
+  `toMobilePantryItems` in `@gm/core/pantry` maps a row → `{ id: canonicalItemId, name,
+  quantity: Math.round(Number(baseQtyOnHand)), status, runsOutInDays }`; the on-hand figure mirrors the
+  web "N on hand" idiom (NaN-safe), and the countdown is RELABELED "Expires"→"Runs out" (the field is a
+  consumption prediction, not a spoilage date — a "no fake data" honesty fix). 8-case keyless guard
+  `mobile-view.test.ts`. **#637 (fix/mobile onboarding finish):** the step-3 "finish" awaited
+  `apiFetch` then `router.replace("/")` UNCONDITIONALLY; `apiFetch` only rejects on network/timeout, so
+  a 5xx from the very call that marks onboarding complete still sent the user home un-onboarded →
+  re-onboard loop on next launch. Gated the redirect on `res.ok` (the idiom the other mobile screens
+  already use). **#639 (perf/pantry reproject):** `reprojectStock`'s two independent reads (ledger
+  events + item shelf-life) dispatched together via Promise.all on the hottest write path (per purchase
+  line, per cook ingredient); Reviewer A traced porsager/postgres's tx queue (FIFO-serialized, safe;
+  established in ask/actions.ts). **#640 (a11y/ask chips):** /ask starter chips (interactive buttons on
+  `.pill-brand` ~24px) raised to `min-h-[44px] px-4`, shared `.pill` untouched. All 4 file-disjoint; 8/8
+  Sonnet first-pass APPROVE. **PROCESS LESSON — a maker-owned accuracy correction before opening the PR
+  is not a review cycle.** Reviewer A's precise #639 note (inside a tx postgres.js still does two
+  serialized wire round-trips — the win is removing the JS-side await STALL, not saving a round-trip) was
+  correct + non-blocking; since I own the file and no PR existed yet I amended the comment/commit/PR to
+  the accurate framing (force-with-lease) rather than ship an overstated claim — run-91's honesty
+  discipline applied pre-emptively. **LESSON — an untyped client↔server JSON boundary hides shape drift;
+  reconcile it in ONE pure, tested place.** The pantry bug slipped because the boundary is a
+  `res.json() as T` cast on the client + a `Response.json(rows)` on the server — TS sees neither side of
+  the other; the durable fix is a pure `@gm/core` mapper that owns the DTO shape and is unit-tested, not
+  per-screen patching. **FOLLOW-UPS (future runs):** (a) mobile pantry `item.name` rendered raw — both
+  #638 reviewers flagged; PRE-EXISTING + non-blocking; `titleCase` lives only in `apps/web/app/lib/
+  format.ts`, unreachable from the workspace-excluded mobile app, so folding it into core would be a
+  layering smell → needs a mobile-local/`@gm/shared` title-caser; (b) `/digest` `<a className=
+  "pill-brand">` (page.tsx:291) — the next sub-44px interactive-link a11y candidate after #640;
+  (c) NO outcome-asserting test across the mobile JSON boundary — the #638 pure mappers are the right
+  seam for a future Track-F contract-test that catches DTO drift keyless before it reaches a device.
+  REJECTED with evidence: ingest.ts `purchaseRows[0]!.id`/`lineRows[0]!.id` "CRITICAL ledger corruption"
+  = FALSE POSITIVE (Drizzle `.returning()` on a single-row insert yields one row or throws; never
+  empty); CORS "missing ACAO" = the secure same-origin default, not a hole; Stripe webhook non-UUID
+  userId = already fails safe (caught, logged, 200); multi-instance in-memory ceiling = owner-gated,
+  already tracked; log-cook/ingest N+1 = order-dependent / risky-refactor, deferred. Monetization NO
+  buildable non-reach lever (reach-gated #190 re-confirmed, ~10th consecutive run). **Readiness:** did
+  NOT open 'ready' — sole DoD gap unchanged (reach-gated floor #190, base ≈ $33K < $100K = owner-GTM;
+  Confidence UNCHECKED). validation 8/8, 0 unmet; ship gate MET (A). A productive convergent run — the
+  DEEP AUDIT earned its keep, catching a genuine CRITICAL dead-on-arrival mobile bug (+ a second mobile
+  side-effect bug) that no test guarded, plus a hot-path perf win and an a11y clear.
