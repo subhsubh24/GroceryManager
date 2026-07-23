@@ -8,9 +8,17 @@ type PantryItem = {
   id: string;
   name: string;
   quantity: number;
-  unit: string | null;
-  daysUntilExpiry: number | null;
+  status: string;
+  // Whole days until projected run-out (consumption prediction, NOT an expiry date).
+  // ≤0 = today/overdue; null when there's no estimate.
+  runsOutInDays: number | null;
 };
+
+function runOutLabel(days: number): string {
+  if (days <= 0) return "Likely out";
+  if (days === 1) return "Runs out tomorrow";
+  return `Runs out in ${days}d`;
+}
 
 export default function PantryScreen() {
   const { token } = useAuth();
@@ -102,24 +110,17 @@ export default function PantryScreen() {
             <View style={styles.card}>
               <View style={styles.cardMain}>
                 <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemQty}>
-                  {item.quantity}
-                  {item.unit ? ` ${item.unit}` : ""}
-                </Text>
+                <Text style={styles.itemQty}>{item.quantity} on hand</Text>
               </View>
-              {item.daysUntilExpiry !== null && (
+              {item.runsOutInDays !== null && (
                 <Text
                   style={[
                     styles.expiry,
-                    item.daysUntilExpiry <= 2 && styles.expiryUrgent,
-                    item.daysUntilExpiry <= 5 && item.daysUntilExpiry > 2 && styles.expiryWarn,
+                    item.runsOutInDays <= 2 && styles.expiryUrgent,
+                    item.runsOutInDays <= 5 && item.runsOutInDays > 2 && styles.expiryWarn,
                   ]}
                 >
-                  {item.daysUntilExpiry <= 0
-                    ? "Expired"
-                    : item.daysUntilExpiry === 1
-                    ? "Expires tomorrow"
-                    : `${item.daysUntilExpiry}d left`}
+                  {runOutLabel(item.runsOutInDays)}
                 </Text>
               )}
             </View>

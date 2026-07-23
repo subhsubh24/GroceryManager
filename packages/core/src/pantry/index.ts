@@ -4,5 +4,6 @@ export * from "./persist.js";
 export * from "./shelf-life.js";
 export * from "./shelf-life-llm.js";
 export * from "./expiring.js";
+export * from "./mobile-view.js";
 export * from "./waste.js";
 export * from "./waste-persist.js";
