@@ -115,7 +115,7 @@ export function ChatPanel() {
               type="button"
               onClick={() => send(s)}
               disabled={pending}
-              className="pill-brand transition hover:scale-[1.02] disabled:opacity-50"
+              className="pill-brand min-h-[44px] px-4 transition hover:scale-[1.02] disabled:opacity-50"
             >
               {s}
             </button>
