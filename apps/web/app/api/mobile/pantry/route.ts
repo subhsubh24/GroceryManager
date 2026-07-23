@@ -1,4 +1,5 @@
 import { getDb, getPantryView, withTenant } from "@gm/db";
+import { toMobilePantryItems } from "@gm/core/pantry";
 import { verifyMobileToken } from "../_lib";
 import { serverError } from "../../_lib/guard";
 import { rateLimit, tooManyRequests } from "../../_lib/rate-limit";
@@ -21,8 +22,8 @@ export async function GET(req: Request) {
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   try {
-    const items = await withTenant(getDb(), userId, (tx) => getPantryView(tx, userId));
-    return Response.json({ items });
+    const rows = await withTenant(getDb(), userId, (tx) => getPantryView(tx, userId));
+    return Response.json({ items: toMobilePantryItems(rows) });
   } catch (err) {
     return serverError("mobile/pantry", err);
   }
