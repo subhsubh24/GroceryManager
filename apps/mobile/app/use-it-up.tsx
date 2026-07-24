@@ -9,6 +9,7 @@ import {
   Pressable,
 } from "react-native";
 import { Redirect, router } from "expo-router";
+import { titleCase } from "@gm/core/format";
 import { useAuth } from "../lib/auth";
 import { apiFetch } from "../lib/api";
 
@@ -126,7 +127,7 @@ export default function UseItUpScreen() {
             <View style={styles.chipRow}>
               {data.expiring.map((e) => (
                 <View key={e.name} style={styles.chip}>
-                  <Text style={styles.chipName}>{e.name}</Text>
+                  <Text style={styles.chipName}>{titleCase(e.name)}</Text>
                   <Text style={styles.chipDays}>{daysLabel(e.daysLeft)}</Text>
                 </View>
               ))}

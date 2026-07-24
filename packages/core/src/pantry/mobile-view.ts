@@ -8,29 +8,9 @@
  * "expiry" — run-out is a prediction, not a spoilage date, and the copy must not overclaim.
  */
 
+import { titleCase } from "../format/index.js";
+
 const DAY_MS = 86_400_000;
-
-// Words that stay lowercase mid-phrase (but are capitalized if they lead). Mirrors the web
-// `titleCase` (apps/web/app/lib/format.ts) so the native app reads identically to the web surface.
-const SMALL = new Set(["and", "or", "of", "the", "a", "an", "with", "in", "on", "to", "for"]);
-
-/**
- * Title-case a canonical item name for display: canonical names are stored lowercase (for matching),
- * so raw them would surface a "database dump" on the device. Capitalizes each word (small connecting
- * words stay lowercase unless first) and lowercases the remainder so ALL-CAPS receipt text
- * ("ORGANIC AVOCADO") also reads cleanly — the same rule the web app applies at render.
- */
-function titleCaseName(s: string): string {
-  return s
-    .trim()
-    .split(/\s+/)
-    .map((w, i) => {
-      if (!w) return w;
-      if (i > 0 && SMALL.has(w.toLowerCase())) return w.toLowerCase();
-      return w[0]!.toUpperCase() + w.slice(1).toLowerCase();
-    })
-    .join(" ");
-}
 
 /** The subset of a `getPantryView` row this mapper needs (structurally compatible with the query). */
 export interface MobilePantryRow {
@@ -69,7 +49,7 @@ export function toMobilePantryItems(rows: MobilePantryRow[], now: Date = new Dat
     const qty = Math.round(Number(r.baseQtyOnHand));
     return {
       id: r.canonicalItemId,
-      name: titleCaseName(r.name),
+      name: titleCase(r.name),
       quantity: Number.isFinite(qty) ? qty : 0,
       status: r.status,
       runsOutInDays,

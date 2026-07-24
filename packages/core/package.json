@@ -17,6 +17,7 @@
     "./recipe/generate-llm": "./src/recipe/generate-llm.ts",
     "./recipe/import-llm": "./src/recipe/import-llm.ts",
     "./nutrition": "./src/nutrition/index.ts",
+    "./format": "./src/format/index.ts",
     "./crypto": "./src/crypto/index.ts",
     "./ingestion": "./src/ingestion/index.ts",
     "./pantry": "./src/pantry/index.ts",
