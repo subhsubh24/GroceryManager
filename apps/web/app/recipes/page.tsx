@@ -231,9 +231,10 @@ export default async function RecipesPage({
                   Cook →
                 </a>
                 <CookedItButton recipeId={r.id} />
+                {/* ≥44px hit target (WCAG 2.5.5 / Apple HIG) — inline cook-loop actions beside "Cook →". */}
                 <a
                   href={`/remix/${r.id}`}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-brand-700"
+                  className="inline-flex min-h-[44px] items-center gap-1 px-1 text-xs font-medium text-brand-700"
                 >
                   <Shuffle className="h-3.5 w-3.5" strokeWidth={2} /> Remix
                 </a>
@@ -243,7 +244,10 @@ export default async function RecipesPage({
                     {[...new Set(r.missing)].map((m) => (
                       <input key={m} type="hidden" name="name" value={m} />
                     ))}
-                    <button type="submit" className="text-xs font-medium text-brand-700">
+                    <button
+                      type="submit"
+                      className="inline-flex min-h-[44px] items-center px-1 text-xs font-medium text-brand-700"
+                    >
                       + Add {new Set(r.missing).size} missing to list
                     </button>
                   </form>
