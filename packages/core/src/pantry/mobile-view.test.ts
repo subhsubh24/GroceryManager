@@ -30,6 +30,15 @@ describe("toMobilePantryItems", () => {
     expect(item.quantity).toBe(2);
   });
 
+  it("title-cases the stored name so the device never shows a raw slug (matches the web surface)", () => {
+    // Canonical names are stored lowercase for matching; the device must read like the web app.
+    expect(one({ name: "organic hass avocados" }).name).toBe("Organic Hass Avocados");
+    // ALL-CAPS receipt text reads cleanly too.
+    expect(one({ name: "WHOLE MILK" }).name).toBe("Whole Milk");
+    // Small connecting words stay lowercase mid-phrase (but capitalize if leading).
+    expect(one({ name: "loaf of bread" }).name).toBe("Loaf of Bread");
+  });
+
   it("coerces a numeric-string on-hand and rounds to a whole figure", () => {
     expect(one({ baseQtyOnHand: "3.6" }).quantity).toBe(4);
   });
