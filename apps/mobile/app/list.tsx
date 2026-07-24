@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, Pressable, RefreshControl } from "react-native";
 import { Redirect } from "expo-router";
+import { titleCase } from "@gm/core/format";
 import { useAuth } from "../lib/auth";
 import { apiFetch } from "../lib/api";
 
@@ -90,7 +91,7 @@ export default function ListScreen() {
             <View style={styles.card}>
               <View style={styles.dot} />
               <View style={styles.cardBody}>
-                <Text style={styles.itemName}>{item.name}</Text>
+                <Text style={styles.itemName}>{titleCase(item.name)}</Text>
                 <Text style={styles.itemReason}>
                   {REASON_LABEL[item.reason] ?? item.reason}
                 </Text>

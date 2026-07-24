@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, ActivityIndicator, Pressable, StyleSheet, ScrollView } from "react-native";
 import { Redirect, Link } from "expo-router";
+import { titleCase } from "@gm/core/format";
 import { useAuth } from "../lib/auth";
 import { apiFetch } from "../lib/api";
 
@@ -147,7 +148,7 @@ export default function SpendScreen() {
           <Text style={styles.sectionTitle}>Top items by spend</Text>
           {data.top.map((item, i) => (
             <View key={item.name + i} style={styles.row}>
-              <Text style={styles.rowLabel} numberOfLines={1}>{item.name}</Text>
+              <Text style={styles.rowLabel} numberOfLines={1}>{titleCase(item.name)}</Text>
               <Text style={styles.rowValue}>{fmt(item.totalCents)}</Text>
             </View>
           ))}
