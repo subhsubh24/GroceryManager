@@ -146,8 +146,8 @@ importers:
         specifier: ^0.36.0
         version: 0.36.4(@types/react@19.2.17)(postgres@3.4.9)(react@19.2.7)
       margin-meter:
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.2.0
+        version: 0.2.0
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -342,11 +342,11 @@ packages:
 
   '@esbuild-kit/core-utils@3.3.2':
     resolution: {integrity: sha512-sPRAnw9CdSsRmEtnsl2WXWdyquogVpB3yZ3dgwJfe8zrOzTsV7cJvmwrKVa+0ma5BoiGJ+BoqkMvawbayKUsqQ==}
-    deprecated: 'Merged into tsx: https://tsx.is'
+    deprecated: 'Merged into tsx: https://tsx.hirok.io'
 
   '@esbuild-kit/esm-loader@2.6.5':
     resolution: {integrity: sha512-FxEMIkJKnodyA1OaCUoEvbYRkoZlLZ4d/eXFu9Fh8CbBBgP5EmZxrfTRyN0qpXZ4vOvqnE5YdRdcrmUUXuU+dA==}
-    deprecated: 'Merged into tsx: https://tsx.is'
+    deprecated: 'Merged into tsx: https://tsx.hirok.io'
 
   '@esbuild/aix-ppc64@0.19.12':
     resolution: {integrity: sha512-bmoCYyWdEL3wDQIVbcyzRyeKLgk2WtWLTWz1ZIAZF/EGbNOwSA6ew3PftJ1PqMiOOGu0OyFMzG53L0zqIpPeNA==}
@@ -2407,8 +2407,8 @@ packages:
     resolution: {integrity: sha512-hXdUTZYIVOt1Ex//jAQi+wTZZpUpwBj/0QsOzqegb3rGMMeJiSEu5xLHnYfBrRV4RH2+OCSOO95Is/7x1WJ4bw==}
     engines: {node: '>=10'}
 
-  margin-meter@0.1.0:
-    resolution: {integrity: sha512-SRXeMl5wfV+l1L5EhERplrZCMIKPOsJ0loU9zuiWcMfo4zmPhZx2OCADxYzvpj2g7uVIGQw/XcpA5syIqULMJw==}
+  margin-meter@0.2.0:
+    resolution: {integrity: sha512-77WyyzCXHiEXDMtIyq+JB6CGjyyqN7MWWJavoKC4nyNZff9O1dmmh/G/nsHWEywsN9lcEFuC06Kmu08RULQCLw==}
     engines: {node: '>=18'}
 
   merge-stream@2.0.0:
@@ -4977,7 +4977,7 @@ snapshots:
     dependencies:
       semver: 7.8.4
 
-  margin-meter@0.1.0: {}
+  margin-meter@0.2.0: {}
 
   merge-stream@2.0.0: {}
 
