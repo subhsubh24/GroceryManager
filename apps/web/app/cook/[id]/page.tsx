@@ -148,9 +148,10 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
               />
             </div>
             <p className="page-subtitle">Screen stays awake · tap through each step.</p>
+            {/* ≥44px hit target (WCAG 2.5.5 / Apple HIG) — an inline cook-loop action on the cook screen. */}
             <a
               href={`/remix/${id}`}
-              className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-brand-700"
+              className="mt-1 inline-flex min-h-[44px] items-center gap-1 px-1 text-sm font-medium text-brand-700"
             >
               <Shuffle className="h-4 w-4" strokeWidth={2} /> Remix this recipe
             </a>
