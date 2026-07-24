@@ -3257,3 +3257,51 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   Confidence UNCHECKED). validation 8/8, 0 unmet; ship gate MET (A). A productive convergent run — the
   DEEP AUDIT earned its keep, catching a genuine CRITICAL dead-on-arrival mobile bug (+ a second mobile
   side-effect bug) that no test guarded, plus a hot-path perf win and an a11y clear.
+- **2026-07-24 (run 93) — no DEEP AUDIT (run 92 ran a full 7-lens sweep <24h prior); a focused 3-Haiku
+  scout (a11y/design-taste · mobile functional-reality · core Track-F coverage) advanced the run-92
+  follow-ups. 3 file-disjoint clears shipped (#642, #644, #643), 1 abandoned (#645); 3 REQUEST_CHANGES
+  (all correct + converged), 0 circuit-breaks.** Baseline green at start (validation 8/8 READY 0 unmet,
+  prices 499/3999/999/7999¢ byte-consistent, SUMMARY valid YAML base $33,450/floor_met false, 0 open
+  PRs, clean tree). **Shipped:** **#642 (fix/mobile pantry names)** — the native Pantry screen rendered
+  raw lowercase canonical slugs (`item.name`, "organic hass avocados") while the web title-cases via
+  `titleCase`; fixed in the pure tested seam (`toMobilePantryItems`, the server-side DTO mapper), +3
+  keyless guard cases; 2/2 first-pass. **#644 (a11y/recipes)** — the recipe-card cook-loop row paired a
+  `min-h-[44px]` "Cook →" with two `text-xs` sub-44px inline controls (the "Remix" link ~28px + the "+
+  Add N missing to list" submit); both raised to `min-h-[44px] px-1` (WCAG 2.5.5); 2/2 first-pass. **#643
+  (refactor/format)** — extracted `titleCase` into `@gm/core/format` as the SINGLE source of truth; the
+  pantry DTO mapper reuses it (dropped its inline copy, −16 lines), the three remaining raw-name native
+  screens (`list.tsx` card, `use-it-up.tsx` at-risk banner, `spend.tsx` top-items) title-case at render
+  via the `@gm/core/*` alias, AND `apps/web/app/lib/format.ts` now re-exports it dropping its own copy;
+  +6-case unit test; 2/2 after 2 rework cycles. **Abandoned #645 (a11y/cook "Remix this recipe" 44px)** —
+  see the layout-shift lesson below. **LESSON — a workspace-excluded native app CAN still import pure
+  `@gm/core` logic via the tsconfig `@gm/core/*` path alias; reuse it rather than hand-copy a display
+  rule.** Run-92's follow-up note assumed the mobile name-casing needed a "mobile-local title-caser"
+  because `titleCase` lived only in `apps/web/app/lib/format.ts` (unreachable). That's only half true: the
+  web lib is unreachable, but `apps/mobile` already imports `@gm/core/billing`/`recipe`/`personalization`
+  through the alias (`@gm/core/*` → `../../packages/core/src/*`, resolved by tsc + Metro), so the DRY fix
+  is to put the pure rule in `@gm/core` and import it — NOT copy it. Reviewer B caught the first revision
+  (a `apps/mobile/lib/format.ts` copy) as avoidable duplication and was right. **LESSON — a "single source
+  of truth" claim is only true once EVERY copy routes through the shared module — including the web lib's.**
+  The second revision put `titleCase` in `@gm/core/format` and had mobile + the mapper use it, but left
+  `apps/web/app/lib/format.ts`'s own identical copy in place — so the docstring's "web and mobile can
+  never drift" was false (two copies still existed). Reviewer B flagged the overclaim; the fix was one
+  cheap file: `format.ts` imports + re-exports `titleCase` from `@gm/core/format` (its 14+ consumers
+  import from `@/app/lib/format`, unaffected). Now there is genuinely one implementation. **LESSON — don't
+  ship a layout change you can't visually verify on a design-bar repo (#645 abandon).** The naive 44px fix
+  (`min-h-[44px] items-center`) on the single "Remix this recipe" link adds ~12px of centering space
+  above/below the ~20px text, so the `mt-2→mt-1` nudge doubled the visible gap and pushed the CookMode
+  section down — Reviewer A's correctness catch. The repo's correct idiom is a negative-margin offset that
+  cancels the height growth (`pantry/page.tsx:408`, `save-button.tsx:45` use `-my-2 -mr-2`), but sizing it
+  right is layout-sensitive and there is no practical headless browser check for a 4px gap. The disciplined
+  call on a low-value single-link change was to abandon (clean tree) rather than iterate blind — the brakes
+  endorse a partial batch. **FOLLOW-UPS (future runs):** (a) #645's cook-screen "Remix this recipe" link
+  + the same screen's `back-link`/`nav-link` controls (Reviewer B) still need the 44px negative-margin
+  fix, verified in a browser; (b) the mobile JSON-boundary contract-test seam (still open from run 92);
+  (c) `humanize`/`sourceLabel` remain web-only — if a native screen ever needs enum humanization, move
+  `humanize` into `@gm/core/format` too (same pattern). **Monetization: NO buildable non-reach lever
+  (reach-gated #190 re-confirmed, ~11th consecutive run).** **Readiness:** did NOT open 'ready' — sole
+  DoD gap unchanged (reach-gated floor #190, base ≈ $33K < $100K = owner-GTM; Confidence UNCHECKED).
+  validation 8/8, 0 unmet; ship gate MET (A). A productive convergent run — completed the mobile "never
+  show raw slugs" story (4 screens now match web, via one shared formatter) + 2 cook-loop touch-target
+  clears; the review cycles were the maker≠checker loop working (each REQUEST_CHANGES made the change
+  strictly better), not churn.
