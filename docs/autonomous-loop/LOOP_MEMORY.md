@@ -3305,3 +3305,58 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   show raw slugs" story (4 screens now match web, via one shared formatter) + 2 cook-loop touch-target
   clears; the review cycles were the maker≠checker loop working (each REQUEST_CHANGES made the change
   strictly better), not churn.
+- **2026-07-25 (run 94) — DEEP AUDIT (4-Haiku lens sweep, ~24h since run-92's 7-lens) BEFORE scouting;
+  3 file-disjoint clears shipped (#648, #649, #650), 2 abandoned on Reviewer-B value rejections; 2
+  REQUEST_CHANGES (both correct), 0 circuit-breaks.** Baseline green at start (typecheck 6/6, 1067
+  core tests +27 skip, prod web build exit 0 no missing-export, mobile `npm ci` + tsc clean, validation
+  8/8 READY 0 unmet, prices 499/3999/999/7999¢ byte-consistent, SUMMARY base $33,450/floor_met false, 0
+  open PRs, clean tree). **DEEP AUDIT 2026-07-25** (4 Haiku read-only lenses over the whole repo:
+  security/RLS/Track-G · correctness/dead-code · design/a11y/taste · perf+coverage+artifact-freshness):
+  **SECURITY/RLS/Track-G** — NO new holes (all public tables RLS+policy; ~41 routes auth/rate-limit/zod/
+  error-hygienic; timing-safe Stripe/RevenueCat/Gmail/cron webhooks; login lockout no-enumeration;
+  entitlements server-side; no committed secrets). Two noted, both non-actionable: (a) **CSP allows
+  `'unsafe-inline'`/`'unsafe-eval'` in script-src** (HIGH-labeled) — a genuine hardening, but a
+  nonce-based CSP is cross-cutting (per-request middleware nonce + forces dynamic rendering) and
+  conflicts with this repo's careful static-/404 handling (CLAUDE.md); the theme inline script in
+  `layout.tsx` likely *requires* `unsafe-inline`, so removal is unverifiable in a headless env →
+  **DEFERRED as too risky to attempt blind** (future: confirm the inline script can carry a nonce +
+  browser-verify the theme still applies + CSP enforces, THEN migrate); (b) multi-instance in-memory
+  rate-limit/quota/demo-ceiling — KNOWN, owner-gated (Upstash), already in PENDING_OPS + the scorecard's
+  standing A→A+ nit. CORS `Allow-Methods`/`Allow-Headers` without `Allow-Origin` = the secure
+  same-origin default, NOT a hole. **CORRECTNESS/DEAD-CODE** — 1 shipped (#650); 1 abandoned (capture.tsx).
+  **DESIGN/a11y** — 2 shipped (#648, #649); cook-mode/pantry/recipes verified already 44px-compliant (no
+  churn); landing-centered hero + dark focus-ring nits subjective/low → deferred. **PERF+COVERAGE+ARTIFACT**
+  — the media/models 'previously-untested' finding was a **FALSE POSITIVE** (Reviewer B caught it:
+  `resolveImageModel`/`resolveMusicModel` are already asserted in `media-gen.test.ts:33-52`, the
+  capabilities-manifest keyless proof) → the duplicate test abandoned; `getActiveListView` sequential
+  awaits marginal (postgres.js pipelines one connection) → deferred; artifacts CLEAN. Monetization
+  RE-CONFIRMED reach-gated (#190, base ≈$33K, ~12th consecutive run). **SHIPPED:** **#648 (a11y/use-it-up)**
+  — the "Tossed it" waste-logging button in the "Expiring soon" list was `btn-sm` (~28-30px), under the
+  44px WCAG 2.5.5 bar; raised via the established right-flush idiom `min-h-[44px] -my-2 -mr-2` (matches
+  pantry/page.tsx). 2/2 first-pass. **#649 (a11y/staples)** — the dose "Set" (mid-row → `min-h-[44px] -my-2`)
+  and the autopilot on/off toggle (in a `.row items-start` whose taller left column governs height →
+  `min-h-[44px]` alone, both className branches) both under 44px; raised. 2/2 first-pass. **#650
+  (harden/ingestion)** — `createLlmNormalizer` is fed receipt-line text from **Gmail-ingested email**
+  (untrusted, via gmail-sync:175), interpolated raw as `"${name}"` into the LLM prompt — an indirect
+  prompt-injection surface (OWASP LLM01). Switched to `${JSON.stringify(name)}` (the matchId verifier is
+  the hard bound; this is defence-in-depth) + a regression test with a **capturing fake client** that
+  neutralizes a crafted quote-breaking injection string (captures the REAL constructed prompt, can't pass
+  by accident). 2/2 first-pass. **ABANDONED (both Reviewer-B value rejections, clean, no rework):** the
+  media resolver test (duplicate — zero net coverage) and the capture.tsx `added` DTO guard (speculative
+  — `/api/mobile/capture` → `captureToList` returns `added:number` on every path; no live drift, unlike
+  the real observed #638/#642 mismatches). **LESSON — a cheap Haiku scout will confidently claim a pure
+  module is "previously untested"; ALWAYS grep for an existing sibling/barrel test before treating a
+  "coverage gap" as real.** The media/models finding looked clean (a pure resolver with no adjacent
+  `models.test.ts`), but the identical assertions already live in `media-gen.test.ts` AND that file is
+  the capability's registered keyless proof in `capabilities.json` — a duplicate would have been pure
+  padding. Reviewer B caught it by reading the sibling test + the manifest; the orchestrator should have
+  cross-checked `capabilities.json` before selecting. **LESSON — distinguish a *defensive DTO guard for
+  an observed drift* (real value: #638/#642 fixed screens that were actually broken) from a *speculative
+  guard for a boundary that returns the right shape on every path* (padding).** The capture.tsx guard
+  read like the recent mobile DTO fixes, but there was no drift to defend against — the value bar rejects
+  "harmless hardening" when nothing is actually at risk. **Monetization: NO buildable non-reach lever
+  (reach-gated #190 re-confirmed, ~12th consecutive run).** **Readiness:** did NOT open 'ready' — sole
+  DoD gap unchanged (reach-gated floor #190, base ≈$33K < $100K = owner-GTM; Confidence UNCHECKED).
+  validation 8/8, 0 unmet; ship gate MET (A). A productive convergent run — the DEEP AUDIT earned its
+  keep (3 real clears incl. a genuine security hardening), and the 2 abandons are the maker≠checker guard
+  correctly filtering cheap-scout over-reports rather than churn.
