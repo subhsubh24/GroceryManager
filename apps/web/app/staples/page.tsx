@@ -166,7 +166,7 @@ export default async function StaplesPage() {
                     className="w-16 rounded-lg border border-line bg-surface px-2 py-1 text-xs shadow-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20"
                   />
                   <span className="text-xs text-ink-400">/day dose</span>
-                  <button type="submit" className="btn-ghost btn-sm">
+                  <button type="submit" className="btn-ghost btn-sm min-h-[44px] -my-2">
                     Set
                   </button>
                 </form>
@@ -180,8 +180,8 @@ export default async function StaplesPage() {
                   type="submit"
                   className={
                     i.enabled
-                      ? "btn-secondary btn-sm inline-flex items-center gap-1 rounded-full"
-                      : "btn-dark btn-sm rounded-full"
+                      ? "btn-secondary btn-sm inline-flex min-h-[44px] items-center gap-1 rounded-full"
+                      : "btn-dark btn-sm min-h-[44px] rounded-full"
                   }
                 >
                   {i.enabled ? (
