@@ -39,8 +39,11 @@ export function createLlmNormalizer(client: GeminiClient): LlmNormalizer {
     const list = candidates.length
       ? candidates.map((c) => `- id=${c.id} name="${c.name}" (sim ${c.score.toFixed(2)})`).join("\n")
       : "(no candidates)";
+    // JSON-encode the untrusted receipt name so embedded quotes/newlines/braces can't break out of
+    // the delimiter and steer the prompt (defence-in-depth; the matchId verifier below is the hard
+    // guarantee — a hallucinated id is rejected — but never interpolate raw user text into a prompt).
     const prompt =
-      `Product to map: "${name}"\n\nCandidates:\n${list}\n\n` +
+      `Product to map: ${JSON.stringify(name)}\n\nCandidates:\n${list}\n\n` +
       "Return matchId (one of the listed ids) if one is the same food, else a createName.";
 
     try {
