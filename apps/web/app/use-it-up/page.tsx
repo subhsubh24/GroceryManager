@@ -178,7 +178,7 @@ export default async function UseItUpPage() {
                         <input type="hidden" name="name" value={e.name} />
                         <button
                           type="submit"
-                          className="btn-ghost btn-sm rounded-full"
+                          className="btn-ghost btn-sm min-h-[44px] -my-2 -mr-2 rounded-full"
                           title="Mark as wasted — removes it and teaches me to buy less"
                         >
                           Tossed it
