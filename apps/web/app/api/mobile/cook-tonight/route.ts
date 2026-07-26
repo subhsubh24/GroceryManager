@@ -84,12 +84,13 @@ export async function GET(req: Request) {
       },
     });
 
+    const idToFull = new Map(full.map((f) => [f.id, f]));
     const recipes = ranked.map((r) => ({
       id: r.id,
       title: r.title,
-      imageUrl: full.find((f) => f.id === r.id)?.imageUrl ?? null,
+      imageUrl: idToFull.get(r.id)?.imageUrl ?? null,
       haveCount: r.haveCount,
-      cuisine: full.find((f) => f.id === r.id)?.cuisine ?? null,
+      cuisine: idToFull.get(r.id)?.cuisine ?? null,
     }));
 
     return Response.json({ recipes });
