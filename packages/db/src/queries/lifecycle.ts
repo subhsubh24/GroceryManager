@@ -122,6 +122,112 @@ export async function getWinbackCandidates(db: Querier): Promise<LifecycleCandid
   return rows.map((r) => ({ userId: r.user_id, email: r.email, name: r.name }));
 }
 
+// ---------------------------------------------------------------------------
+// Trial lifecycle (T1–T3 / H16–H18) candidate queries.
+//
+// These target users MID-TRIAL. The Stripe webhook writes a `subscription_status` signal (raw
+// `sub.status`: 'trialing' | 'active' | 'past_due' | … ; 'canceled' on deletion) and, when the
+// subscription carries one, a `trial_end_at` signal (the ISO trial-end timestamp). A user's LATEST
+// `subscription_status` = 'trialing' is PRECISELY "started a trial and has NOT yet converted (a
+// conversion writes status='active') or cancelled (deletion writes status='canceled')". The trial
+// window is 7 days and auto-converts, so the three queries slice the remaining time to stage the
+// welcome (early), the ~2-days-left reminder, and the ends-today expiry email — never sending a
+// stale/duplicate one (idempotency via `lifecycle_email_sends`).
+// ---------------------------------------------------------------------------
+
+/** DISTINCT ON latest `subscription_status` value per user (raw Stripe status). */
+const LATEST_STATUS = sql`
+  latest_status AS (
+    SELECT DISTINCT ON (user_id) user_id, value
+    FROM preference_signals WHERE topic = 'subscription_status'
+    ORDER BY user_id, occurred_at DESC
+  )`;
+
+/** DISTINCT ON latest `trial_end_at` value per user (ISO timestamp string). */
+const LATEST_TRIAL_END = sql`
+  latest_trial_end AS (
+    SELECT DISTINCT ON (user_id) user_id, value
+    FROM preference_signals WHERE topic = 'trial_end_at'
+    ORDER BY user_id, occurred_at DESC
+  )`;
+
+/**
+ * H16 / T1 — trial WELCOME. Latest status = 'trialing' (still trialing: not yet converted or
+ * cancelled) AND the trial still has more than 3 of its 7 days left (don't "welcome" someone about
+ * to expire), who hasn't already received the welcome. Excludes opted-out + no-email users.
+ */
+export async function getTrialWelcomeCandidates(db: Querier): Promise<LifecycleCandidate[]> {
+  const rows = (await db.execute(
+    sql`WITH ${LATEST_STATUS}, ${LATEST_TRIAL_END}
+        SELECT u.id AS user_id, u.email AS email, u.name AS name
+        FROM latest_status ls
+        JOIN latest_trial_end lte ON lte.user_id = ls.user_id
+        JOIN users u ON u.id = ls.user_id
+        WHERE ls.value = 'trialing'
+          AND lte.value::timestamptz > now() + interval '3 days'
+          AND u.email IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM lifecycle_email_sends s
+            WHERE s.user_id = u.id AND s.email_type = 'h16_trial_welcome'
+          )
+          AND ${NOT_OPTED_OUT}
+        LIMIT ${RUN_LIMIT}`,
+  )) as unknown as Array<{ user_id: string; email: string; name: string | null }>;
+  return rows.map((r) => ({ userId: r.user_id, email: r.email, name: r.name }));
+}
+
+/**
+ * H17 / T2 — trial REMINDER (~2 days left). Latest status = 'trialing' AND trial end is between
+ * 1 and 3 days out (the ~2-days-left window), who hasn't already received the reminder. Excludes
+ * opted-out + no-email users.
+ */
+export async function getTrialReminderCandidates(db: Querier): Promise<LifecycleCandidate[]> {
+  const rows = (await db.execute(
+    sql`WITH ${LATEST_STATUS}, ${LATEST_TRIAL_END}
+        SELECT u.id AS user_id, u.email AS email, u.name AS name
+        FROM latest_status ls
+        JOIN latest_trial_end lte ON lte.user_id = ls.user_id
+        JOIN users u ON u.id = ls.user_id
+        WHERE ls.value = 'trialing'
+          AND lte.value::timestamptz > now() + interval '1 day'
+          AND lte.value::timestamptz <= now() + interval '3 days'
+          AND u.email IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM lifecycle_email_sends s
+            WHERE s.user_id = u.id AND s.email_type = 'h17_trial_reminder'
+          )
+          AND ${NOT_OPTED_OUT}
+        LIMIT ${RUN_LIMIT}`,
+  )) as unknown as Array<{ user_id: string; email: string; name: string | null }>;
+  return rows.map((r) => ({ userId: r.user_id, email: r.email, name: r.name }));
+}
+
+/**
+ * H18 / T3 — trial EXPIRY (ends today). Latest status = 'trialing' AND the trial ends within the
+ * next day (still in the future — not already lapsed), who hasn't already received the expiry
+ * email. This is the anti-surprise-charge + annual-upsell moment. Excludes opted-out + no-email users.
+ */
+export async function getTrialExpiryCandidates(db: Querier): Promise<LifecycleCandidate[]> {
+  const rows = (await db.execute(
+    sql`WITH ${LATEST_STATUS}, ${LATEST_TRIAL_END}
+        SELECT u.id AS user_id, u.email AS email, u.name AS name
+        FROM latest_status ls
+        JOIN latest_trial_end lte ON lte.user_id = ls.user_id
+        JOIN users u ON u.id = ls.user_id
+        WHERE ls.value = 'trialing'
+          AND lte.value::timestamptz > now()
+          AND lte.value::timestamptz <= now() + interval '1 day'
+          AND u.email IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM lifecycle_email_sends s
+            WHERE s.user_id = u.id AND s.email_type = 'h18_trial_expiry'
+          )
+          AND ${NOT_OPTED_OUT}
+        LIMIT ${RUN_LIMIT}`,
+  )) as unknown as Array<{ user_id: string; email: string; name: string | null }>;
+  return rows.map((r) => ({ userId: r.user_id, email: r.email, name: r.name }));
+}
+
 /**
  * Record that a lifecycle email truly left for a user (idempotent on (user_id, email_type)).
  * Call ONLY after the provider returned sent=true — never on a dry-run/skip — so a campaign retries

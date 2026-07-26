@@ -120,6 +120,20 @@
         "requiresCiEnv": [],
         "requiresOwnerSecret": []
       }
+    },
+    {
+      "id": "lifecycle-trial-emails",
+      "summary": "The T1–T3 trial lifecycle email sequence (H16 welcome / H17 ~2-days-left transparency / H18 expiry-day annual-upsell) built on the SAME degrade-by-default runLifecycleCampaign orchestrator as H14/H15: candidate queries read the append-only preference_signals ledger (the Stripe webhook writes subscription_status + trial_end_at signals) to find users mid-trial, assign a stable experiment variant, and send. Copy is accurate to the AUTO-CONVERT trial reality — the 7-day Stripe trial collects a card upfront and converts to paid ($4.99/mo or $39.99/yr) unless the user cancels, so the emails are TRANSPARENCY + annual-upsell (the sub 'begins'/continues; cancel anytime), never a false 'buy now to keep premium'; no discount/coupon is promised (none is wired — the annual plan is simply cheaper). Prices reuse the single-source constants and CTAs point at /manage-subscription (users are already subscribed), except the T1 welcome which links the real Gmail-connect surface (the /pantry Connect-Gmail button). Dormant until an email provider is connected: with no provider the send is dry-run-skipped and NOT recorded, so no fake success and the campaign retries once connected. Validated KEYLESS by the pure email-builder unit tests (prices, CTAs, unsubscribe link, variant framing, and anti-overclaim accuracy assertions) — no Stripe/provider key needed for the copy logic; the candidate SQL runs against the migrated DB in CI's migrate job like the other lifecycle queries.",
+      "status": "active",
+      "ownerActionId": null,
+      "validation": {
+        "specs": [],
+        "tests": [
+          "packages/core/src/lifecycle/emails.test.ts"
+        ],
+        "requiresCiEnv": [],
+        "requiresOwnerSecret": []
+      }
     }
   ]
 }

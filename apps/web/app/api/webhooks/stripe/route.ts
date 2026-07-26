@@ -165,6 +165,32 @@ export async function POST(req: Request) {
           });
         }
 
+        // Trial lifecycle signals — power the trial (T1–T3 / H16–H18) lifecycle emails. The candidate
+        // queries read a user's LATEST `subscription_status` (= 'trialing' means started a trial and
+        // not yet converted/cancelled) and `trial_end_at` to slice the trial window. Additive: does
+        // not touch the entitlement/tier logic above.
+        await appendPreferenceSignal(adminDb, {
+          userId,
+          topic: "subscription_status",
+          value: sub.status, // raw Stripe status: "trialing" | "active" | "past_due" | …
+          polarity: "positive",
+          source: "correction",
+          confidence: 1.0,
+        });
+
+        // Only record a trial-end timestamp when the subscription actually carries one (a trialing
+        // sub). Skip entirely when null so we never write an empty/"null" trial_end_at.
+        if (typeof sub.trial_end === "number" && sub.trial_end > 0) {
+          await appendPreferenceSignal(adminDb, {
+            userId,
+            topic: "trial_end_at",
+            value: new Date(sub.trial_end * 1000).toISOString(),
+            polarity: "positive",
+            source: "correction",
+            confidence: 1.0,
+          });
+        }
+
         console.info("[stripe-webhook] Synced entitlement", {
           userId,
           type: event.type,
@@ -185,6 +211,16 @@ export async function POST(req: Request) {
           userId,
           topic: "subscription_tier",
           value: null,
+          polarity: "negative",
+          source: "correction",
+          confidence: 1.0,
+        });
+        // Trial lifecycle: record the terminal status so a churned user's LATEST subscription_status
+        // is 'canceled' (never left as 'trialing') — this de-qualifies them from the T1–T3 emails.
+        await appendPreferenceSignal(adminDb, {
+          userId,
+          topic: "subscription_status",
+          value: "canceled",
           polarity: "negative",
           source: "correction",
           confidence: 1.0,

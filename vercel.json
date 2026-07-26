@@ -4,6 +4,9 @@
   },
   "crons": [
     { "path": "/api/cron/h14-annual-nudge", "schedule": "0 9 * * *" },
-    { "path": "/api/cron/h15-winback", "schedule": "0 10 * * *" }
+    { "path": "/api/cron/h15-winback", "schedule": "0 10 * * *" },
+    { "path": "/api/cron/h18-trial-expiry", "schedule": "0 8 * * *" },
+    { "path": "/api/cron/h16-trial-welcome", "schedule": "0 11 * * *" },
+    { "path": "/api/cron/h17-trial-reminder", "schedule": "0 12 * * *" }
   ]
 }
