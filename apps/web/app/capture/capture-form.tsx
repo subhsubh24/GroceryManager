@@ -149,7 +149,7 @@ export function CaptureForm({ action }: { action: (formData: FormData) => void }
             aria-pressed={listening}
             aria-label={listening ? "Stop dictating" : "Dictate"}
             title={listening ? "Stop dictating" : "Dictate"}
-            className={`btn-ghost btn-sm absolute right-2.5 top-3.5 !rounded-full !px-2 !py-2 ${
+            className={`btn-ghost btn-sm absolute right-2 top-2 !rounded-full !p-0 min-h-[44px] min-w-[44px] ${
               listening ? "!border-brand-300 !bg-brand-50 !text-brand-600" : ""
             }`}
           >
