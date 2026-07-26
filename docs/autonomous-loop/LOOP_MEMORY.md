@@ -3360,3 +3360,40 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   validation 8/8, 0 unmet; ship gate MET (A). A productive convergent run — the DEEP AUDIT earned its
   keep (3 real clears incl. a genuine security hardening), and the 2 abandons are the maker≠checker guard
   correctly filtering cheap-scout over-reports rather than churn.
+- **2026-07-26 (run 95) — DEEP AUDIT (6-Haiku lens sweep, ~24h since run 94) BEFORE scouting; 6
+  file-disjoint clears shipped (#652, #653, #655, #656, #657, and the headline #658), 1 abandoned on a
+  Reviewer-B value rejection (#654); 2 REQUEST_CHANGES total (both correct — one marginal-perf abandon,
+  one stale-base rebase on #658), 0 circuit-breaks.** Baseline green (typecheck 6/6, 1067 core tests
+  +27 skip, prod web build exit 0, validation 8/8 READY, prices byte-consistent, 0 open PRs, clean tree).
+  **DEEP AUDIT 2026-07-26** (6 Haiku lenses: security/RLS/Track-G · correctness/dead-code · design/a11y ·
+  perf+coverage+artifact-freshness · **monetization/business-case (adversarial)** · mobile+store):
+  **SECURITY** NO new holes. **CORRECTNESS** 2 real error-hygiene gaps (#652 mobile/recipes GET had NO
+  try/catch — the last unguarded mobile DB read; #653 instacart reorder read sat outside the try that
+  only wrapped the Instacart API call). **DESIGN/a11y** 3 real 44px gaps (#655 capture mic icon-button,
+  #656 getting-started Dismiss, #657 the 3 copy-link buttons). **PERF** cook-tonight double-find →
+  abandoned (#654, marginal at n≤8). **MONETIZATION (the big one)** — the ~12-run-standing "every
+  conversion/retention lever is built, only reach remains" claim was CHALLENGED by an adversarial Haiku
+  lens and PARTLY FALSIFIED: the trial-ending **T1–T3** email sequence was documented in
+  EMAIL_LIFECYCLE.md but NEVER built while H14/H15 were → **BUILT as #658**. **MOBILE+STORE** parity
+  CLEAN. **#658 detail:** the webhook did NOT distinguish `trialing` from paid (it collapsed both to
+  entitlement=premium) and `subscription_renewal_at` stored the event time not the trial-end — so the
+  build added ADDITIVE `subscription_status` + guarded `trial_end_at` signals + 3 windowed idempotent
+  queries + 3 crons + experiments + vercel crons + the `lifecycle-trial-emails` keyless capability + 18
+  tests, all on the existing `runLifecycleCampaign` orchestrator. **Billing-accuracy crux:** the trial
+  auto-converts (Checkout `trial_period_days` + default `payment_method_collection:"always"` = card on
+  file), so the copy is TRANSPARENCY + annual-upsell ("begins"/"cancel anytime"), NEVER a false "buy to
+  keep". Reviewer A empirically verified the 3 SQL windows against real Postgres (contiguous,
+  boundary-correct); both reviewers APPROVE after a rebase fixed a stale-base diff artifact.
+  **Delegation worked:** the large billing-adjacent #658 was built by an Opus worktree subagent from a
+  precise spec, then orchestrator-reviewed + 2-Sonnet-reviewed. **LESSON — re-derive the "every lever
+  is built" monetization claim ADVERSARIALLY each deep audit; do NOT inherit it.** ~12 runs carried
+  "no buildable non-reach lever" forward; an adversarial lens found it false (T1–T3 unbuilt). The
+  reach-gated FLOOR conclusion is still true; the "all levers built" corollary was over-inherited.
+  **LESSON — trace the DATA a lever needs to its source before sizing it:** the scout's "4 files,
+  existing infra" for T1–T3 missed that the webhook didn't track trial status distinctly (needed
+  additive plumbing first). **Monetization:** T1–T3 now built; median UNMOVED (no adoption banked —
+  anti-gaming, same as H14/H15/referral); floor stays reach-gated (#190, base ≈$33K). **Readiness:** did
+  NOT open 'ready' — sole DoD gap unchanged (reach-gated floor #190; Confidence UNCHECKED). validation
+  9/9, 0 unmet; ship gate MET. **Known minor follow-up:** a cancel-during-trial user (cancel_at_period_end
+  while status still 'trialing') can still receive T2/T3 — low severity (copy still says "cancel anytime,
+  no charge"); future refinement = record cancel_at_period_end + exclude.

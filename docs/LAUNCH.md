@@ -264,6 +264,11 @@ Do the same for Google Play Console (separate metadata in ASO_READY.md).
 2. Set `CONVERTKIT_API_KEY` (or equivalent) in Vercel env.
 3. In `apps/web/app/components/waitlist-action.ts`, replace the `insertWaitlistEmail` call with an email-service SDK call to subscribe the address. (The DB persistence — `waitlist_submissions` — continues as a backup log regardless.)
 4. Wire the 15-email lifecycle from `docs/brand/EMAIL_LIFECYCLE.md` into your chosen provider.
+   The transactional/lifecycle campaigns H14 (annual nudge), H15 (win-back), and H16–H18 (the trial
+   T1–T3 welcome / ~2-days-left / expiry-day sequence, run 95) are already CODE-BUILT and their cron
+   routes are declared in `vercel.json` — they run dormant (dry-run-skip, nothing recorded) until you
+   set an email provider key + confirm the crons are scheduled. See the `lifecycle-email-migration`
+   item in `PENDING_OPS.md` for the exact provider keys + the five `/api/cron/h1*` routes to schedule.
 
 ---
 
