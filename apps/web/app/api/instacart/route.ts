@@ -25,10 +25,23 @@ export async function POST() {
   const rl = rateLimit(`instacart:${userId}`, 10, 60_000);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
-  const { rows, listItems } = await withTenant(getDb(), userId, async (tx) => ({
-    rows: (await loadReorderInputs(tx, userId)) as ReorderInputRow[],
-    listItems: await getActiveListView(tx, userId),
-  }));
+  // The reorder DB reads can fail (connectivity, transient) too — guard them separately from the
+  // Instacart API call below so a DB blip degrades to a controlled 500 instead of an uncontrolled
+  // throw (which risks leaking stack/schema text), matching this route's other JSON responses.
+  let rows: ReorderInputRow[];
+  let listItems: Awaited<ReturnType<typeof getActiveListView>>;
+  try {
+    ({ rows, listItems } = await withTenant(getDb(), userId, async (tx) => ({
+      rows: (await loadReorderInputs(tx, userId)) as ReorderInputRow[],
+      listItems: await getActiveListView(tx, userId),
+    })));
+  } catch (err) {
+    console.error("instacart: failed to load reorder inputs", err);
+    return NextResponse.json(
+      { error: "Couldn't load your order details right now. Please try again in a moment." },
+      { status: 500 },
+    );
+  }
   const draft = buildDraftOrders(rows, {});
   // One cart: due staples + the active shopping list (manual quick-adds + plan gaps), deduped.
   const payload = buildCombinedInstacartPayload(
