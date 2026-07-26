@@ -62,6 +62,42 @@ export const EXPERIMENTS: ExperimentDefinition[] = [
     // logged (never fabricated). Floor at 100 for early signal.
     minSamplePerArm: Math.max(100, minSampleSizePerArm(0.05, 0.02)),
   },
+  {
+    id: "h16_trial_welcome",
+    hypothesis:
+      "A transparent day-0 trial welcome that lists what Premium unlocks and nudges the best first " +
+      "step (connect Gmail) lifts trial→paid conversion vs sending nothing. Single arm — kept in the " +
+      "registry for exposure consistency with the rest of the trial (T1–T3) sequence.",
+    variants: ["control"],
+    primaryEvent: "trial_convert",
+    // 40% baseline trial→paid, +5pp MDE; conversion stays "running" / null until real conversions are
+    // logged (never fabricated). Floor at 100 for early signal.
+    minSamplePerArm: Math.max(100, minSampleSizePerArm(0.4, 0.05)),
+  },
+  {
+    id: "h17_trial_reminder",
+    hypothesis:
+      "For trials with ~2 days left, leading the reminder with the time/countdown framing ('urgency') " +
+      "holds more trials through to paid conversion than the value framing ('control'). Both are honest " +
+      "about the auto-convert — the sub begins at $4.99/mo unless cancelled.",
+    variants: ["control", "urgency"],
+    primaryEvent: "trial_convert",
+    // 40% baseline trial→paid, +5pp MDE; conversion stays "running" / null until real conversions are
+    // logged (never fabricated). Floor at 100 for early signal.
+    minSamplePerArm: Math.max(100, minSampleSizePerArm(0.4, 0.05)),
+  },
+  {
+    id: "h18_trial_expiry",
+    hypothesis:
+      "On the trial's final day, an annual-forward framing ('annual') drives more monthly→annual " +
+      "switches than the transparency-first framing ('control'). The annual plan is genuinely cheaper " +
+      "($39.99/yr vs $4.99/mo) — no discount is promised.",
+    variants: ["control", "annual"],
+    primaryEvent: "annual_switch",
+    // 8% baseline annual-switch, +3pp MDE; conversion stays "running" / null until real switches are
+    // logged (never fabricated). Floor at 100 for early signal.
+    minSamplePerArm: Math.max(100, minSampleSizePerArm(0.08, 0.03)),
+  },
 ];
 
 /**
