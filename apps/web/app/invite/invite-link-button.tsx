@@ -49,7 +49,7 @@ export function InviteLinkButton({ url }: { url: string }) {
         <button
           type="button"
           onClick={onCopy}
-          className="btn-secondary btn-sm inline-flex items-center gap-1.5"
+          className="btn-secondary btn-sm inline-flex min-h-[44px] items-center gap-1.5"
         >
           {copied ? (
             <>
