@@ -264,10 +264,13 @@ optimistic trajectory.
    _(Built 2026-06-27, run 20: the Gmail-import first-premium-moment teaser on `/pantry` — PR #197 — plus
    the H9/H10 analytics + experiment engine — PR #198 — which lets the Growth Agent EMPIRICALLY measure and
    tune signup→paid lift post-launch. The median here is unchanged: the base 4 % already assumes the Gmail
-   hook, and the experiment engine measures real lift only once there is traffic. More buildable conversion/
-   retention levers remain for subsequent runs — month-3 annual nudge, expiry/reorder push, referral perks,
-   win-back — to be shipped through the normal gate until the honest median clears the floor or only reach
-   remains.)_
+   hook, and the experiment engine measures real lift only once there is traffic. The month-3 annual nudge
+   (H14), win-back (H15), referral perks, AND — as of run 95 (PR #658) — the **trial-ending T1–T3 email
+   sequence** (H16 welcome / H17 ~2-days-left transparency / H18 expiry-day annual-upsell, the highest-intent
+   trial→paid + anti-surprise-charge + annual-ARPU moment) are now all BUILT, dormant until an email provider
+   is connected. The median here is deliberately UNMOVED — no adoption % is banked from any of these; real
+   lift is measured live once there is traffic (anti-gaming). No buildable non-reach conversion lever remains
+   unbuilt; the binding constraint for signup→paid is traffic reaching the funnel, not the funnel machine.)_
 3. **RETENTION / LTV + viral acquisition.** Lower churn both raises steady state *and* shortens the ramp.
    Re-engagement (push, weekly cook-tonight digest, annual-plan nudge) is built; the recurring weekly-use
    loop is the structural advantage. _(Built 2026-06-28, run 22: the referral-reward loop — PR #217 — turns
@@ -301,7 +304,8 @@ connect to email + deep links to push k-factor up).
 
 ### Risk: signup→paid stays at the 2–3 % low end
 **Levers:** surface Gmail import as the very first premium moment; day-7 nudge email
-(`docs/brand/CONTENT_DRAFTS.md` Email 3); single clear upgrade CTA.
+(`docs/brand/CONTENT_DRAFTS.md` Email 3 — **built run 95 as the H18/T3 expiry-day email**, PR #658);
+single clear upgrade CTA.
 
 ### Risk: churn rises above 6 %
 This both lowers steady state and is the conservative-scenario trap. **Levers:** push re-engagement
