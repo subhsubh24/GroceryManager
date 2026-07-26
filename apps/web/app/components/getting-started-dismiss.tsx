@@ -25,7 +25,7 @@ export function DismissGettingStarted() {
       }
       aria-label="Dismiss getting started"
       title="Dismiss"
-      className="btn-ghost btn-sm shrink-0 disabled:opacity-50"
+      className="btn-ghost btn-sm min-h-[44px] shrink-0 disabled:opacity-50"
     >
       {pending ? "…" : "Dismiss"}
     </button>
