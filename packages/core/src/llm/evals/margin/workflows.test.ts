@@ -128,6 +128,13 @@ describe("generic runner (over a fake workflow — no Gemini, no network)", () =
     grade: (output) => ({ score: output.v, ok: output.v > 0, detail: output.v > 0 ? [] : ["v<=0"] }),
   };
 
+  // These two are the file's only `async` tests: each awaits `runWorkflowEval`, which yields the
+  // event loop per case (`await run` + `await emitEvalOutcome`). Their wall-clock is dominated by
+  // event-loop SCHEDULING, not real work (the fake `run` is trivial and the meter no-ops with no
+  // ingest key) — so under the parallel `--coverage` run they balloon from ~0.4s isolated to ~1s
+  // under load, and on a CPU-starved CI box a rare spike can cross vitest's 5000ms default and time
+  // out (an intermittently-red required check that would block auto-merge). The explicit 20s budget
+  // is pure starvation headroom; it changes NO assertion and still catches a true hang.
   it("grades every case, records outcomes fail-safe, and restores MARGIN_WORKFLOW_ID", async () => {
     const before = process.env.MARGIN_WORKFLOW_ID;
     const seen: string[] = [];
@@ -140,10 +147,10 @@ describe("generic runner (over a fake workflow — no Gemini, no network)", () =
     expect(results.find((r) => r.result.name === "fail")!.result.score.ok).toBe(false);
     expect(seen).toEqual(["pass", "fail"]);
     expect(process.env.MARGIN_WORKFLOW_ID).toBe(before); // restored (undefined here)
-  });
+  }, 20_000);
 
   it("honors a cost cap", async () => {
     const results = await runWorkflowEval(fake, {} as GeminiClient, { maxCases: 1, emit: false });
     expect(results).toHaveLength(1);
-  });
+  }, 20_000);
 });
