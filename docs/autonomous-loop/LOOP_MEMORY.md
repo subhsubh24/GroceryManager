@@ -3397,3 +3397,29 @@ Durable, cross-run lessons. The loop appends here each run; read it before picki
   9/9, 0 unmet; ship gate MET. **Known minor follow-up:** a cancel-during-trial user (cancel_at_period_end
   while status still 'trialing') can still receive T2/T3 — low severity (copy still says "cancel anytime,
   no charge"); future refinement = record cancel_at_period_end + exclude.
+- **2026-07-27 (run 96) — NO deep audit due (run 95 swept 6 lenses <24h prior); focused 2-Haiku scout
+  (correctness/security + design/a11y); 1 file-disjoint Track-F clear (#660); 2 a11y candidates HELD;
+  2-Sonnet review APPROVE first-pass; 0 abandons, 0 circuit-breaks.** Baseline was green on every gate
+  EXCEPT the core suite, which showed **1 intermittent failure** on `src/llm/evals/margin/workflows.test.ts`
+  — caught only by reading the full `Tests 1 failed | 1085 passed` summary line (the coverage table scrolls
+  past it). **HEADLINE #660 (Track-F flake fix):** the margin-eval guard's two `async` tests each
+  `await runWorkflowEval` (event-loop yield per case); their wall-clock is dominated by SCHEDULING, not work
+  (trivial fake `run`; `emitEvalOutcome`→`margin-meter@0.2.0` no-ops with no ingest key). Under the parallel
+  `--coverage` run the "grades every case…" test climbs from ~385ms isolated to ~1s under load; a rare
+  CPU-starvation spike crossed vitest's **5000ms** default (observed failing file dur **5020ms**) → an
+  intermittently-red REQUIRED check that would block auto-merge. Fix = explicit **20 000ms** on both async
+  tests (pure headroom; NO assertion changed; a true hang still fails at 20s). Env-race ruled out
+  (`isolate:true`/`pool:forks` → per-file `process.env`; only `MARGIN_WORKFLOW_ID` writer restores in a
+  `finally`). Reviewer A independently re-verified against `runner.ts` + the installed transport + vitest
+  config. **HELD (2, not abandoned — deferred as unverifiable-blind):** the shared `.back-link`/`.nav-link`
+  44px gap (`globals.css`, 29+ call sites) and the cook-screen "Remix this recipe" link (`cook/[id]/page.tsx:151`)
+  — the SAME layout-sensitive items runs 93 (#645) + 95 disciplined-abandoned; booting the app + seeded DB +
+  auth to verify a 4px nav nudge is disproportionate, and blind shipping violates the design-bar LESSON.
+  **LESSON — read the full `Tests …` summary line before declaring a baseline green;** a single-line
+  intermittent failure hides behind the coverage table. **LESSON — a failing duration that ≈ the default
+  timeout (5020ms vs 5000ms) is the CPU-starvation tell;** verify env-leak/network-hang/missing-await are all
+  false, THEN bump the timeout — don't mask a deadlock. **Monetization:** unchanged, floor reach-gated (#190,
+  base ≈$33K = owner-GTM); T1–T3 (run 95) stands; median unmoved (anti-gaming). **Readiness:** did NOT open
+  'ready' — sole DoD gap unchanged (reach-gated floor; Confidence UNCHECKED). validation 9/9, 0 unmet; ship
+  gate MET. A quiet disciplined run — one real Track-F fix that unblocks the pipeline, a clean security scout,
+  two candidates correctly held.
